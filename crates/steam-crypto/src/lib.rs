@@ -45,17 +45,6 @@ pub fn verify_signature(data: &[u8], signature: &[u8]) -> Result<bool, ErrorStac
     verifier.verify(&signature)
 }
 
-/// Encrypt input with key. Returns HMAC
-/// IV is HMAC-SHA1(Random(3) + Plaintext) + Random(3). (Same random values for both)
-pub fn symetric_encrypt_hmac_iv(input: &[u8], key: &[u8]) {
-    let mut random_vec: [u8; 3] = [0; 3];
-    thread_rng().fill_bytes(&mut random_vec);
-
-    // the resulting IV must be 16 bytes long, so truncate the hmac to make room for the random
-}
-
-pub fn symmetric_decrypt_ecb() {}
-
 /// Generates a 32 byte random blob of data and encrypts it with RSA using the Steam system's public key.
 /// Returns SessionsKeys struct.
 pub fn generate_session_key(nonce: &str) -> SessionKeys {
