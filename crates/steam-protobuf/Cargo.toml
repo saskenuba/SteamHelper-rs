@@ -3,7 +3,13 @@ name = "steam-proto"
 version = "0.1.0"
 authors = ["Martin <martin@hotmail.com.br>"]
 edition = "2018"
+build = "build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+
+
+[build-dependencies]
+protoc-rust = "2.8.1"
+walkdir = "2.2.9"
