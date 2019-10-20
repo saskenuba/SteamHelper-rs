@@ -44,12 +44,24 @@ pub fn symmetric_encrypt_with_iv(message: &[u8], key: &[u8], plain_iv: Option<&[
     output
 }
 
-pub fn symmetric_decrypt(input: &[u8], key: &[u8]) -> Vec<u8> {
+pub fn symmetric_decrypt(input: &[u8], key: &[u8], is_hmac: bool) -> Vec<u8> {
     let encrypted_iv = &input[0..16];
     let plain_iv = cipher_iv_ecb(key, Option::from(encrypted_iv), Mode::Decrypt);
 
     let encrypted_message = &input[16..];
-    cipher_message(encrypted_message, key, Option::from(encrypted_iv), Mode::Decrypt)
+
+    if !is_hmac {
+        cipher_message(encrypted_message, key, Option::from(encrypted_iv), Mode::Decrypt);
+    }
+    let iv_len = plain_iv.len();
+    let hmac_partial = &plain_iv[..iv_len - 3];
+    let hmac_random_bytes = &plain_iv[iv_len - 3..];
+
+    let signed_data = sign_hmac_sha1(&hmac_random_bytes, &plain_iv, &key[..16]);
+    if &signed_data[..iv_len] != hmac_partial {
+        panic!("Received invalid HMAC from remote host.");
+    }
+    plain_iv
 }
 
 /// Encrypt input with key. Returns HMAC
@@ -59,14 +71,20 @@ pub fn symmetric_encrypt_hmac_iv(input: &[u8], key: &[u8]) -> Vec<u8> {
     let mut random_vec: [u8; RAND_VEC_SIZE] = [0; RAND_VEC_SIZE];
     thread_rng().fill_bytes(&mut random_vec);
 
-    let pkey = openssl::pkey::PKey::hmac(&key[..16]).unwrap();
-    let mut signer = Signer::new(MessageDigest::sha1(), &pkey).unwrap();
-    signer.update(&random_vec).unwrap();
-    signer.update(&input);
-    let mut signed_data = signer.sign_to_vec().unwrap()[..16 - RAND_VEC_SIZE].to_vec();
-    signed_data.extend(random_vec.iter());
-
-    symmetric_encrypt_with_iv(input, key, Option::from(signed_data.as_ref()))
+    let signed_data = sign_hmac_sha1(&mut random_vec, &input, &key[..16]);
 
     // the resulting IV must be 16 bytes long, so truncate the hmac to make room for the random
+    let mut signed_data_slice = signed_data[..16 - RAND_VEC_SIZE].to_vec();
+    signed_data_slice.extend(random_vec.iter());
+
+    symmetric_encrypt_with_iv(input, key, Option::from(signed_data_slice.as_ref()))
+}
+
+fn sign_hmac_sha1(random_bytes: &[u8], input: &[u8], key: &[u8]) -> Vec<u8> {
+    let pkey = openssl::pkey::PKey::hmac(&key).unwrap();
+    let mut signer = Signer::new(MessageDigest::sha1(), &pkey).unwrap();
+    signer.update(random_bytes).unwrap();
+    signer.update(&input).unwrap();
+    let signed_data = signer.sign_to_vec().unwrap();
+    signed_data
 }
