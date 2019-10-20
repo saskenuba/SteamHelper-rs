@@ -1,3 +1,7 @@
+#![warn(dead_code)]
+
+use openssl::hash::MessageDigest;
+use openssl::sign::Signer;
 use openssl::symm::{Cipher, Crypter, Mode};
 use rand::{thread_rng, RngCore};
 
@@ -45,9 +49,24 @@ pub fn symmetric_decrypt(input: &[u8], key: &[u8]) -> Vec<u8> {
     let plain_iv = cipher_iv_ecb(key, Option::from(encrypted_iv), Mode::Decrypt);
 
     let encrypted_message = &input[16..];
-    let decrypted_message =
-        cipher_message(encrypted_message, key, Option::from(encrypted_iv), Mode::Decrypt);
-
-    decrypted_message
+    cipher_message(encrypted_message, key, Option::from(encrypted_iv), Mode::Decrypt)
 }
+
+/// Encrypt input with key. Returns HMAC
+/// IV is HMAC-SHA1(Random(3) + Plaintext) + Random(3). (Same random values for both)
+pub fn symmetric_encrypt_hmac_iv(input: &[u8], key: &[u8]) -> Vec<u8> {
+    const RAND_VEC_SIZE: usize = 3;
+    let mut random_vec: [u8; RAND_VEC_SIZE] = [0; RAND_VEC_SIZE];
+    thread_rng().fill_bytes(&mut random_vec);
+
+    let pkey = openssl::pkey::PKey::hmac(&key[..16]).unwrap();
+    let mut signer = Signer::new(MessageDigest::sha1(), &pkey).unwrap();
+    signer.update(&random_vec).unwrap();
+    signer.update(&input);
+    let mut signed_data = signer.sign_to_vec().unwrap()[..16 - RAND_VEC_SIZE].to_vec();
+    signed_data.extend(random_vec.iter());
+
+    symmetric_encrypt_with_iv(input, key, Option::from(signed_data.as_ref()))
+
+    // the resulting IV must be 16 bytes long, so truncate the hmac to make room for the random
 }
