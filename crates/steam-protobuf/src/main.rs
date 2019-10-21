@@ -18,10 +18,10 @@ macro_rules! generate_protos_for {
         let entries_as_slice: Vec<&str> = entries.iter().map(|c| c.to_str().unwrap()).collect();
 
         protoc_rust::run(protoc_rust::Args {
-            out_dir: &concat!("assets/generated/", $folder_name),
+            out_dir: &concat!("src/", $folder_name),
             input: entries_as_slice.as_ref(),
             includes: &[concat!("assets/Protobufs/", $folder_name)],
-            customize: Customize { ..Default::default() },
+            customize: Customize { serde_derive: Some(true), ..Default::default() },
         })
         .expect("protoc")
     }};
