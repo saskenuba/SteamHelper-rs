@@ -4,7 +4,10 @@ SteamHelper is (in the future) a modular Rust alternative to popular libraries a
 
 It can be used to create bots, automate profiles, the possibilities are endless.
 
-### Features:
+The library needs contributors. Check issues that need help and send those PRs in!
+To learn more about how Steam works, check (here)[https://github.com/saskenuba/SteamHelper-rs/blob/master/docs/dev/README.md]
+
+### Features (not yet implemented):
 - Steam Authenticator: Mobile 2FA
 - Steam WebAuth: Authentication to Steam Community and Steam Store
 - Steam Client
