@@ -4,8 +4,9 @@ extern crate steam_protobuf;
 
 //use steam_protobuf::steammessages_clientserver_login;
 
-mod server;
-mod connection;
+pub mod server;
+pub mod connection;
+pub mod api;
 
 struct SteamCMClient {
     /// steam_id of client
