@@ -4,6 +4,8 @@ use reqwest::blocking::Response;
 use reqwest::Error;
 use serde::Deserialize;
 
+use crate::api::APIBuilder;
+
 #[derive(Deserialize, Debug)]
 pub struct CmServerWebApi {
     response: CmServerResponse,
@@ -26,14 +28,12 @@ impl CmServerWebApi {
 /// Steam calls regions as Cells
 /// reference: https://github.com/SteamDatabase/SteamTracking/blob/master/ClientExtracted/steam/cached/CellMap.vdf
 pub fn fetch_servers(api_key: &str) -> Result<CmServerWebApi, Error> {
-    let url = &format!(
-        "https://api.steampowered.com/ISteamDirectory/GetCMList/v1/\
-         ?key={API_KEY}&cellid={CELL_ID}",
-        API_KEY = api_key,
-        CELL_ID = 0
-    );
+    let parameters = vec![("cellid", "0")];
 
-    let json: CmServerWebApi = reqwest::blocking::get(url)?.json()?;
+    let new_api_call =
+        APIBuilder::new("ISteamDirectory", "GetCMList", api_key, Option::from(parameters));
+
+    let json: CmServerWebApi = reqwest::blocking::get(new_api_call.dump_request_link())?.json()?;
     Ok(json)
 }
 
