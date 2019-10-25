@@ -1,11 +1,7 @@
 ///! This API is not final
-extern crate steam_crypto;
-extern crate steam_protobuf;
 
-//use steam_protobuf::steammessages_clientserver_login;
-
-pub mod server;
-pub mod connection;
+pub mod cmserver;
+pub mod tcpconnection;
 pub mod api;
 
 struct SteamCMClient {

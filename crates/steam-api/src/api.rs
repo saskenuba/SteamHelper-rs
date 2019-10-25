@@ -68,7 +68,7 @@ mod tests {
 
     #[tokio::test]
     async fn api_setup() {
-        let vector: Vec<(&str, &str)> =  vec!(("cellid", "25"));
+        let vector: Vec<Param> =  vec!(("cellid", "25"));
         let api_call = APIBuilder::new("ISteamDirectory", "GetCMList", "1", Option::from(vector));
         let api_ok = api_call.setup().await.is_ok();
         assert!(api_ok)
