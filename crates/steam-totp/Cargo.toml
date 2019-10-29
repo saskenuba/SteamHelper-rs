@@ -9,3 +9,6 @@ edition = "2018"
 [dependencies]
 rand = "0.7.2"
 openssl = "0.10.25"
+bytes = "0.4.12"
+sha-1 = "0.8.1"
+hmac = "0.7.1"
