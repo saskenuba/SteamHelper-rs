@@ -4,19 +4,21 @@ extern crate bytes;
 extern crate hmac;
 extern crate sha1;
 
+mod error;
+
+pub use error::TotpError;
+
 use bytes::{BigEndian,ByteOrder};
 use hmac::{Hmac,Mac};
 use sha1::Sha1;
-use std::time::{Duration,SystemTime,UNIX_EPOCH};
+use std::{
+    result,
+    time::{SystemTime,UNIX_EPOCH},
+};
 
-#[derive(Debug)]
-pub enum Error {
-    InvalidSystemTime(Duration),
-    InvalidSecretLength,
-}
 
-pub type Result<T> = std::result::Result<T, Error>;
-
+/// A `Result` wrapper for totp operations.
+pub type Result<T> = result::Result<T, TotpError>;
 type HmacSha1 = Hmac<Sha1>;
 
 
@@ -32,8 +34,7 @@ pub fn generate_auth_code(secret: &[u8], offset: Option<u64>) -> Result<String> 
 
 fn time(offset: Option<u64>) -> Result<u64> {
     let offset = offset.unwrap_or(0);
-    let unix_time_secs = SystemTime::now().duration_since(UNIX_EPOCH)
-        .map_err(|e| Error::InvalidSystemTime(e.duration()))?
+    let unix_time_secs = SystemTime::now().duration_since(UNIX_EPOCH)?
         .as_secs();
 
     Ok(offset + unix_time_secs)
@@ -46,8 +47,7 @@ fn create_initial_auth_buffer(time: u64) -> [u8; 8] {
 }
 
 fn create_hmac_for_auth<'a>(secret: &'a [u8], buffer: &[u8]) -> Result<Vec<u8>> {
-    let mut hmac = HmacSha1::new_varkey(secret)
-        .map_err(|_| Error::InvalidSecretLength)?;
+    let mut hmac = HmacSha1::new_varkey(secret)?;
 
     hmac.input(buffer);
     Ok(hmac.result().code().as_slice().to_vec())
@@ -74,13 +74,18 @@ fn derive_auth_code(fullcode: usize) -> String {
     .0
 }
 
+/// TODO: Add doc
 pub fn generate_confirmation_key() {
     unimplemented!()
 }
-pub fn get_time_offset() {
+
+/// TODO: Add doc
+pub fn get_device_id() {
     unimplemented!()
 }
-pub fn get_device_id() {
+
+/// TODO: Add doc
+pub fn get_time_offset() {
     unimplemented!()
 }
 

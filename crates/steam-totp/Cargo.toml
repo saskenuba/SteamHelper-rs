@@ -12,3 +12,4 @@ openssl = "0.10.25"
 bytes = "0.4.12"
 sha-1 = "0.8.1"
 hmac = "0.7.1"
+crypto-mac = { version = "0.7.0", features = ["std"] }
