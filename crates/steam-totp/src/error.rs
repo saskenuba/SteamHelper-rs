@@ -22,14 +22,7 @@ impl fmt::Display for TotpError {
 }
 
 impl error::Error for TotpError {
-    fn description(&self) -> &str {
-        match *self {
-            TotpError::Time(ref err) => err.description(),
-            TotpError::Hmac(ref err) => err.description(),
-        }
-    }
-
-    fn cause(&self) -> Option<&dyn error::Error> {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match *self {
             TotpError::Time(ref err) => Some(err),
             TotpError::Hmac(ref err) => Some(err),
