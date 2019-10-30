@@ -92,17 +92,17 @@ fn send_heartbeat() {
 
 #[cfg(test)]
 mod tests {
-    use crate::CMserver::{CmServerWebApi, fetch_servers};
+    use crate::cmserver::{CmServerWebApi, fetch_servers};
 
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
-//    #[test]
-//    fn connect_to_web_server() {
-//        let get_results = fetch_servers(env!("STEAM_API"));
-//        let fetched_servers = get_results.unwrap();
-//        let mut connection = new_connection(&fetched_servers.dump_servers()[0]).unwrap();
-//        let data = read_packet(&mut connection).unwrap();
-//        println!("{:?}", data);
-//    }
+    #[tokio::test]
+    async fn connect_to_web_server() {
+        let get_results = fetch_servers(env!("STEAM_API")).await;
+        let fetched_servers = get_results.unwrap();
+        let mut steam_connection = SteamConnection::new_connection(&fetched_servers.dump_servers()[0]).await.unwrap();
+        let data = steam_connection.read_packet().await.unwrap();
+        println!("{:?}", data);
+    }
 }
