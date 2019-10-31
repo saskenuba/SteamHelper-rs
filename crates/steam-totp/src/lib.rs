@@ -34,13 +34,13 @@ impl Secret {
         })
     }
 
-    pub fn from_hex(secret: &str) -> Result<Secret> {
+    pub fn from_hex(secret: &str) -> result::Result<Secret, hex::FromHexError> {
         Ok(Secret(SecretInner {
             data: hex::decode(secret)?
         }))
     }
 
-    pub fn from_b64(secret: &str) -> Result<Secret> {
+    pub fn from_b64(secret: &str) -> result::Result<Secret, base64::DecodeError> {
         Ok(Secret(SecretInner {
             data: base64::decode(secret)?
         }))
