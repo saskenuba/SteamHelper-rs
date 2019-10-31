@@ -1,14 +1,12 @@
 //! Direct port of
 //! https://github.com/DoctorMcKay/node-steam-totp/blob/master/index.js
-extern crate bytes;
-extern crate hmac;
-extern crate sha1;
-
 mod error;
 
 pub use error::TotpError;
 
+use base64;
 use bytes::{BigEndian,ByteOrder};
+use hex;
 use hmac::{Hmac,Mac};
 use sha1::Sha1;
 use std::{
@@ -21,12 +19,44 @@ use std::{
 pub type Result<T> = result::Result<T, TotpError>;
 type HmacSha1 = Hmac<Sha1>;
 
+#[derive(Debug)]
+struct SecretInner {
+    data: Vec<u8>,
+}
+
+#[derive(Debug)]
+pub struct Secret(SecretInner);
+
+impl Secret {
+    pub fn new(secret: &[u8]) -> Secret {
+        Secret(SecretInner {
+            data: secret.to_vec(),
+        })
+    }
+
+    pub fn from_hex(secret: &str) -> Result<Secret> {
+        Ok(Secret(SecretInner {
+            data: hex::decode(secret)?
+        }))
+    }
+
+    pub fn from_b64(secret: &str) -> Result<Secret> {
+        Ok(Secret(SecretInner {
+            data: base64::decode(secret)?
+        }))
+    }
+
+    fn data<'a>(&'a self) -> &[u8] {
+        &self.0.data
+    }
+}
+
 
 /// Generate a Steam-style TOTP authentication code.
-pub fn generate_auth_code(secret: &[u8], offset: Option<u64>) -> Result<String> {
+pub fn generate_auth_code(secret: Secret, offset: Option<u64>) -> Result<String> {
     let time = time(offset)?;
     let buf = create_initial_auth_buffer(time);
-    let hmac = create_hmac_for_auth(secret, &buf)?;
+    let hmac = create_hmac_for_auth(secret.data(), &buf)?;
     let fullcode = create_fullcode_for_auth(&hmac);
 
     Ok(derive_auth_code(fullcode))
@@ -93,10 +123,53 @@ pub fn get_time_offset() {
 mod tests {
     use super::*;
 
-    fn make_secret() -> [u8; 8] {
-        let mut secret = [0; 8];
-        BigEndian::write_u64(&mut secret, 62_678_480_394_959_550);
-        secret
+    fn make_raw_secret() -> Vec<u8> {
+        hex::decode("deadbeefcafe00").unwrap()
+    }
+
+    fn make_secret() -> Secret {
+        let raw = make_raw_secret();
+        Secret::new(&raw)
+    }
+
+    #[test]
+    fn secret_new() {
+        let raw = make_raw_secret();
+        let secret = Secret::new(&raw);
+
+        assert_eq!(secret.0.data, raw);
+    }
+
+    #[test]
+    fn secret_from_hex() {
+        let raw = make_raw_secret();
+        let hex_str = hex::encode(&raw);
+        let secret = Secret::from_hex(&hex_str);
+
+        assert_eq!(secret.is_ok(), true);
+
+        let secret = secret.unwrap();
+        assert_eq!(secret.data(), &raw[..]);
+    }
+
+    #[test]
+    fn secret_from_b64() {
+        let raw = make_raw_secret();
+        let b64_str = base64::encode(&raw);
+        let secret = Secret::from_b64(&b64_str);
+
+        assert_eq!(secret.is_ok(), true);
+
+        let secret = secret.unwrap();
+        assert_eq!(secret.data(), &raw[..]);
+    }
+
+    #[test]
+    fn secret_data() {
+        let raw = make_raw_secret();
+        let secret = Secret::new(&raw);
+
+        assert_eq!(secret.data(), &raw[..]);
     }
 
     #[test]
@@ -130,7 +203,7 @@ mod tests {
     fn create_hmac_for_auth_succeeds() {
         let secret = make_secret();
         let buf = create_initial_auth_buffer(9001);
-        let hmac = create_hmac_for_auth(&secret, &buf).unwrap();
+        let hmac = create_hmac_for_auth(secret.data(), &buf).unwrap();
 
         let as_hex_string = |xs: Vec<u8>| xs.into_iter()
             .map(|x| format!("{:x?}", x))
@@ -138,7 +211,7 @@ mod tests {
 
         assert_eq!(
             as_hex_string(hmac),
-            "c32862db5db4eeb121bc9cc267a416b9c515db7".to_owned(),
+            "e73054a5397bbbabbd20ff4655d3cd79d8425359".to_owned(),
         );
     }
 
@@ -146,18 +219,18 @@ mod tests {
     fn create_fullcode_for_auth_succeeds() {
         let secret = make_secret();
         let buf = create_initial_auth_buffer(9001);
-        let hmac = create_hmac_for_auth(&secret, &buf).unwrap();
+        let hmac = create_hmac_for_auth(secret.data(), &buf).unwrap();
 
-        assert_eq!(create_fullcode_for_auth(&hmac), 824294556);
+        assert_eq!(create_fullcode_for_auth(&hmac), 553600597);
     }
 
     #[test]
     fn derive_auth_code_succeeds() {
         let secret = make_secret();
         let buf = create_initial_auth_buffer(9001);
-        let hmac = create_hmac_for_auth(&secret, &buf).unwrap();
+        let hmac = create_hmac_for_auth(secret.data(), &buf).unwrap();
         let fullcode = create_fullcode_for_auth(&hmac);
 
-        assert_eq!(derive_auth_code(fullcode), String::from("RMVRC"));
+        assert_eq!(derive_auth_code(fullcode), String::from("NRHFK"));
     }
 }

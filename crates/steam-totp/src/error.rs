@@ -1,15 +1,19 @@
+use base64;
+use hmac::crypto_mac::InvalidKeyLength;
+use hex::FromHexError;
 use std::{
     error,
     fmt,
     time::SystemTimeError,
 };
-use hmac::crypto_mac::InvalidKeyLength;
 
 /// A custom `Error` for totp operations that wraps underlying errors.
 #[derive(Debug)]
 pub enum TotpError {
     Time(SystemTimeError),
     Hmac(InvalidKeyLength),
+    HexDecode(FromHexError),
+    B64Decode(base64::DecodeError),
 }
 
 impl fmt::Display for TotpError {
@@ -17,6 +21,8 @@ impl fmt::Display for TotpError {
         match *self {
             TotpError::Time(ref err) => write!(f, "SystemTime error: {}", err),
             TotpError::Hmac(ref err) => write!(f, "Hmac error: {}", err),
+            TotpError::HexDecode(ref err) => write!(f, "FromHex error: {}", err),
+            TotpError::B64Decode(ref err) => write!(f, "Base64 error: {}", err),
         }
     }
 }
@@ -26,6 +32,8 @@ impl error::Error for TotpError {
         match *self {
             TotpError::Time(ref err) => Some(err),
             TotpError::Hmac(ref err) => Some(err),
+            TotpError::HexDecode(ref err) => Some(err),
+            TotpError::B64Decode(ref err) => Some(err),
         }
     }
 }
@@ -42,3 +50,14 @@ impl From<InvalidKeyLength> for TotpError {
     }
 }
 
+impl From<FromHexError> for TotpError {
+    fn from(err: FromHexError) -> TotpError {
+        TotpError::HexDecode(err)
+    }
+}
+
+impl From<base64::DecodeError> for TotpError {
+    fn from(err: base64::DecodeError) -> TotpError {
+        TotpError::B64Decode(err)
+    }
+}
