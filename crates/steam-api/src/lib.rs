@@ -1,11 +1,13 @@
 ///! This API is not final
 #[macro_use]
 extern crate enum_primitive;
+#[macro_use]
+extern crate arrayref;
 
 pub mod cmserver;
 pub mod tcpconnection;
 pub mod api;
-mod emsg;
+pub mod messages;
 
 struct SteamCMClient {
     /// steam_id of client

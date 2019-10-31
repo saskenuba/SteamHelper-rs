@@ -20,6 +20,7 @@ async-trait = "0.1.16"
 # emsg parsing
 enum_primitive = "*"
 num = "0.2.0"
+arrayref = "0.3.5"
 
 [dependencies.reqwest]
 version = "0.10.0-alpha.1"
