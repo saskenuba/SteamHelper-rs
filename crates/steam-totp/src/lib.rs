@@ -1,5 +1,21 @@
 //! Direct port of
-//! https://github.com/DoctorMcKay/node-steam-totp/blob/master/index.js
+//! [DoctorMcKay/node-steam-totp](https://github.com/DoctorMcKay/node-steam-totp)
+//!
+//! This crate generates Steam 2FA auth codes for a shared secret.
+//!
+//! # Example
+//!
+//! ```
+//! use steam_totp::{Secret,generate_auth_code};
+//!
+//! fn main() {
+//!     let secret = Secret::from_hex("deadbeefcafe").unwrap();
+//!     let auth_code = generate_auth_code(secret, None).unwrap();
+//!
+//!     println!("{}", auth_code);  // Will print a 5 character code similar to "R7VRC"
+//! }
+//! ```
+
 mod error;
 mod secret;
 
@@ -15,12 +31,15 @@ use std::{
 };
 
 
-/// A `Result` wrapper for totp operations.
+/// The result type for TOTP operations.
 pub type Result<T> = result::Result<T, TotpError>;
 type HmacSha1 = Hmac<Sha1>;
 
 
-/// Generate a Steam-style TOTP authentication code.
+/// Generate a Steam TOTP authentication code.
+///
+/// `offset` is the difference of time in seconds that your server is off from
+/// the steam servers.
 pub fn generate_auth_code(secret: Secret, offset: Option<u64>) -> Result<String> {
     let time = time(offset)?;
     let buf = create_initial_auth_buffer(time);

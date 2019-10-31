@@ -5,7 +5,7 @@ use std::{
     time::SystemTimeError,
 };
 
-/// A custom `Error` for totp operations that wraps underlying errors.
+/// The error type for TOTP operations that wraps underlying errors.
 #[derive(Debug)]
 pub enum TotpError {
     Time(SystemTimeError),
