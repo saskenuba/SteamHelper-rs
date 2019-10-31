@@ -1,12 +1,12 @@
 //! Direct port of
 //! https://github.com/DoctorMcKay/node-steam-totp/blob/master/index.js
 mod error;
+mod secret;
 
 pub use error::TotpError;
+pub use secret::Secret;
 
-use base64;
 use bytes::{BigEndian,ByteOrder};
-use hex;
 use hmac::{Hmac,Mac};
 use sha1::Sha1;
 use std::{
@@ -18,38 +18,6 @@ use std::{
 /// A `Result` wrapper for totp operations.
 pub type Result<T> = result::Result<T, TotpError>;
 type HmacSha1 = Hmac<Sha1>;
-
-#[derive(Debug)]
-struct SecretInner {
-    data: Vec<u8>,
-}
-
-#[derive(Debug)]
-pub struct Secret(SecretInner);
-
-impl Secret {
-    pub fn new(secret: &[u8]) -> Secret {
-        Secret(SecretInner {
-            data: secret.to_vec(),
-        })
-    }
-
-    pub fn from_hex(secret: &str) -> result::Result<Secret, hex::FromHexError> {
-        Ok(Secret(SecretInner {
-            data: hex::decode(secret)?
-        }))
-    }
-
-    pub fn from_b64(secret: &str) -> result::Result<Secret, base64::DecodeError> {
-        Ok(Secret(SecretInner {
-            data: base64::decode(secret)?
-        }))
-    }
-
-    fn data<'a>(&'a self) -> &[u8] {
-        &self.0.data
-    }
-}
 
 
 /// Generate a Steam-style TOTP authentication code.
@@ -130,46 +98,6 @@ mod tests {
     fn make_secret() -> Secret {
         let raw = make_raw_secret();
         Secret::new(&raw)
-    }
-
-    #[test]
-    fn secret_new() {
-        let raw = make_raw_secret();
-        let secret = Secret::new(&raw);
-
-        assert_eq!(secret.0.data, raw);
-    }
-
-    #[test]
-    fn secret_from_hex() {
-        let raw = make_raw_secret();
-        let hex_str = hex::encode(&raw);
-        let secret = Secret::from_hex(&hex_str);
-
-        assert_eq!(secret.is_ok(), true);
-
-        let secret = secret.unwrap();
-        assert_eq!(secret.data(), &raw[..]);
-    }
-
-    #[test]
-    fn secret_from_b64() {
-        let raw = make_raw_secret();
-        let b64_str = base64::encode(&raw);
-        let secret = Secret::from_b64(&b64_str);
-
-        assert_eq!(secret.is_ok(), true);
-
-        let secret = secret.unwrap();
-        assert_eq!(secret.data(), &raw[..]);
-    }
-
-    #[test]
-    fn secret_data() {
-        let raw = make_raw_secret();
-        let secret = Secret::new(&raw);
-
-        assert_eq!(secret.data(), &raw[..]);
     }
 
     #[test]
