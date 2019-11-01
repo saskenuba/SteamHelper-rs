@@ -6,33 +6,28 @@
 //! # Example
 //!
 //! ```
-//! use steam_totp::{Secret,generate_auth_code};
+//! use steam_totp::{Time,Secret,generate_auth_code};
 //!
 //! fn main() {
+//!     let time = Time::now(None).unwrap();
 //!     let secret = Secret::from_hex("deadbeefcafe").unwrap();
-//!     let auth_code = generate_auth_code(secret, None).unwrap();
+//!     let auth_code = generate_auth_code(secret, time).unwrap();
 //!
 //!     println!("{}", auth_code);  // Will print a 5 character code similar to "R7VRC"
 //! }
 //! ```
 
-mod error;
+mod time;
 mod secret;
 
-pub use error::TotpError;
+pub use time::Time;
 pub use secret::Secret;
 
 use bytes::{BigEndian,ByteOrder};
-use hmac::{Hmac,Mac};
+use hmac::{crypto_mac::InvalidKeyLength,Hmac,Mac};
 use sha1::Sha1;
-use std::{
-    result,
-    time::{SystemTime,UNIX_EPOCH},
-};
 
 
-/// The result type for TOTP operations.
-pub type Result<T> = result::Result<T, TotpError>;
 type HmacSha1 = Hmac<Sha1>;
 
 
@@ -40,21 +35,12 @@ type HmacSha1 = Hmac<Sha1>;
 ///
 /// `offset` is the difference of time in seconds that your server is off from
 /// the steam servers.
-pub fn generate_auth_code(secret: Secret, offset: Option<u64>) -> Result<String> {
-    let time = time(offset)?;
-    let buf = create_initial_auth_buffer(time);
+pub fn generate_auth_code(secret: Secret, time: Time) -> Result<String, InvalidKeyLength> {
+    let buf = create_initial_auth_buffer(time.time());
     let hmac = create_hmac_for_auth(secret.data(), &buf)?;
     let fullcode = create_fullcode_for_auth(&hmac);
 
     Ok(derive_auth_code(fullcode))
-}
-
-fn time(offset: Option<u64>) -> Result<u64> {
-    let offset = offset.unwrap_or(0);
-    let unix_time_secs = SystemTime::now().duration_since(UNIX_EPOCH)?
-        .as_secs();
-
-    Ok(offset + unix_time_secs)
 }
 
 fn create_initial_auth_buffer(time: u64) -> [u8; 8] {
@@ -63,7 +49,7 @@ fn create_initial_auth_buffer(time: u64) -> [u8; 8] {
     buf
 }
 
-fn create_hmac_for_auth<'a>(secret: &'a [u8], buffer: &[u8]) -> Result<Vec<u8>> {
+fn create_hmac_for_auth<'a>(secret: &'a [u8], buffer: &[u8]) -> Result<Vec<u8>, InvalidKeyLength> {
     let mut hmac = HmacSha1::new_varkey(secret)?;
 
     hmac.input(buffer);
@@ -117,27 +103,6 @@ mod tests {
     fn make_secret() -> Secret {
         let raw = make_raw_secret();
         Secret::new(&raw)
-    }
-
-    #[test]
-    fn time_returns_seconds() {
-        use std::time::{SystemTime,UNIX_EPOCH};
-
-        let now_seconds = SystemTime::now().duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
-
-        assert_eq!(time(None).unwrap(), now_seconds);
-    }
-
-    #[test]
-    fn time_returns_seconds_with_offset() {
-        let offset = 100;
-        let now_seconds = SystemTime::now().duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
-
-        assert_eq!(time(Some(offset)).unwrap(), now_seconds + offset);
     }
 
     #[test]
