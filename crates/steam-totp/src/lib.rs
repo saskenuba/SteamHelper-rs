@@ -112,11 +112,6 @@ pub fn get_device_id(steam_id: &str) -> String {
     format!("android:{}-{}-{}-{}-{}", one, two, three, four, five)
 }
 
-/// TODO: Add doc
-pub fn get_time_offset() {
-    unimplemented!()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

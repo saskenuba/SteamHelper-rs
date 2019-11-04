@@ -15,6 +15,16 @@ impl Time {
         Ok(Time(offset + unix_time_secs))
     }
 
+    /// TODO: Add doc
+    pub fn offset() -> Result<u64> {
+        unimplemented!()
+    }
+
+    /// TODO: Add doc
+    pub fn with_offset() -> Result<Time> {
+        unimplemented!()
+    }
+
     pub(crate) fn as_padded_buffer<'a>(&self, interval: Option<u64>) -> Vec<u8> {
         let interval = interval.unwrap_or(1);
         let mut buffer = vec![0; 8];
