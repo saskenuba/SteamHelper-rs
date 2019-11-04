@@ -20,12 +20,14 @@
 pub extern crate base64;
 pub extern crate hex;
 pub extern crate hmac;
+pub extern crate sha1;
 
 pub use error::TotpError;
 pub use secret::Secret;
 pub use time::Time;
 
 use bytes::{BigEndian, ByteOrder};
+use sha1::{Digest, Sha1};
 use std::result;
 
 mod error;
@@ -96,9 +98,18 @@ pub fn generate_confirmation_key(
     Ok(identity_secret.hmac_input(&buffer).code())
 }
 
-/// TODO: Add doc
-pub fn get_device_id() {
-    unimplemented!()
+/// Get a standardized device ID based on your SteamID.
+pub fn get_device_id(steam_id: &str) -> String {
+    let hash = Sha1::digest(steam_id.as_bytes());
+    let hex = hex::encode(hash);
+
+    let (one, rest) = hex.split_at(8);
+    let (two, rest) = rest.split_at(4);
+    let (three, rest) = rest.split_at(4);
+    let (four, rest) = rest.split_at(4);
+    let (five, _) = rest.split_at(12);
+
+    format!("android:{}-{}-{}-{}-{}", one, two, three, four, five)
 }
 
 /// TODO: Add doc
@@ -146,6 +157,16 @@ mod tests {
         assert_eq!(
             generate_confirmation_key(secret, time, Some("details")).unwrap(),
             "uofPzqUhpWkuPH4ZWuRSWejdfAw=".to_string()
+        );
+    }
+
+    #[test]
+    fn get_device_id_succeeds() {
+        let steam_id = "myWonderfulSteamId";
+
+        assert_eq!(
+            get_device_id(steam_id),
+            "android:cd5f79f7-6eb7-77fb-f3c6-211c848cf6d1".to_string()
         );
     }
 }
