@@ -21,7 +21,6 @@
 //! # }
 //! ```
 
-pub use error::TotpError;
 pub use secret::Secret;
 pub use time::Time;
 
@@ -29,11 +28,13 @@ use bytes::{BigEndian, ByteOrder};
 use sha1::{Digest, Sha1};
 use std::result;
 
-mod error;
+pub mod error;
 mod time;
 mod secret;
+pub mod steam_api;
 
-pub type Result<T> = result::Result<T, TotpError>;
+/// The `steam_totp` Result type.
+pub type Result<T> = result::Result<T, error::TotpError>;
 
 /// Generate a Steam TOTP authentication code.
 ///

@@ -1,18 +1,11 @@
-use super::{Result, TotpError, error::SteamApiError};
+use super::{
+    Result,
+    error::{TotpError, SteamApiError},
+    steam_api::SteamApiResponse,
+};
 use bytes::{BigEndian, ByteOrder};
 use reqwest;
 use std::time::{SystemTime, UNIX_EPOCH};
-use serde::Deserialize;
-
-#[derive(Deserialize, Debug)]
-pub struct SteamApiResponse {
-    pub(crate) response: SteamApiResponseInner,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct SteamApiResponseInner {
-    pub(crate) server_time: String,
-}
 
 /// Struct for working with TOTP time values.
 #[derive(Debug)]
@@ -31,7 +24,7 @@ impl Time {
     /// Queries the Steam servers for their time, then subtracts our local time
     /// from it to get our offset.
     ///
-    /// The offset is how many seconds we are **behind** Steam. You can pass
+    /// The offset is how many seconds we are _behind_ Steam. You can pass
     /// this value to `Time::now()` as-is with no math involved.
     ///
     /// # Example
@@ -106,6 +99,7 @@ mod tests {
         assert_eq!(Time::now(Some(offset)).unwrap().0, now_seconds + offset);
     }
 
+    #[test]
     fn as_padded_buffer_without_interval() {
         let seconds = 1572580000;
         let time = Time(seconds);
@@ -115,12 +109,13 @@ mod tests {
         assert_eq!(time.as_padded_buffer(None), buffer);
     }
 
+    #[test]
     fn as_padded_buffer_with_interval() {
         let seconds = 1572580000;
         let interval = 30;
         let time = Time(seconds);
         let mut buffer = [0; 8];
-        BigEndian::write_u32(&mut buffer[4..], (time.0 / 30) as u32);
+        BigEndian::write_u32(&mut buffer[4..], (time.0 / interval) as u32);
 
         assert_eq!(time.as_padded_buffer(Some(30)), buffer);
     }

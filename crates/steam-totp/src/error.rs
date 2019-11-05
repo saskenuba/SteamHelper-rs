@@ -1,10 +1,14 @@
-use super::time::SteamApiResponse;
+//! Module containing error types used by this crate.
+
+use super::steam_api::SteamApiResponse;
 use base64;
 use hex;
 use hmac::crypto_mac::InvalidKeyLength;
 use reqwest;
 use std::{error, fmt, time::SystemTimeError};
 
+/// This error type deals with unresolvable issues coming from the Steam API
+/// itself
 #[derive(Debug)]
 pub enum SteamApiError {
     BadStatusCode(reqwest::Response),
