@@ -1,26 +1,25 @@
 //! Direct port of
 //! [DoctorMcKay/node-steam-totp](https://github.com/DoctorMcKay/node-steam-totp)
 //!
-//! This crate generates Steam 2FA auth codes for a shared secret.
+//! This crate generates Steam 2FA auth codes for a shared secret. It currently
+//! requires **nightly** Rust.
 //!
 //! # Example
 //!
 //! ```
 //! use steam_totp::{Time,Secret,generate_auth_code};
 //!
-//! fn main() {
-//!     let time = Time::now(None).unwrap();
-//!     let shared_secret = Secret::from_hex("deadbeefcafe").unwrap();
-//!     let auth_code = generate_auth_code(shared_secret, time);
+//! # async fn run() -> Result<(), Box<dyn std::error::Error>> {
+//! #
+//! let time = Time::with_offset().await?;
+//! let shared_secret = Secret::from_hex("deadbeefcafe")?;
+//! let auth_code = generate_auth_code(shared_secret, time);
 //!
-//!     println!("{}", auth_code);  // Will print a 5 character code similar to "R7VRC"
-//! }
+//! println!("{}", auth_code);  // Will print a 5 character code similar to "R7VRC"
+//! #
+//! # Ok(())
+//! # }
 //! ```
-
-pub extern crate base64;
-pub extern crate hex;
-pub extern crate hmac;
-pub extern crate sha1;
 
 pub use error::TotpError;
 pub use secret::Secret;

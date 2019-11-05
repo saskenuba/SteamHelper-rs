@@ -1,7 +1,20 @@
-use super::Result;
+use super::{Result, TotpError, error::SteamApiError};
 use bytes::{BigEndian, ByteOrder};
+use reqwest;
 use std::time::{SystemTime, UNIX_EPOCH};
+use serde::Deserialize;
 
+#[derive(Deserialize, Debug)]
+pub struct SteamApiResponse {
+    pub(crate) response: SteamApiResponseInner,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct SteamApiResponseInner {
+    pub(crate) server_time: String,
+}
+
+/// Struct for working with TOTP time values.
 #[derive(Debug)]
 pub struct Time(pub(crate) u64);
 
@@ -9,20 +22,58 @@ impl Time {
     /// Creates a Time struct with the current local Unix time in seconds, plus
     /// the given offset.
     pub fn now(offset: Option<u64>) -> Result<Time> {
+        let now_secs = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
         let offset = offset.unwrap_or(0);
-        let unix_time_secs = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
 
-        Ok(Time(offset + unix_time_secs))
+        Ok(Time(now_secs + offset))
     }
 
-    /// TODO: Add doc
-    pub fn offset() -> Result<u64> {
-        unimplemented!()
+    /// Queries the Steam servers for their time, then subtracts our local time
+    /// from it to get our offset.
+    ///
+    /// The offset is how many seconds we are **behind** Steam. You can pass
+    /// this value to `Time::now()` as-is with no math involved.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use steam_totp::{Time};
+    /// # async fn run() -> Result<(), Box<dyn std::error::Error>> {
+    /// let offset = Time::offset().await?;
+    /// let time = Time::now(Some(offset));
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn offset() -> Result<u64> {
+        let client = reqwest::Client::new();
+        let response = {
+            let res = client
+                .post("http://api.steampowered.com/ITwoFactorService/QueryTime/v1/")
+                .header(reqwest::header::CONTENT_LENGTH, 0)
+                .send()
+                .await?;
+
+            if res.status() != reqwest::StatusCode::OK {
+                return Err(TotpError::from(SteamApiError::BadStatusCode(res)))
+            }
+
+            res.json::<SteamApiResponse>().await?
+        };
+
+        let server_time = match response.response.server_time.parse::<u64>() {
+            Ok(x) => x,
+            Err(_) => {
+                return Err(TotpError::from(SteamApiError::ParseServerTime(response)));
+            },
+        };
+
+        let now_secs = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
+        Ok(server_time - now_secs)
     }
 
-    /// TODO: Add doc
-    pub fn with_offset() -> Result<Time> {
-        unimplemented!()
+    /// Returns a `Time` value with computed offset from Steam servers.
+    pub async fn with_offset() -> Result<Time> {
+        Time::now(Some(Time::offset().await?))
     }
 
     pub(crate) fn as_padded_buffer<'a>(&self, interval: Option<u64>) -> Vec<u8> {
