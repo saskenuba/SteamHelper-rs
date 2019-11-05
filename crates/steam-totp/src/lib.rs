@@ -70,14 +70,25 @@ pub fn generate_auth_code(mut shared_secret: Secret, time: Time) -> String {
     derive_2fa_code(fullcode)
 }
 
-/// Returns a string containing your base64 confirmation key for use with the
-/// mobile confirmations web page.
+/// Generate a Steam TOTP authentication code asynchronously.
+///
+/// This is a convenience function that will handle getting your current time,
+/// with its offset from the Steam servers, for you.
+///
+/// **Note:** You should use your `shared_secret` for this.
+pub async fn generate_auth_code_async(shared_secret: Secret) -> Result<String> {
+    let time = Time::with_offset().await?;
+    Ok(generate_auth_code(shared_secret, time))
+}
+
+/// Returns a string containing your confirmation key for use with the mobile
+/// confirmations web page.
 ///
 /// `tag` identifies what this request (and therefore key) will be for.
 /// `"conf"` to load the confirmations page, `"details"` to load details about a
 /// trade, `"allow"` to confirm a trade, `"cancel"` to cancel it.
 ///
-/// **Note:** You should use your `shared_secret` for this.
+/// **Note:** You should use your `identity_secret` for this.
 pub fn generate_confirmation_key(
     mut identity_secret: Secret,
     time: Time,
