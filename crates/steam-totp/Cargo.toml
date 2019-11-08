@@ -1,17 +1,17 @@
 [package]
 name = "steam-totp"
-version = "0.1.0"
-authors = ["Martin <martin@hotmail.com.br>"]
+version = "0.2.0"
+authors = ["Martin <martin@hotmail.com.br>","Leorii <leorii@pm.me>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rand = "0.7.2"
-openssl = "0.10.25"
 bytes = "0.4.12"
 sha-1 = "0.8.1"
 hmac = "0.7.1"
 crypto-mac = { version = "0.7.0", features = ["std"] }
 hex = "0.4.0"
 base64 = "0.11.0"
+reqwest = { version = "0.10.0-alpha.1", features = ["json"] }
+serde = { version = "1.0.102", features = ["derive"] }

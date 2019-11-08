@@ -1,183 +1,178 @@
 //! Direct port of
 //! [DoctorMcKay/node-steam-totp](https://github.com/DoctorMcKay/node-steam-totp)
 //!
-//! This crate generates Steam 2FA auth codes for a shared secret.
+//! This crate generates Steam 2FA auth codes for a shared secret. It currently
+//! requires **nightly** Rust.
 //!
 //! # Example
 //!
 //! ```
-//! use steam_totp::{Secret,generate_auth_code};
+//! use steam_totp::{Time,Secret,generate_auth_code};
 //!
-//! fn main() {
-//!     let secret = Secret::from_hex("deadbeefcafe").unwrap();
-//!     let auth_code = generate_auth_code(secret, None).unwrap();
+//! # async fn run() -> Result<(), Box<dyn std::error::Error>> {
+//! #
+//! let time = Time::with_offset().await?;
+//! let shared_secret = Secret::from_hex("deadbeefcafe")?;
+//! let auth_code = generate_auth_code(shared_secret, time);
 //!
-//!     println!("{}", auth_code);  // Will print a 5 character code similar to "R7VRC"
-//! }
+//! println!("{}", auth_code);  // Will print a 5 character code similar to "R7VRC"
+//! #
+//! # Ok(())
+//! # }
 //! ```
 
-mod error;
-mod secret;
-
-pub use error::TotpError;
 pub use secret::Secret;
+pub use time::Time;
 
-use bytes::{BigEndian,ByteOrder};
-use hmac::{Hmac,Mac};
-use sha1::Sha1;
-use std::{
-    result,
-    time::{SystemTime,UNIX_EPOCH},
-};
+use bytes::{BigEndian, ByteOrder};
+use sha1::{Digest, Sha1};
+use std::result;
 
+pub mod error;
+mod time;
+mod secret;
+pub mod steam_api;
 
-/// The result type for TOTP operations.
-pub type Result<T> = result::Result<T, TotpError>;
-type HmacSha1 = Hmac<Sha1>;
-
+/// The `steam_totp` Result type.
+pub type Result<T> = result::Result<T, error::TotpError>;
 
 /// Generate a Steam TOTP authentication code.
 ///
 /// `offset` is the difference of time in seconds that your server is off from
 /// the steam servers.
-pub fn generate_auth_code(secret: Secret, offset: Option<u64>) -> Result<String> {
-    let time = time(offset)?;
-    let buf = create_initial_auth_buffer(time);
-    let hmac = create_hmac_for_auth(secret.data(), &buf)?;
-    let fullcode = create_fullcode_for_auth(&hmac);
+///
+/// **Note:** You should use your `shared_secret` for this.
+pub fn generate_auth_code(mut shared_secret: Secret, time: Time) -> String {
+    fn create_fullcode(hmac: &[u8]) -> usize {
+        let start = hmac[19] as usize & 0x0F;
+        let code = &hmac[start..start + 4];
 
-    Ok(derive_auth_code(fullcode))
+        BigEndian::read_u32(&code) as usize & 0x7FFFFFFF
+    }
+
+    fn derive_2fa_code(fullcode: usize) -> String {
+        let char_set = "23456789BCDFGHJKMNPQRTVWXY";
+
+        (0..5)
+            .fold((String::new(), fullcode), |(mut code, fullcode), _| {
+                // We modulo, so this can't panic
+                let c = char_set.chars().nth(fullcode % char_set.len()).unwrap();
+
+                code.push(c);
+                (code, fullcode / char_set.len())
+            })
+            .0
+    }
+
+    let buffer = time.as_padded_buffer(Some(30));
+    let digest = shared_secret.hmac_input(&buffer).code_as_vec();
+    let fullcode = create_fullcode(&digest);
+
+    derive_2fa_code(fullcode)
 }
 
-fn time(offset: Option<u64>) -> Result<u64> {
-    let offset = offset.unwrap_or(0);
-    let unix_time_secs = SystemTime::now().duration_since(UNIX_EPOCH)?
-        .as_secs();
-
-    Ok(offset + unix_time_secs)
+/// Generate a Steam TOTP authentication code asynchronously.
+///
+/// This is a convenience function that will handle getting your current time,
+/// with its offset from the Steam servers, for you.
+///
+/// **Note:** You should use your `shared_secret` for this.
+pub async fn generate_auth_code_async(shared_secret: Secret) -> Result<String> {
+    let time = Time::with_offset().await?;
+    Ok(generate_auth_code(shared_secret, time))
 }
 
-fn create_initial_auth_buffer(time: u64) -> [u8; 8] {
-    let mut buf = [0; 8];
-    BigEndian::write_u32(&mut buf[4..], time as u32 / 30);
-    buf
+/// Returns a string containing your confirmation key for use with the mobile
+/// confirmations web page.
+///
+/// `tag` identifies what this request (and therefore key) will be for.
+/// `"conf"` to load the confirmations page, `"details"` to load details about a
+/// trade, `"allow"` to confirm a trade, `"cancel"` to cancel it.
+///
+/// **Note:** You should use your `identity_secret` for this.
+pub fn generate_confirmation_key(
+    mut identity_secret: Secret,
+    time: Time,
+    tag: Option<&str>,
+) -> Result<String> {
+    fn create_buffer(time: Time, tag: Option<&str>) -> Vec<u8> {
+        let mut buffer = time.as_padded_buffer(None);
+
+        if let Some(x) = tag {
+            let mut tag = x.as_bytes().into_iter().take(32).map(|x| x.to_owned()).collect();
+            buffer.append(&mut tag);
+        }
+        buffer
+    }
+
+    let buffer = create_buffer(time, tag);
+    Ok(identity_secret.hmac_input(&buffer).code())
 }
 
-fn create_hmac_for_auth<'a>(secret: &'a [u8], buffer: &[u8]) -> Result<Vec<u8>> {
-    let mut hmac = HmacSha1::new_varkey(secret)?;
+/// Get a standardized device ID based on your SteamID.
+pub fn get_device_id(steam_id: &str) -> String {
+    let hash = Sha1::digest(steam_id.as_bytes());
+    let hex = hex::encode(hash);
 
-    hmac.input(buffer);
-    Ok(hmac.result().code().as_slice().to_vec())
-}
+    let (one, rest) = hex.split_at(8);
+    let (two, rest) = rest.split_at(4);
+    let (three, rest) = rest.split_at(4);
+    let (four, rest) = rest.split_at(4);
+    let (five, _) = rest.split_at(12);
 
-fn create_fullcode_for_auth(hmac: &[u8]) -> usize {
-    let start = hmac[19] as usize & 0x0F;
-    let code = &hmac[start..start + 4];
-
-    BigEndian::read_u32(&code) as usize & 0x7FFFFFFF
-}
-
-fn derive_auth_code(fullcode: usize) -> String {
-    let char_set = "23456789BCDFGHJKMNPQRTVWXY";
-
-    (0..5).fold((String::new(), fullcode), |(mut code, fullcode), _| {
-        let c = char_set.chars()
-            .nth(fullcode % char_set.len())
-            .unwrap(); // We modulo, so this can't panic
-
-        code.push(c);
-        (code, fullcode / char_set.len())
-    })
-    .0
-}
-
-/// TODO: Add doc
-pub fn generate_confirmation_key() {
-    unimplemented!()
-}
-
-/// TODO: Add doc
-pub fn get_device_id() {
-    unimplemented!()
-}
-
-/// TODO: Add doc
-pub fn get_time_offset() {
-    unimplemented!()
+    format!("android:{}-{}-{}-{}-{}", one, two, three, four, five)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn make_raw_secret() -> Vec<u8> {
-        hex::decode("deadbeefcafe00").unwrap()
+    fn make_fixed_time() -> Time {
+        Time(1572580000)
     }
 
     fn make_secret() -> Secret {
-        let raw = make_raw_secret();
-        Secret::new(&raw)
+        let raw = hex::decode("deadbeefcafe00").unwrap();
+        Secret::new(&raw).unwrap()
     }
 
     #[test]
-    fn time_returns_seconds() {
-        use std::time::{SystemTime,UNIX_EPOCH};
-
-        let now_seconds = SystemTime::now().duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
-
-        assert_eq!(time(None).unwrap(), now_seconds);
-    }
-
-    #[test]
-    fn time_returns_seconds_with_offset() {
-        let offset = 100;
-        let now_seconds = SystemTime::now().duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
-
-        assert_eq!(time(Some(offset)).unwrap(), now_seconds + offset);
-    }
-
-    #[test]
-    fn create_initial_auth_buffer_succeeds() {
-        let buffer = create_initial_auth_buffer(9001);
-        assert_eq!(BigEndian::read_u64(&buffer), 300);
-    }
-
-    #[test]
-    fn create_hmac_for_auth_succeeds() {
+    pub fn generate_auth_code_succeeds() {
         let secret = make_secret();
-        let buf = create_initial_auth_buffer(9001);
-        let hmac = create_hmac_for_auth(secret.data(), &buf).unwrap();
+        let time = make_fixed_time();
 
-        let as_hex_string = |xs: Vec<u8>| xs.into_iter()
-            .map(|x| format!("{:x?}", x))
-            .collect::<String>();
+        assert_eq!(generate_auth_code(secret, time), "6RFHH");
+    }
+
+    #[test]
+    fn generate_confirmation_key_without_tag_succeeds() {
+        let time = make_fixed_time();
+        let secret = make_secret();
 
         assert_eq!(
-            as_hex_string(hmac),
-            "e73054a5397bbbabbd20ff4655d3cd79d8425359".to_owned(),
+            generate_confirmation_key(secret, time, None).unwrap(),
+            "Y3orSQpLIsycZY/6shH8j/1UwRY=".to_string()
         );
     }
 
     #[test]
-    fn create_fullcode_for_auth_succeeds() {
+    fn generate_confirmation_key_with_tag_succeeds() {
+        let time = make_fixed_time();
         let secret = make_secret();
-        let buf = create_initial_auth_buffer(9001);
-        let hmac = create_hmac_for_auth(secret.data(), &buf).unwrap();
 
-        assert_eq!(create_fullcode_for_auth(&hmac), 553600597);
+        assert_eq!(
+            generate_confirmation_key(secret, time, Some("details")).unwrap(),
+            "uofPzqUhpWkuPH4ZWuRSWejdfAw=".to_string()
+        );
     }
 
     #[test]
-    fn derive_auth_code_succeeds() {
-        let secret = make_secret();
-        let buf = create_initial_auth_buffer(9001);
-        let hmac = create_hmac_for_auth(secret.data(), &buf).unwrap();
-        let fullcode = create_fullcode_for_auth(&hmac);
+    fn get_device_id_succeeds() {
+        let steam_id = "myWonderfulSteamId";
 
-        assert_eq!(derive_auth_code(fullcode), String::from("NRHFK"));
+        assert_eq!(
+            get_device_id(steam_id),
+            "android:cd5f79f7-6eb7-77fb-f3c6-211c848cf6d1".to_string()
+        );
     }
 }
