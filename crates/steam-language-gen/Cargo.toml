@@ -9,3 +9,7 @@ edition = "2018"
 [dependencies]
 nom = "5.0.1"
 petgraph = "0.4.13"
+
+[dependencies.Inflector]
+version = "*"
+default-features = false
