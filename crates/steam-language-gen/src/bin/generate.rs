@@ -5,11 +5,6 @@ use petgraph::Graph;
 
 use steam_language_gen::file::generate_file_from_tree;
 
-struct Keyword {
-    keyword: String,
-    equivalent: String,
-}
-
 fn main() {
     let file_steam_msg: &'static str =
         include_str!("../../assets/SteamKit/Resources/SteamLanguage/steammsg.steamd");
@@ -42,46 +37,48 @@ fn main() {
 
         next_block = value.1;
     }
-    generate_file_from_tree(graph, entry);
+    let file = generate_file_from_tree(graph, entry);
+    print!("{}", file);
 }
 
-const CLASS: &[u8] = br#"class "#;
-const CLASS_EOF: &[u8] = br#"};"#;
-const DERIVE: &str = "#[derive()]";
+const CLASS_KEYWORD: &[u8] = br#"class "#;
+const ENUM_KEYWORD: &[u8] = br#"enum "#;
+const BLOCK_EOF: &[u8] = br#"};"#;
 
 type ResultSlice<'a> = IResult<&'a [u8], &'a [u8]>;
 type U82tuple<'a> = (&'a [u8], &'a [u8]);
 type U83tuple<'a> = (&'a [u8], &'a [u8], &'a [u8]);
 
 fn take_until_class(stream: &[u8]) -> ResultSlice {
-    take_until(CLASS)(&stream)
+    take_until(CLASS_KEYWORD)(&stream)
 }
 
-fn take_until_class_eof(stream: &[u8]) -> ResultSlice {
-    take_until(CLASS_EOF)(&stream)
+fn take_until_enum(stream: &[u8]) -> ResultSlice {
+    take_until(ENUM_KEYWORD)(&stream)
+}
+
+fn take_until_block_eof(stream: &[u8]) -> ResultSlice {
+    take_until(BLOCK_EOF)(&stream)
 }
 
 fn take_until_open_bracket(stream: &[u8]) -> ResultSlice {
     take_until("{")(&stream)
 }
 
-fn take_until_ident(stream: &[u8]) -> ResultSlice {
-    take_until("uint")(&stream)
-}
+fn take_until_lessthan(stream: &[u8]) -> ResultSlice { take_until("<")(&stream) }
 
-fn take_until_lessthan(stream: &[u8]) -> ResultSlice {
-    take_until("<")(&stream)
-}
 
-/// takes a class ident and returns as a node
-fn class_as_node() {}
+/// Returns enum code, along with enum name
+fn extract_enum_code(stream: &[u8]) -> Option<U83tuple> {
+    unimplemented!()
+}
 
 /// Returns class code, along with class name
 fn extract_class_code(stream: &[u8]) -> Option<U83tuple> {
     let parser = nom::sequence::preceded(
         // Ditch anything before the preamble
         take_until_class,
-        nom::sequence::preceded(tag(CLASS), take_until_class_eof),
+        nom::sequence::preceded(tag(CLASS_KEYWORD), take_until_block_eof),
     );
 
     // swap positions so index 1 is the rest
@@ -125,7 +122,11 @@ fn split_words_to_vec(declaration: &str) -> Vec<&str> {
 }
 
 /// Returns matched types
-fn match_type(slice: &str) -> &str {
+fn match_type(mut slice: &str) -> &str {
+
+    // simply discard const
+    if slice.starts_with("const ") { slice = &slice[6..] }
+
     match slice {
         "ulong" => "u64",
         "long" => "i64",
@@ -134,7 +135,14 @@ fn match_type(slice: &str) -> &str {
         "ushort" => "u16",
         "short" => "i16",
         "byte" => "u8",
-        value => value,
+
+        // we later may change how this is parsed
+        // on the original steamkit parser each one of this serves as a marker to
+        // getters and setters of different behavior
+        "steamidmarshal ulong" => "u64",
+        "boolmarshal byte" => "u8",
+        "gameidmarshal ulong" => "u64",
+        value => value
     }
 }
 
@@ -142,15 +150,30 @@ fn match_type(slice: &str) -> &str {
 fn parse_stmts(stmt_vector: Vec<String>) -> Vec<Vec<String>> {
     let mut final_vector: Vec<Vec<String>> = Vec::new();
     for stmt in stmt_vector {
-        let stmt_tokens = split_words_to_vec(&stmt);
+
+        // if only one token and assignment, we know it is an enum
+        let stmt_split_by_assign: Vec<&str> = stmt.split(" =").collect();
+        let stmt_tokens = split_words_to_vec(&stmt_split_by_assign[0]);
 
         let mut new_vec: Vec<String> = Vec::with_capacity(stmt_tokens.len());
-        new_vec.push(to_snake_case(stmt_tokens[1]));
 
-        if is_array(&stmt_tokens[0]) {
-            new_vec.push(format!("[u8; {}]", array_extract_size(&stmt_tokens[0])));
+        let mut token_ident = stmt_tokens[1];
+        let mut token_type = stmt_tokens[0].to_string();
+
+        // in the case of three tokens
+        // we join the first two to match its type
+        if stmt_tokens.len() > 2 {
+            token_type.push(' ');
+            token_type.push_str(stmt_tokens[1]);
+            token_ident = stmt_tokens[2];
+        }
+
+        new_vec.push(to_snake_case(token_ident));
+
+        if is_array(&token_type) {
+            new_vec.push(format!("[u8; {}]", array_extract_size(&token_type)));
         } else {
-            new_vec.push(match_type(stmt_tokens[0]).to_string());
+            new_vec.push(match_type(token_type.as_ref()).to_string());
         }
 
         final_vector.push(new_vec);
@@ -190,11 +213,25 @@ mod tests {
         vec!["ulong giftId".into(), "byte<10> giftType".into(), "uint accountId".into()]
     }
 
+    fn gen_three_token_vec() -> Vec<String> {
+        vec!["steamidmarshal ulong accountId".into(), "const uint ObfuscationMask".into(),
+             "boolmarshal byte validated".into()]
+    }
+
+    fn gen_assignment_vec() -> Vec<String> {
+        vec!["EUniverse universe = EUniverse::Invalid".into(), "const uint ObfuscationMask = 0xBAADF00D".into(),
+             "uint protocolVersion = MsgChannelEncryptRequest::PROTOCOL_VERSION".into()]
+    }
+
+    fn vec_string_to_str<'a>(vec: &(&[&str; 2], &'a Vec<String>)) -> Vec<&'a str> {
+        vec.1.iter().map(|c| c.as_str()).collect()
+    }
+
     #[test]
     fn test_split_tokens() {
         let stmt = gen_stmt_known_type();
-        let wat = split_words_to_vec(stmt);
-        assert_eq!(vec!["ulong", "steamId"], wat);
+        let stmt_tokens = split_words_to_vec(stmt);
+        assert_eq!(vec!["ulong", "steamId"], stmt_tokens);
     }
 
     #[test]
@@ -213,7 +250,32 @@ mod tests {
         let test_vec = [["gift_id", "u64"], ["gift_type", "[u8; 10]"], ["account_id", "u32"]];
 
         for vec in test_vec.iter().zip(parsed_vec.iter()) {
-            let x: Vec<&str> = vec.1.iter().map(|c| c.as_str()).collect();
+            let x: Vec<&str> = vec_string_to_str(&vec);
+            assert_eq!(vec.0.to_vec(), x)
+        }
+    }
+
+    #[test]
+    fn test_parse_three_tokens() {
+        let non_parsed_vec = gen_three_token_vec();
+        let parsed_vec = parse_stmts(non_parsed_vec);
+        let test_vec = [["account_id", "u64"], ["obfuscation_mask", "u32"], ["validated", "u8"]];
+
+        for vec in test_vec.iter().zip(parsed_vec.iter()) {
+            let x: Vec<&str> = vec_string_to_str(&vec);
+            assert_eq!(vec.0.to_vec(), x)
+        }
+    }
+
+    #[test]
+    fn test_parse_assignment_tokens() {
+        let non_parsed_vec = gen_assignment_vec();
+        let parsed_vec = parse_stmts(non_parsed_vec);
+        let test_vec = [
+            ["universe", "EUniverse"], ["obfuscation_mask", "u32"], ["protocol_version", "u32"]];
+
+        for vec in test_vec.iter().zip(parsed_vec.iter()) {
+            let x: Vec<&str> = vec_string_to_str(&vec);
             assert_eq!(vec.0.to_vec(), x)
         }
     }
