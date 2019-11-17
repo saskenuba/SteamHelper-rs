@@ -1,7 +1,10 @@
 use inflector::cases::snakecase::to_snake_case;
-use nom::bytes::complete::{is_a, tag, take_until};
-use nom::IResult;
+use nom::bytes::complete::{is_a, tag, take, take_until};
+use nom::character::complete::{line_ending, not_line_ending, tab};
+use nom::combinator::map_parser;
+use nom::{IResult, FindSubstring};
 use petgraph::Graph;
+use petgraph::graph::NodeIndex;
 
 use steam_language_gen::file::generate_file_from_tree;
 
@@ -9,20 +12,30 @@ fn main() {
     let file_steam_msg: &'static str =
         include_str!("../../assets/SteamKit/Resources/SteamLanguage/steammsg.steamd");
 
+    let file_steam_enums: &'static str =
+        include_str!("../../assets/SteamKit/Resources/SteamLanguage/enums.steamd");
+
+
+    let (class_graph, entry) = parse_classes_to_tree(file_steam_msg);
+    let file_class = generate_file_from_tree(class_graph, entry);
+    print!("{:?}", file_steam_enums);
+}
+
+fn parse_classes_to_tree(file: &'static str) -> (Graph<String, &str>, NodeIndex<u32>) {
     let mut graph = Graph::<String, &str>::new();
     let entry = graph.add_node("entry".to_string());
-    let mut next_block = file_steam_msg.as_ref();
+    let mut next_block = file.as_ref();
 
-    while let Some(value) = extract_class_code(next_block) {
-        let current_class_identifier = String::from_utf8(Vec::from(value.2)).unwrap();
+    while let Some(value) = extract_class_block(next_block) {
+        let current_identifier = String::from_utf8(Vec::from(value.2)).unwrap();
 
         // node insertion
-        let class_node = graph.add_node(current_class_identifier);
-        graph.add_edge(entry, class_node, "0");
+        let block_node = graph.add_node(current_identifier);
+        graph.add_edge(entry, block_node, "0");
 
         let member = extract_attr_lines(value.0).unwrap();
 
-        let members: Vec<String> = extract_members_exhaustive(member.0)
+        let members: Vec<String> = extract_members_exhaustive(member.0, extract_member_struct)
             .iter()
             .map(|c| String::from_utf8(Vec::from(*c)).unwrap())
             .collect();
@@ -31,18 +44,17 @@ fn main() {
         for stmt in parsed_stmts {
             stmt.iter().for_each(|c| {
                 let edge = graph.add_node(c.to_string());
-                graph.add_edge(class_node, edge, "0");
+                graph.add_edge(block_node, edge, "0");
             })
         }
-
         next_block = value.1;
     }
-    let file = generate_file_from_tree(graph, entry);
-    print!("{}", file);
+    (graph, entry)
 }
 
 const CLASS_KEYWORD: &[u8] = br#"class "#;
 const ENUM_KEYWORD: &[u8] = br#"enum "#;
+const BLOCK_START: &[u8] = br#"{"#;
 const BLOCK_EOF: &[u8] = br#"};"#;
 
 type ResultSlice<'a> = IResult<&'a [u8], &'a [u8]>;
@@ -61,30 +73,37 @@ fn take_until_block_eof(stream: &[u8]) -> ResultSlice {
     take_until(BLOCK_EOF)(&stream)
 }
 
-fn take_until_open_bracket(stream: &[u8]) -> ResultSlice {
-    take_until("{")(&stream)
-}
+fn take_until_open_bracket(stream: &[u8]) -> ResultSlice { take_until("{")(&stream) }
 
 fn take_until_lessthan(stream: &[u8]) -> ResultSlice { take_until("<")(&stream) }
 
+fn take_tabs_newlines(stream: &[u8]) -> ResultSlice { not_line_ending(stream) }
 
-/// Returns enum code, along with enum name
-fn extract_enum_code(stream: &[u8]) -> Option<U83tuple> {
-    unimplemented!()
+fn preamble_parser<'a>(stream: &'a [u8], keyword: &'static [u8]) -> Option<U82tuple<'a>> {
+    nom::sequence::preceded(
+        // Ditch anything before the preamble
+        take_until(keyword),
+        nom::sequence::preceded(tag(keyword), take_until_block_eof),
+    )(stream).ok()
 }
 
 /// Returns class code, along with class name
-fn extract_class_code(stream: &[u8]) -> Option<U83tuple> {
-    let parser = nom::sequence::preceded(
-        // Ditch anything before the preamble
-        take_until_class,
-        nom::sequence::preceded(tag(CLASS_KEYWORD), take_until_block_eof),
-    );
+fn extract_class_block(stream: &[u8]) -> Option<U83tuple> {
+    let parser = preamble_parser(stream, CLASS_KEYWORD);
 
     // swap positions so index 1 is the rest
-    parser(stream).ok().map(|c| {
+    parser.map(|c| {
         let parsed_classname = take_until_lessthan(c.1).unwrap();
         (c.1, c.0, parsed_classname.1)
+    })
+}
+
+/// Returns enum code, along with enum name
+fn extract_enum_block(stream: &[u8]) -> Option<U83tuple> {
+    let parser = preamble_parser(stream, ENUM_KEYWORD);
+    parser.map(|c| {
+        let enum_name = take_tabs_newlines(c.1).unwrap();
+        (c.1, c.0, enum_name.1)
     })
 }
 
@@ -99,18 +118,48 @@ fn clear_lines_tab(stream: &[u8]) -> ResultSlice {
 }
 
 /// Discard newlines, tabs and ';' eof
-fn extract_member(stream: &[u8]) -> Option<U82tuple> {
-    nom::sequence::preceded(clear_lines_tab, take_until(";"))(stream).ok().map(|c| {
-        //removes ; on the 1st byte
-        let x = &c.0[1..];
-        (c.1, x)
-    })
+/// Member could be an attribute of a struct, or an enum
+fn extract_member_struct(stream: &[u8]) -> Option<U82tuple> {
+    nom::sequence::preceded(clear_lines_tab, take_until(";"))(stream)
+        .ok()
+        .map(|c| {
+            //removes ; on the 1st byte
+            let x = &c.0[1..];
+            (c.1, x)
+        })
+}
+
+/// Discard newlines, tabs and ';' eof
+/// Returns every member of enum.
+/// In the case of an enum has some keywords to indicate no more in use, such as obsolete, removed
+/// a empty slice is returned
+fn extract_member_enum(stream: &[u8]) -> Option<U82tuple> {
+    let mut flag: bool = false;
+    nom::sequence::preceded(clear_lines_tab, take_until("\r"))(stream)
+        .ok()
+        .map(|c| {
+
+            // removes ; from last pass
+            let rest = &c.0[1..];
+            // check for commentaries
+            if c.1.find_substring("removed").is_some() { flag = true };
+
+            let match_len = c.1.len();
+
+            if flag {
+                let slice: &[u8] = b"";
+                return (slice, rest);
+            }
+            (&c.1[..match_len - 1], rest)
+        })
 }
 
 /// Extract attributes inside a class and returns as Vec of bytes
-fn extract_members_exhaustive(mut attributes_code: &[u8]) -> Vec<&[u8]> {
+/// Accepts a custom extraction function
+fn extract_members_exhaustive<F>(mut attributes_code: &[u8], member_extraction_function: F) -> Vec<&[u8]>
+    where F: Fn(&[u8]) -> Option<U82tuple> {
     let mut tokens = Vec::new();
-    while let Some(value) = extract_member(attributes_code) {
+    while let Some(value) = member_extraction_function(attributes_code) {
         tokens.push(value.0);
         attributes_code = value.1;
     }
@@ -152,7 +201,7 @@ fn parse_stmts(stmt_vector: Vec<String>) -> Vec<Vec<String>> {
     for stmt in stmt_vector {
 
         // if only one token and assignment, we know it is an enum
-        let stmt_split_by_assign: Vec<&str> = stmt.split(" =").collect();
+        let stmt_split_by_assign: Vec<&str> = stmt.split(" = ").collect();
         let stmt_tokens = split_words_to_vec(&stmt_split_by_assign[0]);
 
         let mut new_vec: Vec<String> = Vec::with_capacity(stmt_tokens.len());
@@ -193,13 +242,11 @@ fn is_array(string: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use crate::{extract_attr_lines, extract_enum_block, extract_member_enum, extract_member_struct};
+
     use super::{
         array_extract_size, extract_members_exhaustive, is_array, parse_stmts, split_words_to_vec,
     };
-
-    fn gen_stmt_unknown_type() -> &'static str {
-        "steamidmarshal ulong steamId"
-    }
 
     fn gen_stmt_known_type() -> &'static str {
         "ulong steamId"
@@ -223,8 +270,24 @@ mod tests {
              "uint protocolVersion = MsgChannelEncryptRequest::PROTOCOL_VERSION".into()]
     }
 
+    fn gen_enum() -> &'static str {
+        "\r\n\r\nenum EChatEntryType\r\n{\r\n\tInvalid = 0;\r\n\r\n\tChatMsg = 1;\r\n\tTyping = 2;\
+        \r\n\tInviteGame = 3;\r\n\tEmote = 4; removed \"No longer supported by clients\"\r\n\tLobby\
+        GameStart = 5; removed \"Listen for LobbyGameCreated_t callback instead\"\r\n\tLeftConversa\
+        tion = 6;\r\n\tEntered = 7;\r\n\tWasKicked = 8;\r\n\tWasBanned = 9;\r\n\tDisconnected = 10;\
+        \r\n\tHistoricalChat = 11;\r\n\tReserved1 = 12;\r\n\tReserved2 = 13;\r\n\tLinkBlocked = 14;\
+        \r\n};"
+    }
+
+
     fn vec_string_to_str<'a>(vec: &(&[&str; 2], &'a Vec<String>)) -> Vec<&'a str> {
         vec.1.iter().map(|c| c.as_str()).collect()
+    }
+
+    fn bytes_to_str(vec: Vec<&[u8]>) -> Vec<String> {
+        vec.iter().map(|c| {
+            String::from_utf8((*c).to_vec()).unwrap()
+        }).collect()
     }
 
     #[test]
@@ -234,10 +297,11 @@ mod tests {
         assert_eq!(vec!["ulong", "steamId"], stmt_tokens);
     }
 
+
     #[test]
     fn test_extract_members_exhaustive() {
         let code = gen_members_code();
-        let members = extract_members_exhaustive(code.as_ref());
+        let members = extract_members_exhaustive(code.as_ref(), extract_member_struct);
         let stringify: Vec<String> =
             members.iter().map(|c| String::from_utf8(c.to_vec()).unwrap()).collect();
         assert_eq!(vec!["ulong giftId", "byte giftType", "uint accountId"], stringify)
@@ -288,5 +352,18 @@ mod tests {
         assert_eq!(true, is_array(array));
         assert_eq!(false, is_array(not_array));
         assert_eq!(10, array_extract_size(array).parse::<u32>().unwrap());
+    }
+
+    #[test]
+    fn test_enum() {
+        let correct_output = vec!["Invalid = 0", "ChatMsg = 1", "Typing = 2", "InviteGame = 3",
+                                  "", "", "LeftConversation = 6"];
+        let stmt = gen_enum().as_ref();
+        let enum_code_block = extract_enum_block(stmt).unwrap();
+        let enum_attr_block = extract_attr_lines(enum_code_block.0).unwrap();
+        let parsed_attr_block = extract_members_exhaustive(enum_attr_block.0, extract_member_enum);
+        let parsed_attr_block_str = bytes_to_str(parsed_attr_block);
+
+        assert_eq!(correct_output[..7], parsed_attr_block_str[..7]);
     }
 }
