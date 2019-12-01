@@ -1,0 +1,53 @@
+* Parser
+
+** Messages
+
+Decide how to create new messages from default values. Perhaps we can do it with the derive_new crate and attributes..
+
+** Enum
+There is the need to decide which crate to use: EnumFlags or Bitflags
+
+Bitflags derives from structs and EnumFlags from enums.
+
+We are parsing this:
+#+BEGIN_STR rust
+enum EClanPermission flags
+{
+    Nobody = 0;
+
+    Owner = 1;
+    Officer = 2;
+    OwnerAndOfficer = 3;
+    Member = 4;
+    Moderator = 8;
+    OwnerOfficerModerator = Owner | Officer | Moderator; // 11
+    AllMembers = Owner | Officer | Moderator | Member ; // 15
+    OGGGameOwner = 16;
+    NonMember = 128;
+    MemberAllowed       = NonMember | Member; // 132
+    ModeratorAllowed    = NonMember | Member | Moderator; // 140
+    OfficerAllowed      = NonMember | Member | Moderator | Officer; // 142
+    OwnerAllowed        = NonMember | Member | Moderator | Officer | Owner; // 143
+    Anybody             = NonMember | Member | Moderator | Officer | Owner; // 143
+};
+#+END_STR
+
+Into something like this with bitflags: (The standard repr should be i32)
+#+BEGIN_STR rust
+bitflags! {
+    struct EClanPermission: u32 {
+        const Nobody = 0;
+        const Owner = 1,
+        const Officer = 2,
+        const OwnerAndOfficer = 3,
+        const Member = 4,
+        const Moderator = 8,
+        const OwnerOfficerModerator = Self::Owner.bits | Self:Officer.bits | Self:Moderator.bits
+    };
+}
+#+END_STR
+
+There are only two or three enums that requires a negative flag, such as the * ERemoteStoragePlatform *.
+
+Couple of things that need fix:
+- For a enum that has the flag type, if it has only one flag, it will miss the Self::xx.bits;
