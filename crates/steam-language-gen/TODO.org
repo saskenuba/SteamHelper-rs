@@ -4,6 +4,9 @@
 
 Decide how to create new messages from default values. Perhaps we can do it with the derive_new crate and attributes..
 
+Fix pending:
+- Some struct members has name "type", it has to be changed to "type_" or something else for example;
+
 ** Enum
 There is the need to decide which crate to use: EnumFlags or Bitflags
 

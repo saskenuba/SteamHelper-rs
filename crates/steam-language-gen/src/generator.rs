@@ -1,50 +1,17 @@
 //! This file is the opinionated rust bindings generator
 
 use std::fs;
+use std::io::Write;
 
 use petgraph::prelude::*;
 use petgraph::visit::EdgeFiltered;
 
 use crate::{Element, Token};
-use std::io::Write;
 
 #[derive(PartialEq, Eq)]
 enum DetectedStructure {
     EnumType,
     StructType,
-}
-
-pub fn generate_file_from_tree(graph: Graph<String, &str>, entry: NodeIndex) -> String {
-    let mut file = String::new();
-    let mut dfs = Dfs::new(&graph, entry);
-
-    let imports = "#[macro_use]\nuse serde::{Deserialize, Serialize};\n\n";
-    file.push_str(imports);
-
-    while let Some(nx) = dfs.next(&graph) {
-        if !graph[nx].starts_with("Msg") { continue; }
-
-        file.push_str("#[derive(Debug, Serialize, Deserialize, SteamMsg)]\n");
-        file.push_str(&format!("struct {} {{\n", graph[nx]));
-
-        let neighbors = graph.neighbors_directed(nx, Direction::Outgoing);
-
-        // the printing is reversed because neighbors_directed does not have a method to reverse
-        // found nodes
-        let mut new_str: Vec<String> = Vec::new();
-        for (mut iterator, x) in neighbors.enumerate() {
-            iterator += 1;
-            if iterator % 2 == 0 {
-                new_str.insert(0, format!("\t{}: ", graph[x]));
-            }
-            if iterator % 2 == 1 {
-                new_str.insert(0, format!("{},\n", graph[x]));
-            }
-        }
-        file.push_str(&new_str.join(""));
-        file.push_str("}\n\n");
-    }
-    file
 }
 
 pub fn generate_code(graph: Graph<Token, Element>, entry: NodeIndex) -> String {
@@ -183,14 +150,3 @@ fn flags_to_bitflags(stream: String) -> String {
     variable_name.to_owned() + " = " + &translated_flags.join(" | ")
 }
 
-
-//bitflags! {
-//	#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-//	struct EUCMFilePrivacyState: i32 {
-//		const Invalid = -1;
-//		const Private = 2;
-//		const FriendsOnly = 4;
-//		const Public = 8;
-//		const All = Self::Public.bits | Self::FriendsOnly.bits | Self::Private.bits; // 1,
-//	}
-//}

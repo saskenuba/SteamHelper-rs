@@ -1,7 +1,5 @@
-use steam_language_gen::generator::{generate_code, write_to_file, append_to_file};
-
-
-use steam_language_gen::parser::{parse_enums_to_tree, parse_classes_to_tree};
+use steam_language_gen::generator::{append_to_file, generate_code, write_to_file};
+use steam_language_gen::parser::{parse_classes_to_tree, parse_enums_to_tree};
 
 fn main() {
 
@@ -17,13 +15,13 @@ fn main() {
     let file_steam_enums: &'static str =
         include_str!("../../assets/SteamKit/Resources/SteamLanguage/enums.steamd");
 
-//    let (class_graph, class_entry) = parse_classes_to_tree(file_steam_msg);
-//    let file_class = generate_code(class_graph, class_entry);
-//    write_to_file(&file_class, "messages.rs");
-//
-//    let (enum_graph, enum_entry) = parse_enums_to_tree(file_steam_enums);
-//    let enum_class = generate_code(enum_graph, enum_entry);
-//    write_to_file(&enum_class, "enums.rs");
+    let (class_graph, class_entry) = parse_classes_to_tree(file_steam_msg);
+    let file_class = generate_code(class_graph, class_entry);
+    write_to_file(&file_class, "messages.rs");
+
+    let (enum_graph, enum_entry) = parse_enums_to_tree(file_steam_enums);
+    let enum_class = generate_code(enum_graph, enum_entry);
+    write_to_file(&enum_class, "enums.rs");
 
     let (enum_graph, enum_entry) = parse_enums_to_tree(file_eresult);
     let enum_class = generate_code(enum_graph, enum_entry);

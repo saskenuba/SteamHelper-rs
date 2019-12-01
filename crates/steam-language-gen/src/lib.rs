@@ -1,16 +1,13 @@
-#![feature(box_syntax)]
-#![feature(box_patterns)]
 #![allow(dead_code)]
 
 #[macro_use]
+extern crate bitflags;
+#[macro_use]
 extern crate num_derive;
 #[macro_use]
-extern crate steam_language_gen_derive;
-#[macro_use]
 extern crate serde;
-
 #[macro_use]
-extern crate bitflags;
+extern crate steam_language_gen_derive;
 
 pub mod generated;
 pub mod generator;
