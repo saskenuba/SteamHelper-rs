@@ -52,5 +52,7 @@ bitflags! {
 
 There are only two or three enums that requires a negative flag, such as the * ERemoteStoragePlatform *.
 
-Couple of things that need fix:
+TODO:
 - For a enum that has the flag type, if it has only one flag, it will miss the Self::xx.bits;
+- Generate default values with NEW derives(crate);
+- Generate traits withing files automatically;

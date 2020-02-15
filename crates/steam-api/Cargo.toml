@@ -4,35 +4,86 @@ version = "0.1.0"
 authors = ["Martin <martin@hotmail.com.br>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+# See more keys and their definitions at
+# https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# There are no benchmarks in the library code itself
+bench = false
+
+[features]
+default = []
+
+# Optional Websockets connection to Steam Servers
+websockets = ["tokio-tungstenite", "tokio-tls"]
 
 [dependencies]
-# serde
-serde = {version = "1.0.101", features = ["derive"]}
-serde_json = "1.0.41"
-serde_repr = "0.1.5"
 
-bytes = "0.4.12"
-byteorder = "1.3.2"
-bincode = "1.2.0"
-protobuf = "2.8.1"
+# Serialization Related
+serde_json = "1"
+serde_repr = "0.1"
+bincode = "1"
 
-# futures
-tokio = "0.2.0-alpha.6"
-async-trait = "0.1.16"
+# Misc
+bytes = "0.5"
+byteorder = "1"
+log = "0.4"
+regex = "1"
+lazy_static = "1"
+bitvec = "0.17"
+
+# Futures related
+async-trait = "0.1"
+futures = "0.3.4"
 
 # emsg parsing
+arrayref = "0.3"
+derive-new = "*"
 enum_primitive = "*"
-num = "0.2.0"
-arrayref = "0.3.5"
+num = "0.2"
 
+# Dealing asynchronously to streams
+[dependencies.tokio]
+version = "0.2"
+features = ["full"]
+
+# Optional Websockets Connection
+[dependencies.tokio-tungstenite]
+version = "*"
+features = ["tls"]
+optional = true
+
+[dependencies.tokio-tls]
+version = "*"
+optional = true
+
+# Essential to read Steam Protobuf messages
+[dependencies.protobuf]
+git = "https://github.com/stepancheg/rust-protobuf.git"
+branch = "master"
+
+# Essential for serializing steam messages
+[dependencies.serde]
+version = "1"
+features = ["derive"]
+
+# Web API calls
 [dependencies.reqwest]
-version = "0.10.0-alpha.1"
-features = [ "blocking", "json" ]
+version = "0.10"
+features = ["blocking", "json"]
 
+# Internal Dependencies
 [dependencies.steam-protobuf]
 path = "../steam-protobuf"
 
 [dependencies.steam-crypto]
 path = "../steam-crypto"
 
+[dependencies.steam-language-gen]
+path = "../steam-language-gen"
+
+[dependencies.steam-language-gen-derive]
+path = "../steam-language-gen-derive"
+
+[dev-dependencies]
+env_logger = { version = "*", features = ["termcolor"] }

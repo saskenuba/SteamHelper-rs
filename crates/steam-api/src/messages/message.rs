@@ -7,65 +7,21 @@
 //! Check link below for more info:
 //! https://github.com/ValvePython/steam/blob/09f4f51a287ee7aec1f159c7e8098add5f14bed3/steam/core/msg/headers.py
 
-#[macro_use]
-use num::FromPrimitive;
-use protobuf::Message as OtherMessage;
 use serde::{Deserialize, Serialize};
 
-use steam_protobuf::steam::steammessages_base::CMsgProtoBufHeader;
-
-use super::enums::{EMsg, EUniverse};
-use super::headers::*;
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
-struct Message<K, V>
-where
-    K: SerializableMessageHeader,
-    V: SerializableMessageBody,
-{
-    header: K,
-    body: V,
-}
-
-pub trait SerializableMessageBody {
-    fn new() -> Self;
-    fn serialize(&self) -> Vec<u8>;
-    fn deserialize_struct(packet_data: &[u8]) -> Self;
-}
-
-impl SerializableMessageBody for MsgChannelEncryptRequest {
-    fn new() -> Self {
-        Self { header: Default::default(), protocol_version: 1, universe: EUniverse::Public }
-    }
-
-    fn serialize(&self) -> Vec<u8> {
-        bincode::serialize(&self).unwrap()
-    }
-
-    fn deserialize_struct(packet_data: &[u8]) -> Self {
-        let decoded: Self = bincode::deserialize(packet_data).unwrap();
-        decoded
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
-struct MsgChannelEncryptRequest {
-    header: StandardMessageHeader,
-    protocol_version: u32,
-    universe: EUniverse,
-}
+use steam_language_gen::generated::headers::SerializableMessageHeader;
+use steam_language_gen::generated::messages::SerializableMessageBody;
 
 #[cfg(test)]
 mod tests {
     use protobuf::Message;
 
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
-    use super::{
-        EMsg, EUniverse, ExtendedMessageHeader, MsgChannelEncryptRequest, ProtobufMessageHeader,
-        SerializableMessageBody, SerializableMessageHeader, StandardMessageHeader,
-    };
+    use steam_language_gen::generated::enums::{EMsg, EUniverse};
+    use steam_language_gen::generated::headers::{StandardMessageHeader, SerializableMessageHeader, ExtendedMessageHeader};
+    use steam_language_gen::generated::messages::{MsgChannelEncryptRequest, MsgClientChatEnter, SerializableMessageBody};
 
     /// ChannelEncryptRequest
+                                /// This has standard header
     fn get_channel_encrypt_request() -> Vec<u8> {
         let on_connection_packet = vec![
             23, 5, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
@@ -109,13 +65,35 @@ mod tests {
     }
 
     #[test]
-    fn deserialize_msg_encrypt_request() {
-        let message = b"\x17\x05\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x01\x00\x00\x00\x01\x00\x00\x00".to_vec();
-        let deserialized_from_bytes = MsgChannelEncryptRequest::deserialize_struct(&message);
+    fn deserialize_client_chat_enter() {
+        let message = get_client_chat_enter();
 
-        assert_eq!(message, deserialized_from_bytes.serialize());
-        assert_eq!(deserialized_from_bytes.protocol_version, 1);
-        assert_eq!(deserialized_from_bytes.universe, EUniverse::Public);
+        let emsg = EMsg::from_raw_message(&message).unwrap();
+        let message_complete = EMsg::strip_message(&message);
+        let (header, message): (&[u8], &[u8]) = ExtendedMessageHeader::strip_as_bytes(message_complete);
+
+        assert_eq!(EMsg::ClientChatEnter, emsg);
+
+        let msg = MsgClientChatEnter::from_bytes(message);
+        println!(": {:#?}", msg);
+    }
+
+    #[test]
+    fn deserialize_msg_encrypt_request() {
+        let message = b"\x17\x05\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
+        \xff\xff\xff\xff\x01\x00\x00\x00\x01\x00\x00\x00".to_vec();
+
+        let emsg = EMsg::from_raw_message(&message).unwrap();
+        let message_complete = EMsg::strip_message(&message);
+        let (header, message): (&[u8], &[u8]) = StandardMessageHeader::strip_as_bytes(message_complete);
+        let msgheader_default: StandardMessageHeader = StandardMessageHeader::new();
+
+        assert_eq!(EMsg::ChannelEncryptRequest, emsg);
+        assert_eq!(msgheader_default.to_bytes(), header);
+        assert_eq!(StandardMessageHeader::from_bytes(header), msgheader_default);
+
+        let msg = MsgChannelEncryptRequest { protocol_version: 1, universe: EUniverse::Public };
+        assert_eq!(MsgChannelEncryptRequest::from_bytes(message), msg);
     }
 }
 

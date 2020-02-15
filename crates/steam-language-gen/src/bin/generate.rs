@@ -12,6 +12,9 @@ fn main() {
     let file_eresult: &'static str =
         include_str!("../../assets/SteamKit/Resources/SteamLanguage/eresult.steamd");
 
+    let file_emsg: &'static str =
+        include_str!("../../assets/SteamKit/Resources/SteamLanguage/emsg.steamd");
+
     let file_steam_enums: &'static str =
         include_str!("../../assets/SteamKit/Resources/SteamLanguage/enums.steamd");
 
@@ -24,6 +27,10 @@ fn main() {
     write_to_file(&enum_class, "enums.rs");
 
     let (enum_graph, enum_entry) = parse_enums_to_tree(file_eresult);
+    let enum_class = generate_code(enum_graph, enum_entry);
+    append_to_file(&enum_class, &(path_enums_output.to_owned() + "enums.rs"));
+
+    let (enum_graph, enum_entry) = parse_enums_to_tree(file_emsg);
     let enum_class = generate_code(enum_graph, enum_entry);
     append_to_file(&enum_class, &(path_enums_output.to_owned() + "enums.rs"));
 }

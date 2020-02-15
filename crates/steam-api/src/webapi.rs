@@ -1,10 +1,9 @@
-use tokio::future::Future;
-use reqwest::{Response, Error};
+use reqwest::{Error, Response};
+use std::future::Future;
 
 const STEAM_API_BASE_ADDRESS: &str = "https://api.steampowered.com/";
 
 type Param<'a> = (&'a str, &'a str);
-
 
 #[derive(Debug)]
 pub struct APIBuilder {
@@ -27,7 +26,7 @@ impl APIBuilder {
         APIBuilder { request_link: whole_address }
     }
 
-    pub fn setup(&self) -> impl Future<Output = Result<Response, Error>> + '_ {
+    pub fn setup(&self) -> impl Future<Output=Result<Response, Error>> + '_ {
         reqwest::get(&self.request_link)
     }
 
@@ -68,7 +67,7 @@ mod tests {
 
     #[tokio::test]
     async fn api_setup() {
-        let vector: Vec<Param> =  vec!(("cellid", "25"));
+        let vector: Vec<Param> = vec![("cellid", "25")];
         let api_call = APIBuilder::new("ISteamDirectory", "GetCMList", "1", Option::from(vector));
         let api_ok = api_call.setup().await.is_ok();
         assert!(api_ok)

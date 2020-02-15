@@ -1,53 +1,56 @@
 use serde::{Deserialize, Serialize};
-use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use crate::generated::enums::*;
 
 pub trait SerializableMessageBody {
-	fn serialize(&self) -> Vec<u8>;
-	fn deserialize_struct(packet_data: &[u8]) -> Self;
+	fn to_bytes(&self) -> Vec<u8>;
+	fn from_bytes(packet_data: &[u8]) -> Self;
 }
 
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientJustStrings {
+pub struct MsgClientJustStrings {
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientGenericResponse {
+pub struct MsgClientGenericResponse {
 	result: EResult,
 }
 
-#[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgChannelEncryptRequest {
-	protocol_version: u32,
-	universe: EUniverse,
+#[derive(new, PartialEq, Debug, Serialize, Deserialize, SteamMsg)]
+pub struct MsgChannelEncryptRequest {
+	#[new(value = "1")]
+	pub protocol_version: u32,
+	#[new(value = "EUniverse::Invalid")]
+	pub universe: EUniverse,
 }
 
-#[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgChannelEncryptResponse {
+#[derive(new, Debug, Serialize, Deserialize, SteamMsg)]
+pub struct MsgChannelEncryptResponse {
+	#[new(value = "1")]
 	protocol_version: u32,
+	#[new(value = "128")]
 	key_size: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgChannelEncryptResult {
+pub struct MsgChannelEncryptResult {
 	result: EResult,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientNewLoginKey {
+pub struct MsgClientNewLoginKey {
 	unique_id: u32,
 	login_key: [u8; 20],
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientNewLoginKeyAccepted {
+pub struct MsgClientNewLoginKeyAccepted {
 	unique_id: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientLogon {
+pub struct MsgClientLogon {
 	obfuscation_mask: u32,
 	current_protocol: u32,
 	protocol_ver_major_mask: u32,
@@ -78,46 +81,46 @@ struct MsgClientLogon {
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientVACBanStatus {
+pub struct MsgClientVACBanStatus {
 	num_bans: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientAppUsageEvent {
+pub struct MsgClientAppUsageEvent {
 	app_usage_event: EAppUsageEvent,
 	game_id: u64,
 	offline: u16,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientEmailAddrInfo {
+pub struct MsgClientEmailAddrInfo {
 	password_strength: u32,
 	flags_account_security_policy: u32,
 	validated: u8,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientUpdateGuestPassesList {
+pub struct MsgClientUpdateGuestPassesList {
 	result: EResult,
 	count_guest_passes_to_give: i32,
 	count_guest_passes_to_redeem: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientRequestedClientStats {
+pub struct MsgClientRequestedClientStats {
 	count_stats: i32,
 }
 
-#[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientP2PIntroducerMessage {
-	steam_id: u64,
-	routing_type_: EIntroducerRouting,
-	data: [u8; 1450],
-	data_len: u32,
-}
+//#[derive(Debug, Serialize, Deserialize, SteamMsg)]
+//pub struct MsgClientP2PIntroducerMessage {
+//	steam_id: u64,
+//	routing_type_: EIntroducerRouting,
+//	data: [u8; 1450],
+//	data_len: u32,
+//}
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientOGSBeginSession {
+pub struct MsgClientOGSBeginSession {
 	account_type_: u8,
 	account_id: u64,
 	app_id: u32,
@@ -125,7 +128,7 @@ struct MsgClientOGSBeginSession {
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientOGSBeginSessionResponse {
+pub struct MsgClientOGSBeginSessionResponse {
 	result: EResult,
 	collecting_any: u8,
 	collecting_details: u8,
@@ -133,7 +136,7 @@ struct MsgClientOGSBeginSessionResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientOGSEndSession {
+pub struct MsgClientOGSEndSession {
 	session_id: u64,
 	time_ended: u32,
 	reason_code: i32,
@@ -141,35 +144,35 @@ struct MsgClientOGSEndSession {
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientOGSEndSessionResponse {
+pub struct MsgClientOGSEndSessionResponse {
 	result: EResult,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientOGSWriteRow {
+pub struct MsgClientOGSWriteRow {
 	session_id: u64,
 	count_attributes: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientGetFriendsWhoPlayGame {
+pub struct MsgClientGetFriendsWhoPlayGame {
 	game_id: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientGetFriendsWhoPlayGameResponse {
+pub struct MsgClientGetFriendsWhoPlayGameResponse {
 	result: EResult,
 	game_id: u64,
 	count_friends: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgGSPerformHardwareSurvey {
+pub struct MsgGSPerformHardwareSurvey {
 	flags: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgGSGetPlayStatsResponse {
+pub struct MsgGSGetPlayStatsResponse {
 	result: EResult,
 	rank: i32,
 	lifetime_connects: u32,
@@ -177,7 +180,7 @@ struct MsgGSGetPlayStatsResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgGSGetReputationResponse {
+pub struct MsgGSGetReputationResponse {
 	result: EResult,
 	reputation_score: u32,
 	banned: u8,
@@ -188,31 +191,31 @@ struct MsgGSGetReputationResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgGSDeny {
+pub struct MsgGSDeny {
 	steam_id: u64,
 	deny_reason: EDenyReason,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgGSApprove {
+pub struct MsgGSApprove {
 	steam_id: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgGSKick {
+pub struct MsgGSKick {
 	steam_id: u64,
 	deny_reason: EDenyReason,
 	wait_til_map_change: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgGSGetUserGroupStatus {
+pub struct MsgGSGetUserGroupStatus {
 	steam_id_user: u64,
 	steam_id_group: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgGSGetUserGroupStatusResponse {
+pub struct MsgGSGetUserGroupStatusResponse {
 	steam_id_user: u64,
 	steam_id_group: u64,
 	clan_relationship: EClanRelationship,
@@ -220,13 +223,13 @@ struct MsgGSGetUserGroupStatusResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientJoinChat {
+pub struct MsgClientJoinChat {
 	steam_id_chat: u64,
 	is_voice_speaker: u8,
 }
 
-#[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientChatEnter {
+#[derive(PartialEq, Debug, Serialize, Deserialize, SteamMsg)]
+pub struct MsgClientChatEnter {
 	steam_id_chat: u64,
 	steam_id_friend: u64,
 	chat_room_type_: EChatRoomType,
@@ -238,27 +241,27 @@ struct MsgClientChatEnter {
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientChatMsg {
+pub struct MsgClientChatMsg {
 	steam_id_chatter: u64,
 	steam_id_chat_room: u64,
 	chat_msg_type_: EChatEntryType,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientChatMemberInfo {
+pub struct MsgClientChatMemberInfo {
 	steam_id_chat: u64,
 	type_: EChatInfoType,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientChatAction {
+pub struct MsgClientChatAction {
 	steam_id_chat: u64,
 	steam_id_user_to_act_on: u64,
 	chat_action: EChatAction,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientChatActionResult {
+pub struct MsgClientChatActionResult {
 	steam_id_chat: u64,
 	steam_id_user_acted_on: u64,
 	chat_action: EChatAction,
@@ -266,33 +269,33 @@ struct MsgClientChatActionResult {
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientChatRoomInfo {
+pub struct MsgClientChatRoomInfo {
 	steam_id_chat: u64,
 	type_: EChatInfoType,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientSetIgnoreFriend {
+pub struct MsgClientSetIgnoreFriend {
 	my_steam_id: u64,
 	steam_id_friend: u64,
 	ignore: u8,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientSetIgnoreFriendResponse {
+pub struct MsgClientSetIgnoreFriendResponse {
 	friend_id: u64,
 	result: EResult,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientLoggedOff {
+pub struct MsgClientLoggedOff {
 	result: EResult,
 	sec_min_reconnect_hint: i32,
 	sec_max_reconnect_hint: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientLogOnResponse {
+pub struct MsgClientLogOnResponse {
 	result: EResult,
 	out_of_game_heartbeat_rate_sec: i32,
 	in_game_heartbeat_rate_sec: i32,
@@ -302,26 +305,26 @@ struct MsgClientLogOnResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientSendGuestPass {
+pub struct MsgClientSendGuestPass {
 	gift_id: u64,
 	gift_type_: u8,
 	account_id: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientSendGuestPassResponse {
+pub struct MsgClientSendGuestPassResponse {
 	result: EResult,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientServerUnavailable {
+pub struct MsgClientServerUnavailable {
 	jobid_sent: u64,
 	e_msg_sent: u32,
 	e_server_type_unavailable: EServerType,
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientCreateChat {
+pub struct MsgClientCreateChat {
 	chat_room_type_: EChatRoomType,
 	game_id: u64,
 	steam_id_clan: u64,
@@ -335,7 +338,7 @@ struct MsgClientCreateChat {
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientCreateChatResponse {
+pub struct MsgClientCreateChatResponse {
 	result: EResult,
 	steam_id_chat: u64,
 	chat_room_type_: EChatRoomType,
@@ -343,7 +346,7 @@ struct MsgClientCreateChatResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, SteamMsg)]
-struct MsgClientMarketingMessageUpdate2 {
+pub struct MsgClientMarketingMessageUpdate2 {
 	marketing_message_update_time: u32,
 	count: u32,
 }

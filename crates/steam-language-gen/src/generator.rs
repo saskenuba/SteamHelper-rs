@@ -50,7 +50,7 @@ fn generate_struct(graph: &Graph<Token, Element, Directed, u32>, current_node: N
         let type_node = head_edges.target();
 
         let struct_name = graph[name_node].get_value();
-        let struct_type = graph[type_node].get_value();
+        let _struct_type = graph[type_node].get_value();
 
         println!("{:?}", struct_name);
 

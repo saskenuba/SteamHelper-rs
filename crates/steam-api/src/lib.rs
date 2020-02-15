@@ -1,13 +1,33 @@
 //! This API is not final
+
+#![allow(dead_code)]
+#![allow(non_upper_case_globals)]
+#![allow(unused_imports)]
+#![allow(unused_variables)]
+#![feature(associated_type_bounds)]
+
 #[macro_use]
 extern crate arrayref;
 #[macro_use]
+extern crate derive_new;
+#[macro_use]
 extern crate enum_primitive;
+#[macro_use]
+extern crate steam_language_gen_derive;
+#[macro_use]
+extern crate log;
+#[macro_use]
+extern crate lazy_static;
 
-pub mod cmserver;
-pub mod tcpconnection;
-pub mod api;
+mod cmserver;
+mod encrypted_connection;
+pub mod config;
+pub mod connection;
+pub mod handlers;
 pub mod messages;
+pub mod steam_id;
+pub mod webapi;
+pub mod steamclient;
 
 struct SteamCMClient {
     /// steam_id of client

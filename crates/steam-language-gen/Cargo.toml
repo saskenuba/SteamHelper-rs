@@ -8,22 +8,25 @@ edition = "2018"
 
 [dependencies]
 nom = "5.0.1"
-regex = "1.3.1"
-petgraph = "0.4.13"
+regex = "1"
+petgraph = "0.4"
+arrayref = "0.3"
 
 #derives
 num-traits = "0.2"
 num-derive = "0.3"
-bitflags = "1.2.1"
-derive-new = "0.5.8"
+num = "0.2"
+bitflags = "1"
+derive-new = "*"
 
 # serde
-serde = {version = "1.0.101", features = ["derive"]}
-serde_json = "1.0.41"
-serde_repr = "0.1.5"
-bincode = "1.2.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_repr = "0.1"
+bincode = "1"
 
 steam-language-gen-derive = { path = "../steam-language-gen-derive" }
+steam-protobuf = { path = "../steam-protobuf" }
 
 [dependencies.Inflector]
 version = "*"
