@@ -54,7 +54,7 @@ fn generate_struct(graph: &Graph<Token, Element, Directed, u32>, current_node: N
 
         println!("{:?}", struct_name);
 
-        file.push_str("#[derive(Debug, Serialize, Deserialize, SteamMsg)]\n");
+        file.push_str("#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize, SteamMsg)]\n");
         file.push_str(&format!("pub struct {} {{\n", struct_name));
 
         let mut member_edges = graph.edges_directed(type_node, Direction::Outgoing);
@@ -89,7 +89,7 @@ fn generate_enum(graph: &Graph<Token, Element, Directed, u32>, current_node: Nod
             file.push_str("\t#[derive(Serialize, Deserialize)]\n");
             file.push_str(&format!("\tpub struct {}: i32 {{\n", enum_name));
         } else {
-            file.push_str("#[derive(FromPrimitive, ToPrimitive, Debug, PartialEq, Eq, \
+            file.push_str("#[derive(FromPrimitive, ToPrimitive, Clone, Debug, PartialEq, Eq, \
                 Serialize, Deserialize)]\n");
             file.push_str(&format!("#[repr({})]\n", enum_type));
             file.push_str(&format!("pub enum {} {{\n", enum_name));
