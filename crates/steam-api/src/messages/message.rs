@@ -7,21 +7,17 @@
 //! Check link below for more info:
 //! https://github.com/ValvePython/steam/blob/09f4f51a287ee7aec1f159c7e8098add5f14bed3/steam/core/msg/headers.py
 
-use serde::{Deserialize, Serialize};
-
-use steam_language_gen::generated::headers::SerializableMessageHeader;
-use steam_language_gen::generated::messages::SerializableMessageBody;
-
 #[cfg(test)]
 mod tests {
     use protobuf::Message;
 
+    use steam_language_gen::{MessageHeader, MessageHeaderExt, SerializableBytes, DeserializableBytes};
     use steam_language_gen::generated::enums::{EMsg, EUniverse};
-    use steam_language_gen::generated::headers::{StandardMessageHeader, SerializableMessageHeader, ExtendedMessageHeader};
-    use steam_language_gen::generated::messages::{MsgChannelEncryptRequest, MsgClientChatEnter, SerializableMessageBody};
+    use steam_language_gen::generated::headers::{ExtendedMessageHeader, StandardMessageHeader};
+    use steam_language_gen::generated::messages::{MsgChannelEncryptRequest, MsgClientChatEnter};
 
     /// ChannelEncryptRequest
-                                /// This has standard header
+    /// This has standard header
     fn get_channel_encrypt_request() -> Vec<u8> {
         let on_connection_packet = vec![
             23, 5, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
@@ -70,7 +66,7 @@ mod tests {
 
         let emsg = EMsg::from_raw_message(&message).unwrap();
         let message_complete = EMsg::strip_message(&message);
-        let (header, message): (&[u8], &[u8]) = ExtendedMessageHeader::strip_as_bytes(message_complete);
+        let (header, message): (&[u8], &[u8]) = ExtendedMessageHeader::split_from_bytes(message_complete);
 
         assert_eq!(EMsg::ClientChatEnter, emsg);
 
@@ -85,7 +81,7 @@ mod tests {
 
         let emsg = EMsg::from_raw_message(&message).unwrap();
         let message_complete = EMsg::strip_message(&message);
-        let (header, message): (&[u8], &[u8]) = StandardMessageHeader::strip_as_bytes(message_complete);
+        let (header, message): (&[u8], &[u8]) = StandardMessageHeader::split_from_bytes(message_complete);
         let msgheader_default: StandardMessageHeader = StandardMessageHeader::new();
 
         assert_eq!(EMsg::ChannelEncryptRequest, emsg);

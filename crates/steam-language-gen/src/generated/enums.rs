@@ -1643,7 +1643,7 @@ pub enum EResult {
 	CantRemoveItem = 113,
 }
 
-#[derive(FromPrimitive, ToPrimitive, Clone, Debug, PartialEq, Eq, Serialize_repr, Deserialize_repr)]
+#[derive(FromPrimitive, ToPrimitive, Hash, Clone, Debug, PartialEq, Eq, Serialize_repr, Deserialize_repr)]
 #[repr(i32)]
 pub enum EMsg {
 	Invalid = 0,

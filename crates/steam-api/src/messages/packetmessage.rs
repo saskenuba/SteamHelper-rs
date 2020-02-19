@@ -1,5 +1,6 @@
+use steam_language_gen::{MessageHeader, MessageHeaderExt, SerializableBytes, DeserializableBytes};
 use steam_language_gen::generated::enums::EMsg;
-use steam_language_gen::generated::headers::{ExtendedMessageHeader, SerializableMessageHeader, StandardMessageHeader};
+use steam_language_gen::generated::headers::{ExtendedMessageHeader, StandardMessageHeader};
 
 /// Represents a simple unified interface into client messages received from the network.
 /// This is contrasted with [IClientMsg] in that this interface is packet body agnostic
@@ -22,6 +23,8 @@ impl<'a> PacketMessage<'a> {
     pub(crate) fn jobs_ids(&self) -> (&u64, &u64) {
         (&self.source_job_id, &self.target_job_id)
     }
+    /// Returns underlying EMsg.
+    pub(crate) fn emsg(&self) -> &EMsg { &self.emsg }
 
     /// This classify the message as:
     /// - Standard message (EncryptRequest, EncryptResponse, EncryptResult)
@@ -32,8 +35,10 @@ impl<'a> PacketMessage<'a> {
     /// [raw_message_data] are the bytes after the magic bytes received from connection stream.
     /// This _should_ be used by the main client to classify the messages from the raw bytes.
     /// Reference: https://github.com/SteamRE/SteamKit/blob/58562fcc6f6972181615a6d1ff98103b06f0e33f/SteamKit2/SteamKit2/Steam/CMClient.cs#L448
-    pub(crate) fn from_rawdata(raw_message_data: &[u8]) -> PacketMessage {
-        let extracted_emsg = EMsg::from_raw_message(raw_message_data).unwrap();
+    pub(crate) fn from_rawdata(raw_message_bytes: &[u8]) -> PacketMessage {
+        // should do error checking in case emsg not valid
+        let extracted_emsg = EMsg::from_raw_message(raw_message_bytes).unwrap();
+        let raw_message_data = EMsg::strip_message(raw_message_bytes);
         let target_job_id;
         let source_job_id;
         let body_bytes;
@@ -41,7 +46,8 @@ impl<'a> PacketMessage<'a> {
         match extracted_emsg {
             EMsg::ChannelEncryptRequest | EMsg::ChannelEncryptResponse | EMsg::ChannelEncryptResult => {
                 debug!("Found a Standard Header.");
-                let (header, body) = StandardMessageHeader::strip_as_bytes(raw_message_data);
+                let (header, body) = StandardMessageHeader::split_from_bytes(raw_message_data);
+                trace!("Header bytes: {:?} Body bytes: {:?}", header, body);
                 let header = StandardMessageHeader::from_bytes(header);
                 target_job_id = header.target_job_id;
                 source_job_id = header.source_job_id;
@@ -53,7 +59,7 @@ impl<'a> PacketMessage<'a> {
                     unimplemented!();
                 } else {
                     debug!("Found a Extended Header.");
-                    let (header, body) = ExtendedMessageHeader::strip_as_bytes(raw_message_data);
+                    let (header, body) = ExtendedMessageHeader::split_from_bytes(raw_message_data);
                     let header = ExtendedMessageHeader::from_bytes(header);
                     target_job_id = header.target_job_id;
                     source_job_id = header.source_job_id;

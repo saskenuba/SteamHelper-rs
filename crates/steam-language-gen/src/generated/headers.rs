@@ -2,13 +2,32 @@ use serde::{Deserialize, Serialize};
 
 use steam_protobuf::steam::steammessages_base::CMsgProtoBufHeader;
 
-pub trait SerializableMessageHeader {
-    fn to_bytes(&self) -> Vec<u8>;
-    fn from_bytes(packet_data: &[u8]) -> Self where Self: Sized;
-    fn strip_as_bytes(data: &[u8]) -> (&[u8], &[u8]);
+use crate::{MessageHeader, MessageHeaderExt, SerializableBytes, DeserializableBytes};
+use crate::generated::enums::EMsg;
+
+// add protobuf
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum MessageHeaders {
+    Standard,
+    Extended,
 }
 
-#[derive(new, Debug, Serialize, Deserialize, PartialEq, Eq, MsgHeader)]
+// add protobuf matching
+impl MessageHeaders {
+    pub fn header_from_emsg(emsg: EMsg) -> Option<MessageHeaders> {
+        match emsg {
+            EMsg::ChannelEncryptRequest | EMsg::ChannelEncryptResponse | EMsg::ChannelEncryptResult => {
+                Some(MessageHeaders::Standard)
+            }
+            _ => {
+                Some(MessageHeaders::Extended)
+            }
+            _ => None
+        }
+    }
+}
+
+#[derive(new, Clone, Debug, Serialize, Deserialize, PartialEq, Eq, MsgHeader)]
 pub struct StandardMessageHeader {
     #[new(value = "std::u64::MAX")]
     pub target_job_id: u64,
@@ -17,7 +36,7 @@ pub struct StandardMessageHeader {
 }
 
 
-#[derive(new, Debug, Serialize, Deserialize, PartialEq, Eq, MsgHeader)]
+#[derive(new, Clone, Debug, Serialize, Deserialize, PartialEq, Eq, MsgHeader)]
 pub struct ExtendedMessageHeader {
     #[new(value = "32")]
     header_size: u8,

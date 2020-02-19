@@ -11,5 +11,6 @@ publish = false
 proc-macro = true
 
 [dependencies]
-syn = "1.0"
+syn = { version = "1", features = ["full"] }
 quote = "1.0"
+proc-macro2 = "1.0"

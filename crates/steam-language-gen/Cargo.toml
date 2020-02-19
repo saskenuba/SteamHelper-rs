@@ -18,6 +18,8 @@ num-derive = "0.3"
 num = "0.2"
 bitflags = "1"
 derive-new = "*"
+downcast-rs = "1"
+enum_dispatch = "0.2"
 
 # serde
 serde = { version = "1", features = ["derive"] }

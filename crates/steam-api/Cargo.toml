@@ -31,6 +31,7 @@ log = "0.4"
 regex = "1"
 lazy_static = "1"
 bitvec = "0.17"
+enum_dispatch = "0.2"
 
 # Futures related
 async-trait = "0.1"

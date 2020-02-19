@@ -13,7 +13,7 @@ use std::convert::TryInto;
 use std::error::Error;
 use std::future::Future;
 
-use bytes::{Bytes, BytesMut};
+use bytes::{Buf, Bytes, BytesMut};
 use futures::task::Context;
 use tokio::{
     io::{
@@ -46,7 +46,7 @@ pub struct SteamConnection<S> {
 trait Connection<S> {
     async fn new_connection(ip_addr: &str) -> Result<SteamConnection<S>, Box<dyn Error>>;
     async fn read_packets(&mut self) -> Result<Vec<u8>, Box<dyn Error>>;
-    async fn write_packets(data: &[u8]) -> Result<(), Box<dyn Error>>;
+    async fn write_packets(&mut self, data: &[u8]) -> Result<(), Box<dyn Error>>;
 }
 
 impl<S> Future for SteamConnection<S>
@@ -82,19 +82,31 @@ impl Connection<TcpStream> for SteamConnection<TcpStream> {
             log::error!("Could not find magic packet on read.");
         }
         let data_length = u32::from_le_bytes(data_len);
-        let mut incoming_data = Vec::with_capacity(data_length as usize);
-        self.stream.read_buf(&mut incoming_data).await?;
+        let mut incoming_data = BytesMut::with_capacity(data_length as usize);
+        let oi = self.stream.read_buf(&mut incoming_data).await?;
+        debug!("bytes read from socket {}", oi);
+        debug_assert_eq!(oi as u32, data_length);
 
         // Sanity check
         debug!("data length: {}", data_length);
-        trace!("data: {:?}", incoming_data);
+        trace!("data: {:?}", incoming_data.bytes());
 
         Ok(incoming_data.to_vec())
     }
 
     #[inline]
-    async fn write_packets(data: &[u8]) -> Result<(), Box<dyn Error>> {
-        unimplemented!()
+    async fn write_packets(&mut self, data: &[u8]) -> Result<(), Box<dyn Error>> {
+        let mut output_buffer = BytesMut::with_capacity(1024);
+
+        output_buffer.extend_from_slice(&(data.len() as u32).to_le_bytes());
+        trace!("Data size: {} ", data.len());
+        output_buffer.extend_from_slice(PACKET_MAGIC_BYTES);
+        output_buffer.extend_from_slice(data);
+        trace!("Data bytes: {:?}", data);
+
+        trace!("Writing {} bytes of data to stream..", output_buffer.len());
+        self.stream.write_all(output_buffer.bytes()).await?;
+        Ok(())
     }
 }
 
@@ -140,7 +152,7 @@ mod connection_method {
         }
 
         #[inline]
-        async fn write_packets(data: &[u8]) -> Result<(), Box<dyn Error>> {
+        async fn write_packets(&mut self, data: &[u8]) -> Result<(), Box<dyn Error>> {
             unimplemented!()
         }
     }
@@ -179,14 +191,8 @@ mod tests {
         let cm_servers = CmServerSvList::fetch_servers(env!("STEAM_API")).await;
         let dumped_cm_servers = cm_servers.unwrap().dump_tcp_servers();
 
-        let mut steam_connection: SteamConnection<TcpStream> = SteamConnection::new_connection(&dumped_cm_servers[0]).await.unwrap();
-        let data = steam_connection.read_packets().await.unwrap();
-        let message = EMsg::from_raw_message(&data);
-
-        assert_eq!(message.unwrap(), EMsg::ChannelEncryptRequest);
-
-        //
-        handle_encrypt_request(PacketMessage::from_rawdata(&data));
+        let steam_connection = SteamConnection::new_connection(&dumped_cm_servers[0]).await;
+        assert!(steam_connection.is_ok());
     }
 
     #[tokio::test]
@@ -197,10 +203,30 @@ mod tests {
         let get_results = CmServerSvList::fetch_servers(env!("STEAM_API")).await;
         let fetched_servers = get_results.unwrap().dump_ws_servers();
 
-        let steam_connection = SteamConnection::new_connection(&fetched_servers[0]).await.unwrap();
-        // let data = steam_connection.read_packet().await.unwrap();
-        // let message = EMsg::from_raw_message(&data);
-        // debug!("Decoded Message: {:?}", message.unwrap());
+        let steam_connection = SteamConnection::new_connection(&fetched_servers[0]).await;
+        assert!(steam_connection.is_ok())
+    }
+
+    #[tokio::test]
+    #[cfg(not(feature = "websockets"))]
+    async fn answer_encrypt_request() {
+        init();
+
+        let cm_servers = CmServerSvList::fetch_servers(env!("STEAM_API")).await;
+        let dumped_cm_servers = cm_servers.unwrap().dump_tcp_servers();
+
+        let mut steam_connection: SteamConnection<TcpStream> = SteamConnection::new_connection(&dumped_cm_servers[0]).await.unwrap();
+        let data = steam_connection.read_packets().await.unwrap();
+        let message = EMsg::from_raw_message(&data);
+
+        assert_eq!(message.unwrap(), EMsg::ChannelEncryptRequest);
+
+        //
+        handle_encrypt_request(PacketMessage::from_rawdata(&data));
+        steam_connection.write_packets(b"\x18\x05\0\0\x17\x05\0\0\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x01\0\0\0\x80\0\0\0").await.unwrap();
+        let data = steam_connection.read_packets().await.unwrap();
+        let message = EMsg::from_raw_message(&data);
+        assert_eq!(message.unwrap(), EMsg::ChannelEncryptResult);
     }
 }
 

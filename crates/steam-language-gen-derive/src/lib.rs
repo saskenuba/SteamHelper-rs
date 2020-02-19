@@ -1,8 +1,8 @@
-use syn::DeriveInput;
-use syn::export::TokenStream;
+use proc_macro::TokenStream;
+
+use syn::{AttributeArgs, DeriveInput, parse_macro_input};
 
 use quote::quote;
-
 
 #[proc_macro_derive(SteamMsg)]
 pub fn steammsg_derive(input: TokenStream) -> TokenStream {
@@ -14,21 +14,27 @@ pub fn steammsg_derive(input: TokenStream) -> TokenStream {
     impl_steammsg_macro(&ast)
 }
 
-
 /// We also need to accept attributes in an specific order, so we can
 /// implement the "new" function, that set each attribute in order of members
 fn impl_steammsg_macro(ast: &DeriveInput) -> TokenStream {
     let name = &ast.ident;
-    let gen = quote! {
-        impl SerializableMessageBody for #name {
 
+    let gen = quote! {
+        impl SerializableBytes for #name {
             fn to_bytes(&self) -> Vec<u8> {
                 bincode::serialize(&self).unwrap()
             }
-
+        }
+        impl DeserializableBytes for #name {
             fn from_bytes(packet_data: &[u8]) -> Self {
                 let decoded: Self = bincode::deserialize(packet_data).unwrap();
                 decoded
+            }
+        }
+        impl MessageBodyExt for #name {
+            fn split_from_bytes(data: &[u8]) -> (&[u8], &[u8]) {
+                let size = std::mem::size_of::<Self>();
+                (&data[..size], &data[size..])
             }
         }
     };
@@ -46,26 +52,41 @@ pub fn header_derive(input: TokenStream) -> TokenStream {
     impl_header_macro(&ast)
 }
 
+
 fn impl_header_macro(ast: &DeriveInput) -> TokenStream {
     let name = &ast.ident;
     let gen = quote! {
-        impl SerializableMessageHeader for #name {
 
+        impl SerializableBytes for #name {
             fn to_bytes(&self) -> Vec<u8> {
                 bincode::serialize(&self).unwrap()
             }
-
+        }
+        impl DeserializableBytes for #name {
             fn from_bytes(packet_data: &[u8]) -> Self {
                 let decoded: Self = bincode::deserialize(packet_data).unwrap();
                 decoded
             }
+        }
 
-            /// Returns header on the left, rest on the right
-            fn strip_as_bytes(data: &[u8]) -> (&[u8], &[u8]) {
+        impl MessageHeaderExt for #name {
+            // we are taking out 4 bytes of the emsg
+            fn split_from_bytes(data: &[u8]) -> (&[u8], &[u8]) {
                 let size = std::mem::size_of::<Self>();
                 (&data[..size], &data[size..])
             }
+            fn create() -> Self {
+                Self::new()
+            }
+        }
 
+        impl MessageHeader for #name {
+            fn set_target(&mut self, new_target: u64) {
+                self.target_job_id = new_target;
+            }
+            fn set_source(&mut self, new_source: u64) {
+                self.source_job_id = new_source;
+            }
         }
     };
     gen.into()
