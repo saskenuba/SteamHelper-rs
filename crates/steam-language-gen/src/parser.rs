@@ -16,6 +16,7 @@ const BLOCK_EOF: &[u8] = br#"};"#;
 type ResultSlice<'a> = IResult<&'a [u8], &'a [u8]>;
 type U82tuple<'a> = (&'a [u8], &'a [u8]);
 type U83tuple<'a> = (&'a [u8], &'a [u8], &'a [u8]);
+// type U83tuple<'a> = (&'a [u8], &'a [u8], &'a [u8]);
 type U84tuple<'a> = (&'a [u8], &'a [u8], &'a [u8], &'a str);
 
 pub fn parse_enums_to_tree(file: &'static str) -> (Graph<Token, Element>, NodeIndex<u32>) {
@@ -23,7 +24,7 @@ pub fn parse_enums_to_tree(file: &'static str) -> (Graph<Token, Element>, NodeIn
     let entry = graph.add_node(Token { value: "entry".to_string(), default: None });
     let mut next_block = file.as_ref();
 
-    while let Some(enum_code_block) = extract_enum_block(next_block) {
+    while let Some(enum_code_block) = extract_main_block(ENUM_KEYWORD, next_block) {
         let current_identifier = String::from_utf8(Vec::from(enum_code_block.2)).unwrap();
         let current_type = String::from_utf8(Vec::from(enum_code_block.3)).unwrap();
 
@@ -67,9 +68,11 @@ pub fn parse_classes_to_tree(file: &'static str) -> (Graph<Token, Element>, Node
     let entry = graph.add_node(Token { value: "entry".to_string(), default: None });
     let mut next_block = file.as_ref();
 
-    while let Some(value) = extract_class_block(next_block) {
+    while let Some(value) = extract_main_block(CLASS_KEYWORD, next_block) {
+        // this holds the Msg Name (Ident)
         let current_identifier = String::from_utf8(Vec::from(value.2)).unwrap();
-        let current_type = String::from_utf8(Vec::from(value.2)).unwrap();
+        // this is holding the EMSg type of our Msg
+        let current_type = String::from_utf8(Vec::from(value.3)).unwrap();
 
         // node insertion
         let block_node = graph.add_node(Token { value: current_identifier, default: Some("struct") });
@@ -108,8 +111,6 @@ fn take_until_open_bracket(stream: &[u8]) -> ResultSlice { take_until(BLOCK_STAR
 
 fn take_until_block_eof(stream: &[u8]) -> ResultSlice { take_until(BLOCK_EOF)(&stream) }
 
-fn take_until_lessthan(stream: &[u8]) -> ResultSlice { take_until("<")(&stream) }
-
 fn take_tabs_newlines(stream: &[u8]) -> ResultSlice { not_line_ending(stream) }
 
 fn preamble_parser<'a>(stream: &'a [u8], keyword: &'static [u8]) -> Option<U82tuple<'a>> {
@@ -120,14 +121,14 @@ fn preamble_parser<'a>(stream: &'a [u8], keyword: &'static [u8]) -> Option<U82tu
     )(stream).ok()
 }
 
-/// Returns class code, along with class name
-fn extract_class_block(stream: &[u8]) -> Option<U83tuple> {
-    let parser = preamble_parser(stream, CLASS_KEYWORD);
-
-    // swap positions so index 1 is the rest
+/// Returns a tuple with:
+/// (class_code, rest, class_name, class_type)
+fn extract_main_block<'a>(keyword: &'static [u8], stream: &'a [u8]) -> Option<U84tuple<'a>> {
+    let parser = preamble_parser(stream, keyword);
     parser.map(|c| {
-        let parsed_classname = take_until_lessthan(c.1).unwrap();
-        (c.1, c.0, parsed_classname.1)
+        let (_, enum_declaration_line) = take_tabs_newlines(c.1).unwrap();
+        let (enum_filtered_name, enum_type) = filter_name_type(enum_declaration_line);
+        (c.1, c.0, enum_filtered_name, enum_type)
     })
 }
 
@@ -138,7 +139,7 @@ fn filter_name_type(line_stream: &[u8]) -> (&[u8], &str) {
     let mut index = line_stream.len();
 
     // check for type between greater and less than OR flags
-    let re = Regex::new(r"<(\w+)>| (flags)").unwrap();
+    let re = Regex::new(r"<(.+)>| (flags)").unwrap();
     if let Some(capture) = re.captures(line_stream) {
 
         // if we cant match the first, match the second
@@ -147,16 +148,6 @@ fn filter_name_type(line_stream: &[u8]) -> (&[u8], &str) {
         index = captured_type.start() - 1;
     }
     (&line_stream[..index], found_type)
-}
-
-/// Returns enum code, along with enum name and its type
-fn extract_enum_block(stream: &[u8]) -> Option<U84tuple> {
-    let parser = preamble_parser(stream, ENUM_KEYWORD);
-    parser.map(|c| {
-        let (_, enum_declaration_line) = take_tabs_newlines(c.1).unwrap();
-        let (enum_filtered_name, enum_type) = filter_name_type(enum_declaration_line);
-        (c.1, c.0, enum_filtered_name, enum_type)
-    })
 }
 
 fn extract_attr_lines(stream: &[u8]) -> Option<U82tuple> {
@@ -295,9 +286,11 @@ fn is_array(string: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use crate::parser::{ENUM_KEYWORD, CLASS_KEYWORD};
+
     use super::{
-        array_extract_size, extract_attr_lines, extract_enum_block, extract_member_enum, extract_member_struct,
-        extract_members_exhaustive, is_array, parse_stmts, split_words_to_vec,
+        array_extract_size, extract_attr_lines, extract_main_block, extract_member_enum,
+        extract_member_struct, extract_members_exhaustive, is_array, parse_stmts, split_words_to_vec,
     };
 
     fn gen_stmt_known_type() -> &'static str {
@@ -322,6 +315,10 @@ mod tests {
              "uint protocolVersion = MsgChannelEncryptRequest::PROTOCOL_VERSION".into()]
     }
 
+    fn gen_class_block() -> &'static str {
+        "\r\n\r\nclass MsgClientNewLoginKeyAccepted<EMsg::ClientNewLoginKeyAccepted>\r\n{\r\n\tuint uniqueID;\r\n};\r\n\r\nclass"
+    }
+
     fn gen_enum() -> &'static str {
         "\r\n\r\nenum EChatEntryType flags\r\n{\r\n\tInvalid = 0;\r\n\r\n\tChatMsg = 1;\r\n\tTyping = 2;\
         \r\n\tInviteGame = 3;\r\n\tEmote = 4; removed \"No longer supported by clients\"\r\n\tLobby\
@@ -340,6 +337,21 @@ mod tests {
         vec.iter().map(|c| {
             String::from_utf8((*c).to_vec()).unwrap()
         }).collect()
+    }
+
+    #[test]
+    fn test_extract_class() {
+        let raw_class = gen_class_block();
+        let (_whole_class_block, _rest, parsed_classname, emsg_type) = extract_main_block(CLASS_KEYWORD, raw_class.as_ref()).unwrap();
+
+        assert_eq!(
+            String::from_utf8(parsed_classname.to_vec()).unwrap(),
+            "MsgClientNewLoginKeyAccepted".to_string()
+        );
+        assert_eq!(
+            emsg_type,
+            "EMsg::ClientNewLoginKeyAccepted"
+        );
     }
 
     #[test]
@@ -411,7 +423,7 @@ mod tests {
         let correct_output = vec!["Invalid = 0", "ChatMsg = 1", "Typing = 2", "InviteGame = 3",
                                   "", "", "LeftConversation = 6"];
         let stmt = gen_enum().as_ref();
-        let enum_code_block = extract_enum_block(stmt).unwrap();
+        let enum_code_block = extract_main_block(ENUM_KEYWORD, stmt).unwrap();
         let enum_attr_block = extract_attr_lines(enum_code_block.0).unwrap();
         let parsed_attr_block = extract_members_exhaustive(enum_attr_block.0, extract_member_enum);
         let parsed_attr_block_str = bytes_to_str(parsed_attr_block);

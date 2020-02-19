@@ -70,3 +70,27 @@ fn impl_header_macro(ast: &DeriveInput) -> TokenStream {
     };
     gen.into()
 }
+
+#[proc_macro_attribute]
+pub fn linked_emsg(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let ast: DeriveInput = syn::parse(item).unwrap();
+    let name = &ast.ident;
+
+    let mut args: AttributeArgs = parse_macro_input!(attr as AttributeArgs);
+    let attribute = args.pop().unwrap();
+
+    let tokens = quote! {
+        #ast
+
+        impl HasEMsg for #name {
+            fn emsg() -> EMsg {
+                #attribute
+            }
+            fn create() -> Self {
+                Self::new()
+            }
+        }
+
+    };
+    tokens.into()
+}

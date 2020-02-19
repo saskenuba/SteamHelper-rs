@@ -22,8 +22,11 @@ pub fn generate_code(graph: Graph<Token, Element>, entry: NodeIndex) -> String {
     });
     let mut dfs = Dfs::new(&ef_graph_head, entry);
 
+    let disclaimer = "// This file is auto-generated.\n\n";
+
     let standard_imports = "use serde::{Deserialize, Serialize};\
     \nuse serde_repr::{Deserialize_repr, Serialize_repr};\n\n";
+    file.push_str(disclaimer);
     file.push_str(standard_imports);
 
     // sends the head node to the proper function
@@ -50,10 +53,11 @@ fn generate_struct(graph: &Graph<Token, Element, Directed, u32>, current_node: N
         let type_node = head_edges.target();
 
         let struct_name = graph[name_node].get_value();
-        let _struct_type = graph[type_node].get_value();
+        let struct_type = graph[type_node].get_value();
 
         println!("{:?}", struct_name);
 
+        file.push_str(&format!("#[linked_emsg({})]", struct_type));
         file.push_str("#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize, SteamMsg)]\n");
         file.push_str(&format!("pub struct {} {{\n", struct_name));
 
