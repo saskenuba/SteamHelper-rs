@@ -12,3 +12,13 @@ To learn more about how Steam works, check [here](https://github.com/saskenuba/S
 - Steam WebAuth: Authentication to Steam Community and Steam Store
 - Steam Client
 - Steam WebAPI
+
+## License
+
+This project is licensed under the [MIT license](LICENSE).
+
+### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in Tokio by you, shall be licensed as MIT, without any additional
+terms or conditions.
