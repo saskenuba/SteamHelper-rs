@@ -1,0 +1,354 @@
+<body>
+    <!-- header bar, contains info browsing user if logged in -->
+    <div id="global_header">
+        <div class="content">
+            <div class="logo">
+			<span id="logo_holder">
+									<a href="https://store.steampowered.com/">
+						<img height="44"
+                             src="https://steamcommunity-a.akamaihd.net/public/shared/images/header/globalheader_logo.png?t=962016"
+                             width="176">
+					</a>
+							</span>
+                <!--[if lt IE 7]>
+                <style type="text/css">
+                    #logo_holder img {
+                        filter: progid:DXImageTransform.Microsoft.Alpha(opacity=0);
+                    }
+
+                    #logo_holder {
+                        display: inline-block;
+                        width: 176px;
+                        height: 44px;
+                        filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='https://steamcommunity-a.akamaihd.net/public/images/v5/globalheader_logo.png');
+                    }
+                </style>
+                <![endif]-->
+            </div>
+
+            <div class="supernav_container">
+                <a class="menuitem supernav" data-tooltip-content=".submenu_store" data-tooltip-type="selector"
+                   href="https://store.steampowered.com/">
+                    STORE </a>
+                <div class="submenu_store" data-submenuid="store" style="display: none;">
+                    <a class="submenuitem" href="https://store.steampowered.com/">Featured</a>
+                    <a class="submenuitem" href="https://steamcommunity.com/my/wishlist/">Wishlist</a>
+                    <a class="submenuitem" href="https://store.steampowered.com/news/">News</a>
+                    <a class="submenuitem" href="https://store.steampowered.com/stats/">Stats</a>
+                    <a class="submenuitem" href="https://store.steampowered.com/about/">ABOUT</a>
+                </div>
+
+
+                <a class="menuitem supernav" data-tooltip-content=".submenu_community" data-tooltip-type="selector"
+                   href="https://steamcommunity.com/" style="display: block">
+                    COMMUNITY </a>
+                <div class="submenu_community" data-submenuid="community" style="display: none;">
+                    <a class="submenuitem" href="https://steamcommunity.com/">Home</a>
+                    <a class="submenuitem" href="https://steamcommunity.com/discussions/">Discussions</a>
+                    <a class="submenuitem" href="https://steamcommunity.com/workshop/">Workshop</a>
+                    <a class="submenuitem" href="https://steamcommunity.com/market/">Market</a>
+                    <a class="submenuitem" href="https://steamcommunity.com/?subsection=broadcasts">Broadcasts</a>
+                </div>
+
+
+                <a class="menuitem supernav username" data-tooltip-content=".submenu_username"
+                   data-tooltip-type="selector" href="https://steamcommunity.com/id/xxxxx/home/">
+                    xxxxx </a>
+                <div class="submenu_username" data-submenuid="username" style="display: none;">
+                    <a class="submenuitem" href="https://steamcommunity.com/id/xxxxxx/home/">Activity</a>
+                    <a class="submenuitem" href="https://steamcommunity.com/id/xxxxxx/">Profile</a>
+                    <a class="submenuitem" href="https://steamcommunity.com/id/xxxxxx/friends/">Friends</a>
+                    <a class="submenuitem" href="https://steamcommunity.com/id/xxxxxx/groups/">Groups</a>
+                    <a class="submenuitem" href="https://steamcommunity.com/id/xxxxxx/screenshots/">Content</a>
+                    <a class="submenuitem" href="https://steamcommunity.com/id/xxxxxx/badges/">Badges</a>
+                    <a class="submenuitem" href="https://steamcommunity.com/id/xxxxxx/inventory/">Inventory</a>
+                </div>
+
+                <a class="menuitem" href="https://steamcommunity.com/chat/">
+                    Chat </a>
+
+                <a class="menuitem" href="https://help.steampowered.com/en/">
+                    SUPPORT </a>
+            </div>
+            <script type="text/javascript">
+                jQuery(function ($) {
+                    $('#global_header .supernav').v_tooltip({
+                        'location': 'bottom',
+                        'destroyWhenDone': false,
+                        'tooltipClass': 'supernav_content',
+                        'offsetY': -4,
+                        'offsetX': 1,
+                        'horizontalSnap': 4,
+                        'tooltipParent': '#global_header .supernav_container',
+                        'correctForScreenSize': false
+                    });
+                });
+            </script>
+
+            <div id="global_actions">
+                <div id="global_action_menu">
+                    <div class="header_installsteam_btn header_installsteam_btn_gray">
+
+                        <a class="header_installsteam_btn_content" href="https://store.steampowered.com/about/">
+                            Install Steam </a>
+                    </div>
+
+
+                    <!-- notification inbox area -->
+                    <span class="tooltip header_parental_btn global_header_toggle_button red"
+                          data-tooltip-html="You are not in Family View, access to Steam is unrestricted.  Click to return to Family View."
+                          id="header_parental_link"
+                          onclick="LockFamilyView(false)">
+		&nbsp;
+	</span>
+                    <div id="header_notification_area">
+                        <script type="text/javascript">$J(EnableNotificationCountPolling);</script>
+                        <div class="header_notification_btn global_header_toggle_button notification_count_total_ctn has_notifications"
+                             id="header_notification_link"
+                             onclick="ShowMenu( this, 'header_notification_dropdown', 'right' );">
+                            <span class="notification_count">2</span>
+                            <span class="header_notification_envelope">
+				<img height="8"
+                     src="https://steamcommunity-a.akamaihd.net/public/shared/images/responsive/header_menu_notifications.png"
+                     width="11">
+			</span>
+                        </div>
+
+                        <div class="popup_block_new" id="header_notification_dropdown" style="display: none;">
+                            <div class="popup_body popup_menu">
+                                <a class="popup_menu_item notification_ctn header_notification_comments "
+                                   data-notification-type="4"
+                                   href="https://steamcommunity.com/id/xxxxxx/commentnotifications/">
+                                    <span class="notification_icon"></span><span
+                                        class="notification_count_string singular"
+                                        style="display: none;">1 new comment</span><span
+                                        class="notification_count_string plural" style=""><span
+                                        class="notification_count">0</span> new comments</span> </a>
+                                <div class="header_notification_dropdown_seperator"></div>
+                                <a class="popup_menu_item notification_ctn header_notification_items "
+                                   data-notification-type="5"
+                                   href="https://steamcommunity.com/id/xxxxxx/inventory/">
+                                    <span class="notification_icon"></span><span
+                                        class="notification_count_string singular" style="display: none;">1 new item in your inventory</span><span
+                                        class="notification_count_string plural" style=""><span
+                                        class="notification_count">0</span> new items in your inventory</span> </a>
+                                <div class="header_notification_dropdown_seperator"></div>
+                                <a class="popup_menu_item notification_ctn header_notification_invites "
+                                   data-notification-type="6"
+                                   href="https://steamcommunity.com/id/xxxxxx/home/invites/">
+                                    <span class="notification_icon"></span><span
+                                        class="notification_count_string singular"
+                                        style="display: none;">1 new invite</span><span
+                                        class="notification_count_string plural" style=""><span
+                                        class="notification_count">0</span> new invites</span> </a>
+                                <div class="header_notification_dropdown_seperator"></div>
+                                <a class="popup_menu_item notification_ctn header_notification_gifts "
+                                   data-notification-type="8"
+                                   href="https://steamcommunity.com/id/xxxxxx/inventory/#pending_gifts">
+                                    <span class="notification_icon"></span><span
+                                        class="notification_count_string singular"
+                                        style="display: none;">1 new gift</span><span
+                                        class="notification_count_string plural" style=""><span
+                                        class="notification_count">0</span> new gifts</span> </a>
+                                <div class="header_notification_dropdown_seperator"></div>
+                                <a class="popup_menu_item notification_ctn header_notification_offlinemessages "
+                                   data-notification-type="9"
+                                   href="javascript:void(0)"
+                                   onclick="LaunchWebChat(); HideMenu( 'header_notification_link', 'header_notification_dropdown' ); return false;">
+                                    <span class="notification_icon"></span><span
+                                        class="notification_count_string singular" style="display: none;">1 unread chat message</span><span
+                                        class="notification_count_string plural" style=""><span
+                                        class="notification_count">0</span> unread chat messages</span> </a>
+                                <a class="popup_menu_item notification_ctn hide_when_empty header_notification_tradeoffers "
+                                   data-notification-type="1"
+                                   href="https://steamcommunity.com/id/xxxxxx/tradeoffers/">
+                                    <div class="header_notification_dropdown_seperator"></div>
+                                    <span class="notification_icon"></span><span
+                                        class="notification_count_string singular" style="display: none;">1 new trade notification</span><span
+                                        class="notification_count_string plural" style=""><span
+                                        class="notification_count">0</span> new trade notifications</span> </a>
+                                <a class="popup_menu_item notification_ctn hide_when_empty header_notification_asyncgame active_inbox_item"
+                                   data-notification-type="2"
+                                   href="https://steamcommunity.com/id/xxxxxx/gamenotifications">
+                                    <div class="header_notification_dropdown_seperator"></div>
+                                    <span class="notification_icon"></span><span
+                                        class="notification_count_string singular"
+                                        style="display: none;">1 turn waiting</span><span
+                                        class="notification_count_string plural" style=""><span
+                                        class="notification_count">2</span> new turns waiting</span> </a>
+                                <a class="popup_menu_item notification_ctn hide_when_empty header_notification_moderatormessage "
+                                   data-notification-type="3"
+                                   href="https://steamcommunity.com/id/xxxxxx/moderatormessages">
+                                    <div class="header_notification_dropdown_seperator"></div>
+                                    <span class="notification_icon"></span><span
+                                        class="notification_count_string singular" style="display: none;">1 community message</span><span
+                                        class="notification_count_string plural" style=""><span
+                                        class="notification_count">0</span> community messages</span> </a>
+                                <a class="popup_menu_item notification_ctn hide_when_empty header_notification_helprequestreply "
+                                   data-notification-type="10"
+                                   href="https://help.steampowered.com/en/wizard/HelpRequests">
+                                    <div class="header_notification_dropdown_seperator"></div>
+                                    <span class="notification_icon"></span><span
+                                        class="notification_count_string singular" style="display: none;">1 reply from Steam Support</span><span
+                                        class="notification_count_string plural" style=""><span
+                                        class="notification_count">0</span> replies from Steam Support</span> </a>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="pulldown global_action_link" id="account_pulldown"
+                          onclick="ShowMenu( this, 'account_dropdown', 'right', 'bottom', true );">xxxxx</span>
+                    <div class="popup_block_new" id="account_dropdown" style="display: none;">
+                        <div class="popup_body popup_menu">
+                            <a class="popup_menu_item" href="https://steamcommunity.com/id/xxxxxx/">View profile</a>
+                            <a class="popup_menu_item" href="https://store.steampowered.com/account/">Account
+                                details</a>
+                            <a class="popup_menu_item" href="javascript:Logout();">Logout: <span class="persona online">martincrazy</span></a>
+                            <a class="popup_menu_item" href="https://store.steampowered.com/account/preferences/">Preferences</a>
+                            <span class="popup_menu_item" id="account_language_pulldown">Change language</span>
+                            <div class="popup_block_new" id="language_dropdown" style="display: none;">
+                                <div class="popup_body popup_menu">
+                                    <a class="popup_menu_item tight" href="?l=schinese"
+                                       onclick="ChangeLanguage( 'schinese' ); return false;">简体中文 (Simplified
+                                        Chinese)</a>
+                                    <a class="popup_menu_item tight" href="?l=tchinese"
+                                       onclick="ChangeLanguage( 'tchinese' ); return false;">繁體中文 (Traditional
+                                        Chinese)</a>
+                                    <a class="popup_menu_item tight" href="?l=japanese"
+                                       onclick="ChangeLanguage( 'japanese' ); return false;">日本語 (Japanese)</a>
+                                    <a class="popup_menu_item tight" href="?l=koreana"
+                                       onclick="ChangeLanguage( 'koreana' ); return false;">한국어 (Korean)</a>
+                                    <a class="popup_menu_item tight" href="?l=thai"
+                                       onclick="ChangeLanguage( 'thai' ); return false;">ไทย (Thai)</a>
+                                    <a class="popup_menu_item tight" href="?l=bulgarian"
+                                       onclick="ChangeLanguage( 'bulgarian' ); return false;">Български (Bulgarian)</a>
+                                    <a class="popup_menu_item tight" href="?l=czech"
+                                       onclick="ChangeLanguage( 'czech' ); return false;">Čeština (Czech)</a>
+                                    <a class="popup_menu_item tight" href="?l=danish"
+                                       onclick="ChangeLanguage( 'danish' ); return false;">Dansk (Danish)</a>
+                                    <a class="popup_menu_item tight" href="?l=german"
+                                       onclick="ChangeLanguage( 'german' ); return false;">Deutsch (German)</a>
+                                    <a class="popup_menu_item tight" href="?l=english"
+                                       onclick="ChangeLanguage( 'english' ); return false;">English</a>
+                                    <a class="popup_menu_item tight" href="?l=spanish"
+                                       onclick="ChangeLanguage( 'spanish' ); return false;">Español - España (Spanish -
+                                        Spain)</a>
+                                    <a class="popup_menu_item tight" href="?l=latam"
+                                       onclick="ChangeLanguage( 'latam' ); return false;">Español - Latinoamérica
+                                        (Spanish - Latin America)</a>
+                                    <a class="popup_menu_item tight" href="?l=greek"
+                                       onclick="ChangeLanguage( 'greek' ); return false;">Ελληνικά (Greek)</a>
+                                    <a class="popup_menu_item tight" href="?l=french"
+                                       onclick="ChangeLanguage( 'french' ); return false;">Français (French)</a>
+                                    <a class="popup_menu_item tight" href="?l=italian"
+                                       onclick="ChangeLanguage( 'italian' ); return false;">Italiano (Italian)</a>
+                                    <a class="popup_menu_item tight" href="?l=hungarian"
+                                       onclick="ChangeLanguage( 'hungarian' ); return false;">Magyar (Hungarian)</a>
+                                    <a class="popup_menu_item tight" href="?l=dutch"
+                                       onclick="ChangeLanguage( 'dutch' ); return false;">Nederlands (Dutch)</a>
+                                    <a class="popup_menu_item tight" href="?l=norwegian"
+                                       onclick="ChangeLanguage( 'norwegian' ); return false;">Norsk (Norwegian)</a>
+                                    <a class="popup_menu_item tight" href="?l=polish"
+                                       onclick="ChangeLanguage( 'polish' ); return false;">Polski (Polish)</a>
+                                    <a class="popup_menu_item tight" href="?l=portuguese"
+                                       onclick="ChangeLanguage( 'portuguese' ); return false;">Português
+                                        (Portuguese)</a>
+                                    <a class="popup_menu_item tight" href="?l=brazilian"
+                                       onclick="ChangeLanguage( 'brazilian' ); return false;">Português - Brasil
+                                        (Portuguese - Brazil)</a>
+                                    <a class="popup_menu_item tight" href="?l=romanian"
+                                       onclick="ChangeLanguage( 'romanian' ); return false;">Română (Romanian)</a>
+                                    <a class="popup_menu_item tight" href="?l=russian"
+                                       onclick="ChangeLanguage( 'russian' ); return false;">Русский (Russian)</a>
+                                    <a class="popup_menu_item tight" href="?l=finnish"
+                                       onclick="ChangeLanguage( 'finnish' ); return false;">Suomi (Finnish)</a>
+                                    <a class="popup_menu_item tight" href="?l=swedish"
+                                       onclick="ChangeLanguage( 'swedish' ); return false;">Svenska (Swedish)</a>
+                                    <a class="popup_menu_item tight" href="?l=turkish"
+                                       onclick="ChangeLanguage( 'turkish' ); return false;">Türkçe (Turkish)</a>
+                                    <a class="popup_menu_item tight" href="?l=vietnamese"
+                                       onclick="ChangeLanguage( 'vietnamese' ); return false;">Tiếng Việt
+                                        (Vietnamese)</a>
+                                    <a class="popup_menu_item tight" href="?l=ukrainian"
+                                       onclick="ChangeLanguage( 'ukrainian' ); return false;">Українська (Ukrainian)</a>
+                                    <a class="popup_menu_item tight" href="http://translation.steampowered.com"
+                                       target="_blank">Help us translate Steam</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <script type="text/javascript">
+                        RegisterFlyout('account_language_pulldown', 'language_dropdown', 'leftsubmenu', 'bottomsubmenu', true);
+                    </script>
+                </div>
+                <a class="user_avatar playerAvatar offline" href="https://steamcommunity.com/id/xxxxxx/">
+                    <img src="https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/e2/e2c36cc89f64a9425ac4e8d39113ea5b2586e9c9.jpg">
+                </a>
+            </div>
+        </div>
+    </div>
+    <div id="modalBG" style="display: none"></div>
+    <!-- /header bar -->
+
+
+    <!-- top content -->
+    <div id="BG_top">
+        <div id="mainContents">
+            <h2>Register Steam Web API Key</h2>
+        </div>
+    </div>
+    <!-- /top content -->
+    <!-- main body -->
+    <div id="BG_bottom">
+
+        <div id="bodyContents_ex">
+
+            <h2>Your Steam Web API Key</h2>
+            <p>Key: D805666DF5E380C5F8A89B8F8A0814B8</p>
+            <p>Domain Name: localhost</p>
+            <form action="https://steamcommunity.com/dev/revokekey" class="smallForm" id="editForm" method="POST"
+                  name="editForm" onSubmit="return verifyRevoke()">
+                <input name="Revoke" type="submit" value="Revoke My Steam Web API Key">
+                <input name="sessionid" type="hidden" value="">
+            </form>
+
+
+        </div>
+
+
+        <br clear="all"/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+
+    </div>
+    <!-- footer -->
+    <div id="footer_spacer"></div>
+    <div id="footer_responsive_optin_spacer"></div>
+    <div id="footer">
+        <div class="footer_content">
+            <span id="footerLogo"><img
+                    alt="Valve Logo" border="0"
+                    height="26"
+                    src="https://steamcommunity-a.akamaihd.net/public/images/skin_1/footerLogo_valve.png?v=1"
+                    width="96"/></span>
+            <span id="footerText">
+				&copy; Valve Corporation. All rights reserved. All trademarks are property of their respective owners in the US and other countries.<br/>Some geospatial data on this website is provided by <a
+                    href="https://steamcommunity.com/linkfilter/?url=http://www.geonames.org" rel="noreferrer"
+                    target="_blank">geonames.org</a>.				<br>
+									<span class="valve_links">
+						<a href="http://store.steampowered.com/privacy_agreement/" target="_blank">Privacy Policy</a>
+						&nbsp; | &nbsp;<a href="https://store.steampowered.com/legal/" target="_blank">Legal</a>
+						&nbsp;| &nbsp;<a href="http://store.steampowered.com/subscriber_agreement/" target="_blank">Steam Subscriber Agreement</a>
+					</span>
+							</span>
+        </div>
+        <div class="responsive_optin_link">
+            <div class="btn_medium btnv6_grey_black" onclick="Responsive_RequestMobileView()">
+                <span>View mobile website</span>
+            </div>
+        </div>
+    </div>
+    <!-- /footer -->
+</body>

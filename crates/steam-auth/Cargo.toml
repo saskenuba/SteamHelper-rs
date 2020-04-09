@@ -1,0 +1,39 @@
+[package]
+name = "steam-auth"
+version = "0.1.0"
+authors = ["Martin <martin@hotmail.com.br>"]
+edition = "2018"
+
+[features]
+default = ["cli"]
+
+# This feature is used only if we want a CLI.
+cli = ["clap"]
+
+[dependencies]
+base64 = "0.12.0"
+bytes = "0.5"
+const-concat = { git = "https://github.com/reesmanp/const-concat", branch = "master" }
+hex = "0.4"
+futures = "0.3.4"
+rand = "0.7"
+rsa = "0.2"
+scraper = "0.11.0"
+serde = "1"
+serde_derive = "1.0.106"
+serde_json = "1.0.51"
+thiserror = "1.0.14"
+tokio = { version = "0.2.16", features = ["rt-core", "macros", "time"] }
+uuid = { version = "0.8.1", features = ["v4"] }
+
+# Clap 3.0
+[dependencies.clap]
+git = "https://github.com/clap-rs/clap/"
+optional = true
+
+[dependencies.steam-totp]
+path = "../steam-totp"
+
+[dependencies.reqwest]
+version = "0.10"
+features = ["json", "cookies", "gzip"]

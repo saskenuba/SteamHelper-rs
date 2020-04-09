@@ -1,0 +1,5 @@
+{
+  "shared_secret": "STRING",
+  "identity_secret": "STRING",
+  "device_id": "STRING"
+}
