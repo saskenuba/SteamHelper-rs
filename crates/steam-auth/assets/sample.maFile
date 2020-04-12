@@ -1,5 +1,5 @@
 {
-  "shared_secret": "STRING",
-  "identity_secret": "STRING",
-  "device_id": "STRING"
+  "shared_secret": "1uKA49q+1BZzaLhjTWfdzZd5D6g=",
+  "identity_secret": "\/EqfG4Sixnt0QHOk3wkUUG4uMxE=",
+  "device_id": "android:9d473c17-f575-4a28-9908-fc230eb52453"
 }

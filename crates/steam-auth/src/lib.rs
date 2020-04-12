@@ -1,87 +1,226 @@
 #![allow(dead_code)]
-#![feature(async_closure)]
+#![feature(str_strip)]
 
-use std::{collections::HashMap, fs::OpenOptions, io::Read, time::Duration};
+use std::{fs::OpenOptions, io::Read};
 
-use rand::thread_rng;
+use cookie::{Cookie, CookieJar};
 use reqwest::{header::HeaderMap, Client, Method, Response, Url};
-use rsa::{BigUint, PublicKey, RSAPublicKey};
+use scraper::Html;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use const_concat::const_concat;
 
-use crate::responses::{LoginRequest, LoginResponse, RSAResponse};
+use crate::utils::dump_cookies_by_domain;
+use std::cell::RefCell;
 
 mod errors;
-mod confirmations;
-mod responses;
-mod scraper;
+mod steam_scraper;
+mod types;
 mod utils;
+mod web_handler;
 
 /// Recommended time to allow STEAM to catch up.
 const STEAM_DELAY_MS: u64 = 350;
 /// Extension of the mobile authenticator files.
-const MOBILEAUTH_EXT: &str = ".maFile";
+const MA_FILE_EXT: &str = ".maFile";
 
-const STEAMAPI_BASE: &str = "https://api.steampowered.com";
-const COMMUNITY_BASE: &str = "https://steamcommunity.com";
+const STEAM_COMMUNITY_HOST: &str = ".steamcommunity.com";
+const STEAM_HELP_HOST: &str = ".help.steampowered.com";
+const STEAM_STORE_HOST: &str = ".store.steampowered.com";
 
-const LOGIN_GETRSA_URL: &str = const_concat!(COMMUNITY_BASE, "/login/getrsakey");
-const LOGIN_DO_URL: &str = const_concat!(COMMUNITY_BASE, "/login/dologin");
+const STEAM_COMMUNITY_BASE: &str = "https://steamcommunity.com";
+const STEAM_API_BASE: &str = "https://api.steampowered.com";
 
-const MOBILEAUTH_GETWGTOKEN: &str =
-    const_concat!(STEAMAPI_BASE, "/IMobileAuthService/GetWGToken/v0001");
-
-const TWO_FACTOR_TIME_QUERY: &str =
-    const_concat!(STEAMAPI_BASE, "/ITwoFactorService/QueryTime/v0001");
+/// used to refresh session
+const MOBILE_AUTH_GETWGTOKEN: &str =
+    const_concat!(STEAM_API_BASE, "/IMobileAuthService/GetWGToken/v0001");
 
 const MOBILE_REFERER: &str = const_concat!(
-    COMMUNITY_BASE,
-    "/mobilelogin?oauth_client_id=DE45CD61&oauth_scope=read_profile%20write_profile%20read_client%20write_client"
+    STEAM_COMMUNITY_BASE,
+    "/mobilelogin?oauth_client_id=DE45CD61&oauth_scope=read_profile%20write_profile%20read_client\
+    %20write_client"
 );
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct User {
     pub username: String,
     pub password: String,
+    pub parental_code: Option<String>,
+    pub linked_mafile: Option<MobileAuthFile>,
+    pub cached_info: CachedInfo,
 }
 
-#[derive(Debug)]
-/// Main authenticator. We use it to spawn and act as our "mobile" client.
-/// Responsible for accepting/denying trades.
-struct SteamAuthenticator {
-    pub client: reqwest::Client,
-    pub ma_file: Option<MobileAuthFile>,
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
+/// After login, we cache some information from the user so there is no need to keep manually
+/// querying Steam multiple times.
+struct CachedInfo {
+    pub steamid: Option<String>,
+    pub api_key: Option<String>,
 }
 
-/// Generate a Steam Authenticator that you use to login into the Steam Community / Steam Store.
-impl SteamAuthenticator {
+impl User {
     fn build() -> Self {
-        Self { client: create_mobile_client(), ma_file: None }
+        Self {
+            username: "".to_string(),
+            password: "".to_string(),
+            parental_code: None,
+            linked_mafile: None,
+            cached_info: Default::default(),
+        }
+    }
+
+    fn username<T: ToString>(mut self, username: T) -> Self {
+        self.username = username.to_string();
+        self
+    }
+
+    fn password<T: ToString>(mut self, password: T) -> Self {
+        self.password = password.to_string();
+        self
+    }
+
+    fn parental_code<T: ToString>(mut self, parental_code: T) -> Self {
+        self.parental_code = Some(parental_code.to_string());
+        self
     }
 
     /// Convenience function that imports the file from disk
-    fn ma_file_from_disk(mut self, path: &str) -> SteamAuthenticator {
+    fn ma_file_from_disk(mut self, path: &str) -> Self {
         let mut file = OpenOptions::new().read(true).open(path).unwrap();
         let mut buffer = String::new();
 
         file.read_to_string(&mut buffer).unwrap();
-        self.ma_file = Some(serde_json::from_str::<MobileAuthFile>(&buffer).unwrap());
+        self.linked_mafile = Some(serde_json::from_str::<MobileAuthFile>(&buffer).unwrap());
         self
     }
 
-    fn ma_file_from_string(mut self, ma_file: &str) -> SteamAuthenticator {
-        self.ma_file = Some(serde_json::from_str::<MobileAuthFile>(ma_file).unwrap());
-        self
-    }
-
-    fn finish(mut self) -> SteamAuthenticator {
+    fn ma_file_from_string(mut self, ma_file: &str) -> Self {
+        self.linked_mafile = Some(MobileAuthFile::from(ma_file));
         self
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug)]
+/// Main authenticator. We use it to spawn and act as our "mobile" client.
+/// Responsible for accepting/denying trades, and some other operations
+/// that may or not be related to only mobile operations.
+struct SteamAuthenticator {
+    pub client: MobileClient,
+    pub user: User,
+}
+
+#[derive(Debug)]
+struct MobileClient {
+    /// Standard HTTP Client to make requests.
+    pub client: reqwest::Client,
+    /// We manually handle cookies, because reqwest is just not good at it.
+    pub cookie_store: RefCell<CookieJar>,
+}
+
+impl MobileClient {
+    async fn request_ensure_login<T: Serialize>(
+        &self,
+        url: &str,
+        method: reqwest::Method,
+        custom_headers: Option<HeaderMap>,
+        data: Option<T>,
+    ) {
+        unimplemented!()
+    }
+
+    // remember that we need to disallow redirects
+    // because it may redirect us to weird paths, such as steamobile://xxx
+    async fn request<T: Serialize>(
+        &self,
+        url: &str,
+        method: reqwest::Method,
+        custom_headers: Option<HeaderMap>,
+        data: Option<T>,
+    ) -> Result<Response, reqwest::Error> {
+        let parsed_url = Url::parse(url).unwrap();
+        let mut header_map = custom_headers.unwrap_or_default();
+
+        // Send cookies from jar, based on domain
+        let domain = &format!(".{}", parsed_url.host_str().unwrap());
+        let domain_cookies = dump_cookies_by_domain(
+            &self.cookie_store.borrow(),
+            domain,
+        );
+        header_map.insert(
+            reqwest::header::COOKIE,
+            domain_cookies.unwrap_or_else(|| "".to_string()).parse().unwrap(),
+        );
+
+        let req_builder = self.client.request(method, parsed_url).headers(header_map);
+
+        let request = match data {
+            None => req_builder.build().unwrap(),
+            Some(data) => req_builder.form(&data).build().unwrap(),
+        };
+
+        // dbg!(&request);
+        Ok(self.client.execute(request).await?)
+    }
+
+    /// Convenience function to retrieve HTML
+    async fn get_html(&self, url: &str) -> Result<Html, reqwest::Error> {
+        let response = self.request(url, Method::GET, None, None::<&str>).await?;
+        let response_text = response.text().await?;
+        let _html_document = Html::parse_document(&response_text);
+
+        Ok(_html_document)
+    }
+
+    /// Initiate cookie jar with mobile cookies
+    fn init_cookie_jar() -> CookieJar {
+        let mut mobile_cookies = CookieJar::new();
+        mobile_cookies.add(Cookie::build("Steam_Language", "english").domain(STEAM_COMMUNITY_HOST).finish());
+        mobile_cookies.add(Cookie::build("mobileClient", "android").domain(STEAM_COMMUNITY_HOST).finish());
+        mobile_cookies.add(Cookie::build("mobileClientVersion", "0 (2.1.3)").domain(STEAM_COMMUNITY_HOST).finish());
+        mobile_cookies
+    }
+
+    /// Initiate mobile client with default headers
+    fn init_mobile_client() -> Client {
+        let user_agent = "Mozilla/5.0 (Linux; U; Android 4.1.1; en-us; Google Nexus 4 - 4.1.1 - \
+    API 16 - 768x1280 Build/JRO03S) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30";
+        let mut default_headers = HeaderMap::new();
+        default_headers.insert(
+            reqwest::header::ACCEPT,
+            "text/javascript, text/html, application/xml, text/xml, */*".parse().unwrap(),
+        );
+        default_headers.insert(reqwest::header::REFERER, MOBILE_REFERER.parse().unwrap());
+
+        default_headers.insert(
+            "X-Requested-With",
+            "com.valvesoftware.android.steam.community".parse().unwrap(),
+        );
+
+        reqwest::Client::builder()
+            .cookie_store(true)
+            .user_agent(user_agent)
+            .default_headers(default_headers)
+            .referer(false)
+            .build()
+            .unwrap()
+    }
+}
+
+impl Default for MobileClient {
+    fn default() -> Self {
+        Self { client: Self::init_mobile_client(), cookie_store: RefCell::new(Self::init_cookie_jar()) }
+    }
+}
+
+/// Generate a Steam Authenticator that you use to login into the Steam Community / Steam Store.
+impl SteamAuthenticator {
+    fn new(user: User) -> Self {
+        Self { client: MobileClient::default(), user }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
 /// The MobileAuthFile (.maFile) is the standard that some custom authenticators use to
 /// save the auth secrets to disk. It follows the json format.
 struct MobileAuthFile {
@@ -91,152 +230,32 @@ struct MobileAuthFile {
     /// The shared secret is used to generate TOTP codes.
     shared_secret: String,
     /// Device ID is used to generate the confirmation links for our trade requests.
-    /// Can be generated randomly.
+    /// Can be retrieved from mobile device, such as a rooted android, iOS, or generated randomly if
+    /// creating our own authenticator.
+    /// Needed for confirmations to trade to work properly.
     device_id: Option<String>,
+    /// Used if shared secret is lost. Please, don't lose it.
+    recovery_code: Option<String>,
+}
+
+impl From<&str> for MobileAuthFile {
+    fn from(string: &str) -> Self {
+        serde_json::from_str(string).unwrap()
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 /// Identifies the mobile device and needed to generate confirmation links.
+/// It is on the format of a UUID V4.
 struct DeviceId(String);
 
 impl DeviceId {
     const PREFIX: &'static str = "android:";
 
-    /// Generates a random device ID on the format of 'android:780c3700-2b4f-4b9a-a196-9af6e6010d09'
+    /// Generates a random device ID on the format of UUID v4
+    /// Example: android:780c3700-2b4f-4b9a-a196-9af6e6010d09
     pub fn generate() -> Self {
         Self { 0: Self::PREFIX.to_owned() + &Uuid::new_v4().to_string() }
     }
     pub fn validate() {}
-}
-
-fn create_mobile_client() -> Client {
-    let user_agent = "Mozilla/5.0 (Linux; U; Android 4.1.1; en-us; Google Nexus 4 - 4.1.1 - \
-    API 16 - 768x1280 Build/JRO03S) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30";
-    let mut default_headers = HeaderMap::new();
-    default_headers.insert(
-        reqwest::header::ACCEPT,
-        "text/javascript, text/html, application/xml, text/xml, */*".parse().unwrap(),
-    );
-    default_headers.insert(reqwest::header::REFERER, MOBILE_REFERER.parse().unwrap());
-
-    // steam-auth uses it, so we use it too
-    default_headers
-        .insert("X-Requested-With", "com.valvesoftware.android.steam.community".parse().unwrap());
-
-    // mobile cookies
-    default_headers.insert(
-        reqwest::header::COOKIE,
-        "Steam_Language=english; mobileClient=android; mobileClientVersion=0 (2.1.3); Path=/; \
-        Domain=.steamcommunity.com"
-            .parse()
-            .unwrap(),
-    );
-
-    reqwest::Client::builder()
-        .cookie_store(true)
-        .user_agent(user_agent)
-        .default_headers(default_headers)
-        .referer(false)
-        .build()
-        .unwrap()
-}
-
-async fn mobile_request<T: Serialize>(
-    client: &Client,
-    url: &str,
-    method: reqwest::Method,
-    custom_headers: Option<HeaderMap>,
-    data: Option<T>,
-) -> Response {
-    let referer = MOBILE_REFERER;
-    dbg!(&client);
-
-    let pre_client = client
-        .request(method, Url::parse(url).unwrap())
-        .headers(custom_headers.unwrap_or_default());
-
-    let request = match data {
-        None => pre_client.build().unwrap(),
-        Some(data) => pre_client.form(&data).build().unwrap(),
-    };
-
-    dbg!(&request);
-
-    client.execute(request).await.unwrap()
-}
-
-async fn login(user: User) {
-    let client = create_mobile_client();
-
-    // load Session cookies
-    mobile_request(&client, MOBILE_REFERER, Method::GET, None, None::<&str>).await;
-
-    let mut post_data = HashMap::new();
-    let steam_time_offset = (steam_totp::time::Time::offset().await.unwrap() * 1000).to_string();
-    post_data.insert("donotcache", steam_time_offset.as_str());
-    post_data.insert("username", &user.username);
-
-    let rsa_response =
-        mobile_request(&client, LOGIN_GETRSA_URL, Method::POST, None, Some(post_data.clone()))
-            .await;
-
-    let response = rsa_response.json::<RSAResponse>().await.unwrap();
-    println!("response: {:?}", response);
-
-    // wait for steam to catch up
-    tokio::time::delay_for(Duration::from_millis(STEAM_DELAY_MS)).await;
-
-    // rsa handling
-    let password_bytes = user.password.as_bytes();
-    let modulus = hex::decode(response.modulus).unwrap();
-    let exponent = hex::decode(response.exponent).unwrap();
-    let rsa_encryptor =
-        RSAPublicKey::new(BigUint::from_bytes_be(&*modulus), BigUint::from_bytes_be(&*exponent))
-            .unwrap();
-
-    let mut random_gen = thread_rng();
-    let encrypted_pwd_bytes = rsa_encryptor
-        .encrypt(&mut random_gen, rsa::padding::PaddingScheme::PKCS1v15, password_bytes)
-        .unwrap();
-    let encrypted_pwd_b64 = base64::encode(encrypted_pwd_bytes);
-
-    // finish login
-    let two_factor_code: Option<&str> = None;
-    let require_captcha: Option<&str> = None;
-    let require_2fa: Option<&str> = None;
-    let require_email: Option<&str> = None;
-
-    post_data.clear();
-    let steam_time_offset = (steam_totp::time::Time::offset().await.unwrap() * 1000).to_string();
-
-    let login_request = LoginRequest {
-        donotcache: &steam_time_offset,
-        password: &encrypted_pwd_b64,
-        username: &user.username,
-        twofactorcode: two_factor_code.unwrap_or(""),
-        emailauth: "".to_string(),
-        loginfriendlyname: "".to_string(),
-        captchagid: require_captcha.unwrap_or("-1"),
-        captcha_text: require_captcha.unwrap_or(""),
-        emailsteamid: "".to_string(),
-        rsatimestamp: response.timestamp,
-        ..Default::default()
-    };
-
-    let login_response =
-        mobile_request(&client, LOGIN_DO_URL, Method::POST, None, Some(login_request)).await;
-    dbg!(&login_response);
-
-    let login_response_json = login_response.json::<LoginResponse>().await;
-    println!("Login response: {:?}", login_response_json);
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::{SteamAuthenticator, User};
-
-    #[test]
-    fn test_new_authenticator_with_ma_file() {
-        SteamAuthenticator::build().ma_file_from_disk("assets/sample.maFile");
-    }
 }

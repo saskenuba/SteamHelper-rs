@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub(crate) enum ApiKeyError {
+pub enum ApiKeyError {
     #[error("General Failure: `{0}`")]
     GeneralError(String),
     #[error("This key is unavailable for registering.")]
