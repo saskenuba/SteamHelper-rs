@@ -1,11 +1,22 @@
+use std::error::Error;
+use std::str::FromStr;
+
 use bitvec::prelude::*;
 use regex::{Regex, RegexBuilder};
-use std::error::Error;
+
+use steam_language_gen::generated::enums::{EAccountType, EUniverse};
+
+use crate::enum_primitive::FromPrimitive;
+
+// TODO - Error catching
 
 #[allow(clippy::invalid_regex)]
 lazy_static! {
-    static ref REGEX_STEAM2: Regex = Regex::new(r"STEAM_(?<universe>[0-4]):(?<authserver>[0-1]):(?<accountid>\d+)").unwrap();
-    static ref REGEX_STEAM3: Regex = Regex::new(r"\[(?<type>[AGMPCgcLTIUai]):(?<universe>[0-4]):(?<account>\d+)(:(?<instance>\d+))]").unwrap();
+    static ref REGEX_STEAM2: Regex =
+        Regex::new(r"STEAM_(?P<universe>[0-4]):(?P<authserver>[0-1]):(?P<accountid>\d+)").unwrap();
+    static ref REGEX_STEAM3: Regex = Regex::new(
+        r"\[(?P<type>[AGMPCgcLTIUai]):(?P<universe>[0-4]):(?P<account>\d+)\]") .unwrap();
+    static ref REGEX_STEAM64: Regex = Regex::new(r"(?P<account>7\d{16})").unwrap();
     static ref REGEX_STEAM3_FALLBACK: Regex = Regex::new(r"").unwrap();
 }
 
@@ -17,8 +28,9 @@ pub struct SteamID {
     /// Account Number. Z
     account_number: BitVec<Msb0, u64>,
     account_instance: BitVec<Msb0, u64>,
+    /// 4 Bits.
     account_type: BitVec<Msb0, u64>,
-    /// Universe
+    /// Universe. 8 Bits
     universe: BitVec<Msb0, u64>,
 }
 
@@ -26,7 +38,7 @@ pub struct SteamID {
 impl SteamID {
     /// Using the formula W=Z*2+Y, a SteamID can be converted to the following link:
     /// http or https://steamcommunity.com/path/[letter:1:W]
-    fn to_steam32(&self) -> u64 {
+    fn to_steam3(&self) -> u64 {
         let steamid64_identifier: u64 = 0x0110_0001_0000_0000;
 
         let z = self.account_number.load::<u64>();
@@ -52,6 +64,22 @@ impl SteamID {
         vec[1..].load::<u64>()
     }
 
+    // still need to parse account type letter
+    fn from_steam3(steam3: u32, universe: EUniverse, account_type: EAccountType) -> Self {
+        let account_number = ((steam3 - 1) / 2) as u64;
+        let universe = universe as u64;
+        let account_type = account_type as u64;
+        let instance = 1u64;
+
+        Self {
+            account_id: true,
+            account_number: BitVec::from(&account_number.bits()[33..]),
+            account_instance: BitVec::from(&instance.bits()[44..]),
+            account_type: BitVec::from(&account_type.bits()[60..]),
+            universe: universe.bits()[56..].to_vec(),
+        }
+    }
+
     fn from_steam64(steam64: u64) -> Self {
         let steam_as_bits = steam64.bits::<Msb0>();
         let steamid_len = steam_as_bits.len() - 1;
@@ -66,20 +94,32 @@ impl SteamID {
     }
 
     /// Utility function
-    fn parse() -> Self {
-        unimplemented!()
+    fn parse(steamid: &str) -> Option<Self> {
+        if REGEX_STEAM3.is_match(steamid) {
+            let captures = REGEX_STEAM3.captures(steamid).unwrap();
+
+            // since it matched we can unwrap
+            let account_number = captures.name("account").unwrap();
+            let account_universe = captures.name("universe").unwrap();
+
+            // TODO - For Type we need to parse the letters
+            let account_type = captures.name("type").unwrap();
+            let account_instance = captures.name("instance");
+
+            return Some(Self::from_steam3(
+                (account_number.as_str()).parse().unwrap(),
+                EUniverse::from_u32(u32::from_str(account_universe.as_str()).unwrap()).unwrap(),
+                EAccountType::Individual,
+            ));
+        } else if REGEX_STEAM64.is_match(steamid) {
+            let captures = REGEX_STEAM64.captures(steamid).unwrap();
+            let number = captures.name("account").unwrap();
+
+            return Some(Self::from_steam64(u64::from_str(number.as_str()).unwrap()));
+        }
+        None
     }
 }
-
-enum SteamId {
-    Steam2,
-    Steam3,
-    Steam64,
-    SteamGUID,
-}
-
-impl SteamId {}
-
 
 #[cfg(test)]
 mod tests {
@@ -87,30 +127,59 @@ mod tests {
 
     // We are using this for our tests:
     // https://steamidfinder.com/lookup/76561198092541763/
-    fn get_steam_id_64() -> u64 {
+    fn get_steam64() -> u64 {
         76_561_198_092_541_763
     }
 
-    fn get_steam_id_32() -> u64 {
+    fn get_steam3() -> u64 {
         132_276_035
     }
 
-    #[test]
-    fn steamid_from_u64() {
-        let steamid = SteamID::from_steam64(get_steam_id_64());
+    fn get_steam3_unformatted() -> &'static str {
+        "[U:1:132276035]"
     }
 
     #[test]
-    fn steamid_to_u64() {
-        let steamid = SteamID::from_steam64(get_steam_id_64());
+    fn steamid_from_steam64() {
+        let steamid = SteamID::from_steam64(get_steam64());
+    }
+
+    #[test]
+    fn steamid_to_steam64() {
+        let steamid = SteamID::from_steam64(get_steam64());
         let steam64 = steamid.to_steam64();
-        assert_eq!(steam64, get_steam_id_64())
+        assert_eq!(steam64, get_steam64())
     }
 
     #[test]
-    fn steamid_to_steam32() {
-        let steamid = SteamID::from_steam64(get_steam_id_64());
-        let steam32 = steamid.to_steam32();
-        assert_eq!(steam32, get_steam_id_32())
+    fn steamid_to_steam3() {
+        let steamid = SteamID::from_steam64(get_steam64());
+        let steam32 = steamid.to_steam3();
+        assert_eq!(steam32, get_steam3())
+    }
+
+    #[test]
+    fn steamid_from_steam3() {
+        let steamid =
+            SteamID::from_steam3(
+                get_steam3() as u32,
+                EUniverse::Public,
+                EAccountType::Individual,
+            );
+        assert_eq!(steamid.to_steam64(), get_steam64())
+    }
+
+    #[test]
+    fn steam64_parse() {
+        let formatted_steamid = format!("text {} xxaasssddff", get_steam64());
+        let steamid = SteamID::parse(&formatted_steamid).unwrap();
+        assert_eq!(steamid.to_steam64(), get_steam64());
+    }
+
+    #[test]
+    fn steam3_parse() {
+        let formatted_steamid = format!("text {} xxaasssddff", get_steam3_unformatted());
+        let steamid = SteamID::parse(&formatted_steamid).unwrap();
+        assert_eq!(steamid.to_steam64(), get_steam64());
     }
 }
