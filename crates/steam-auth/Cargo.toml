@@ -15,14 +15,15 @@ base64 = "0.12.0"
 bytes = "0.5"
 const-concat = { git = "https://github.com/reesmanp/const-concat", branch = "master" }
 cookie = { git = "https://github.com/saskenuba/cookie-rs", branch = "master" }
-hex = "0.4"
 futures = "0.3.4"
+hex = "0.4"
 rand = "0.7"
 rsa = "0.2"
 scraper = "0.11.0"
 serde = "1"
 serde_derive = "1.0.106"
 serde_json = "1.0.51"
+serde_repr = "0.1.5"
 serde_with = { version =  "1.4.0", features = ["json"] }
 thiserror = "1.0.14"
 tokio = { version = "0.2.16", features = ["rt-core", "macros", "time"] }
@@ -38,6 +39,9 @@ path = "../steam-totp"
 
 [dependencies.steam-crypto]
 path = "../steam-crypto"
+
+[dependencies.steam-language-gen]
+path = "../steam-language-gen"
 
 [dependencies.steamid-parser]
 path = "../steamid-parser"

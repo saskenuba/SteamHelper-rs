@@ -1,5 +1,56 @@
-use crate::SteamAuthenticator;
 use serde::{Deserialize, Serialize};
+use steam_language_gen::generated::enums::{ETradeOfferState, ETradeOfferConfirmationMethod};
+
+#[derive(Serialize, Debug, Clone)]
+pub struct IEconServiceGetTradeOffersRequest {
+    pub active_only: u8,
+    pub get_descriptions: u8,
+    pub get_sent_offers: u8,
+    pub get_received_offers: u8,
+    #[serde(rename = "key")]
+    pub api_key: String,
+    pub time_historical_cutoff: u32,
+}
+
+impl Default for IEconServiceGetTradeOffersRequest {
+    fn default() -> Self {
+        Self {
+            active_only: 1,
+            get_descriptions: 1,
+            get_received_offers: 1,
+            get_sent_offers: 0,
+            api_key: "".to_string(),
+            time_historical_cutoff: u32::max_value(),
+        }
+    }
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct PhoneAjaxRequest<'a> {
+    #[serde(rename = "op")]
+    pub operation: &'a str,
+    #[serde(rename = "arg")]
+    pub operation_arg: &'a str,
+    pub sessionid: &'a str,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct CheckSmsCodeRequest<'a> {
+    pub skipvoip: &'a str,
+    pub checkfortos: &'a str,
+    #[serde(flatten)]
+    pub ops: PhoneAjaxRequest<'a>,
+}
+
+impl<'a> Default for CheckSmsCodeRequest<'a> {
+    fn default() -> Self {
+        Self {
+            skipvoip: "1",
+            checkfortos: "0",
+            ops: PhoneAjaxRequest { operation: "check_sms_code", operation_arg: "", sessionid: "" },
+        }
+    }
+}
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct RSAResponse {
@@ -87,8 +138,30 @@ pub struct Oauth {
     pub wgtoken_secure: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct AddAuthenticator {
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct FinalizeAddAuthenticatorBase {
+    pub response: FinalizeAddAuthenticatorResponse,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct FinalizeAddAuthenticatorResponse {
+    pub status: String,
+    pub server_time: String,
+    pub want_more: String,
+    pub success: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct FinalizeAddAuthenticatorRequest<'a> {
+    pub access_token: &'a str,
+    pub activation_code: &'a str,
+    pub authenticator_code: &'a str,
+    pub authenticator_time: &'a str,
+    pub steamid: &'a str,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct AddAuthenticatorRequest {
     pub access_token: String,
     pub steamid: String,
     pub authenticator_type: String,
@@ -96,7 +169,7 @@ pub struct AddAuthenticator {
     pub sms_phone_id: String,
 }
 
-impl Default for AddAuthenticator {
+impl Default for AddAuthenticatorRequest {
     fn default() -> Self {
         Self {
             access_token: "".to_string(),
@@ -105,6 +178,21 @@ impl Default for AddAuthenticator {
             device_identifier: "".to_string(),
             sms_phone_id: "1".to_string(),
         }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct RemoveAuthenticatorRequest<'a> {
+    pub steamid: &'a str,
+    pub steamguard_scheme: &'a str,
+    pub revocation_code: &'a str,
+    /// This is also known as the oauth token. We receive it after the mobile logOn.
+    pub access_token: &'a str,
+}
+
+impl<'a> Default for RemoveAuthenticatorRequest<'a> {
+    fn default() -> Self {
+        Self { steamid: "", steamguard_scheme: "2", revocation_code: "", access_token: "" }
     }
 }
 
@@ -155,4 +243,51 @@ pub struct ResolveVanityUrlRequest {
     api_key: String,
     #[serde(rename = "vanityurl")]
     vanity_url: String,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct IEconServiceGetTradeOffersResponse {
+    pub trade_offers_sent: Vec<CEcon_TradeOffer>,
+    pub trade_offers_received: Vec<CEcon_TradeOffer>,
+    pub descriptions: Descriptions,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct Descriptions {
+    #[serde(with = "serde_with::rust::display_fromstr")]
+    pub appid: u32,
+    #[serde(with = "serde_with::rust::display_fromstr")]
+    pub classid: u64,
+    #[serde(with = "serde_with::rust::display_fromstr")]
+    pub instanceid: u64,
+    #[serde(with = "serde_with::rust::display_fromstr")]
+    pub marketable: bool,
+    pub tradable: String,
+}
+
+/// Represents a steam trade offer.
+/// Returned by GetTradeOffers (vector) and GetTradeOffer.
+#[derive(Deserialize, Debug, Clone)]
+pub struct CEcon_TradeOffer {
+    /// Unique ID generated when a trade offer is created
+    #[serde(with = "serde_with::rust::display_fromstr")]
+    tradeofferid: u64,
+    #[serde(with = "serde_with::rust::display_fromstr")]
+    /// the other steamid in the format of steamid3?
+    accountid_other: u32,
+    /// Message included by the creator of the trade offer
+    message: String,
+    expiration_time: String,
+    /// State of trade offer
+    trade_offer_state: ETradeOfferState,
+    items_to_give: String,
+    items_to_receive: String,
+    /// Indicates the account binded with the api key requested this trade
+    #[serde(with = "serde_with::rust::display_fromstr")]
+    is_our_offer: bool,
+    time_created: String,
+    time_updated: String,
+    from_real_time_trade: String,
+    escrow_end_date: String,
+    confirmation_method: ETradeOfferConfirmationMethod,
 }

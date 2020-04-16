@@ -10,14 +10,14 @@ use thiserror::Error;
 use const_concat::const_concat;
 use steam_totp::{Secret, Time};
 
+use crate::{MOBILE_REFERER, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_DELAY_MS, STEAM_HELP_HOST, STEAM_STORE_HOST, User, STEAM_STORE_BASE};
+use crate::client::MobileClient;
 use crate::types::{LoginRequest, LoginResponseMobile, RSAResponse};
-use crate::{
-    MobileClient, User, MOBILE_REFERER, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_DELAY_MS,
-    STEAM_HELP_HOST, STEAM_STORE_HOST,
-};
 
 const LOGIN_GETRSA_URL: &str = const_concat!(STEAM_COMMUNITY_BASE, "/login/getrsakey");
 const LOGIN_DO_URL: &str = const_concat!(STEAM_COMMUNITY_BASE, "/login/dologin");
+
+type LoginResult<T> = Result<T, LoginError>;
 
 #[derive(Error, Debug)]
 enum LoginError {
@@ -32,14 +32,14 @@ enum LoginError {
 /// This method is used to login through Steam ISteamAuthUser interface.
 /// Webapi_nonce is received by connecting to the Steam Network. Currently not possible.
 /// For website login check [login_website]
-async fn login_isteam_user_auth(_client: &Client, user: User, _webapi_nonce: &[u8]) {
-    let session_key = steam_crypto::generate_session_key(None).unwrap();
+async fn login_isteam_user_auth(_client: &Client, _user: User, _webapi_nonce: &[u8]) -> LoginResult<()> {
+    let _session_key = steam_crypto::generate_session_key(None).unwrap();
 
     unimplemented!();
 }
 
 /// Website has some quirks to login. Here we handle it.
-fn login_website_handle_rsa(user: &User, response: RSAResponse) -> String {
+fn website_handle_rsa(user: &User, response: RSAResponse) -> String {
     let password_bytes = user.password.as_bytes();
     let modulus = hex::decode(response.modulus).unwrap();
     let exponent = hex::decode(response.exponent).unwrap();
@@ -69,7 +69,7 @@ fn login_website_handle_rsa(user: &User, response: RSAResponse) -> String {
 //
 // Should accept closure to handle cases such as needing a captcha or sms.
 // But the best way is to have it already setup to use TOTP codes.
-async fn login_website(client: &MobileClient, user: User) -> Result<(), LoginError> {
+async fn login_website(client: &MobileClient, user: User) -> LoginResult<()> {
     // load Session cookies ( we can create it also, but we need steamid )
     client.request(MOBILE_REFERER, Method::GET, None, None::<&str>).await?;
 
@@ -86,19 +86,16 @@ async fn login_website(client: &MobileClient, user: User) -> Result<(), LoginErr
 
     // rsa handling
     let response = rsa_response.json::<RSAResponse>().await.unwrap();
-    let encrypted_pwd_b64 = login_website_handle_rsa(&user, response.clone());
+    let encrypted_pwd_b64 = website_handle_rsa(&user, response.clone());
 
-    post_data.clear();
     let offset = Time::offset().await.unwrap();
     let time = Time::now(Some(offset)).unwrap();
 
     let steam_time_offset = (offset * 1000).to_string();
-    let two_factor_code = match user.linked_mafile {
-        None => "".to_string(),
-        Some(mafile) => {
-            steam_totp::generate_auth_code(Secret::from_b64(&mafile.shared_secret).unwrap(), time)
-        }
-    };
+    let two_factor_code = user.linked_mafile
+        .map(|f| Secret::from_b64(&f.shared_secret).unwrap())
+        .map(|s| steam_totp::generate_auth_code(s, time))
+        .unwrap_or_else(|| "".to_string());
 
     let login_request = LoginRequest {
         donotcache: &steam_time_offset,
@@ -116,14 +113,8 @@ async fn login_website(client: &MobileClient, user: User) -> Result<(), LoginErr
     let login_response =
         client.request(LOGIN_DO_URL, Method::POST, None, Some(login_request)).await?;
 
-    let login_response_json = match login_response.json::<LoginResponseMobile>().await {
-        Ok(resp) => resp,
-        Err(_) => {
-            return Err(LoginError::GeneralFailure(
-                "Non mobile response detected. Contact maintainer.".to_string(),
-            ));
-        }
-    };
+    let login_response_json = login_response.json::<LoginResponseMobile>().await
+        .map_err(|_| LoginError::GeneralFailure("Non mobile response detected. Contact maintainer.".to_string()))?;
 
     let steamid = login_response_json.oauth.steamid;
     let token = login_response_json.oauth.wgtoken;
@@ -151,17 +142,40 @@ async fn login_website(client: &MobileClient, user: User) -> Result<(), LoginErr
     Ok(())
 }
 
-async fn session_refresh() {}
+async fn session_refresh(_client: &MobileClient) {
+    // run login again
+    unimplemented!()
+}
 
-async fn session_is_expired(url: &str) {
-    let parsed_url = Url::parse(url).unwrap();
+/// Checks if session is expired by parsing the the redirect URL
+/// 'steamobile:://lostauth' or something that has '/login' as path
+async fn session_is_expired(client: &MobileClient) -> Result<bool, LoginError> {
+    let url = format!("{}/account", STEAM_STORE_BASE);
+    let response = client.request_with_session_guard(
+        &url,
+        Method::HEAD,
+        None,
+        None::<&str>,
+    ).await?;
+
+    let parsed_url = response.headers()
+        .get(reqwest::header::LOCATION)
+        .map(|url| Url::parse(url.to_str().unwrap()).unwrap());
+
+    match parsed_url {
+        // No redirections, then not expired
+        None => Ok(false),
+        Some(url) => {
+            Ok(url.host_str().unwrap_or("") == "lostauth" ||
+                url.path().starts_with("/login"))
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::SteamAuthenticator;
-
-    use super::*;
+    use crate::client::SteamAuthenticator;
+    use crate::User;
 
     #[tokio::test]
     async fn test_login() {
@@ -170,8 +184,8 @@ mod tests {
             .password("test")
             .parental_code("1111")
             .ma_file_from_disk("assets/sample.maFile");
-        let client = SteamAuthenticator::new(my_user.clone());
+        SteamAuthenticator::new(my_user.clone());
 
-        login_website(&client.client, my_user).await.unwrap();
+        // login_website(client.client(), my_user).await.unwrap();
     }
 }
