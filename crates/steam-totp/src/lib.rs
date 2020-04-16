@@ -21,15 +21,16 @@
 //! # }
 //! ```
 
+use std::result;
+
+use byteorder::{ByteOrder, BigEndian};
+use sha1::{Digest, Sha1};
+
 pub use secret::Secret;
 pub use time::Time;
 
-use bytes::{BigEndian, ByteOrder};
-use sha1::{Digest, Sha1};
-use std::result;
-
 pub mod error;
-mod time;
+pub mod time;
 mod secret;
 pub mod steam_api;
 
@@ -47,7 +48,7 @@ pub fn generate_auth_code(mut shared_secret: Secret, time: Time) -> String {
         let start = hmac[19] as usize & 0x0F;
         let code = &hmac[start..start + 4];
 
-        BigEndian::read_u32(&code) as usize & 0x7FFFFFFF
+        BigEndian::read_u32(&code) as usize & 0x7FFF_FFFF
     }
 
     fn derive_2fa_code(fullcode: usize) -> String {
@@ -99,7 +100,7 @@ pub fn generate_confirmation_key(
         let mut buffer = time.as_padded_buffer(None);
 
         if let Some(x) = tag {
-            let mut tag = x.as_bytes().into_iter().take(32).map(|x| x.to_owned()).collect();
+            let mut tag = x.as_bytes().iter().take(32).map(|x| x.to_owned()).collect();
             buffer.append(&mut tag);
         }
         buffer

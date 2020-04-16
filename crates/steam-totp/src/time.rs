@@ -1,15 +1,23 @@
-use super::{
-    Result,
-    error::{TotpError, SteamApiError},
-    steam_api::SteamApiResponse,
-};
-use bytes::{BigEndian, ByteOrder};
-use reqwest;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use byteorder::{BigEndian, ByteOrder};
+use serde::export::Formatter;
+
+use super::{
+    error::{SteamApiError, TotpError},
+    Result,
+    steam_api::SteamApiResponse,
+};
+
 /// Struct for working with TOTP time values.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct Time(pub(crate) u64);
+
+impl std::fmt::Display for Time {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 impl Time {
     /// Creates a Time struct with the current local Unix time in seconds, plus
@@ -47,7 +55,7 @@ impl Time {
                 .await?;
 
             if res.status() != reqwest::StatusCode::OK {
-                return Err(TotpError::from(SteamApiError::BadStatusCode(res)))
+                return Err(TotpError::from(SteamApiError::BadStatusCode(res)));
             }
 
             res.json::<SteamApiResponse>().await?
@@ -57,11 +65,13 @@ impl Time {
             Ok(x) => x,
             Err(_) => {
                 return Err(TotpError::from(SteamApiError::ParseServerTime(response)));
-            },
+            }
         };
 
         let now_secs = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
-        Ok(server_time - now_secs)
+        let offset = server_time.saturating_sub(now_secs);
+
+        Ok(offset)
     }
 
     /// Returns a `Time` value with computed offset from Steam servers.
