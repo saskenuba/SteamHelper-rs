@@ -39,6 +39,9 @@ path = "../steam-totp"
 [dependencies.steam-crypto]
 path = "../steam-crypto"
 
+[dependencies.steamid-parser]
+path = "../steamid-parser"
+
 [dependencies.reqwest]
 version = "0.10"
 features = ["json", "cookies", "gzip"]

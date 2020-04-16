@@ -1,9 +1,14 @@
-use crate::cmserver::CmServerSvList;
-use crate::config::SteamConfiguration;
-use crate::connection::SteamConnection;
-use crate::steam_id::SteamID;
+use std::error::Error;
 
-struct SteamClient<S> {
+use crate::{
+    cmserver::CmServerSvList,
+    config::SteamConfiguration,
+    connection::SteamConnection,
+};
+
+use steamid_parser::SteamID;
+
+pub struct SteamClient<S> {
     /// Could be standard tcp or websockets (default).
     connection: SteamConnection<S>,
     /// Configuration to be used.

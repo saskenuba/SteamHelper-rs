@@ -40,8 +40,11 @@ futures = "0.3.4"
 # emsg parsing
 arrayref = "0.3"
 derive-new = "*"
-enum_primitive = "*"
 num = "0.2"
+tokio-util = "0.2"
+
+tracing = "0.1"
+tracing-futures = "0.2"
 
 # Dealing asynchronously to streams
 [dependencies.tokio]
@@ -85,6 +88,9 @@ path = "../steam-language-gen"
 
 [dependencies.steam-language-gen-derive]
 path = "../steam-language-gen-derive"
+
+[dependencies.steamid-parser]
+path = "../steamid-parser"
 
 [dev-dependencies]
 env_logger = { version = "*", features = ["termcolor"] }

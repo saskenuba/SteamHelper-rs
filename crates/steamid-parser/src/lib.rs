@@ -1,26 +1,45 @@
-use std::error::Error;
 use std::str::FromStr;
 
 use bitvec::prelude::*;
-use regex::{Regex, RegexBuilder};
+use num::FromPrimitive;
+use regex::Regex;
 
+use lazy_static::lazy_static;
 use steam_language_gen::generated::enums::{EAccountType, EUniverse};
-
-use crate::enum_primitive::FromPrimitive;
 
 // TODO - Error catching
 
-#[allow(clippy::invalid_regex)]
 lazy_static! {
     static ref REGEX_STEAM2: Regex =
         Regex::new(r"STEAM_(?P<universe>[0-4]):(?P<authserver>[0-1]):(?P<accountid>\d+)").unwrap();
-    static ref REGEX_STEAM3: Regex = Regex::new(
-        r"\[(?P<type>[AGMPCgcLTIUai]):(?P<universe>[0-4]):(?P<account>\d+)\]") .unwrap();
+    static ref REGEX_STEAM3: Regex =
+        Regex::new(r"\[(?P<type>[AGMPCgcLTIUai]):(?P<universe>[0-4]):(?P<account>\d+)\]").unwrap();
     static ref REGEX_STEAM64: Regex = Regex::new(r"(?P<account>7\d{16})").unwrap();
     static ref REGEX_STEAM3_FALLBACK: Regex = Regex::new(r"").unwrap();
 }
 
-#[derive(Debug)]
+struct AccountType(EAccountType);
+
+impl AccountType {
+    fn new(identifier: &str) -> Option<Self> {
+        let kind = match identifier {
+            "A" => EAccountType::AnonGameServer,
+            "G" => EAccountType::GameServer,
+            "M" => EAccountType::Multiseat,
+            "P" => EAccountType::Pending,
+            "C" => EAccountType::ContentServer,
+            "g" => EAccountType::Clan,
+            "T" => EAccountType::Chat,
+            "I" => EAccountType::Invalid,
+            "U" => EAccountType::Individual,
+            "a" => EAccountType::AnonUser,
+            _ => return None,
+        };
+        Some(Self { 0: kind })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 /// Let X, Y and Z constants be defined by the SteamID: STEAM_X:Y:Z.
 pub struct SteamID {
     /// ID number of account. Either 0 or 1
@@ -36,8 +55,8 @@ pub struct SteamID {
 
 /// Reference: https://developer.valvesoftware.com/wiki/SteamID
 impl SteamID {
-    /// Using the formula W=Z*2+Y, a SteamID can be converted to the following link:
-    /// http or https://steamcommunity.com/path/[letter:1:W]
+    /// Using the formula W=Z*2+Y, a SteamID can be converted to Steam3.
+    /// Source: https://steamcommunity.com/path/[letter:1:W]
     fn to_steam3(&self) -> u64 {
         let steamid64_identifier: u64 = 0x0110_0001_0000_0000;
 
@@ -56,19 +75,22 @@ impl SteamID {
         vec.extend_from_slice(self.account_number.as_bitslice());
         vec.push(self.account_id);
 
-        trace!("Generated STEAM64: {:?}", vec);
-        trace!("Generated STEAM64 len: {:?}", vec.len());
-
         // this should be ..64, we are omitting a initial zero(first bit)
         // from the steamID
         vec[1..].load::<u64>()
     }
 
-    // still need to parse account type letter
-    fn from_steam3(steam3: u32, universe: EUniverse, account_type: EAccountType) -> Self {
+    /// Creates a new SteamID from the Steam3 format.
+    /// Defaults to Public universe, and Individual account.
+    /// You can use the parse utility function.
+    fn from_steam3(
+        steam3: u32,
+        universe: Option<EUniverse>,
+        account_type: Option<EAccountType>,
+    ) -> Self {
         let account_number = ((steam3 - 1) / 2) as u64;
-        let universe = universe as u64;
-        let account_type = account_type as u64;
+        let universe = universe.unwrap_or(EUniverse::Public) as u64;
+        let account_type = account_type.unwrap_or(EAccountType::Individual) as u64;
         let instance = 1u64;
 
         Self {
@@ -76,10 +98,11 @@ impl SteamID {
             account_number: BitVec::from(&account_number.bits()[33..]),
             account_instance: BitVec::from(&instance.bits()[44..]),
             account_type: BitVec::from(&account_type.bits()[60..]),
-            universe: universe.bits()[56..].to_vec(),
+            universe: BitVec::from(&universe.bits()[56..]),
         }
     }
 
+    /// Creates a new SteamID from the Steam64 format.
     fn from_steam64(steam64: u64) -> Self {
         let steam_as_bits = steam64.bits::<Msb0>();
         let steamid_len = steam_as_bits.len() - 1;
@@ -93,23 +116,25 @@ impl SteamID {
         Self { account_id, account_number, account_instance, account_type, universe }
     }
 
-    /// Utility function
+    /// Parses the following formats:
+    /// Steam64: digit 7 + 16 digits,
+    /// Steam3: [T:U:D] where T: The account type, U: The account universe, D: Account number,
     fn parse(steamid: &str) -> Option<Self> {
         if REGEX_STEAM3.is_match(steamid) {
             let captures = REGEX_STEAM3.captures(steamid).unwrap();
 
-            // since it matched we can unwrap
-            let account_number = captures.name("account").unwrap();
-            let account_universe = captures.name("universe").unwrap();
+            // since it got matched, we can unwrap
+            let account_number = captures.name("account").unwrap().as_str();
+            let account_universe = captures.name("universe").unwrap().as_str();
+            let account_type = captures.name("type").unwrap().as_str();
 
-            // TODO - For Type we need to parse the letters
-            let account_type = captures.name("type").unwrap();
+            // TODO - match instance
             let account_instance = captures.name("instance");
 
             return Some(Self::from_steam3(
-                (account_number.as_str()).parse().unwrap(),
-                EUniverse::from_u32(u32::from_str(account_universe.as_str()).unwrap()).unwrap(),
-                EAccountType::Individual,
+                account_number.parse().unwrap(),
+                Some(EUniverse::from_u32(u32::from_str(account_universe).unwrap()).unwrap()),
+                Some(AccountType::new(account_type).unwrap().0),
             ));
         } else if REGEX_STEAM64.is_match(steamid) {
             let captures = REGEX_STEAM64.captures(steamid).unwrap();
@@ -160,12 +185,7 @@ mod tests {
 
     #[test]
     fn steamid_from_steam3() {
-        let steamid =
-            SteamID::from_steam3(
-                get_steam3() as u32,
-                EUniverse::Public,
-                EAccountType::Individual,
-            );
+        let steamid = SteamID::from_steam3(get_steam3() as u32, None, None);
         assert_eq!(steamid.to_steam64(), get_steam64())
     }
 
