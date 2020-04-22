@@ -57,17 +57,17 @@ pub struct SteamID {
 impl SteamID {
     /// Using the formula W=Z*2+Y, a SteamID can be converted to Steam3.
     /// Source: https://steamcommunity.com/path/[letter:1:W]
-    fn to_steam3(&self) -> u64 {
-        let steamid64_identifier: u64 = 0x0110_0001_0000_0000;
+    pub fn to_steam3(&self) -> u64 {
+        // let steamid64_identifier: u64 = 0x0110_0001_0000_0000;
 
         let z = self.account_number.load::<u64>();
         let y = self.account_id as u64;
-        let x = self.universe.load::<u64>();
+        // let x = self.universe.load::<u64>();
 
         z * 2 + y
     }
 
-    fn to_steam64(&self) -> u64 {
+    pub fn to_steam64(&self) -> u64 {
         let mut vec: BitVec<Msb0> = BitVec::with_capacity(64);
         vec.extend_from_slice(self.universe.as_bitslice());
         vec.extend_from_slice(self.account_type.as_bitslice());
@@ -83,7 +83,7 @@ impl SteamID {
     /// Creates a new SteamID from the Steam3 format.
     /// Defaults to Public universe, and Individual account.
     /// You can use the parse utility function.
-    fn from_steam3(
+    pub fn from_steam3(
         steam3: u32,
         universe: Option<EUniverse>,
         account_type: Option<EAccountType>,
@@ -103,7 +103,7 @@ impl SteamID {
     }
 
     /// Creates a new SteamID from the Steam64 format.
-    fn from_steam64(steam64: u64) -> Self {
+    pub fn from_steam64(steam64: u64) -> Self {
         let steam_as_bits = steam64.bits::<Msb0>();
         let steamid_len = steam_as_bits.len() - 1;
 
@@ -117,9 +117,10 @@ impl SteamID {
     }
 
     /// Parses the following formats:
-    /// Steam64: digit 7 + 16 digits,
+    /// Steam64: digit 7 + 16 digits
+    ///
     /// Steam3: [T:U:D] where T: The account type, U: The account universe, D: Account number,
-    fn parse(steamid: &str) -> Option<Self> {
+    pub fn parse(steamid: &str) -> Option<Self> {
         if REGEX_STEAM3.is_match(steamid) {
             let captures = REGEX_STEAM3.captures(steamid).unwrap();
 
@@ -129,7 +130,7 @@ impl SteamID {
             let account_type = captures.name("type").unwrap().as_str();
 
             // TODO - match instance
-            let account_instance = captures.name("instance");
+            // let account_instance = captures.name("instance");
 
             return Some(Self::from_steam3(
                 account_number.parse().unwrap(),
