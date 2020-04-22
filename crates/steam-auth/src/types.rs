@@ -1,6 +1,56 @@
 use serde::{Deserialize, Serialize};
 use steam_language_gen::generated::enums::{ETradeOfferState, ETradeOfferConfirmationMethod};
 
+
+#[derive(Serialize, Debug, Clone)]
+pub struct ConfirmationMultiAcceptRequest<'a> {
+    #[serde(rename = "a")]
+    pub steamid: String,
+    #[serde(rename = "k")]
+    pub confirmation_hash: String,
+    #[serde(rename = "m")]
+    pub device_kind: String,
+    #[serde(rename = "op")]
+    /// Accept or cancel confirmation
+    pub operation: String,
+    #[serde(rename = "p")]
+    pub device_id: String,
+    #[serde(rename = "t")]
+    pub time: &'a str,
+    pub tag: &'a str,
+    #[serde(flatten)]
+    pub confirmation: Vec<ConfirmationParameter>
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct ConfirmationParameter {
+    #[serde(rename = "cid[]")]
+    pub confirmation_id: String,
+    #[serde(rename = "ck[]")]
+    pub confirmation_key: String
+}
+
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct ConfirmationDetailsResponse {
+    success: bool,
+    pub html: String,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct ParentalUnlockResponse {
+    pub success: bool,
+    pub eresult: u32,
+    pub error_message: bool,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct ParentalUnlockRequest<'a> {
+    /// Parental Unlock Code
+    pub pin: &'a str,
+    pub sessionid: &'a str,
+}
+
 #[derive(Serialize, Debug, Clone)]
 pub struct IEconServiceGetTradeOffersRequest {
     pub active_only: u8,
@@ -133,6 +183,7 @@ pub struct LoginResponseMobile {
 pub struct Oauth {
     pub steamid: String,
     pub account_name: String,
+    /// This is also knwon as "access_token", and can be used to refresh sessions.
     pub oauth_token: String,
     pub wgtoken: String,
     pub wgtoken_secure: String,
@@ -247,8 +298,8 @@ pub struct ResolveVanityUrlRequest {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct IEconServiceGetTradeOffersResponse {
-    pub trade_offers_sent: Vec<CEcon_TradeOffer>,
-    pub trade_offers_received: Vec<CEcon_TradeOffer>,
+    pub trade_offers_sent: Vec<IEconTradeOffer>,
+    pub trade_offers_received: Vec<IEconTradeOffer>,
     pub descriptions: Descriptions,
 }
 
@@ -268,7 +319,7 @@ pub struct Descriptions {
 /// Represents a steam trade offer.
 /// Returned by GetTradeOffers (vector) and GetTradeOffer.
 #[derive(Deserialize, Debug, Clone)]
-pub struct CEcon_TradeOffer {
+pub struct IEconTradeOffer {
     /// Unique ID generated when a trade offer is created
     #[serde(with = "serde_with::rust::display_fromstr")]
     tradeofferid: u64,

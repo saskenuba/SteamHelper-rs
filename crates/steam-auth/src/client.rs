@@ -1,32 +1,97 @@
-use std::cell::RefCell;
+use std::{
+    cell::RefCell,
+    rc::Rc,
+};
 
 use cookie::{Cookie, CookieJar};
 use reqwest::{Client, header::HeaderMap, Method, Response, Url};
 use scraper::Html;
 use serde::Serialize;
+use tracing::{debug, info, warn};
 
 use crate::{
+    CachedInfo,
+    errors::AuthError,
     User,
-    utils::dump_cookies_by_domain,
+    utils::{
+        dump_cookies_by_domain,
+        retrieve_header_location,
+    },
+    web_handler::{
+        confirmation::Confirmation,
+        confirmations_retrieve_all,
+        login::login_website,
+    },
 };
+use crate::web_handler::parental_unlock;
+use crate::web_handler::confirmation::Confirmations;
 
 #[derive(Debug)]
 /// Main authenticator. We use it to spawn and act as our "mobile" client.
-/// Responsible for accepting/denying trades, and some other operations
-/// that may or not be related to only mobile operations.
+/// Responsible for accepting/denying trades, and some other operations that may or not be related
+/// to mobile operations.
+///
+/// # Example: Fetch mobile notifications
+///
+/// ```rust
+/// use steam_auth::client::SteamAuthenticator;
+/// use steam_auth::User;
+///
+///
+/// ```
+///
 pub struct SteamAuthenticator {
+    /// Inner client with cookie storage
     client: MobileClient,
     user: User,
+    cached_data: Rc<RefCell<CachedInfo>>,
 }
 
 /// Generate a Steam Authenticator that you use to login into the Steam Community / Steam Store.
 impl SteamAuthenticator {
     pub fn new(user: User) -> Self {
-        Self { client: MobileClient::default(), user }
+        Self {
+            client: MobileClient::default(),
+            user,
+            cached_data: Rc::new(RefCell::new(Default::default())),
+        }
     }
-
     pub fn client(&self) -> &MobileClient {
         &self.client
+    }
+
+    /// Login into Steam, and unlock parental control if needed.
+    pub async fn login(&self) -> Result<(), AuthError> {
+        login_website(
+            &self.client,
+            &self.user,
+            self.cached_data.borrow_mut(),
+        ).await?;
+
+        info!("Login to Steam successfully.");
+
+        parental_unlock(
+            &self.client,
+            &self.user,
+        ).await?;
+
+        info!("Parental unlock successfully.");
+
+        Ok(())
+    }
+
+    pub async fn fetch_confirmations(
+        &self,
+        with_details: bool,
+    ) -> Result<Option<Vec<Confirmation>>, AuthError> {
+        let steamid = self.cached_data.borrow().steam_id().unwrap();
+        let confirmations = confirmations_retrieve_all(
+            &self.client,
+            &self.user,
+            steamid,
+            with_details
+        ).await?;
+        Ok(confirmations)
     }
 }
 
@@ -34,50 +99,48 @@ impl SteamAuthenticator {
 pub struct MobileClient {
     /// Standard HTTP Client to make requests.
     pub inner_http_client: reqwest::Client,
-    /// We manually handle cookies, because reqwest is just not good at it.
-    pub cookie_store: RefCell<CookieJar>,
+    /// Cookie jar that manually handle cookies, because reqwest doens't let us handle its cookies.
+    pub cookie_store: Rc<RefCell<CookieJar>>,
 }
 
 impl MobileClient {
-
-    /// Wraps the request function with some guards in case we lose the session.
-    /// Basically only the login operation do some interaction without requiring a session.
+    /// Wrapper to make requests while preemptively checking if the session is still valid.
     pub(crate) async fn request_with_session_guard<T>(
         &self,
-        url: &str,
+        url: String,
         method: reqwest::Method,
         custom_headers: Option<HeaderMap>,
         data: Option<T>,
-    ) -> Result<Response, reqwest::Error> where T: Serialize {
+    ) -> Result<Response, reqwest::Error>
+        where
+            T: Serialize,
+    {
+        // We check preemptively if the session is still working.
+        if self.session_is_expired().await? {
+            warn!("Session was lost. Trying to reconnect.");
+            unimplemented!()
+        };
 
-        // implement guards
-
-        Ok(self.request(
-            url,
-            method,
-            custom_headers,
-            data
-        ).await?)
+        self.request(url, method, custom_headers, data).await
     }
 
-    // remember that we need to disallow redirects
-    // because it may redirect us to weird paths, such as steamobile://xxx
+    /// Simple wrapper to allow generic requests to be made.
     pub(crate) async fn request<T>(
         &self,
-        url: &str,
+        url: String,
         method: reqwest::Method,
         custom_headers: Option<HeaderMap>,
         data: Option<T>,
-    ) -> Result<Response, reqwest::Error> where T: Serialize {
-        let parsed_url = Url::parse(url).unwrap();
+    ) -> Result<Response, reqwest::Error>
+        where
+            T: Serialize,
+    {
+        let parsed_url = Url::parse(&url).unwrap();
         let mut header_map = custom_headers.unwrap_or_default();
 
         // Send cookies from jar, based on domain
         let domain = &format!(".{}", parsed_url.host_str().unwrap());
-        let domain_cookies = dump_cookies_by_domain(
-            &self.cookie_store.borrow(),
-            domain,
-        );
+        let domain_cookies = dump_cookies_by_domain(&self.cookie_store.borrow(), domain);
         header_map.insert(
             reqwest::header::COOKIE,
             domain_cookies.unwrap_or_else(|| "".to_string()).parse().unwrap(),
@@ -90,32 +153,66 @@ impl MobileClient {
             Some(data) => req_builder.form(&data).build().unwrap(),
         };
 
-        // dbg!(&request);
-        Ok(self.inner_http_client.execute(request).await?)
+        debug!("{:?}", &request);
+        self.inner_http_client.execute(request).await
     }
 
-    /// Convenience function to retrieve HTML
-    pub(crate) async fn get_html(&self, url: &str) -> Result<Html, reqwest::Error> {
-        let response = self.request_with_session_guard(url, Method::GET, None, None::<&str>).await?;
+    /// Checks if session is expired by parsing the the redirect URL for "steamobile:://lostauth"
+    /// or a path that starts with "/login".
+    ///
+    /// This is the most reliable way to find out, since we check the session by requesting our
+    /// account page at Steam Store, which is not going to be deprecated anytime soon.
+    async fn session_is_expired(&self) -> Result<bool, reqwest::Error> {
+        let account_url = format!("{}/account", crate::STEAM_STORE_BASE);
+
+        // FIXME: Not sure if we should request from client directly
+        let response = self.request(account_url, Method::HEAD, None, None::<&str>).await?;
+
+        if let Some(location) = retrieve_header_location(&response) {
+            return Ok(Url::parse(location).map(Self::url_expired_check).unwrap());
+        }
+        Ok(false)
+    }
+
+    fn url_expired_check(redirect_url: Url) -> bool {
+        redirect_url.host_str().unwrap() == "lostauth" || redirect_url.path().starts_with("/login")
+    }
+
+    /// Convenience function to retrieve HTML w/ session
+    pub(crate) async fn get_html(&self, url: String) -> Result<Html, reqwest::Error> {
+        let response =
+            self.request_with_session_guard(url, Method::GET, None, None::<&str>).await?;
         let response_text = response.text().await?;
-        let _html_document = Html::parse_document(&response_text);
+        let html_document = Html::parse_document(&response_text);
 
-        Ok(_html_document)
+        Ok(html_document)
     }
 
-    /// Initiate cookie jar with mobile cookies
+    /// Replace current cookie jar with a new one.
+    fn reset_jar(&mut self) {
+        self.cookie_store = Rc::new(RefCell::new(CookieJar::new()));
+    }
+
+    /// Mobile cookies that makes us look like the mobile app
+    fn standard_mobile_cookies() -> Vec<Cookie<'static>> {
+        vec![
+            Cookie::build("Steam_Language", "english").domain(crate::STEAM_COMMUNITY_HOST).finish(),
+            Cookie::build("mobileClient", "android").domain(crate::STEAM_COMMUNITY_HOST).finish(),
+            Cookie::build("mobileClientVersion", "0 (2.1.3)").domain(crate::STEAM_COMMUNITY_HOST).finish(),
+        ]
+    }
+
+    /// Initialize cookie jar, and populates it with mobile cookies.
     fn init_cookie_jar() -> CookieJar {
         let mut mobile_cookies = CookieJar::new();
-        mobile_cookies.add(Cookie::build("Steam_Language", "english").domain(crate::STEAM_COMMUNITY_HOST).finish());
-        mobile_cookies.add(Cookie::build("mobileClient", "android").domain(crate::STEAM_COMMUNITY_HOST).finish());
-        mobile_cookies.add(Cookie::build("mobileClientVersion", "0 (2.1.3)").domain(crate::STEAM_COMMUNITY_HOST).finish());
+        Self::standard_mobile_cookies().into_iter().for_each(|cookie| mobile_cookies.add(cookie));
         mobile_cookies
     }
 
     /// Initiate mobile client with default headers
     fn init_mobile_client() -> Client {
         let user_agent = "Mozilla/5.0 (Linux; U; Android 4.1.1; en-us; Google Nexus 4 - 4.1.1 - \
-    API 16 - 768x1280 Build/JRO03S) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30";
+        API 16 - 768x1280 Build/JRO03S) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30";
         let mut default_headers = HeaderMap::new();
         default_headers.insert(
             reqwest::header::ACCEPT,
@@ -123,13 +220,12 @@ impl MobileClient {
         );
         default_headers.insert(reqwest::header::REFERER, crate::MOBILE_REFERER.parse().unwrap());
         default_headers.insert(
-            "X-Requested-With", "com.valvesoftware.android.steam.community".parse().unwrap(),
+            "X-Requested-With",
+            "com.valvesoftware.android.steam.community".parse().unwrap(),
         );
 
         let no_redirect_policy = reqwest::redirect::Policy::none();
         reqwest::Client::builder()
-            // we need to take out cookie store, and use only our jar
-            .cookie_store(true)
             .user_agent(user_agent)
             .redirect(no_redirect_policy)
             .default_headers(default_headers)
@@ -141,6 +237,9 @@ impl MobileClient {
 
 impl Default for MobileClient {
     fn default() -> Self {
-        Self { inner_http_client: Self::init_mobile_client(), cookie_store: RefCell::new(Self::init_cookie_jar()) }
+        Self {
+            inner_http_client: Self::init_mobile_client(),
+            cookie_store: Rc::new(RefCell::new(Self::init_cookie_jar())),
+        }
     }
 }

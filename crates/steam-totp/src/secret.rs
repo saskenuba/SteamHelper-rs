@@ -7,7 +7,7 @@ use sha1::Sha1;
 type HmacSha1 = Hmac<Sha1>;
 
 /// Struct for working with your TOTP shared secret.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Secret {
     value: Vec<u8>,
     hmac: HmacSha1,

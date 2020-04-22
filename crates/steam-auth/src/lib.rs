@@ -8,14 +8,19 @@ use uuid::Uuid;
 
 use const_concat::const_concat;
 use steam_totp::Secret;
+use steamid_parser::SteamID;
 
-mod client;
 mod enums;
-mod errors;
 mod page_scraper;
 mod types;
 mod utils;
 mod web_handler;
+pub mod client;
+pub mod errors;
+
+pub mod confirmation {
+    use crate::web_handler::confirmation::Confirmation;
+}
 
 /// Recommended time to allow STEAM to catch up.
 const STEAM_DELAY_MS: u64 = 350;
@@ -36,31 +41,55 @@ const MOBILE_REFERER: &str = const_concat!(
     %20write_client"
 );
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
+/// User that is needed for the authenticator to work.
+/// Ideally all fields should be populated before authenticator operations are made.
+///
+/// A simple implementation that has everything required to work properly:
+/// ```
+/// use steam_auth::User;
+///
+/// User::build()
+///         .username("test_username")
+///         .password("password")
+///         .parental_code("1111") // Only needed if the is a parental code, otherwise skip
+///         .ma_file_from_disk("assets/my.maFile");
+/// ```
 pub struct User {
     username: String,
     password: String,
     parental_code: Option<String>,
     linked_mafile: Option<MobileAuthFile>,
-    cached_info: CachedInfo,
 }
 
-#[derive(Default, Debug, Clone, Serialize, Deserialize)]
-/// After login, we cache some information from the user so there is no need to keep manually
-/// querying Steam multiple times.
+#[derive(Default, Debug, Clone)]
+/// Information that we cache after the login operation to avoid querying Steam multiple times.
+///
+/// SteamIDs are used for generating confirmations.
 struct CachedInfo {
-    pub steamid: Option<String>,
-    pub api_key: Option<String>,
+    steamid: Option<SteamID>,
+    api_key: Option<String>,
+}
+
+impl CachedInfo {
+    // FIXME: This should not unwrap, probably result with steamid parse error.
+    fn set_steamid(&mut self, steamid: &str) {
+        let parsed_steamid = SteamID::parse(steamid).unwrap();
+        self.steamid = Some(parsed_steamid);
+    }
+
+    fn steam_id(&self) -> Option<u64> {
+        Some(self.steamid.as_ref()?.to_steam64())
+    }
 }
 
 impl User {
-    fn build() -> Self {
+    pub fn build() -> Self {
         Self {
             username: "".to_string(),
             password: "".to_string(),
             parental_code: None,
             linked_mafile: None,
-            cached_info: Default::default(),
         }
     }
 
@@ -76,27 +105,25 @@ impl User {
         Some(&self.linked_mafile.as_ref()?.device_id.as_ref()?)
     }
 
-    fn steam_id(&self) -> Option<&str> {
-        Some(&self.cached_info.steamid.as_ref()?)
-    }
 
-    fn username<T: ToString>(mut self, username: T) -> Self {
+
+    pub fn username<T: ToString>(mut self, username: T) -> Self {
         self.username = username.to_string();
         self
     }
 
-    fn password<T: ToString>(mut self, password: T) -> Self {
+    pub fn password<T: ToString>(mut self, password: T) -> Self {
         self.password = password.to_string();
         self
     }
 
-    fn parental_code<T: ToString>(mut self, parental_code: T) -> Self {
+    pub fn parental_code<T: ToString>(mut self, parental_code: T) -> Self {
         self.parental_code = Some(parental_code.to_string());
         self
     }
 
     /// Convenience function that imports the file from disk
-    fn ma_file_from_disk(mut self, path: &str) -> Self {
+    pub fn ma_file_from_disk(mut self, path: &str) -> Self {
         let mut file = OpenOptions::new().read(true).open(path).unwrap();
         let mut buffer = String::new();
 
@@ -112,8 +139,22 @@ impl User {
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
-/// The MobileAuthFile (.maFile) is the standard that some custom authenticators use to
-/// save the auth secrets to disk. It follows the json format.
+/// The MobileAuthFile (.maFile) is the standard that custom authenticators use to save auth secrets
+/// to disk.
+///
+/// It follows strictly the json format.
+/// Both identity_secret and shared_secret should be base64 encoded. If you don't know, they probably
+/// already are.
+///
+///
+/// Example:
+/// ```json
+/// {
+///     identity_secret: "secret"
+///     shared_secret: "secret"
+///     device_id: "android:xxxxxxxxxxxxxxx"
+/// }
+/// ```
 struct MobileAuthFile {
     /// Identity secret is used to generate the confirmation links for our trade requests.
     /// If we are generating our own Authenticator, this is given by Steam.
