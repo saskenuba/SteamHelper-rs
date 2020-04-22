@@ -7,11 +7,17 @@ It can be used to create bots, automate profiles, the possibilities are endless.
 The library needs contributors. Check issues that need help and send those PRs in!
 To learn more about how Steam works, check [here](https://github.com/saskenuba/SteamHelper-rs/blob/master/docs/dev/README.md).
 
-### Features (not yet implemented):
-- Steam Authenticator: Mobile 2FA
-- Steam WebAuth: Authentication to Steam Community and Steam Store
-- Steam Client
-- Steam WebAPI
+## Features:
+
+### In progress:
+- Steam Auth: Mobile 2FA, Accept/Deny Confirmations, Authentication to Steam Community and Steam Store
+
+### Progress Paused:
+- Steam Client: Same functionality as desktop client, go online, answer to messages, etc;
+
+### Not yet implemented:
+- Steam WebAPI Wrapper
+- Steam Trading
 
 ## License
 
@@ -20,5 +26,5 @@ This project is licensed under the [MIT license](LICENSE).
 ### Contribution
 
 Unless you explicitly state otherwise, any contribution intentionally submitted
-for inclusion in Tokio by you, shall be licensed as MIT, without any additional
-terms or conditions.
+for inclusion in SteamHelper by you, shall be licensed as MIT, without any
+additional terms or conditions.
