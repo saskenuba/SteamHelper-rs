@@ -113,7 +113,13 @@ impl SteamID {
         let account_type = steam_as_bits[8..12].to_vec();
         let universe = steam_as_bits[0..8].to_vec();
 
-        Self { account_id, account_number, account_instance, account_type, universe }
+        Self {
+            account_id,
+            account_number,
+            account_instance,
+            account_type,
+            universe,
+        }
     }
 
     /// Parses the following formats:
