@@ -1,35 +1,46 @@
 use serde::{Deserialize, Serialize};
-use steam_language_gen::generated::enums::{ETradeOfferState, ETradeOfferConfirmationMethod};
 
+use steam_language_gen::generated::enums::{ETradeOfferConfirmationMethod, ETradeOfferState};
+
+use crate::web_handler::confirmation::Confirmation;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct ConfirmationMultiAcceptRequest<'a> {
     #[serde(rename = "a")]
-    pub steamid: String,
+    pub steamid: &'a str,
     #[serde(rename = "k")]
     pub confirmation_hash: String,
     #[serde(rename = "m")]
-    pub device_kind: String,
+    pub device_kind: &'a str,
     #[serde(rename = "op")]
     /// Accept or cancel confirmation
-    pub operation: String,
+    pub operation: &'a str,
     #[serde(rename = "p")]
-    pub device_id: String,
+    pub device_id: &'a str,
     #[serde(rename = "t")]
     pub time: &'a str,
     pub tag: &'a str,
-    #[serde(flatten)]
-    pub confirmation: Vec<ConfirmationParameter>
+    #[serde(flatten, with = "serde_with::rust::tuple_list_as_map")]
+    pub confirmation_id: Vec<(&'a str, String)>,
+    #[serde(flatten, with = "serde_with::rust::tuple_list_as_map")]
+    pub confirmation_key: Vec<(&'a str, String)>,
 }
 
-#[derive(Serialize, Debug, Clone)]
-pub struct ConfirmationParameter {
-    #[serde(rename = "cid[]")]
-    pub confirmation_id: String,
-    #[serde(rename = "ck[]")]
-    pub confirmation_key: String
+impl<'a> Default for ConfirmationMultiAcceptRequest<'a> {
+    fn default() -> Self {
+        Self {
+            steamid: "",
+            confirmation_hash: "".to_string(),
+            device_kind: "android",
+            operation: "",
+            device_id: "",
+            time: "",
+            tag: "conf",
+            confirmation_id: vec![],
+            confirmation_key: vec![],
+        }
+    }
 }
-
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct ConfirmationDetailsResponse {
@@ -42,6 +53,11 @@ pub struct ParentalUnlockResponse {
     pub success: bool,
     pub eresult: u32,
     pub error_message: bool,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct BooleanResponse {
+    pub success: bool,
 }
 
 #[derive(Serialize, Debug, Clone)]
@@ -97,7 +113,11 @@ impl<'a> Default for CheckSmsCodeRequest<'a> {
         Self {
             skipvoip: "1",
             checkfortos: "0",
-            ops: PhoneAjaxRequest { operation: "check_sms_code", operation_arg: "", sessionid: "" },
+            ops: PhoneAjaxRequest {
+                operation: "check_sms_code",
+                operation_arg: "",
+                sessionid: "",
+            },
         }
     }
 }
@@ -243,7 +263,12 @@ pub struct RemoveAuthenticatorRequest<'a> {
 
 impl<'a> Default for RemoveAuthenticatorRequest<'a> {
     fn default() -> Self {
-        Self { steamid: "", steamguard_scheme: "2", revocation_code: "", access_token: "" }
+        Self {
+            steamid: "",
+            steamguard_scheme: "2",
+            revocation_code: "",
+            access_token: "",
+        }
     }
 }
 
@@ -258,7 +283,11 @@ pub struct ApiKeyRegisterRequest<'a> {
 
 impl<'a> Default for ApiKeyRegisterRequest<'a> {
     fn default() -> Self {
-        Self { agree_to_terms: "agreed", domain: "localhost", submit: "Register" }
+        Self {
+            agree_to_terms: "agreed",
+            domain: "localhost",
+            submit: "Register",
+        }
     }
 }
 
@@ -342,3 +371,36 @@ pub struct IEconTradeOffer {
     escrow_end_date: String,
     confirmation_method: ETradeOfferConfirmationMethod,
 }
+
+// steam api thoughts
+//
+// client.partner()
+// .get()
+// .ieconservice()
+// .gettradeoffers("params")
+// .finish()
+//
+// or
+//
+// client.get()
+// .public() // partner()
+// .ieconservice()
+// .gettradeoffers("params")
+// .finish()
+//
+// client.public()
+// .get()
+// .ieconservice()
+// .gettradeoffers("params")
+// .finish()
+//
+//
+// client.ieconservice.gettradeoffers()
+// .text_cutoff()
+// .finish()
+// .execute()?
+//
+//
+//
+// let trade_offers = steamapi::IEconService::GetTradeOffers;
+// let endpoint = trade_offers.endpoint!();

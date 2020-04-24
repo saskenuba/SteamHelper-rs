@@ -2,10 +2,12 @@ use std::str::FromStr;
 
 use scraper::{Html, Selector};
 
-use crate::web_handler::confirmation::{Confirmation, ConfirmationDetails, EConfirmationType};
-use crate::errors::ApiKeyError;
+use crate::{
+    errors::ApiKeyError,
+    web_handler::confirmation::{Confirmation, ConfirmationDetails, EConfirmationType},
+};
 
-///! Responsible for parsing HTML documents for various events.
+/// ! Responsible for parsing HTML documents for various events.
 
 /// Get all confirmations by parsing the document.
 /// Returns all confirmations found.
@@ -13,28 +15,45 @@ pub(crate) fn confirmation_retrieve(confirmation_html: Html) -> Option<Vec<Confi
     let confirmation_nodes_selector = Selector::parse("div.mobileconf_list_entry").unwrap();
 
     // early return if no confirmations are found
-    let mut entries = confirmation_html.select(&confirmation_nodes_selector).peekable();
+    let mut entries = confirmation_html
+        .select(&confirmation_nodes_selector)
+        .peekable();
     entries.peek()?;
 
     let confirmations = entries
         .map(|element| {
-            let confirmation_type = element.value().attr("data-type")
+            let confirmation_type = element
+                .value()
+                .attr("data-type")
                 .map(|s| EConfirmationType::from_str(s).unwrap())
                 .unwrap_or(EConfirmationType::Unknown);
 
-            let trade_offer_id = element.value().attr("data-creator")
+            let trade_offer_id = element
+                .value()
+                .attr("data-creator")
                 .map(|s| u64::from_str(s).unwrap())
                 .and_then(|id| {
-                    if confirmation_type == EConfirmationType::Trade { Some(id) } else { None }
+                    if confirmation_type == EConfirmationType::Trade {
+                        Some(id)
+                    } else {
+                        None
+                    }
                 });
 
             Confirmation {
                 id: element.value().attr("data-confid").unwrap().to_string(),
                 key: element.value().attr("data-key").unwrap().to_string(),
                 kind: confirmation_type,
-                details: { if trade_offer_id.is_some() { Some(ConfirmationDetails { trade_offer_id }) } else { None } },
+                details: {
+                    if trade_offer_id.is_some() {
+                        Some(ConfirmationDetails { trade_offer_id })
+                    } else {
+                        None
+                    }
+                },
             }
-        }).collect::<Vec<Confirmation>>();
+        })
+        .collect::<Vec<Confirmation>>();
 
     Some(confirmations)
 }
@@ -63,8 +82,15 @@ pub(crate) fn confirmation_details_single(confirmation_details_html: Html) -> Co
         ConfirmationDetails {
             trade_offer_id: Some(u64::from_str(tradeofferid_parsed).unwrap()),
         }
-    } else if confirmation_details_html.select(&market_selector).peekable().peek().is_some() {
-        ConfirmationDetails { trade_offer_id: None }
+    } else if confirmation_details_html
+        .select(&market_selector)
+        .peekable()
+        .peek()
+        .is_some()
+    {
+        ConfirmationDetails {
+            trade_offer_id: None,
+        }
     } else {
         unimplemented!()
         // ConfirmationDetails {
@@ -102,7 +128,10 @@ pub(crate) fn api_key_resolve_status(api_key_html: Html) -> Result<String, ApiKe
     let api_key = api_key_text.split("Key: ").nth(1).unwrap();
 
     if api_key.len() != 32 {
-        return Err(ApiKeyError::GeneralError(format!("Size should be 32. Found: {}", api_key)));
+        return Err(ApiKeyError::GeneralError(format!(
+            "Size should be 32. Found: {}",
+            api_key
+        )));
     }
 
     Ok(api_key.to_string())

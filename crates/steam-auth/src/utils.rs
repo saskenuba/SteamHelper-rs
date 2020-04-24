@@ -1,11 +1,13 @@
 use cookie::CookieJar;
-use reqwest::{StatusCode, Response};
+use reqwest::{Response, StatusCode};
 
 /// Retrieve cookie from header response filtered by name.
 pub fn dump_cookie_from_header(response: &Response, name: &str) -> Option<String> {
     let name_len = name.len();
 
-    response.headers().get(reqwest::header::SET_COOKIE)
+    response
+        .headers()
+        .get(reqwest::header::SET_COOKIE)
         .map(|header_value| header_value.to_str().unwrap())
         .and_then(|c| {
             let name_separator = c.find(name)?;
@@ -15,7 +17,6 @@ pub fn dump_cookie_from_header(response: &Response, name: &str) -> Option<String
             Some((&c[name_separator + name_len + 1..end_separator]).to_string())
         })
 }
-
 
 /// Retrieve all cookies from jar filtered by domain, and them dumps into String, ready
 /// to be inserted as a header value

@@ -2,6 +2,10 @@
 name = "steam-auth"
 version = "0.1.0"
 authors = ["Martin <martin@hotmail.com.br>"]
+repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-auth/"
+homepage = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-auth/"
+readme = "README.md"
+license = "MIT"
 edition = "2018"
 
 [features]
