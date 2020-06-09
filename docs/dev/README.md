@@ -4,7 +4,7 @@ SteamHelper is a project organized within a single workspace, that plans to
 offer an extensible way to communicate to Steam's Network.
 
 Feel free to send a PR to increase the quality of this documentation.
-To discuss more about the project, you can enter our Discord [here](https://discord.gg/hUxHZj).
+To discuss more about the project, you can enter our Discord [here](https://discord.gg/s2YRVPy).
 
 ## Big Picture (not Steam's proprietary service)
 
