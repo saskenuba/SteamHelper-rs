@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use steam_language_gen::generated::enums::{ETradeOfferConfirmationMethod, ETradeOfferState};
+use steam_language_gen::generated::enums::{ETradeOfferConfirmationMethod, ETradeOfferState, EResult};
 
 use crate::web_handler::confirmation::Confirmation;
 
@@ -51,7 +51,7 @@ pub struct ConfirmationDetailsResponse {
 #[derive(Deserialize, Debug, Clone)]
 pub struct ParentalUnlockResponse {
     pub success: bool,
-    pub eresult: u32,
+    pub eresult: EResult,
     pub error_message: bool,
 }
 
@@ -203,7 +203,7 @@ pub struct LoginResponseMobile {
 pub struct Oauth {
     pub steamid: String,
     pub account_name: String,
-    /// This is also knwon as "access_token", and can be used to refresh sessions.
+    /// This is also known as "access_token", and can be used to refresh sessions.
     pub oauth_token: String,
     pub wgtoken: String,
     pub wgtoken_secure: String,

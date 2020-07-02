@@ -8,13 +8,14 @@ use tracing::{debug, info, warn};
 
 use crate::{
     errors::AuthError,
-    utils::{dump_cookies_by_domain, retrieve_header_location},
+    utils::{dump_cookies_by_domain, dump_cookies_by_name, retrieve_header_location},
     web_handler::{
-        confirmation::Confirmations, confirmations_retrieve_all, confirmations_send,
+        cache_resolve, confirmation::Confirmations, confirmations_retrieve_all, confirmations_send,
         login::login_website, parental_unlock,
     },
     CachedInfo, ConfirmationMethod, User,
 };
+use reqwest::redirect::Policy;
 
 #[derive(Debug)]
 /// Main authenticator. We use it to spawn and act as our "mobile" client.
@@ -48,12 +49,29 @@ impl SteamAuthenticator {
         &self.client
     }
 
-    /// Login into Steam, and unlock parental control if needed.
+    /// Log on into Steam website and populates the inner client with cookies for the Steam Store,
+    /// Steam community and Steam help domains.
+    /// Automatically unlocks parental control if user uses it, but it need to be included inside
+    /// the [User] builder.
+    ///
+    /// Also caches the API Key, if the user wants to use it for any operation later.
+    ///
+    /// The cookies are inside the [MobileClient] inner cookie storage.
     pub async fn login(&self) -> Result<(), AuthError> {
-        login_website(&self.client, &self.user, self.cached_data.borrow_mut()).await?;
+        {
+            login_website(&self.client, &self.user, self.cached_data.borrow_mut()).await?;
+        }
+
         info!("Login to Steam successfully.");
-        parental_unlock(&self.client, &self.user).await?;
-        info!("Parental unlock successfully.");
+        if self.user.parental_code.is_some() {
+            parental_unlock(&self.client, &self.user).await?;
+            info!("Parental unlock successfully.");
+        }
+
+        {
+            cache_resolve(&self.client, self.cached_data.borrow_mut()).await?;
+        }
+        info!("Cached API Key successfully.");
 
         Ok(())
     }
@@ -99,13 +117,37 @@ impl SteamAuthenticator {
         .await?;
         Ok(())
     }
+
+    /// You can request custom operations for any Steam operation that requires logging in.
+    ///
+    /// The authenticator will take care sending session cookies and keeping the session
+    /// operational.
+    pub async fn request_custom_endpoint<T>(
+        &self,
+        url: String,
+        method: Method,
+        custom_headers: Option<HeaderMap>,
+        data: Option<T>,
+    ) -> Result<Response, reqwest::Error>
+    where
+        T: Serialize,
+    {
+        self.client
+            .request_with_session_guard(url, method, custom_headers, data)
+            .await
+    }
+
+    pub fn dump_cookie(&self, steam_domain_host: &str, steam_cookie_name: &str) -> Option<String> {
+        // TODO: Change domain and names to enums
+        dump_cookies_by_name(&self.client.cookie_store.borrow(), steam_domain_host, steam_cookie_name)
+    }
 }
 
 #[derive(Debug)]
 pub struct MobileClient {
     /// Standard HTTP Client to make requests.
     pub inner_http_client: Client,
-    /// Cookie jar that manually handle cookies, because reqwest doens't let us handle its
+    /// Cookie jar that manually handle cookies, because reqwest doesn't let us handle its
     /// cookies.
     pub cookie_store: Rc<RefCell<CookieJar>>,
 }
@@ -201,7 +243,7 @@ impl MobileClient {
         let response_text = response.text().await?;
         let html_document = Html::parse_document(&response_text);
 
-        info!("{}", &response_text);
+        debug!("{}", &response_text);
         Ok(html_document)
     }
 
@@ -255,10 +297,9 @@ impl MobileClient {
             "com.valvesoftware.android.steam.community".parse().unwrap(),
         );
 
-        let no_redirect_policy = reqwest::redirect::Policy::none();
         reqwest::Client::builder()
             .user_agent(user_agent)
-            .redirect(no_redirect_policy)
+            .redirect(Policy::none())
             .default_headers(default_headers)
             .referer(false)
             .build()

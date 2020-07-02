@@ -1,5 +1,7 @@
 //! Placeholder for trade crate?
 
+use serde::{Deserialize, Serialize};
+
 /// This is decided upon various factors, mainly stability of Steam servers when dealing with huge
 /// trade offers Consider this when creating trade websites.
 const TRADE_MAX_ITEMS: u8 = u8::max_value();
@@ -60,4 +62,20 @@ enum ETradeStatus {
                             * and we gave up */
     InEscrow = 10,       // Trade is in escrow
     EscrowRollback = 11, // A trade in escrow was rolled back
+}
+
+#[derive(Serialize)]
+struct TradeOfferAcceptRequest<'a> {
+    pub server_id: &'a str,
+    #[serde(rename = "tradeofferid")]
+    pub trade_offer_id: &'a str,
+}
+
+impl<'a> Default for TradeOfferAcceptRequest<'a> {
+    fn default() -> Self {
+        Self {
+            server_id: "1",
+            trade_offer_id: "",
+        }
+    }
 }

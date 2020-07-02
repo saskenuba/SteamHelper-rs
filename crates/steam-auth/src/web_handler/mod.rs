@@ -1,9 +1,10 @@
 use std::{cell::RefCell, rc::Rc};
 
 use cookie::{Cookie, CookieJar};
+use futures::{FutureExt, TryFutureExt};
 use reqwest::Method;
 use scraper::Html;
-use tracing::{debug, info, instrument, trace};
+use tracing::{debug, info, trace, warn};
 
 use const_concat::const_concat;
 use steam_totp::Time;
@@ -18,8 +19,11 @@ use crate::{
     },
     utils::{dump_cookie_from_header, dump_cookies_by_name},
     web_handler::confirmation::{Confirmation, ConfirmationMethod},
-    User, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_STORE_BASE, STEAM_STORE_HOST,
+    CachedInfo, User, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_STORE_BASE,
+    STEAM_STORE_HOST,
 };
+use std::cell::RefMut;
+use steam_language_gen::generated::enums::EResult;
 
 pub mod confirmation;
 pub(crate) mod login;
@@ -33,10 +37,12 @@ const MOBILE_AUTH_GETWGTOKEN: &str = const_concat!(
 
 async fn session_refresh() {}
 
-/// This should be performed immediately after login
+/// Parental unlock operation should be made otherwise any operation will fail and should be
+/// performed immediately after login
 pub(crate) async fn parental_unlock(client: &MobileClient, user: &User) -> Result<(), LoginError> {
     let parental_code = user.parental_code.clone().unwrap();
 
+    // unlocks parental on steam community
     {
         parental_unlock_by_service(
             Rc::clone(&client.cookie_store),
@@ -48,6 +54,7 @@ pub(crate) async fn parental_unlock(client: &MobileClient, user: &User) -> Resul
         .await?;
     }
 
+    // unlocks parental on steam store
     {
         parental_unlock_by_service(
             Rc::clone(&client.cookie_store),
@@ -98,8 +105,8 @@ async fn parental_unlock_by_service(
     }
 
     let response = response.json::<ParentalUnlockResponse>().await.unwrap();
-    if response.eresult != 1 {
-        let error = format!("EResult: {}", response.eresult);
+    if response.eresult != EResult::OK {
+        let error = format!("EResult: {:?} {}", response.eresult, response.error_message);
         return Err(LoginError::ParentalUnlock(error));
     }
 
@@ -108,9 +115,15 @@ async fn parental_unlock_by_service(
 
 /// Resolve caching of the user APIKey.
 /// This is done after user logon for the first time in this session.
-async fn cache_resolve(client: &MobileClient, user: &User) {
-    api_key_retrieve(client).await.unwrap();
-    // steamid_retrieve(client).await.unwrap()
+pub(crate) async fn cache_resolve(
+    client: &MobileClient,
+    mut cached_data: RefMut<'_, CachedInfo>,
+) -> Result<(), ApiKeyError> {
+    let api_key = api_key_retrieve(client).await?;
+    debug!("{}", &api_key);
+    cached_data.set_api_key(api_key);
+
+    Ok(())
 }
 
 /// Send confirmations to Steam Servers for accepting/denying.
@@ -230,29 +243,34 @@ async fn steamid_retrieve(client: &MobileClient) {}
 /// Retrieve user Api Key.
 async fn api_key_retrieve(client: &MobileClient) -> Result<String, ApiKeyError> {
     let api_key_url = format!("{}{}", STEAM_COMMUNITY_BASE, "/dev/apikey?l=english");
-    let doc = client.get_html(api_key_url).await?;
-    let api = match api_key_resolve_status(doc) {
+    let doc = client.get_html(api_key_url.clone()).await?;
+    let api_key = match api_key_resolve_status(doc) {
         Ok(api) => api,
         Err(ApiKeyError::NotRegistered) => {
+            warn!("API key not registered. Registering a new one.");
             // in this case we want to register it
-            api_key_register(&client).await?
+            api_key_register(client)
+                .then(|_| client.get_html(api_key_url))
+                .await
+                .map(api_key_resolve_status)??
         }
         Err(e) => return Err(e),
     };
-    Ok(api)
+    Ok(api_key)
 }
 
 /// Request access to an API Key
 /// The account should be validated before.
-async fn api_key_register(client: &MobileClient) -> Result<String, ApiKeyError> {
+async fn api_key_register(client: &MobileClient) -> Result<(), ApiKeyError> {
     let api_register_url = format!("{}{}", STEAM_COMMUNITY_BASE, "/dev/registerkey");
     let register_request = ApiKeyRegisterRequest::default();
 
     let response = client
         .request_with_session_guard(api_register_url, Method::POST, None, Some(register_request))
         .await?;
+    info!("{:?}", response);
 
-    Ok("".to_string())
+    Ok(())
 }
 
 #[cfg(test)]

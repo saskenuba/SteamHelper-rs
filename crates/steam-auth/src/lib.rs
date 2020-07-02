@@ -2,7 +2,6 @@
 //! authenticator, and also confirm/deny mobile confirmations.
 
 #![allow(dead_code)]
-#![feature(str_strip)]
 #![warn(missing_docs, missing_doc_code_examples)]
 #![deny(
     missing_debug_implementations,
@@ -24,13 +23,13 @@ use steam_totp::Secret;
 use steamid_parser::SteamID;
 
 pub mod client;
-mod enums;
 pub mod errors;
 mod page_scraper;
 mod types;
 mod utils;
 mod web_handler;
 
+pub use reqwest::{header::HeaderMap, Method};
 pub use web_handler::confirmation::{ConfirmationMethod, Confirmations, EConfirmationType};
 
 /// Recommended time to allow STEAM to catch up.
@@ -38,9 +37,12 @@ const STEAM_DELAY_MS: u64 = 350;
 /// Extension of the mobile authenticator files.
 const MA_FILE_EXT: &str = ".maFile";
 
-const STEAM_COMMUNITY_HOST: &str = ".steamcommunity.com";
-const STEAM_HELP_HOST: &str = ".help.steampowered.com";
-const STEAM_STORE_HOST: &str = ".store.steampowered.com";
+/// Steam Community Cookie Host
+pub const STEAM_COMMUNITY_HOST: &str = ".steamcommunity.com";
+/// Steam Help Cookie Host
+pub const STEAM_HELP_HOST: &str = ".help.steampowered.com";
+/// Steam Store Cookie Host
+pub const STEAM_STORE_HOST: &str = ".store.steampowered.com";
 
 const STEAM_COMMUNITY_BASE: &str = "https://steamcommunity.com";
 const STEAM_STORE_BASE: &str = "https://store.steampowered.com";
@@ -87,6 +89,14 @@ impl CachedInfo {
     fn set_steamid(&mut self, steamid: &str) {
         let parsed_steamid = SteamID::parse(steamid).unwrap();
         self.steamid = Some(parsed_steamid);
+    }
+
+    fn set_api_key(&mut self, api_key: String) {
+        self.api_key = Some(api_key);
+    }
+
+    fn api_key(&self) -> Option<&String> {
+        Some(self.api_key.as_ref()?)
     }
 
     fn steam_id(&self) -> Option<u64> {

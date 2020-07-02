@@ -24,9 +24,9 @@ type LoginResult<T> = Result<T, LoginError>;
 
 /// This method is used to login through Steam ISteamAuthUser interface.
 ///
-/// Webapi_nonce is received by connecting to the Steam Network. Currently not possible without the
-/// implementation of the [steam-api] crate.
+/// Webapi_nonce is received by connecting to the Steam Network.
 ///
+/// Currently not possible without the implementation of the [steam-api] crate.
 /// For website that currently works, check [login_website] method.
 async fn login_isteam_user_auth(
     _client: &Client,

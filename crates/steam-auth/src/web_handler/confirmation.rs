@@ -57,8 +57,8 @@ impl Confirmations {
     /// This is a convenience function that lets you handle confirmations based if is a trade or
     /// market confirmation.
     ///
-    /// For example, you could have them coming from some other service, or
-    /// elsewhere and you can easily filter them.
+    /// For example, you could have them coming from some other service, or  elsewhere and you can
+    /// easily filter them.
     ///
     /// # Example
     /// ```no_run
