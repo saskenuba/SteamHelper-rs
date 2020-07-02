@@ -88,13 +88,14 @@ impl SteamID {
         universe: Option<EUniverse>,
         account_type: Option<EAccountType>,
     ) -> Self {
-        let account_number = ((steam3 - 1) / 2) as u64;
+        let parity_check = steam3 & 1;
         let universe = universe.unwrap_or(EUniverse::Public) as u64;
+        let account_number = ((steam3 - parity_check) / 2) as u64;
         let account_type = account_type.unwrap_or(EAccountType::Individual) as u64;
         let instance = 1u64;
 
         Self {
-            account_id: true,
+            account_id: parity_check != 0,
             account_number: BitVec::from(&account_number.bits()[33..]),
             account_instance: BitVec::from(&instance.bits()[44..]),
             account_type: BitVec::from(&account_type.bits()[60..]),
@@ -159,7 +160,7 @@ mod tests {
 
     // We are using this for our tests:
     // https://steamidfinder.com/lookup/76561198092541763/
-    fn get_steam64() -> u64 {
+    fn get_steam64_odd() -> u64 {
         76_561_198_092_541_763
     }
 
@@ -171,21 +172,41 @@ mod tests {
         "[U:1:132276035]"
     }
 
+    fn get_steam64_even() -> u64 {
+        76561197984835396
+    }
+
+    fn get_steam3_even() -> u64 {
+        24569668
+    }
+
     #[test]
     fn steamid_from_steam64() {
-        let steamid = SteamID::from_steam64(get_steam64());
+        let steamid = SteamID::from_steam64(get_steam64_odd());
+        assert_eq!(steamid.to_steam64(), get_steam64_odd())
     }
 
     #[test]
     fn steamid_to_steam64() {
-        let steamid = SteamID::from_steam64(get_steam64());
-        let steam64 = steamid.to_steam64();
-        assert_eq!(steam64, get_steam64())
+        let steamid = SteamID::from_steam64(get_steam64_odd());
+        assert_eq!(steamid.to_steam64(), get_steam64_odd())
+    }
+
+    #[test]
+    fn steamid_from_steam3_mine() {
+        let steamid = SteamID::from_steam3(get_steam3_even() as u32, None, None);
+        assert_eq!(steamid.to_steam64(), get_steam64_even())
+    }
+
+    #[test]
+    fn steamid64_to_steam3_mine() {
+        let steamid = SteamID::from_steam64(get_steam64_even());
+        assert_eq!(steamid.to_steam3(), get_steam3_even())
     }
 
     #[test]
     fn steamid_to_steam3() {
-        let steamid = SteamID::from_steam64(get_steam64());
+        let steamid = SteamID::from_steam64(get_steam64_odd());
         let steam32 = steamid.to_steam3();
         assert_eq!(steam32, get_steam3())
     }
@@ -193,20 +214,20 @@ mod tests {
     #[test]
     fn steamid_from_steam3() {
         let steamid = SteamID::from_steam3(get_steam3() as u32, None, None);
-        assert_eq!(steamid.to_steam64(), get_steam64())
+        assert_eq!(steamid.to_steam64(), get_steam64_odd())
     }
 
     #[test]
     fn steam64_parse() {
-        let formatted_steamid = format!("text {} xxaasssddff", get_steam64());
+        let formatted_steamid = format!("text {} xxaasssddff", get_steam64_odd());
         let steamid = SteamID::parse(&formatted_steamid).unwrap();
-        assert_eq!(steamid.to_steam64(), get_steam64());
+        assert_eq!(steamid.to_steam64(), get_steam64_odd());
     }
 
     #[test]
     fn steam3_parse() {
         let formatted_steamid = format!("text {} xxaasssddff", get_steam3_unformatted());
         let steamid = SteamID::parse(&formatted_steamid).unwrap();
-        assert_eq!(steamid.to_steam64(), get_steam64());
+        assert_eq!(steamid.to_steam64(), get_steam64_odd());
     }
 }
