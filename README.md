@@ -11,13 +11,13 @@ To learn more about how Steam works, check [here](https://github.com/saskenuba/S
 
 ### In progress:
 - Steam Auth: Mobile 2FA, Accept/Deny Confirmations, Authentication to Steam Community and Steam Store
+- Steam Trading: Create tradeoffers, Accept/Deny Tradeoffers, keep track of statuses changes.
 
 ### Progress Paused:
 - Steam Client: Same functionality as desktop client, go online, answer to messages, etc;
 
 ### Not yet implemented:
 - Steam WebAPI Wrapper
-- Steam Trading
 
 ## License
 
