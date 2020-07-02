@@ -1,0 +1,28 @@
+[package]
+name = "steam-trading"
+version = "0.1.0"
+authors = ["Martin <martin@hotmail.com.br>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+futures = "0.3.5"
+serde = "1"
+serde_json = { version = "1.0.55", features = ["raw_value"] }
+serde_with = { version = "1.4.0", features = ["json"] }
+thiserror = "1.0.20"
+tokio = { version = "0.2.16", features = ["rt-core", "macros", "time"] }
+tracing = "0.1"
+tracing-futures = "0.2.3"
+tracing-subscriber = "0.2.4" # For testing
+
+[dependencies.reqwest]
+version = "0.10"
+features = ["json", "cookies", "gzip"]
+
+[dependencies.steam-auth]
+path = "../steam-auth"
+
+[dependencies.steamid-parser]
+path = "../steamid-parser"

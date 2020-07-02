@@ -1,0 +1,15 @@
+* TODO
+
+- Steam Auth needs to be modified, to allow custom requests whilst maintaining store cookies. This would be used to
+create trade offers. To check the trade offer history, we only need the api key.
+
+** Trade related
+- Create a trade offer from the user logged in, to a determined STEAMID, requesting one or multiple asset ids, and
+offering nothing or something. (trade can't be completely empty, at least one item needs to be requested or sent);
+- Check for transition of trade offers status (?);
+
+*** Notes
+
+- Trades sent but not yet confirmed, do not show at the trade history API endpoint.
+- TradeHistory can be used to get the new assetids of traded items.
+- Trade URL endpoint: https://steamcommunity.com/tradeoffer/new/send
