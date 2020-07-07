@@ -45,6 +45,16 @@ impl SteamAuthenticator {
         }
     }
 
+    /// Returns current user API Key. Need to login first.
+    pub fn api_key(&self) -> Option<String> {
+        let mut api_key = Default::default();
+
+        {
+            api_key = self.cached_data.borrow().api_key().cloned();
+        }
+        api_key
+    }
+
     fn client(&self) -> &MobileClient {
         &self.client
     }
@@ -139,7 +149,11 @@ impl SteamAuthenticator {
 
     pub fn dump_cookie(&self, steam_domain_host: &str, steam_cookie_name: &str) -> Option<String> {
         // TODO: Change domain and names to enums
-        dump_cookies_by_name(&self.client.cookie_store.borrow(), steam_domain_host, steam_cookie_name)
+        dump_cookies_by_name(
+            &self.client.cookie_store.borrow(),
+            steam_domain_host,
+            steam_cookie_name,
+        )
     }
 }
 
@@ -231,6 +245,7 @@ impl MobileClient {
         Ok(false)
     }
 
+    /// If url is redirecting to '/login' or lostauth, returns true
     fn url_expired_check(redirect_url: Url) -> bool {
         redirect_url.host_str().unwrap() == "lostauth" || redirect_url.path().starts_with("/login")
     }

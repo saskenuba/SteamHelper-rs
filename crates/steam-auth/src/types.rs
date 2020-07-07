@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use steam_language_gen::generated::enums::{ETradeOfferConfirmationMethod, ETradeOfferState, EResult};
-
-use crate::web_handler::confirmation::Confirmation;
+use steam_language_gen::generated::enums::EResult;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct ConfirmationMultiAcceptRequest<'a> {
@@ -323,53 +321,6 @@ pub struct ResolveVanityUrlRequest {
     api_key: String,
     #[serde(rename = "vanityurl")]
     vanity_url: String,
-}
-
-#[derive(Deserialize, Debug, Clone)]
-pub struct IEconServiceGetTradeOffersResponse {
-    pub trade_offers_sent: Vec<IEconTradeOffer>,
-    pub trade_offers_received: Vec<IEconTradeOffer>,
-    pub descriptions: Descriptions,
-}
-
-#[derive(Deserialize, Debug, Clone)]
-pub struct Descriptions {
-    #[serde(with = "serde_with::rust::display_fromstr")]
-    pub appid: u32,
-    #[serde(with = "serde_with::rust::display_fromstr")]
-    pub classid: u64,
-    #[serde(with = "serde_with::rust::display_fromstr")]
-    pub instanceid: u64,
-    #[serde(with = "serde_with::rust::display_fromstr")]
-    pub marketable: bool,
-    pub tradable: String,
-}
-
-/// Represents a steam trade offer.
-/// Returned by GetTradeOffers (vector) and GetTradeOffer.
-#[derive(Deserialize, Debug, Clone)]
-pub struct IEconTradeOffer {
-    /// Unique ID generated when a trade offer is created
-    #[serde(with = "serde_with::rust::display_fromstr")]
-    tradeofferid: u64,
-    #[serde(with = "serde_with::rust::display_fromstr")]
-    /// the other steamid in the format of steamid3?
-    accountid_other: u32,
-    /// Message included by the creator of the trade offer
-    message: String,
-    expiration_time: String,
-    /// State of trade offer
-    trade_offer_state: ETradeOfferState,
-    items_to_give: String,
-    items_to_receive: String,
-    /// Indicates the account binded with the api key requested this trade
-    #[serde(with = "serde_with::rust::display_fromstr")]
-    is_our_offer: bool,
-    time_created: String,
-    time_updated: String,
-    from_real_time_trade: String,
-    escrow_end_date: String,
-    confirmation_method: ETradeOfferConfirmationMethod,
 }
 
 // steam api thoughts

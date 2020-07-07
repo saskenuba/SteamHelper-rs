@@ -27,7 +27,6 @@ use steam_language_gen::generated::enums::EResult;
 
 pub mod confirmation;
 pub(crate) mod login;
-mod trade;
 
 /// used to refresh session
 const MOBILE_AUTH_GETWGTOKEN: &str = const_concat!(
@@ -104,7 +103,14 @@ async fn parental_unlock_by_service(
         );
     }
 
-    let response = response.json::<ParentalUnlockResponse>().await.unwrap();
+    // FIXME: Sometimes this fails, when consecutively logging in. Happened when tried 3 times.
+    // We should try again
+    let response = response.text().await.unwrap();
+
+    let response = serde_json::from_str::<ParentalUnlockResponse>(&*response)
+        .map_err(|e| warn!("{}", e))
+        .unwrap();
+
     if response.eresult != EResult::OK {
         let error = format!("EResult: {:?} {}", response.eresult, response.error_message);
         return Err(LoginError::ParentalUnlock(error));
