@@ -16,25 +16,40 @@
     unused_qualifications
 )]
 
+use const_concat::const_concat;
 use reqwest::Url;
 
 use steam_auth::{client::SteamAuthenticator, HeaderMap, Method, STEAM_COMMUNITY_HOST};
 use steamid_parser::SteamID;
-pub use types::{asset_collection::AssetCollection, trade_offer::TradeOffer};
+pub use types::{asset_collection::AssetCollection, trade_offer::TradeOffer, TradeKind};
 
 use crate::{
     errors::{TradeOfferError, TradeOfferError::PayloadError},
-    types::trade_offer_web::{JsonTradeOffer, TradeOfferParams, TradeOfferRequest},
+    types::{
+        sessionid::{HasSessionID, SessionID},
+        trade_api::CEcon_GetTradeOffers_Response_Base,
+        trade_offer_web::{
+            JsonTradeOffer, TradeOfferAcceptRequest, TradeOfferCreateRequest,
+            TradeOfferGenericParameters, TradeOfferGenericRequest, TradeOfferParams,
+        },
+    },
 };
-
-use crate::types::trade_offer_web::TradeOfferResponse;
-use futures::{FutureExt, TryFutureExt};
+use tracing::{debug, info};
 
 mod errors;
 mod types;
 
-const TRADEOFFER_URL: &str = "https://steamcommunity.com/tradeoffer/new/send";
-const TRADEOFFER_REFERER_URL: &str = "https://steamcommunity.com/tradeoffer/new";
+const TRADEOFFER_BASE: &str = "https://steamcommunity.com/tradeoffer/";
+const TRADEOFFER_NEW_URL: &str = const_concat!(TRADEOFFER_BASE, "new/send");
+
+/// This is decided upon various factors, mainly stability of Steam servers when dealing with huge
+/// trade offers.
+///
+/// Consider this when creating trade websites.
+const TRADE_MAX_ITEMS: u8 = u8::max_value();
+
+/// Limit introduced by Valve
+const TRADE_MAX_TRADES_PER_ACCOUNT: u8 = 5;
 
 #[derive(Debug)]
 pub struct SteamTradeManager<'a> {
