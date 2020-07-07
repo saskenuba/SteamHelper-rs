@@ -63,15 +63,103 @@ impl<'a> SteamTradeManager<'a> {
         }
     }
 
-    /// Parses and validates the TradeOffer, and send it to Steam.
-    /// Returns the trade offer id, or an error.
-    pub async fn send_tradeoffer(&self, tradeoffer: TradeOffer) -> Result<String, TradeOfferError> {
+    pub async fn get_trade_offers(&self, sent: bool, received: bool, active_only: bool) {
+        let api_key = self.authenticator.api_key().unwrap();
+
+        let base_url = format!(
+            "https://api.steampowered.com/IEconService/GetTradeOffers/v1/?key={}",
+            api_key
+        );
+
+        let parameters = format!(
+            "&get_sent_offers={}&get_received_offers={}&active_only={}&\
+             time_historical_cutoff=4294967295",
+            sent as u8, received as u8, active_only as u8
+        );
+
+        let endpoint = base_url + &*parameters;
+        debug!("SteamAPI endpoint requested: {:?}", &endpoint);
+
+        let response = self
+            .authenticator
+            .request_custom_endpoint(endpoint, Method::GET, None, None::<&str>)
+            .await
+            .map(|response| response.json::<CEcon_GetTradeOffers_Response_Base>())
+            .unwrap()
+            .await;
+
+        info!("{:?}", response);
+    }
+
+    fn get_trade_offers_history() {}
+
+    /// Check current session health, injects SessionID cookie, and send the request.
+    pub async fn request(
+        &self,
+        operation: TradeKind,
+        tradeoffer_id: Option<u64>,
+    ) -> Result<(), TradeOfferError> {
+        let endpoint = operation.endpoint(tradeoffer_id);
+
+        let header = if let TradeKind::Create(_) = &operation {
+            let mut header = HeaderMap::new();
+            header.insert(
+                "Referer",
+                (TRADEOFFER_BASE.to_owned() + "new").parse().unwrap(),
+            );
+            Some(header)
+        } else {
+            None
+        };
+
+        let mut request: Box<dyn HasSessionID> = match operation {
+            TradeKind::Accept => Box::new(TradeOfferAcceptRequest {
+                tradeofferid: tradeoffer_id.unwrap(),
+                ..Default::default()
+            }),
+            TradeKind::Cancel | TradeKind::Decline => Box::new(TradeOfferGenericRequest::default()),
+            TradeKind::Create(offer) => Box::new(Self::prepare_tradeoffer(offer)?),
+        };
+
+        // TODO: Check if session is ok, then inject cookie
+        let session_id_cookie = self
+            .authenticator
+            .dump_cookie(STEAM_COMMUNITY_HOST, "sessionid")
+            .ok_or_else(|| {
+                PayloadError(
+                    "Somehow you don't have a sessionid cookie. You need to login first."
+                        .to_string(),
+                )
+            })?;
+
+        request.set_sessionid(session_id_cookie);
+
+        let response = self
+            .authenticator
+            .request_custom_endpoint(endpoint, Method::POST, header, Some(request))
+            .await?;
+
+        Ok(())
+    }
+
+    /// Placeholder
+    ///
+    /// Ex: https://steamcommunity.com/tradeoffer/new/?partner=79925588&token=Ob27qXzn
+    fn prepare_tradeoffer(
+        tradeoffer: TradeOffer,
+    ) -> Result<TradeOfferCreateRequest, TradeOfferError> {
         Self::validate_tradeoffer(&tradeoffer.my_assets, &tradeoffer.their_assets)?;
 
-        let mut request = self.prepare_tradeoffer(&tradeoffer.url, &tradeoffer.message)?;
+        let (steamid3, trade_token) = Self::parse_tradeoffer_url(&tradeoffer.url)?;
+
+        let their_steamid =
+            SteamID::from_steam3((&*steamid3).parse().unwrap(), None, None).to_steam64();
+        let trade_offer_params = trade_token.map(|token| TradeOfferParams {
+            trade_offer_access_token: token,
+        });
 
         // Convert Option<AssetCollection> to an AssetList
-        request.json_tradeoffer = JsonTradeOffer {
+        let json_tradeoffer = JsonTradeOffer {
             my_account: tradeoffer
                 .my_assets
                 .or_else(|| Some(AssetCollection::default()))
@@ -85,60 +173,18 @@ impl<'a> SteamTradeManager<'a> {
             ..Default::default()
         };
 
-        let mut header = HeaderMap::new();
-        header.insert("Referer", TRADEOFFER_REFERER_URL.parse().unwrap());
-
-        let response: TradeOfferResponse = self
-            .authenticator
-            .request_custom_endpoint(
-                TRADEOFFER_URL.to_string(),
-                Method::POST,
-                Some(header),
-                Some(request),
-            )
-            .and_then(|c| c.json::<TradeOfferResponse>())
-            .await?;
-
-        Ok(response.tradeofferid)
-    }
-
-    /// Placeholder
-    ///
-    /// Ex: https://steamcommunity.com/tradeoffer/new/?partner=79925588&token=Ob27qXzn
-    fn prepare_tradeoffer<'b>(
-        &self,
-        tradeoffer_url: &str,
-        message: &'b str,
-    ) -> Result<TradeOfferRequest<'b>, TradeOfferError> {
-        let (steamid3, trade_token) = Self::parse_tradeoffer_url(tradeoffer_url).unwrap();
-
-        // FIXME: SteamID should be +1
-        let their_steamid =
-            SteamID::from_steam3((&*steamid3).parse().unwrap(), None, None).to_steam64();
-        let trade_offer_params = trade_token.map(|token| TradeOfferParams {
-            trade_offer_access_token: token,
-        });
-
-        // FIXME: If we get the sessionid before checking if the session is still up, we run into a
-        // risk of sending an invalid sessionid cookie.
-
-        let session_id_cookie = self
-            .authenticator
-            .dump_cookie(STEAM_COMMUNITY_HOST, "sessionid")
-            .ok_or_else(|| {
-                PayloadError(
-                    "Somehow you don't have a sessionid cookie. You need to login first."
-                        .to_string(),
-                )
-            })?;
-
-        Ok(TradeOfferRequest {
-            sessionid: session_id_cookie,
-            their_steamid,
-            message,
+        let trade_web_request = TradeOfferCreateRequest {
+            sessionid: SessionID::default(),
+            common: TradeOfferGenericParameters {
+                their_steamid,
+                ..Default::default()
+            },
+            message: tradeoffer.message,
+            json_tradeoffer,
             trade_offer_create_params: trade_offer_params,
-            ..Default::default()
-        })
+        };
+
+        Ok(trade_web_request)
     }
 
     fn validate_tradeoffer(
@@ -160,7 +206,7 @@ impl<'a> SteamTradeManager<'a> {
         // Partner ID is mandatory
         let steam_id3 = parsed_url
             .query_pairs()
-            .find(|(param, arg)| param == "partner")
+            .find(|(param, _)| param == "partner")
             .ok_or_else(|| TradeOfferError::InvalidTradeOfferUrl)?
             .1
             .to_string();
@@ -168,7 +214,7 @@ impl<'a> SteamTradeManager<'a> {
         // If the recipient is your friend, you don't need a token
         let trade_token = parsed_url
             .query_pairs()
-            .find(|(param, arg)| param == "token")
+            .find(|(param, _)| param == "token")
             .map(|(_, c)| c.to_string());
 
         Ok((steam_id3, trade_token))

@@ -10,6 +10,13 @@ offering nothing or something. (trade can't be completely empty, at least one it
 
 *** Notes
 
+- The sessionid cookie needs to be injected automatically, after we check for a successfull session. It should not be
+ manually put inside the appropriate request;
 - Trades sent but not yet confirmed, do not show at the trade history API endpoint.
+
 - TradeHistory can be used to get the new assetids of traded items.
-- Trade URL endpoint: https://steamcommunity.com/tradeoffer/new/send
+
+- Accept endpoint response is the trade id, example: {"tradeid":"3151905948734426645"}
+- Decline endpoint response is the tradeofferid, example: {"tradeofferid":"4127436568"}. Request is only sessionid.
+- Completed trades (accepted, for example) have their "trade id" on the GetTradeOffers endpoint. We can use this, to
+check the new asset ids at the GetTradeHistory endpoint, by searching for "trade id" parameter.

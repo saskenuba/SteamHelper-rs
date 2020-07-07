@@ -1,10 +1,58 @@
+use crate::types::sessionid::{HasSessionID, SessionID};
 use serde::{Deserialize, Serialize};
+
+macro_rules! impl_sessionid {
+    ($name:ident) => {
+        impl HasSessionID for $name {
+            fn set_sessionid(&mut self, sessionid: String) {
+                self.sessionid.sessionid = sessionid;
+            }
+        }
+    };
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub(crate) struct TradeOfferGenericParameters {
+    pub serverid: i32,
+    #[serde(rename = "partner")]
+    /// Recipient STEAMID64. Ex: 76561198040191316
+    pub their_steamid: u64,
+    pub captcha: String,
+}
+
+impl<'a> Default for TradeOfferGenericParameters {
+    fn default() -> Self {
+        Self {
+            serverid: 1,
+            their_steamid: 0,
+            captcha: "".parse().unwrap(),
+        }
+    }
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+/// Used for decline, and cancelling an offer.
+/// Url: https://steamcommunity.com/tradeoffer/4127395150/accept
+pub(crate) struct TradeOfferGenericRequest {
+    #[serde(flatten)]
+    pub sessionid: SessionID,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+/// Url: https://steamcommunity.com/tradeoffer/4127395150/accept
+pub(crate) struct TradeOfferAcceptRequest {
+    #[serde(flatten)]
+    pub sessionid: SessionID,
+    #[serde(flatten)]
+    pub common: TradeOfferGenericParameters,
+    pub tradeofferid: u64,
+}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 /// Response after the creation of a new trade offer.
 ///
 /// There is no need of confirmations if not trading items from self account.
-pub struct TradeOfferResponse {
+pub struct TradeOfferCreateResponse {
     /// This is the trade offer ID of our offer. We can use this to mobile confirm.
     /// Ex: 4112828817
     pub tradeofferid: String,
@@ -17,20 +65,18 @@ pub struct TradeOfferResponse {
 /// We create a trade offer from a Steam Trade link the user shares with us.
 /// The "partner" number, is the SteamID3. In order to send the trade offer, first we need to to
 /// convert it to a SteamID64.
-pub(crate) struct TradeOfferRequest<'a> {
+pub(crate) struct TradeOfferCreateRequest {
     /// Session ID cookie from Steam Community.
-    pub sessionid: String,
-    pub serverid: i32,
-    #[serde(rename = "partner")]
-    /// Recipient STEAMID64. Ex: 76561198040191316
-    pub their_steamid: u64,
+    #[serde(flatten)]
+    pub sessionid: SessionID,
+    #[serde(flatten)]
+    pub common: TradeOfferGenericParameters,
     #[serde(rename = "tradeoffermessage")]
     /// Message to be sent to trade offer recipient along with the trade.
     /// The message needs to be form url encoded.
-    pub message: &'a str,
+    pub message: String,
     #[serde(serialize_with = "serde_with::json::nested::serialize")]
     pub json_tradeoffer: JsonTradeOffer,
-    pub captcha: &'a str,
     #[serde(serialize_with = "serde_with::json::nested::serialize")]
     /// If we intend to create a trade offer based on a trade partner link, we need to send the
     /// trade access token with it.
@@ -42,16 +88,13 @@ pub(crate) struct TradeOfferParams {
     pub trade_offer_access_token: String,
 }
 
-impl<'a> Default for TradeOfferRequest<'a> {
+impl Default for TradeOfferCreateRequest {
     fn default() -> Self {
         Self {
-            sessionid: "".to_string(),
-            serverid: 1,
-            their_steamid: 0,
-            message: "",
+            message: "".to_string(),
             json_tradeoffer: Default::default(),
-            captcha: "",
             trade_offer_create_params: None,
+            ..Default::default()
         }
     }
 }
@@ -108,6 +151,10 @@ pub struct Asset {
     pub assetid: String,
 }
 
+impl_sessionid!(TradeOfferGenericRequest);
+impl_sessionid!(TradeOfferAcceptRequest);
+impl_sessionid!(TradeOfferCreateRequest);
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -155,14 +202,12 @@ mod tests {
     #[test]
     fn trade_offer_serialize() {
         let json_trade_offer = get_offer();
-        let new_trade_offer = TradeOfferRequest {
-            sessionid: "1123safsdasd".to_string(),
-            serverid: 1,
-            their_steamid: 78922817233441,
-            message: "5+e+onibus",
+        let new_trade_offer = TradeOfferCreateRequest {
+            message: "5+e+onibus".to_string(),
             json_tradeoffer: json_trade_offer,
-            captcha: "",
             trade_offer_create_params: None,
+            common: Default::default(),
+            ..Default::default()
         };
 
         println!(
