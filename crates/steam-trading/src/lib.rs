@@ -17,7 +17,7 @@
 )]
 
 use const_concat::const_concat;
-use reqwest::Url;
+use tracing::{debug, info};
 
 use steam_auth::{client::SteamAuthenticator, HeaderMap, Method, STEAM_COMMUNITY_HOST};
 use steamid_parser::SteamID;
@@ -34,7 +34,6 @@ use crate::{
         },
     },
 };
-use tracing::{debug, info};
 
 mod errors;
 mod types;
@@ -148,9 +147,9 @@ impl<'a> SteamTradeManager<'a> {
     fn prepare_tradeoffer(
         tradeoffer: TradeOffer,
     ) -> Result<TradeOfferCreateRequest, TradeOfferError> {
-        Self::validate_tradeoffer(&tradeoffer.my_assets, &tradeoffer.their_assets)?;
+        TradeOffer::validate(&tradeoffer.my_assets, &tradeoffer.their_assets)?;
 
-        let (steamid3, trade_token) = Self::parse_tradeoffer_url(&tradeoffer.url)?;
+        let (steamid3, trade_token) = TradeOffer::parse_url(&tradeoffer.url)?;
 
         let their_steamid =
             SteamID::from_steam3((&*steamid3).parse().unwrap(), None, None).to_steam64();
@@ -186,39 +185,6 @@ impl<'a> SteamTradeManager<'a> {
 
         Ok(trade_web_request)
     }
-
-    fn validate_tradeoffer(
-        my_items: &Option<AssetCollection>,
-        their_items: &Option<AssetCollection>,
-    ) -> Result<(), TradeOfferError> {
-        if my_items.is_none() && their_items.is_none() {
-            return Err(TradeOfferError::InvalidTrade(
-                "There can't be a trade offer with no items being traded.".to_string(),
-            ));
-        }
-
-        Ok(())
-    }
-
-    fn parse_tradeoffer_url(url: &str) -> Result<(String, Option<String>), TradeOfferError> {
-        let parsed_url = Url::parse(url).unwrap();
-
-        // Partner ID is mandatory
-        let steam_id3 = parsed_url
-            .query_pairs()
-            .find(|(param, _)| param == "partner")
-            .ok_or_else(|| TradeOfferError::InvalidTradeOfferUrl)?
-            .1
-            .to_string();
-
-        // If the recipient is your friend, you don't need a token
-        let trade_token = parsed_url
-            .query_pairs()
-            .find(|(param, _)| param == "token")
-            .map(|(_, c)| c.to_string());
-
-        Ok((steam_id3, trade_token))
-    }
 }
 
 #[cfg(test)]
@@ -234,8 +200,7 @@ mod tests {
 
     #[test]
     fn tradeoffer_url() {
-        let parsed =
-            SteamTradeManager::parse_tradeoffer_url(get_tradeoffer_url_with_token()).unwrap();
+        let parsed = TradeOffer::parse_url(get_tradeoffer_url_with_token()).unwrap();
         assert_eq!(
             (String::from("79925588"), Some(String::from("Ob27qXzn"))),
             parsed
