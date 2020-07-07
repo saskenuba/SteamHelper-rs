@@ -23,15 +23,12 @@ pub fn dump_cookie_from_header(response: &Response, name: &str) -> Option<String
 pub fn dump_cookies_by_domain(jar: &CookieJar, domain: &str) -> Option<String> {
     jar.iter().peekable().peek()?;
 
-    Some(
-        jar.iter()
-            .filter(|c| c.domain() == Some(domain))
-            .map(|c| format!("{}={}; ", c.name(), c.value()))
-            .collect::<String>()
-            .strip_suffix("; ")
-            .unwrap()
-            .to_string(),
-    )
+    jar.iter()
+        .filter(|c| c.domain() == Some(domain))
+        .map(|c| format!("{}={}; ", c.name(), c.value()))
+        .collect::<String>()
+        .strip_suffix("; ")
+        .map(|cookie_string| cookie_string.to_string())
 }
 
 /// Retrieve cookie from jar,  filtered by domain and name, and them dumps into String.
