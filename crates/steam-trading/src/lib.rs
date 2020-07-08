@@ -17,6 +17,7 @@
 )]
 
 use const_concat::const_concat;
+use futures::TryFutureExt;
 use tracing::{debug, info};
 
 use steam_auth::{client::SteamAuthenticator, HeaderMap, Method, STEAM_COMMUNITY_HOST};
@@ -27,10 +28,10 @@ use crate::{
     errors::{TradeOfferError, TradeOfferError::PayloadError},
     types::{
         sessionid::{HasSessionID, SessionID},
-        trade_api::CEcon_GetTradeOffers_Response_Base,
+        trade_api::{CEcon_GetTradeOffers_Response_Base, CEcon_TradeOffer, HasAssets},
         trade_offer_web::{
-            JsonTradeOffer, TradeOfferAcceptRequest, TradeOfferCreateRequest,
-            TradeOfferGenericParameters, TradeOfferGenericRequest, TradeOfferParams,
+            JsonTradeOffer, TradeOfferAcceptRequest, TradeOfferCommonParameters,
+            TradeOfferCreateRequest, TradeOfferGenericRequest, TradeOfferParams,
         },
     },
 };
@@ -45,7 +46,7 @@ const TRADEOFFER_NEW_URL: &str = const_concat!(TRADEOFFER_BASE, "new/send");
 /// trade offers.
 ///
 /// Consider this when creating trade websites.
-const TRADE_MAX_ITEMS: u8 = u8::max_value();
+const TRADE_MAX_ITEMS: u8 = u8::MAX;
 
 /// Limit introduced by Valve
 const TRADE_MAX_TRADES_PER_ACCOUNT: u8 = 5;
@@ -62,7 +63,15 @@ impl<'a> SteamTradeManager<'a> {
         }
     }
 
-    pub async fn get_trade_offers(&self, sent: bool, received: bool, active_only: bool) {
+    /// Call to GetTradeOffers endpoint.
+    ///
+    /// Especially useful to get information about active trades.
+    pub async fn get_trade_offers(
+        &self,
+        sent: bool,
+        received: bool,
+        active_only: bool,
+    ) -> Result<CEcon_GetTradeOffers_Response_Base, TradeOfferError> {
         let api_key = self.authenticator.api_key().unwrap();
 
         let base_url = format!(
@@ -82,15 +91,22 @@ impl<'a> SteamTradeManager<'a> {
         let response = self
             .authenticator
             .request_custom_endpoint(endpoint, Method::GET, None, None::<&str>)
-            .await
-            .map(|response| response.json::<CEcon_GetTradeOffers_Response_Base>())
-            .unwrap()
-            .await;
+            .and_then(|c| c.json::<CEcon_GetTradeOffers_Response_Base>())
+            .await?;
 
-        info!("{:?}", response);
+        Ok(response)
     }
 
     fn get_trade_offers_history() {}
+
+    pub async fn get_tradeoffer_by_tradeoffer_id(
+        &self,
+        tradeoffer_id: u64,
+    ) -> Result<Vec<CEcon_TradeOffer>, TradeOfferError> {
+        self.get_trade_offers(false, true, true)
+            .map_ok(|c| c.filter_by(|c: &&CEcon_TradeOffer| c.tradeofferid == tradeoffer_id))
+            .await
+    }
 
     /// Check current session health, injects SessionID cookie, and send the request.
     pub async fn request(
@@ -100,22 +116,50 @@ impl<'a> SteamTradeManager<'a> {
     ) -> Result<(), TradeOfferError> {
         let endpoint = operation.endpoint(tradeoffer_id);
 
-        let header = if let TradeKind::Create(_) = &operation {
-            let mut header = HeaderMap::new();
-            header.insert(
-                "Referer",
-                (TRADEOFFER_BASE.to_owned() + "new").parse().unwrap(),
-            );
-            Some(header)
-        } else {
-            None
+        let mut header: Option<HeaderMap> = None;
+        match &operation {
+            TradeKind::Create(_) => {
+                header.replace(HeaderMap::new()).as_mut().unwrap();
+                header.as_mut().unwrap().insert(
+                    "Referer",
+                    (TRADEOFFER_BASE.to_owned() + "new").parse().unwrap(),
+                );
+            }
+            TradeKind::Accept => {
+                header.replace(HeaderMap::new());
+                header.as_mut().unwrap().insert(
+                    "Referer",
+                    format!("{}{}/", TRADEOFFER_BASE, tradeoffer_id.unwrap())
+                        .parse()
+                        .unwrap(),
+                );
+            }
+            _ => {}
         };
 
         let mut request: Box<dyn HasSessionID> = match operation {
-            TradeKind::Accept => Box::new(TradeOfferAcceptRequest {
-                tradeofferid: tradeoffer_id.unwrap(),
-                ..Default::default()
-            }),
+            TradeKind::Accept => {
+                let partner_id = self
+                    .get_tradeoffer_by_tradeoffer_id(tradeoffer_id.unwrap())
+                    .await?
+                    .first()
+                    .map(|c| SteamID::from_steam3(c.tradeofferid as u32, None, None))
+                    .map(|steamid| steamid.to_steam64())
+                    .unwrap();
+
+                let data = TradeOfferAcceptRequest {
+                    common: TradeOfferCommonParameters {
+                        their_steamid: partner_id,
+                        ..Default::default()
+                    },
+                    tradeofferid: tradeoffer_id.unwrap(),
+                    ..Default::default()
+                };
+
+                debug!("{:#?}", serde_json::to_string_pretty(&data).unwrap());
+                Box::new(data)
+            }
+
             TradeKind::Cancel | TradeKind::Decline => Box::new(TradeOfferGenericRequest::default()),
             TradeKind::Create(offer) => Box::new(Self::prepare_tradeoffer(offer)?),
         };
@@ -174,7 +218,7 @@ impl<'a> SteamTradeManager<'a> {
 
         let trade_web_request = TradeOfferCreateRequest {
             sessionid: SessionID::default(),
-            common: TradeOfferGenericParameters {
+            common: TradeOfferCommonParameters {
                 their_steamid,
                 ..Default::default()
             },

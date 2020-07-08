@@ -1,7 +1,7 @@
 use crate::types::trade_offer_web::{Asset, AssetList};
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct AssetCollection(pub Vec<Asset>);
+pub struct AssetCollection(pub(crate) Vec<Asset>);
 
 impl AssetCollection {
     pub fn dump_to_asset_list(self) -> AssetList {

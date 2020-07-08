@@ -8,6 +8,43 @@ use serde_repr::Deserialize_repr;
 
 use steam_language_gen::generated::enums::{ETradeOfferConfirmationMethod, ETradeOfferState};
 
+pub trait HasAssets {
+    fn filter_by<T: Fn(&&CEcon_TradeOffer) -> bool>(self, by: T) -> Vec<CEcon_TradeOffer>;
+}
+
+impl HasAssets for CEcon_GetTradeOffers_Response_Base {
+    fn filter_by<T: Fn(&&CEcon_TradeOffer) -> bool>(self, by: T) -> Vec<CEcon_TradeOffer> {
+
+        match (
+            self.response.trade_offers_sent,
+            self.response.trade_offers_received,
+        ) {
+            (Some(sent), Some(received)) => {
+                let mut all_tradeoffers = vec![];
+                all_tradeoffers.extend(sent.iter());
+                all_tradeoffers.extend(received.iter());
+                all_tradeoffers
+                    .into_iter()
+                    .filter(|c| by(c))
+                    .map(|c: &CEcon_TradeOffer| c.to_owned())
+                    .collect::<Vec<CEcon_TradeOffer>>()
+            }
+            (None, Some(trades)) | (Some(trades), None) => trades
+                .iter()
+                .filter(|c| by(c))
+                .map(|c: &CEcon_TradeOffer| c.to_owned())
+                .collect::<Vec<CEcon_TradeOffer>>(),
+            _ => unreachable!(),
+        }
+    }
+}
+
+// impl HasAssets for CEcon_GetTradeHistory_Response_Trade_Base {
+//     fn filter_tradeoffer_id(&self) {
+//         unimplemented!()
+//     }
+// }
+
 /// Tracks the status of a trade after a trade offer has been accepted.
 /// Received at GetTradeHistory at status field on
 /// CEcon_GetTradeHistory_Response_Trade
@@ -74,9 +111,9 @@ pub struct CEcon_GetTradeOffers_Response {
 pub struct CEcon_TradeOffer {
     /// Unique ID generated when a trade offer is created
     #[serde(with = "serde_with::rust::display_fromstr")]
-    tradeofferid: u64,
+    pub tradeofferid: u64,
     /// SteamID3
-    accountid_other: u32,
+    pub accountid_other: u64,
     /// Message included by the creator of the trade offer
     message: String,
     /// Unix time when the offer will expire (or expired, if it is in the past)

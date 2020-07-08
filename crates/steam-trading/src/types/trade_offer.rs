@@ -1,4 +1,4 @@
-use crate::{errors::TradeOfferError, types::asset_collection::AssetCollection};
+use crate::{errors::TradeOfferError, types::asset_collection::AssetCollection, TRADE_MAX_ITEMS};
 use reqwest::Url;
 
 #[derive(Debug, PartialEq)]
@@ -24,6 +24,7 @@ impl TradeOffer {
         }
     }
 
+    /// Validates if at least one item is being traded or if it exceeds the 255 items limit;
     pub fn validate(
         my_items: &Option<AssetCollection>,
         their_items: &Option<AssetCollection>,
@@ -32,6 +33,18 @@ impl TradeOffer {
             return Err(TradeOfferError::InvalidTrade(
                 "There can't be a trade offer with no items being traded.".to_string(),
             ));
+        }
+
+        // TODO: more elegant, please
+
+        let my_length = my_items.as_ref().map(|c| c.0.len()).unwrap();
+        let their_length = their_items.as_ref().map(|c| c.0.len()).unwrap();
+
+        if my_length >= TRADE_MAX_ITEMS as usize || their_length >= TRADE_MAX_ITEMS as usize {
+            return Err(TradeOfferError::InvalidTrade(format!(
+                "Maximum number of items is: {}",
+                TRADE_MAX_ITEMS
+            )));
         }
 
         Ok(())

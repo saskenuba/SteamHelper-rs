@@ -12,7 +12,7 @@ macro_rules! impl_sessionid {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub(crate) struct TradeOfferGenericParameters {
+pub(crate) struct TradeOfferCommonParameters {
     pub serverid: i32,
     #[serde(rename = "partner")]
     /// Recipient STEAMID64. Ex: 76561198040191316
@@ -20,7 +20,7 @@ pub(crate) struct TradeOfferGenericParameters {
     pub captcha: String,
 }
 
-impl<'a> Default for TradeOfferGenericParameters {
+impl<'a> Default for TradeOfferCommonParameters {
     fn default() -> Self {
         Self {
             serverid: 1,
@@ -44,7 +44,7 @@ pub(crate) struct TradeOfferAcceptRequest {
     #[serde(flatten)]
     pub sessionid: SessionID,
     #[serde(flatten)]
-    pub common: TradeOfferGenericParameters,
+    pub common: TradeOfferCommonParameters,
     pub tradeofferid: u64,
 }
 
@@ -70,7 +70,7 @@ pub(crate) struct TradeOfferCreateRequest {
     #[serde(flatten)]
     pub sessionid: SessionID,
     #[serde(flatten)]
-    pub common: TradeOfferGenericParameters,
+    pub common: TradeOfferCommonParameters,
     #[serde(rename = "tradeoffermessage")]
     /// Message to be sent to trade offer recipient along with the trade.
     /// The message needs to be form url encoded.
