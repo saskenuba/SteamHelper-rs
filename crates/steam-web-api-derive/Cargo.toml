@@ -1,0 +1,13 @@
+[package]
+name = "steam-web-api-derive"
+version = "0.1.0"
+authors = ["Martin <martin@hotmail.com.br>"]
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = "1"
+quote = "1"
+proc-macro2 = "1"
