@@ -1,3 +1,29 @@
+#[cfg(feature = "async")]
+use async_trait::async_trait;
+
+#[cfg(feature = "async")]
+use futures::future;
+
+#[cfg(feature = "async")]
+macro_rules! import {
+    () => {
+        use crate::{
+            helpers::{comma_delimited, indexed_array, querify},
+            async_client::{Executor, ExecutorResponse, GetQueryBuilder},
+        };
+    };
+}
+
+#[cfg(feature = "blocking")]
+macro_rules! import {
+    () => {
+        use crate::{
+            blocking::{Executor, ExecutorResponse, GetQueryBuilder},
+            helpers::{comma_delimited, indexed_array, querify},
+        };
+    };
+}
+
 #[allow(unused)]
 macro_rules! func_client {
     ($i: ident, $t: ty) => {
@@ -31,11 +57,17 @@ macro_rules! from {
 #[allow(unused)]
 macro_rules! new_type {
     ( $f:ident) => {
+        #[cfg(feature = "blocking")]
         pub struct $f<'a> {
-            // pub(crate) request: reqwest::Request,
-            // pub(crate) client: &'a reqwest::Client,
             pub(crate) request: reqwest::blocking::Request,
             pub(crate) client: &'a reqwest::blocking::Client,
+            pub(crate) key: &'a String,
+        }
+
+        #[cfg(feature = "async")]
+        pub struct $f<'a> {
+            pub(crate) request: reqwest::Request,
+            pub(crate) client: &'a reqwest::Client,
             pub(crate) key: &'a String,
         }
     };
@@ -44,6 +76,7 @@ macro_rules! new_type {
 #[allow(unused)]
 macro_rules! exec {
     ($base:ident -> $ret:ident) => {
+        #[cfg(feature = "blocking")]
         impl<'a> ExecutorResponse<$ret> for $base<'a> {
             fn execute_with_response(self) -> reqwest::Result<$ret> {
                 use paste::paste;
@@ -62,10 +95,30 @@ macro_rules! exec {
             }
         }
 
+        #[$crate::async_trait]
+        #[cfg(feature = "async")]
+        impl<'a> ExecutorResponse<$ret> for $base<'a> {
+            async fn execute_with_response(self) -> reqwest::Result<$ret> {
+                use futures::future::TryFutureExt;
+
+                let query: String = self.recover_params();
+                let api_key_parameter = format!("key={}", self.key);
+                let mut req = self.request;
+                let url = req.url_mut();
+                url.set_query(Some(&(api_key_parameter + "&" + &query)));
+
+                self.client
+                    .execute(req)
+                    .and_then(|res| res.json::<$ret>())
+                    .await
+            }
+        }
+
         // also implements for raw response
         exec!($base);
     };
     ($base:ident) => {
+        #[cfg(feature = "blocking")]
         impl<'a> Executor for $base<'a> {
             fn execute(self) -> Result<reqwest::blocking::Response, reqwest::Error> {
                 let query: String = self.recover_params();
@@ -78,17 +131,19 @@ macro_rules! exec {
             }
         }
 
-        // #[async_trait]
-        // impl<'a> Executor for &base<'a> {
-        //     async fn execute(self) -> Result<reqwest::Response, reqwest::Error> {
-        //         let query = self.recover_params();
-        //         let mut req = self.request;
-        //         let url = req.url_mut();
-        //         url.set_query(Some(&query));
-        //
-        //         self.client.execute(req).await
-        //     }
-        // }
+        #[$crate::async_trait]
+        #[cfg(feature = "async")]
+        impl<'a> Executor for $base<'a> {
+            async fn execute(self) -> Result<reqwest::Response, reqwest::Error> {
+                let query: String = self.recover_params();
+                let api_key_parameter = format!("key={}", self.key);
+                let mut req = self.request;
+                let url = req.url_mut();
+                url.set_query(Some(&(api_key_parameter + "&" + &query)));
+
+                self.client.execute(req).await
+            }
+        }
     };
 }
 

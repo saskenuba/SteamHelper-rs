@@ -73,6 +73,16 @@ pub fn derive_parameters(input: TokenStream) -> TokenStream {
     let expanded = quote! {
 
         #[derive(Debug)]
+        #[cfg(feature = "async")]
+        pub struct #new_ident<'a> {
+            pub(crate) key: &'a String,
+            pub(crate) request: reqwest::Request,
+            pub(crate) client: &'a reqwest::Client,
+            pub(crate) parameters: #struct_parameters_name,
+        }
+
+        #[derive(Debug)]
+        #[cfg(feature = "blocking")]
         pub struct #new_ident<'a> {
             pub(crate) key: &'a String,
             pub(crate) request: reqwest::blocking::Request,

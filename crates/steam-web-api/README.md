@@ -29,8 +29,14 @@ Add the following to your `Cargo.toml`
 ```toml
 [dependencies]
 steam-web-api = { git = "https://github.com/saskenuba/SteamHelper-rs.git", branch = "master" }
+
 ```
 
+Or if you want the blocking client:
+
+```toml
+steam-web-api = { git = "https://github.com/saskenuba/SteamHelper-rs.git", branch = "master", default-features = false, features = ["blocking"] }
+```
 
 Then in your `lib.rs` or `main.rs` file add:
 
@@ -38,29 +44,33 @@ Then in your `lib.rs` or `main.rs` file add:
 use steam_web_api::{Executor, Github};
 ```
 
-
  ``` rust
 use steam_web_api::{Executor, Github};
 
-let client = SteamAPI::new("your-api-key");
-
-// You choose between the already structured response
-let response: steam-web-api::response_types::GetPlayerBansBase = client
-    .get()
-    .ISteamUser()
-    .GetPlayerBans(vec!["76561197984835396".to_string()])
-    .execute_with_response()
-    .unwrap();
+// if using blocking client
+// use steam_web_api::blocking::{Executor, Github};
 
 
-// or the raw response from reqwest
-let response: reqwest::blocking::Response = client
-    .get()
-    .ISteamUser()
-    .GetPlayerSummaries(vec!["76561197984835396".to_string()])
-    .execute()
-    .unwrap();
+#[tokio::main]
+async fn main() -> Result<()> {
+    let client = SteamAPI::new(std::env!("STEAM_API"));
 
+    // You choose between the already structured response
+    let response: steam-web-api::response_types::GetPlayerBansBase = client
+        .get()
+        .ISteamUser()
+        .GetPlayerBans(vec!["76561197984835396".to_string()])
+        .execute_with_response()
+        .await?;
+
+    // or the raw response from reqwest
+    let response: reqwest::Response = client
+         .get()
+        .ISteamUser()
+        .GetPlayerSummaries(vec!["76561197984835396".to_string()])
+        .execute()
+        .await?;
+}
 
 // Not all endpoints have the structured endpoint response. You can contribute!
  ```
