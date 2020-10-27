@@ -1,11 +1,23 @@
 use std::{cell::RefCell, rc::Rc};
 
-use cookie::{Cookie, CookieJar};
+use backoff::future::FutureOperation;
+use futures::TryFutureExt;
+use reqwest::redirect::Policy;
 use reqwest::{header::HeaderMap, Client, Method, Response, Url};
 use scraper::Html;
 use serde::Serialize;
+use tokio::time::Duration;
 use tracing::{debug, info, warn};
 
+use cookie::{Cookie, CookieJar};
+
+use crate::errors::{LinkerError, LoginError};
+use crate::retry::login_retry_strategy;
+use crate::types::LoginCaptcha;
+use crate::web_handler::authenticator::{
+    account_has_phone, add_authenticator_to_account, add_phone_to_account, check_email_confirmation, check_sms,
+    finalize_authenticator, validate_phone_number, AddAuthenticatorStep, STEAM_ADD_PHONE_CATCHUP_SECS,
+};
 use crate::{
     errors::AuthError,
     utils::{dump_cookies_by_domain, dump_cookies_by_name, retrieve_header_location},
@@ -13,9 +25,8 @@ use crate::{
         cache_resolve, confirmation::Confirmations, confirmations_retrieve_all, confirmations_send,
         login::login_website, parental_unlock,
     },
-    CachedInfo, ConfirmationMethod, User,
+    CachedInfo, ConfirmationMethod, MobileAuthFile, User, STEAM_COMMUNITY_HOST,
 };
-use reqwest::redirect::Policy;
 
 #[derive(Debug)]
 /// Main authenticator. We use it to spawn and act as our "mobile" client.
@@ -61,18 +72,37 @@ impl SteamAuthenticator {
 
     /// Log on into Steam website and populates the inner client with cookies for the Steam Store,
     /// Steam community and Steam help domains.
+    ///
     /// Automatically unlocks parental control if user uses it, but it need to be included inside
     /// the [User] builder.
+    ///
+    /// The mobile client also has a very simple exponential retry strategy for errors that are *probably*
+    /// caused by fast requests, so we retry it. For errors such as bad credentials, or inserting captcha
+    /// the proper errors are raised by `AuthError`.
     ///
     /// Also caches the API Key, if the user wants to use it for any operation later.
     ///
     /// The cookies are inside the [MobileClient] inner cookie storage.
-    pub async fn login(&self) -> Result<(), AuthError> {
-        {
-            login_website(&self.client, &self.user, self.cached_data.borrow_mut()).await?;
-        }
+    pub async fn login(&self, captcha: Option<LoginCaptcha<'_>>) -> Result<(), AuthError> {
+        // FIXME: Add more permanent errors, such as bad credentials
+        (|| async {
+            login_website(&self.client, &self.user, self.cached_data.borrow_mut(), captcha.clone())
+                .await
+                .map_err(|e| match e {
+                    LoginError::CaptchaRequired { captcha_guid } => {
+                        backoff::Error::Permanent(LoginError::CaptchaRequired { captcha_guid })
+                    }
+                    _ => {
+                        warn!("Transient error happened: Trying again..");
+                        backoff::Error::Transient(e)
+                    }
+                })
+        })
+        .retry(login_retry_strategy())
+        .await?;
 
         info!("Login to Steam successfully.");
+        // FIXME: This should work the same as login, because it can sometimes fail for no reason
         if self.user.parental_code.is_some() {
             parental_unlock(&self.client, &self.user).await?;
             info!("Parental unlock successfully.");
@@ -84,6 +114,74 @@ impl SteamAuthenticator {
         info!("Cached API Key successfully.");
 
         Ok(())
+    }
+
+    pub async fn add_authenticator(
+        &self,
+        current_step: AddAuthenticatorStep,
+        phone_number: &str,
+    ) -> Result<AddAuthenticatorStep, AuthError> {
+        let user_has_phone_registered = account_has_phone(&self.client).await?;
+        debug!("Has phone registered? {:?}", user_has_phone_registered);
+
+        if !user_has_phone_registered && current_step == AddAuthenticatorStep::InitialStep {
+            let phone_registration_result = self.add_phone_number(phone_number).await?;
+            debug!("User add phone result: {:?}", phone_registration_result);
+
+            return Ok(AddAuthenticatorStep::EmailConfirmation);
+        }
+
+        // Signal steam that user confirmed email
+        // If user already has a phone, calling email confirmation will result in a error finalizing the auth process.
+        if !user_has_phone_registered {
+            check_email_confirmation(&self.client).await?;
+            debug!("Email confirmation signal sent.");
+        }
+
+        add_authenticator_to_account(&self.client, self.cached_data.borrow())
+            .await
+            .map(|mafile| AddAuthenticatorStep::MobileAuth(mafile))
+            .map_err(|e| e.into())
+    }
+
+    /// Wraps up the whole process, finishing the registration of the phone number into the account.
+    /// You only call this method after `add_authenticator` works correctly, and you saved your .maFile somewhere safe.
+    pub async fn finalize_authenticator(&self, mafile: &MobileAuthFile, sms_code: &str) -> Result<(), AuthError> {
+        // The delay is that Steam need some seconds to catch up with the new phone number associated.
+        let account_has_phone_now: bool = check_sms(&self.client, sms_code)
+            .map_ok(|x| tokio::time::delay_for(Duration::from_secs(STEAM_ADD_PHONE_CATCHUP_SECS)))
+            .and_then(|_| account_has_phone(&self.client))
+            .await?;
+
+        if !account_has_phone_now {
+            return Err(LinkerError::GeneralFailure("This should not happen.".to_string()).into());
+        }
+
+        info!("Successfully confirmed SMS code.");
+
+        finalize_authenticator(&self.client, self.cached_data.borrow(), mafile, sms_code)
+            .await
+            .map_err(|e| e.into())
+    }
+
+    pub async fn remove_authenticator(&self) {}
+
+    /// Add a phone number into the account, and then checks it to make sure it has been added.
+    /// Returns true if number was successfully added.
+    async fn add_phone_number(&self, phone_number: &str) -> Result<bool, AuthError> {
+        if !validate_phone_number(phone_number) {
+            return Err(LinkerError::GeneralFailure(
+                "Invalid phone number. Should be in format of: +(CountryCode)(AreaCode)(PhoneNumber). E.g +5511976914922"
+                    .to_string(),
+            ).into());
+        }
+
+        // Add the phone number to user account
+        // The delay is that Steam need some seconds to catch up.
+        let response = add_phone_to_account(&self.client, phone_number).await?;
+        tokio::time::delay_for(Duration::from_secs(STEAM_ADD_PHONE_CATCHUP_SECS)).await;
+
+        Ok(response)
     }
 
     /// Fetch confirmations with the authenticator.
@@ -117,15 +215,10 @@ impl SteamAuthenticator {
         confirmations: Confirmations,
     ) -> Result<(), AuthError> {
         let steamid = self.cached_data.borrow().steam_id().unwrap();
-        confirmations_send(
-            &self.client,
-            &self.user,
-            steamid,
-            operation,
-            confirmations.0,
-        )
-        .await?;
-        Ok(())
+
+        confirmations_send(&self.client, &self.user, steamid, operation, confirmations.0)
+            .await
+            .map_err(|e| e.into())
     }
 
     /// You can request custom operations for any Steam operation that requires logging in.
@@ -149,11 +242,7 @@ impl SteamAuthenticator {
 
     pub fn dump_cookie(&self, steam_domain_host: &str, steam_cookie_name: &str) -> Option<String> {
         // TODO: Change domain and names to enums
-        dump_cookies_by_name(
-            &self.client.cookie_store.borrow(),
-            steam_domain_host,
-            steam_cookie_name,
-        )
+        dump_cookies_by_name(&self.client.cookie_store.borrow(), steam_domain_host, steam_cookie_name)
     }
 }
 
@@ -184,7 +273,7 @@ impl MobileClient {
             unimplemented!()
         };
 
-        self.request(url, method, custom_headers, data).await
+        self.request(url, method, custom_headers, data.as_ref()).await
     }
 
     /// Simple wrapper to allow generic requests to be made.
@@ -193,7 +282,7 @@ impl MobileClient {
         url: String,
         method: Method,
         custom_headers: Option<HeaderMap>,
-        data: Option<T>,
+        data: Option<&T>,
     ) -> Result<Response, reqwest::Error>
     where
         T: Serialize,
@@ -206,20 +295,14 @@ impl MobileClient {
         let domain_cookies = dump_cookies_by_domain(&self.cookie_store.borrow(), domain);
         header_map.insert(
             reqwest::header::COOKIE,
-            domain_cookies
-                .unwrap_or_else(|| "".to_string())
-                .parse()
-                .unwrap(),
+            domain_cookies.unwrap_or_else(|| "".to_string()).parse().unwrap(),
         );
 
-        let req_builder = self
-            .inner_http_client
-            .request(method, parsed_url)
-            .headers(header_map);
+        let req_builder = self.inner_http_client.request(method, parsed_url).headers(header_map);
 
         let request = match data {
             None => req_builder.build().unwrap(),
-            Some(data) => req_builder.form(&data).build().unwrap(),
+            Some(data) => req_builder.form(data).build().unwrap(),
         };
 
         debug!("{:?}", &request);
@@ -235,9 +318,7 @@ impl MobileClient {
         let account_url = format!("{}/account", crate::STEAM_STORE_BASE);
 
         // FIXME: Not sure if we should request from client directly
-        let response = self
-            .request(account_url, Method::HEAD, None, None::<&str>)
-            .await?;
+        let response = self.request(account_url, Method::HEAD, None, None::<&u8>).await?;
 
         if let Some(location) = retrieve_header_location(&response) {
             return Ok(Url::parse(location).map(Self::url_expired_check).unwrap());
@@ -271,13 +352,13 @@ impl MobileClient {
     fn standard_mobile_cookies() -> Vec<Cookie<'static>> {
         vec![
             Cookie::build("Steam_Language", "english")
-                .domain(crate::STEAM_COMMUNITY_HOST)
+                .domain(STEAM_COMMUNITY_HOST)
                 .finish(),
             Cookie::build("mobileClient", "android")
-                .domain(crate::STEAM_COMMUNITY_HOST)
+                .domain(STEAM_COMMUNITY_HOST)
                 .finish(),
             Cookie::build("mobileClientVersion", "0 (2.1.3)")
-                .domain(crate::STEAM_COMMUNITY_HOST)
+                .domain(STEAM_COMMUNITY_HOST)
                 .finish(),
         ]
     }
@@ -303,10 +384,7 @@ impl MobileClient {
                 .parse()
                 .unwrap(),
         );
-        default_headers.insert(
-            reqwest::header::REFERER,
-            crate::MOBILE_REFERER.parse().unwrap(),
-        );
+        default_headers.insert(reqwest::header::REFERER, crate::MOBILE_REFERER.parse().unwrap());
         default_headers.insert(
             "X-Requested-With",
             "com.valvesoftware.android.steam.community".parse().unwrap(),

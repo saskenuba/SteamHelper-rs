@@ -11,7 +11,7 @@ use super::{
 
 /// Struct for working with TOTP time values.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub struct Time(pub(crate) u64);
+pub struct Time(pub u64);
 
 impl std::fmt::Display for Time {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

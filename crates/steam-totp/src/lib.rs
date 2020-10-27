@@ -83,6 +83,12 @@ pub async fn generate_auth_code_async(shared_secret: Secret) -> Result<String> {
     Ok(generate_auth_code(shared_secret, time))
 }
 
+/// Same as `generate_auth_code_async`, but returns also the time found on Steam servers.
+pub async fn generate_auth_code_with_time_async(shared_secret: Secret) -> Result<(String, Time)> {
+    let time = Time::with_offset().await?;
+    Ok((generate_auth_code(shared_secret, time), time))
+}
+
 /// Returns a string containing your confirmation key for use with the mobile
 /// confirmations web page.
 ///

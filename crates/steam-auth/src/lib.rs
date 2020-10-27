@@ -15,27 +15,31 @@
 
 use std::{fs::OpenOptions, io::Read};
 
+pub use reqwest::{header::HeaderMap, Method};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use const_concat::const_concat;
 use steam_totp::Secret;
 use steamid_parser::SteamID;
+pub use utils::format_captcha_url;
+pub use web_handler::authenticator::AddAuthenticatorStep;
+pub use web_handler::confirmation::{ConfirmationMethod, Confirmations, EConfirmationType};
 
 pub mod client;
 pub mod errors;
 mod page_scraper;
+pub(crate) mod retry;
 mod types;
-mod utils;
+pub(crate) mod utils;
 mod web_handler;
-
-pub use reqwest::{header::HeaderMap, Method};
-pub use web_handler::confirmation::{ConfirmationMethod, Confirmations, EConfirmationType};
 
 /// Recommended time to allow STEAM to catch up.
 const STEAM_DELAY_MS: u64 = 350;
 /// Extension of the mobile authenticator files.
 const MA_FILE_EXT: &str = ".maFile";
+
+// HOST SHOULD BE USED FOR COOKIE RETRIEVAL INSIDE COOKIE JAR!!
 
 /// Steam Community Cookie Host
 pub const STEAM_COMMUNITY_HOST: &str = ".steamcommunity.com";
@@ -44,8 +48,11 @@ pub const STEAM_HELP_HOST: &str = ".help.steampowered.com";
 /// Steam Store Cookie Host
 pub const STEAM_STORE_HOST: &str = ".store.steampowered.com";
 
+/// Should not be used for cookie retrieval. Use `STEAM_COMMUNTY_HOST` instead.
 const STEAM_COMMUNITY_BASE: &str = "https://steamcommunity.com";
+/// Should not be used for cookie retrieval. Use `STEAM_STORE_HOST` instead.
 const STEAM_STORE_BASE: &str = "https://store.steampowered.com";
+/// Should not be used for cookie retrieval. Use `STEAM_API_HOST` instead.
 const STEAM_API_BASE: &str = "https://api.steampowered.com";
 
 const MOBILE_REFERER: &str = const_concat!(
@@ -78,10 +85,14 @@ pub struct User {
 #[derive(Default, Debug, Clone)]
 /// Information that we cache after the login operation to avoid querying Steam multiple times.
 ///
-/// SteamIDs are used for generating confirmations.
+///
+/// SteamID, API KEY and the login Oauth token are currently cached by `SteamAuthenticator`.
 struct CachedInfo {
     steamid: Option<SteamID>,
     api_key: Option<String>,
+    /// Oauth token recovered at the login.
+    /// Some places call this access_token.
+    oauth_token: Option<String>,
 }
 
 impl CachedInfo {
@@ -89,6 +100,10 @@ impl CachedInfo {
     fn set_steamid(&mut self, steamid: &str) {
         let parsed_steamid = SteamID::parse(steamid).unwrap();
         self.steamid = Some(parsed_steamid);
+    }
+
+    fn set_oauth_token(&mut self, token: String) {
+        self.oauth_token = Some(token);
     }
 
     fn set_api_key(&mut self, api_key: String) {
@@ -101,6 +116,10 @@ impl CachedInfo {
 
     fn steam_id(&self) -> Option<u64> {
         Some(self.steamid.as_ref()?.to_steam64())
+    }
+
+    fn oauth_token(&self) -> Option<&String> {
+        Some(self.oauth_token.as_ref()?)
     }
 }
 
@@ -162,7 +181,7 @@ impl User {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 /// The MobileAuthFile (.maFile) is the standard that custom authenticators use to save auth
 /// secrets to disk.
 ///
@@ -179,7 +198,7 @@ impl User {
 ///     device_id: "android:xxxxxxxxxxxxxxx"
 /// }
 /// ```
-struct MobileAuthFile {
+pub struct MobileAuthFile {
     /// Identity secret is used to generate the confirmation links for our trade requests.
     /// If we are generating our own Authenticator, this is given by Steam.
     identity_secret: String,
@@ -191,8 +210,22 @@ struct MobileAuthFile {
     /// Needed for confirmations to trade to work properly.
     device_id: Option<String>,
     /// Used if shared secret is lost. Please, don't lose it.
-    recovery_code: Option<String>,
+    revocation_code: Option<String>,
+    /// Account name where this maFile was originated.
+    pub account_name: Option<String>,
 }
+
+impl MobileAuthFile {
+    fn set_device_id(&mut self, device_id: String) {
+        self.device_id = Some(device_id)
+    }
+}
+
+// impl Display for MobileAuthFile {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+//         unimplemented!()
+//     }
+// }
 
 impl From<&str> for MobileAuthFile {
     fn from(string: &str) -> Self {

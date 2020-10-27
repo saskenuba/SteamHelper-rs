@@ -1,20 +1,24 @@
 use std::{cell::RefMut, collections::HashMap, time::Duration};
 
 use chrono::Offset;
-use cookie::Cookie;
 use rand::thread_rng;
 use reqwest::{Client, Method};
+use rsa::padding::PaddingScheme;
 use rsa::{BigUint, PublicKey, RSAPublicKey};
+use tokio::time;
+use tracing::warn;
 
 use const_concat::const_concat;
+use cookie::Cookie;
 use steam_totp::{Secret, Time};
 
+use crate::types::{LoginCaptcha, LoginErrorCaptcha};
 use crate::{
     client::MobileClient,
     errors::LoginError,
     types::{LoginRequest, LoginResponseMobile, RSAResponse},
-    CachedInfo, User, MOBILE_REFERER, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_DELAY_MS,
-    STEAM_HELP_HOST, STEAM_STORE_HOST,
+    CachedInfo, User, MOBILE_REFERER, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_DELAY_MS, STEAM_HELP_HOST,
+    STEAM_STORE_HOST,
 };
 
 const LOGIN_GETRSA_URL: &str = const_concat!(STEAM_COMMUNITY_BASE, "/login/getrsakey");
@@ -28,11 +32,7 @@ type LoginResult<T> = Result<T, LoginError>;
 ///
 /// Currently not possible without the implementation of the [steam-api] crate.
 /// For website that currently works, check [login_website] method.
-async fn login_isteam_user_auth(
-    _client: &Client,
-    _user: User,
-    _webapi_nonce: &[u8],
-) -> LoginResult<()> {
+async fn login_isteam_user_auth(_client: &Client, _user: User, _webapi_nonce: &[u8]) -> LoginResult<()> {
     let _session_key = steam_crypto::generate_session_key(None).unwrap();
 
     unimplemented!();
@@ -44,18 +44,11 @@ fn website_handle_rsa(user: &User, response: RSAResponse) -> String {
     let modulus = hex::decode(response.modulus).unwrap();
     let exponent = hex::decode(response.exponent).unwrap();
 
-    let rsa_encryptor = RSAPublicKey::new(
-        BigUint::from_bytes_be(&*modulus),
-        BigUint::from_bytes_be(&*exponent),
-    )
-    .unwrap();
+    let rsa_encryptor =
+        RSAPublicKey::new(BigUint::from_bytes_be(&*modulus), BigUint::from_bytes_be(&*exponent)).unwrap();
     let mut random_gen = thread_rng();
     let encrypted_pwd_bytes = rsa_encryptor
-        .encrypt(
-            &mut random_gen,
-            rsa::padding::PaddingScheme::PKCS1v15,
-            password_bytes,
-        )
+        .encrypt(&mut random_gen, PaddingScheme::PKCS1v15Encrypt, password_bytes)
         .unwrap();
 
     base64::encode(encrypted_pwd_bytes)
@@ -78,10 +71,11 @@ pub(crate) async fn login_website(
     client: &MobileClient,
     user: &User,
     mut cached_data: RefMut<'_, CachedInfo>,
+    captcha: Option<LoginCaptcha<'_>>,
 ) -> LoginResult<()> {
     // we request to generate sessionID cookies
     let response = client
-        .request(MOBILE_REFERER.to_owned(), Method::GET, None, None::<&str>)
+        .request(MOBILE_REFERER.to_owned(), Method::GET, None, None::<&u8>)
         .await?;
     let session_id = response
         .headers()
@@ -91,7 +85,9 @@ pub(crate) async fn login_website(
             let index = c.find('=').unwrap();
             Some((&c[index + 1..index + 25]).to_string())
         })
-        .unwrap();
+        .ok_or(LoginError::GeneralFailure(
+            "Something went wrong while getting sessionid. Should retry".to_string(),
+        ))?;
 
     let mut post_data = HashMap::new();
     let steam_time_offset = (steam_totp::time::Time::offset().await.unwrap() * 1000).to_string();
@@ -99,16 +95,11 @@ pub(crate) async fn login_website(
     post_data.insert("username", &user.username);
 
     let rsa_response = client
-        .request(
-            LOGIN_GETRSA_URL.to_owned(),
-            Method::POST,
-            None,
-            Some(post_data.clone()),
-        )
+        .request(LOGIN_GETRSA_URL.to_owned(), Method::POST, None, Some(&post_data))
         .await?;
 
     // wait for steam to catch up
-    tokio::time::delay_for(Duration::from_millis(STEAM_DELAY_MS)).await;
+    time::delay_for(Duration::from_millis(STEAM_DELAY_MS)).await;
 
     // rsa handling
     let response = rsa_response.json::<RSAResponse>().await.unwrap();
@@ -131,37 +122,44 @@ pub(crate) async fn login_website(
         username: &user.username,
         twofactorcode: &two_factor_code,
         emailauth: "",
-        captcha_gid: "-1",
-        captcha_text: "",
+        captcha_gid: captcha.as_ref().map(|x| x.guid).unwrap_or_else(|| "-1"),
+        captcha_text: captcha.map(|x| x.text).unwrap_or_else(|| ""),
         emailsteamid: "",
         rsa_timestamp: response.timestamp,
         ..Default::default()
     };
 
+    // This next operation will fail if called too fast, we should wait a bit.
+    // time::delay_for(Duration::from_secs(2)).await;
+
     let login_response = client
-        .request(
-            LOGIN_DO_URL.to_owned(),
-            Method::POST,
-            None,
-            Some(login_request),
-        )
+        .request(LOGIN_DO_URL.to_owned(), Method::POST, None, Some(&login_request))
         .await?;
 
-    let login_response_json = login_response
-        .json::<LoginResponseMobile>()
-        .await
-        .map_err(|_| {
-            LoginError::GeneralFailure(
-                "Non mobile response detected. Contact maintainer.".to_string(),
-            )
-        })?;
+    let login_response_text = login_response.text().await?;
+    let login_response_json = serde_json::from_str::<LoginResponseMobile>(&*login_response_text).map_err(|_| {
+        match serde_json::from_str::<LoginErrorCaptcha>(&*login_response_text) {
+            Ok(res) => {
+                warn!("Captcha is required.");
+                LoginError::CaptchaRequired {
+                    captcha_guid: res.captcha_gid,
+                }
+            }
+            Err(_) => {
+                warn!("Generic error {:?}", login_response_text);
+                LoginError::GeneralFailure(login_response_text)
+            }
+        }
+    })?;
 
     let steamid = login_response_json.oauth.steamid;
+    let oauth_token = login_response_json.oauth.oauth_token;
     let token = login_response_json.oauth.wgtoken;
     let token_secure = login_response_json.oauth.wgtoken_secure;
 
     // cache steamid
     cached_data.set_steamid(&steamid);
+    cached_data.set_oauth_token(oauth_token);
 
     {
         // Recover cookies to authorize store.steampowered and help.steampowered subdomains.
@@ -169,10 +167,7 @@ pub(crate) async fn login_website(
         vec![STEAM_COMMUNITY_HOST, STEAM_HELP_HOST, STEAM_STORE_HOST]
             .into_iter()
             .for_each(|host| {
-                let timezone_offset = format!(
-                    "{},0",
-                    chrono::Local::now().offset().fix().local_minus_utc()
-                );
+                let timezone_offset = format!("{},0", chrono::Local::now().offset().fix().local_minus_utc());
                 let fmt_token = format!("{}%7C%7C{}", steamid, token);
                 let fmt_secure_token = format!("{}%7C%7C{}", steamid, token_secure);
                 cookie_jar.add_original(
@@ -181,12 +176,7 @@ pub(crate) async fn login_website(
                         .path("/")
                         .finish(),
                 );
-                cookie_jar.add_original(
-                    Cookie::build("steamLogin", fmt_token)
-                        .domain(host)
-                        .path("/")
-                        .finish(),
-                );
+                cookie_jar.add_original(Cookie::build("steamLogin", fmt_token).domain(host).path("/").finish());
                 cookie_jar.add_original(
                     Cookie::build("sessionid", session_id.clone())
                         .domain(host)

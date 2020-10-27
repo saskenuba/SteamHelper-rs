@@ -1,6 +1,19 @@
 use cookie::CookieJar;
 use reqwest::{Response, StatusCode};
 
+const CAPTCHA_URL: &'static str = "https://steamcommunity.com/login/rendercaptcha/?gid=";
+
+/// Formats the captcha GID into the complete URL.
+/// E.g: https://steamcommunity.com/login/rendercaptcha/?gid=3851100575032057891
+pub fn format_captcha_url(captcha_guid: &str) -> String {
+    CAPTCHA_URL.to_owned() + captcha_guid
+}
+
+/// Generates a standard "Android Device ID" that is based on user's Steam ID.
+pub fn generate_canonical_device_id(steamid: &str) -> String {
+    steam_totp::get_device_id(steamid)
+}
+
 /// Retrieve cookie from header response filtered by name.
 pub fn dump_cookie_from_header(response: &Response, name: &str) -> Option<String> {
     let name_len = name.len();

@@ -1,6 +1,17 @@
 use serde::{Deserialize, Serialize};
 
+use std::borrow::Cow;
 use steam_language_gen::generated::enums::EResult;
+
+#[derive(Serialize, Debug, Clone)]
+pub struct LoginCaptcha<'a> {
+    #[serde(rename = "captcha_gid")]
+    /// Captcha GUID. I.e unique identifier.
+    pub guid: &'a str,
+    #[serde(rename = "captcha_text")]
+    /// Text transcription of captcha,
+    pub text: &'a str,
+}
 
 #[derive(Serialize, Debug, Clone)]
 pub struct ConfirmationMultiAcceptRequest<'a> {
@@ -89,37 +100,6 @@ impl Default for IEconServiceGetTradeOffersRequest {
     }
 }
 
-#[derive(Serialize, Debug, Clone)]
-pub struct PhoneAjaxRequest<'a> {
-    #[serde(rename = "op")]
-    pub operation: &'a str,
-    #[serde(rename = "arg")]
-    pub operation_arg: &'a str,
-    pub sessionid: &'a str,
-}
-
-#[derive(Serialize, Debug, Clone)]
-pub struct CheckSmsCodeRequest<'a> {
-    pub skipvoip: &'a str,
-    pub checkfortos: &'a str,
-    #[serde(flatten)]
-    pub ops: PhoneAjaxRequest<'a>,
-}
-
-impl<'a> Default for CheckSmsCodeRequest<'a> {
-    fn default() -> Self {
-        Self {
-            skipvoip: "1",
-            checkfortos: "0",
-            ops: PhoneAjaxRequest {
-                operation: "check_sms_code",
-                operation_arg: "",
-                sessionid: "",
-            },
-        }
-    }
-}
-
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct RSAResponse {
     success: bool,
@@ -187,6 +167,20 @@ pub struct TransferParameters {
     pub remember_login: bool,
 }
 
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct LoginErrorGenericMessage<'a> {
+    pub success: bool,
+    pub message: Cow<'a, str>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct LoginErrorCaptcha<'a> {
+    pub success: bool,
+    pub message: Cow<'a, str>,
+    pub captcha_needed: bool,
+    pub captcha_gid: String,
+}
+
 #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
 pub struct LoginResponseMobile {
     pub success: bool,
@@ -207,68 +201,7 @@ pub struct Oauth {
     pub wgtoken_secure: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-pub struct FinalizeAddAuthenticatorBase {
-    pub response: FinalizeAddAuthenticatorResponse,
-}
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-pub struct FinalizeAddAuthenticatorResponse {
-    pub status: String,
-    pub server_time: String,
-    pub want_more: String,
-    pub success: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize)]
-pub struct FinalizeAddAuthenticatorRequest<'a> {
-    pub access_token: &'a str,
-    pub activation_code: &'a str,
-    pub authenticator_code: &'a str,
-    pub authenticator_time: &'a str,
-    pub steamid: &'a str,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize)]
-pub struct AddAuthenticatorRequest {
-    pub access_token: String,
-    pub steamid: String,
-    pub authenticator_type: String,
-    pub device_identifier: String,
-    pub sms_phone_id: String,
-}
-
-impl Default for AddAuthenticatorRequest {
-    fn default() -> Self {
-        Self {
-            access_token: "".to_string(),
-            steamid: "".to_string(),
-            authenticator_type: "1".to_string(),
-            device_identifier: "".to_string(),
-            sms_phone_id: "1".to_string(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize)]
-pub struct RemoveAuthenticatorRequest<'a> {
-    pub steamid: &'a str,
-    pub steamguard_scheme: &'a str,
-    pub revocation_code: &'a str,
-    /// This is also known as the oauth token. We receive it after the mobile logOn.
-    pub access_token: &'a str,
-}
-
-impl<'a> Default for RemoveAuthenticatorRequest<'a> {
-    fn default() -> Self {
-        Self {
-            steamid: "",
-            steamguard_scheme: "2",
-            revocation_code: "",
-            access_token: "",
-        }
-    }
-}
 
 #[derive(Debug, Serialize)]
 pub struct ApiKeyRegisterRequest<'a> {
@@ -322,36 +255,3 @@ pub struct ResolveVanityUrlRequest {
     #[serde(rename = "vanityurl")]
     vanity_url: String,
 }
-
-// steam api thoughts
-//
-// client.partner()
-// .get()
-// .ieconservice()
-// .gettradeoffers("params")
-// .finish()
-//
-// or
-//
-// client.get()
-// .public() // partner()
-// .ieconservice()
-// .gettradeoffers("params")
-// .finish()
-//
-// client.public()
-// .get()
-// .ieconservice()
-// .gettradeoffers("params")
-// .finish()
-//
-//
-// client.ieconservice.gettradeoffers()
-// .text_cutoff()
-// .finish()
-// .execute()?
-//
-//
-//
-// let trade_offers = steamapi::IEconService::GetTradeOffers;
-// let endpoint = trade_offers.endpoint!();

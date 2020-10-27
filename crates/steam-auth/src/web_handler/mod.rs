@@ -1,12 +1,14 @@
+use std::cell::RefMut;
 use std::{cell::RefCell, rc::Rc};
 
-use cookie::{Cookie, CookieJar};
-use futures::{FutureExt, TryFutureExt};
+use futures::FutureExt;
 use reqwest::Method;
 use scraper::Html;
 use tracing::{debug, info, trace, warn};
 
 use const_concat::const_concat;
+use cookie::{Cookie, CookieJar};
+use steam_language_gen::generated::enums::EResult;
 use steam_totp::Time;
 
 use crate::{
@@ -14,25 +16,20 @@ use crate::{
     errors::{ApiKeyError, LoginError},
     page_scraper::{api_key_resolve_status, confirmation_details_single, confirmation_retrieve},
     types::{
-        ApiKeyRegisterRequest, BooleanResponse, ConfirmationDetailsResponse,
-        ConfirmationMultiAcceptRequest, ParentalUnlockRequest, ParentalUnlockResponse,
+        ApiKeyRegisterRequest, BooleanResponse, ConfirmationDetailsResponse, ConfirmationMultiAcceptRequest,
+        ParentalUnlockRequest, ParentalUnlockResponse,
     },
     utils::{dump_cookie_from_header, dump_cookies_by_name},
     web_handler::confirmation::{Confirmation, ConfirmationMethod},
-    CachedInfo, User, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_STORE_BASE,
-    STEAM_STORE_HOST,
+    CachedInfo, User, STEAM_API_BASE, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_STORE_BASE, STEAM_STORE_HOST,
 };
-use std::cell::RefMut;
-use steam_language_gen::generated::enums::EResult;
 
+pub(crate) mod authenticator;
 pub mod confirmation;
 pub(crate) mod login;
 
 /// used to refresh session
-const MOBILE_AUTH_GETWGTOKEN: &str = const_concat!(
-    crate::STEAM_API_BASE,
-    "/IMobileAuthService/GetWGToken/v0001"
-);
+const MOBILE_AUTH_GETWGTOKEN: &str = const_concat!(STEAM_API_BASE, "/IMobileAuthService/GetWGToken/v0001");
 
 async fn session_refresh() {}
 
@@ -82,9 +79,7 @@ async fn parental_unlock_by_service(
         pin: parental_control_code,
         sessionid: &session_id,
     };
-    let response = client
-        .request(unlock_url, Method::POST, None, Some(request))
-        .await?;
+    let response = client.request(unlock_url, Method::POST, None, Some(&request)).await?;
 
     let parental_cookie_name = "steamparental";
     if let Some(cookie) = dump_cookie_from_header(&response, parental_cookie_name) {
@@ -125,9 +120,15 @@ pub(crate) async fn cache_resolve(
     client: &MobileClient,
     mut cached_data: RefMut<'_, CachedInfo>,
 ) -> Result<(), ApiKeyError> {
-    let api_key = api_key_retrieve(client).await?;
-    debug!("{}", &api_key);
-    cached_data.set_api_key(api_key);
+    match api_key_retrieve(client).await? {
+        Some(api_key) => {
+            debug!("{}", &api_key);
+            cached_data.set_api_key(api_key);
+        }
+        None => {
+            warn!("API key could not be cached.");
+        }
+    }
 
     Ok(())
 }
@@ -209,18 +210,14 @@ pub(crate) async fn confirmations_retrieve_all(
                 "{}/mobileconf/details/{}?a={}&k={}&l=english&m=android&p={}&t={}&tag=conf",
                 STEAM_COMMUNITY_BASE, confirmation.id, steamid, confirmation_hash, device_id, time
             );
-            client.request(details_url, Method::GET, None, None::<&str>)
+            client.request(details_url, Method::GET, None, None::<&u8>)
         })
         .collect::<Vec<_>>();
 
     let joined_fut = futures::future::join_all(conf_details_fut).await;
     let mut details_vec = Vec::new();
     for response in joined_fut {
-        let response_content = response
-            .unwrap()
-            .json::<ConfirmationDetailsResponse>()
-            .await
-            .unwrap();
+        let response_content = response.unwrap().json::<ConfirmationDetailsResponse>().await.unwrap();
         let html = Html::parse_document(&response_content.html);
         details_vec.push(confirmation_details_single(html));
     }
@@ -237,32 +234,36 @@ async fn generate_confirmation_query_params(user: &User) -> (Time, String, &str)
     let identity_secret = user
         .identity_secret()
         .expect("You need to have a linked ma file to recover confirmations");
-    let confirmation_hash =
-        steam_totp::generate_confirmation_key(identity_secret, time, Some("conf")).unwrap();
+    let confirmation_hash = steam_totp::generate_confirmation_key(identity_secret, time, Some("conf")).unwrap();
     let device_id = user.device_id().expect("You need a linked device id");
     (time, confirmation_hash, device_id)
 }
 
-/// Retrieve user SteamID.
-async fn steamid_retrieve(client: &MobileClient) {}
-
-/// Retrieve user Api Key.
-async fn api_key_retrieve(client: &MobileClient) -> Result<String, ApiKeyError> {
+/// Retrieve this account API KEY.
+/// If the API is not immediately available, but can be registered, the method will attempt to register it.
+///
+///
+/// Will error only if an unknown or network error is raised.
+async fn api_key_retrieve(client: &MobileClient) -> Result<Option<String>, ApiKeyError> {
     let api_key_url = format!("{}{}", STEAM_COMMUNITY_BASE, "/dev/apikey?l=english");
     let doc = client.get_html(api_key_url.clone()).await?;
-    let api_key = match api_key_resolve_status(doc) {
-        Ok(api) => api,
+    Ok(match api_key_resolve_status(doc) {
+        Ok(api) => Some(api),
+
         Err(ApiKeyError::NotRegistered) => {
             warn!("API key not registered. Registering a new one.");
-            // in this case we want to register it
             api_key_register(client)
                 .then(|_| client.get_html(api_key_url))
                 .await
-                .map(api_key_resolve_status)??
+                .map(api_key_resolve_status)?
+                .ok()
+        }
+        Err(ApiKeyError::AccessDenied) => {
+            warn!("Access to API key was denied. .Maybe you don't have a valid email address?");
+            None
         }
         Err(e) => return Err(e),
-    };
-    Ok(api_key)
+    })
 }
 
 /// Request access to an API Key
