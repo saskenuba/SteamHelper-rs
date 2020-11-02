@@ -45,8 +45,6 @@ pub enum AddAuthenticatorStep {
     InitialStep,
     /// Authenticator is waiting user's email confirmation to allow Steam add phone number.
     EmailConfirmation,
-    // Authenticator is waiting user's to retrieve SMS code sent to phone number registered.
-    // SmsCodeConfirmation,
     /// Authenticator succeded and retrieved `MobileAuthFile`.
     MobileAuth(MobileAuthFile),
 }
@@ -132,8 +130,8 @@ pub(crate) async fn finalize_authenticator(
 
     let account_secret = steam_totp::Secret::from_b64(&mafile.shared_secret).unwrap();
 
-    let mut tries: usize = 30;
-    while tries >= 0 {
+    let mut tries: usize = 0;
+    while tries <= 30 {
         let (code, mut time) = steam_totp::generate_auth_code_with_time_async(account_secret.clone()).await?;
         time.0 += 1;
         initial_payload.swap_codes(code, time.0);
@@ -152,7 +150,7 @@ pub(crate) async fn finalize_authenticator(
                 return match error_resp.response.status {
                     89 => Err(LinkerError::BadSMSCode),
                     88 => {
-                        if tries == 0 {
+                        if tries == 30 {
                             return Err(LinkerError::UnableToGenerateCorrectCodes);
                         }
                         continue;
@@ -165,7 +163,7 @@ pub(crate) async fn finalize_authenticator(
         // Steam want more codes, delay a bit and send all again.
         if response.want_more {
             tokio::time::delay_for(Duration::from_secs(1)).await;
-            tries -= 1;
+            tries += 1;
             continue;
         }
 

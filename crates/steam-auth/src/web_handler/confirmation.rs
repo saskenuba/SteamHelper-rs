@@ -83,10 +83,11 @@ impl Confirmations {
     /// # }
     /// ```
     pub fn filter_by_confirmation_type(&mut self, confirmation_type: EConfirmationType) {
-        self.0
-            .retain(|confirmation| confirmation.kind == confirmation_type);
+        self.0.retain(|confirmation| confirmation.kind == confirmation_type);
     }
 
+    /// Filter tradeoffers ids in-place.
+    ///
     /// This is a convenience function that lets you handle confirmations based on trade offer ids.
     /// For example, you could have them coming from some other service, or elsewhere and you can
     /// easily filter them.
@@ -105,11 +106,11 @@ impl Confirmations {
     /// confirmations.filter_by_trade_offer_ids(&*trade_offer_ids);
     /// # }
     /// ```
-    pub fn filter_by_trade_offer_ids(&mut self, trade_offer_ids: &[u64]) {
+    pub fn filter_by_trade_offer_ids<T: AsRef<[u64]>>(&mut self, trade_offer_ids: T) {
         self.0.retain(|c| {
-            if let Some(c) = c.details {
-                let trade_offer_id = c.trade_offer_id.unwrap();
-                return trade_offer_ids.iter().any(|id| *id == trade_offer_id);
+            if let Some(conf_details) = c.details {
+                let trade_offer_id = conf_details.trade_offer_id.unwrap();
+                return trade_offer_ids.as_ref().into_iter().any(|&id| id == trade_offer_id);
             }
             false
         });
@@ -118,18 +119,14 @@ impl Confirmations {
 
 impl From<Vec<Confirmation>> for Confirmations {
     fn from(confirmations_vec: Vec<Confirmation>) -> Self {
-        Self {
-            0: confirmations_vec,
-        }
+        Self { 0: confirmations_vec }
     }
 }
 
 /// Either accept the confirmation, or cancel it.
 #[derive(Copy, Clone, Debug)]
 pub enum ConfirmationMethod {
-    /// Accept a confirmation
     Accept,
-    /// Deny a confirmation
     Deny,
 }
 

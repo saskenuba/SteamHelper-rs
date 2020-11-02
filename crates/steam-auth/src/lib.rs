@@ -13,10 +13,12 @@
     unused_qualifications
 )]
 
+use std::path::PathBuf;
 use std::{fs::OpenOptions, io::Read};
 
-pub use reqwest::{header::HeaderMap, Method};
 use const_format::concatcp;
+/// re-export
+pub use reqwest::{header::HeaderMap, Error as HttpError, Method, Url};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -166,8 +168,11 @@ impl User {
     }
 
     /// Convenience function that imports the file from disk
-    pub fn ma_file_from_disk(mut self, path: &str) -> Self {
-        let mut file = OpenOptions::new().read(true).open(path).unwrap();
+    pub fn ma_file_from_disk<T>(mut self, path: T) -> Self
+    where
+        T: Into<PathBuf>,
+    {
+        let mut file = OpenOptions::new().read(true).open(path.into()).unwrap();
         let mut buffer = String::new();
 
         file.read_to_string(&mut buffer).unwrap();
@@ -175,19 +180,17 @@ impl User {
         self
     }
 
-    fn ma_file_from_string(mut self, ma_file: &str) -> Self {
-        self.linked_mafile = Some(MobileAuthFile::from(ma_file));
+    fn ma_file(mut self, ma_file: MobileAuthFile) -> Self {
+        self.linked_mafile = Some(ma_file);
         self
     }
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
-/// The MobileAuthFile (.maFile) is the standard that custom authenticators use to save auth
-/// secrets to disk.
+/// The MobileAuthFile (.maFile) is the standard file format that custom authenticators use to save auth secrets to disk.
 ///
-/// It follows strictly the json format.
-/// Both identity_secret and shared_secret should be base64 encoded. If you don't know, they
-/// probably already are.
+/// It follows strictly the JSON format.
+/// Both identity_secret and shared_secret should be base64 encoded. If you don't know if they are, they probably already are.
 ///
 ///
 /// Example:
@@ -205,8 +208,7 @@ pub struct MobileAuthFile {
     /// The shared secret is used to generate TOTP codes.
     shared_secret: String,
     /// Device ID is used to generate the confirmation links for our trade requests.
-    /// Can be retrieved from mobile device, such as a rooted android, iOS, or generated randomly
-    /// if creating our own authenticator.
+    /// Can be retrieved from mobile device, such as a rooted android, iOS, or generated from the account's SteamID if creating our own authenticator.
     /// Needed for confirmations to trade to work properly.
     device_id: Option<String>,
     /// Used if shared secret is lost. Please, don't lose it.
@@ -219,17 +221,19 @@ impl MobileAuthFile {
     fn set_device_id(&mut self, device_id: String) {
         self.device_id = Some(device_id)
     }
-}
 
-// impl Display for MobileAuthFile {
-//     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-//         unimplemented!()
-//     }
-// }
-
-impl From<&str> for MobileAuthFile {
-    fn from(string: &str) -> Self {
-        serde_json::from_str(string).unwrap()
+    /// Creates a new `MobileAuthFile`
+    fn new<T>(identity_secret: String, shared_secret: String, device_id: T) -> Self
+    where
+        T: Into<Option<String>>,
+    {
+        Self {
+            identity_secret,
+            shared_secret,
+            device_id: device_id.into(),
+            revocation_code: None,
+            account_name: None,
+        }
     }
 }
 

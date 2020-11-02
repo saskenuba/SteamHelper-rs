@@ -30,7 +30,7 @@ type LoginResult<T> = Result<T, LoginError>;
 ///
 /// Webapi_nonce is received by connecting to the Steam Network.
 ///
-/// Currently not possible without the implementation of the [steam-api] crate.
+/// Currently not possible without the implementation of the [steam-client] crate.
 /// For website that currently works, check [login_website] method.
 async fn login_isteam_user_auth(_client: &Client, _user: User, _webapi_nonce: &[u8]) -> LoginResult<()> {
     let _session_key = steam_crypto::generate_session_key(None).unwrap();
@@ -63,15 +63,15 @@ fn website_handle_rsa(user: &User, response: RSAResponse) -> String {
 ///
 /// https://github.com/Jessecar96/SteamBot/blob/e8e9e5fcd64ae35b201e2597068849c10a667b60/SteamTrade/SteamWeb.cs#L325
 // We can really do that method yet, because connection to the SteamNetwork is not yet implemented
-// by steam-api crate, and consequently we can't get the user webapi_nonce beforehand.
+// by steam-client crate, and consequently we can't get the user webapi_nonce beforehand.
 //
 // Should accept closure to handle cases such as needing a captcha or sms.
 // But the best way is to have it already setup to use TOTP codes.
-pub(crate) async fn login_website(
+pub(crate) async fn login_website<'a, LC: Into<Option<LoginCaptcha<'a>>>>(
     client: &MobileClient,
     user: &User,
     mut cached_data: RefMut<'_, CachedInfo>,
-    captcha: Option<LoginCaptcha<'_>>,
+    captcha: LC,
 ) -> LoginResult<()> {
     // we request to generate sessionID cookies
     let response = client
@@ -116,14 +116,16 @@ pub(crate) async fn login_website(
         .map(|s| steam_totp::generate_auth_code(s, time))
         .unwrap_or_else(|| "".to_string());
 
+    let login_captcha = captcha.into();
+
     let login_request = LoginRequest {
         donotcache: &steam_time_offset,
         password: &encrypted_pwd_b64,
         username: &user.username,
         twofactorcode: &two_factor_code,
         emailauth: "",
-        captcha_gid: captcha.as_ref().map(|x| x.guid).unwrap_or_else(|| "-1"),
-        captcha_text: captcha.map(|x| x.text).unwrap_or_else(|| ""),
+        captcha_gid: login_captcha.as_ref().map(|x| x.guid).unwrap_or_else(|| "-1"),
+        captcha_text: login_captcha.map(|x| x.text).unwrap_or_else(|| ""),
         emailsteamid: "",
         rsa_timestamp: response.timestamp,
         ..Default::default()

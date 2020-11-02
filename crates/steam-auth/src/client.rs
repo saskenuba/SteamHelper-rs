@@ -116,6 +116,18 @@ impl SteamAuthenticator {
         Ok(())
     }
 
+    /// Add an authenticator to the account.
+    /// Note that this makes various assumptions about the account.
+    ///
+    /// This function takes the `AddAuthenticatorStep` to help you automate the process of adding an authenticator to the account.
+    ///
+    /// You will first call this method with `AddAuthenticatorStep::InitialStep`. This requires the account to be already connected with a
+    /// verified email address. After this step is finished, you will receive an email about the phone confirmation.
+    ///
+    /// Once you confirm it, you will call this method with `AddAuthenticatorStep::EmailConfirmation`.
+    ///
+    /// This will return a `AddAuthenticatorStep::MobileAuthenticatorFile` now, with your maFile inside the variant.
+    /// For more complete example, you can check the CLI Tool, that performs the inclusion of an authenticator interactively.
     pub async fn add_authenticator(
         &self,
         current_step: AddAuthenticatorStep,
@@ -140,12 +152,14 @@ impl SteamAuthenticator {
 
         add_authenticator_to_account(&self.client, self.cached_data.borrow())
             .await
-            .map(|mafile| AddAuthenticatorStep::MobileAuth(mafile))
+            .map(AddAuthenticatorStep::MobileAuth)
             .map_err(|e| e.into())
     }
 
-    /// Wraps up the whole process, finishing the registration of the phone number into the account.
-    /// You only call this method after `add_authenticator` works correctly, and you saved your .maFile somewhere safe.
+    /// Finalize the authenticator process, enabling SteamGuard for the account.
+    /// This method wraps up the whole process, finishing the registration of the phone number into the account.
+    ///
+    /// You **should** only call this method after saving your maFile, because otherwise you WILL lose access to your account.
     pub async fn finalize_authenticator(&self, mafile: &MobileAuthFile, sms_code: &str) -> Result<(), AuthError> {
         // The delay is that Steam need some seconds to catch up with the new phone number associated.
         let account_has_phone_now: bool = check_sms(&self.client, sms_code)
@@ -164,7 +178,9 @@ impl SteamAuthenticator {
             .map_err(|e| e.into())
     }
 
-    pub async fn remove_authenticator(&self) {}
+    pub async fn remove_authenticator(&self) {
+        unimplemented!()
+    }
 
     /// Add a phone number into the account, and then checks it to make sure it has been added.
     /// Returns true if number was successfully added.
@@ -194,19 +210,6 @@ impl SteamAuthenticator {
         Ok(confirmations)
     }
 
-    async fn process_tradeoffers(
-        &self,
-        operation: ConfirmationMethod,
-        trade_offers_ids: &[&u64],
-    ) -> Result<(), AuthError> {
-        let steamid = self.cached_data.borrow().steam_id().unwrap();
-
-        let confirmations = confirmations_retrieve_all(&self.client, &self.user, steamid, false)
-            .await?
-            .map(Confirmations::from);
-
-        Ok(())
-    }
 
     /// Accept or deny confirmations.
     pub async fn process_confirmations(

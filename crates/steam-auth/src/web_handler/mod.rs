@@ -134,6 +134,8 @@ pub(crate) async fn cache_resolve(
 }
 
 /// Send confirmations to Steam Servers for accepting/denying.
+/// # Panics
+/// This method will panic if the `User` doesn't have a linked `device_id`.
 pub(crate) async fn confirmations_send(
     client: &MobileClient,
     user: &User,
@@ -178,6 +180,8 @@ pub(crate) async fn confirmations_send(
 }
 
 /// Retrieve all confirmations for user, opting between retrieving details or not.
+/// # Panics
+/// This method will panic if the `User` doesn't have a linked `device_id`.
 pub(crate) async fn confirmations_retrieve_all(
     client: &MobileClient,
     user: &User,
