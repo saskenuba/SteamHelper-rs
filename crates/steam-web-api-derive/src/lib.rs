@@ -33,10 +33,7 @@ pub fn interface(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let steam_interface_name = Ident::new(&attribute, Span::call_site());
     let struct_fields = get_fields(&input).unwrap();
-    let field_idents: Vec<_> = struct_fields
-        .iter()
-        .filter_map(|field| field.ident.as_ref())
-        .collect();
+    let field_idents: Vec<_> = struct_fields.iter().filter_map(|field| field.ident.as_ref()).collect();
     let field_types: Vec<_> = struct_fields.iter().map(|field| &field.ty).collect();
 
     let impl_convert = quote! {
@@ -75,7 +72,7 @@ pub fn derive_parameters(input: TokenStream) -> TokenStream {
         #[derive(Debug)]
         #[cfg(feature = "async")]
         pub struct #new_ident<'a> {
-            pub(crate) key: &'a String,
+            pub(crate) key: &'a str,
             pub(crate) request: reqwest::Request,
             pub(crate) client: &'a reqwest::Client,
             pub(crate) parameters: #struct_parameters_name,
@@ -84,7 +81,7 @@ pub fn derive_parameters(input: TokenStream) -> TokenStream {
         #[derive(Debug)]
         #[cfg(feature = "blocking")]
         pub struct #new_ident<'a> {
-            pub(crate) key: &'a String,
+            pub(crate) key: &'a str,
             pub(crate) request: reqwest::blocking::Request,
             pub(crate) client: &'a reqwest::blocking::Client,
             pub(crate) parameters: #struct_parameters_name,
@@ -93,6 +90,12 @@ pub fn derive_parameters(input: TokenStream) -> TokenStream {
         impl<'a> #new_ident<'a> {
             pub(crate) fn recover_params(&self) -> String {
                 self.parameters.recover_params()
+            }
+
+            pub fn inject_custom_key(self, apikey: &'a str) -> Self {
+                let mut endpoint = self;
+                endpoint.key = apikey;
+                endpoint
             }
         }
 

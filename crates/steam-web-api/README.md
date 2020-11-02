@@ -41,11 +41,11 @@ steam-web-api = { git = "https://github.com/saskenuba/SteamHelper-rs.git", branc
 Then in your `lib.rs` or `main.rs` file add:
 
 ```rust
-use steam_web_api::{Executor, Github};
+use steam_web_api::{Executor, SteamAPI};
 ```
 
  ``` rust
-use steam_web_api::{Executor, Github};
+use steam_web_api::{Executor, SteamAPI};
 
 // if using blocking client
 // use steam_web_api::blocking::{Executor, Github};

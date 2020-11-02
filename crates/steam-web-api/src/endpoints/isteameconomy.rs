@@ -19,3 +19,4 @@ pub(crate) struct GetAssetClassInfoParameters {
 }
 
 convert_with_endpoint!(@ISteamEconomy -> GetAssetClassInfo |> "GetClassInfo/v1");
+exec!(GetAssetClassInfo);

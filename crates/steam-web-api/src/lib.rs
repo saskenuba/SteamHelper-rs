@@ -1,3 +1,69 @@
+//!
+//! Provides a wrapper around documented and some undocumented Steam API endpoints.
+//!
+//! The `steam-web-api` crate provides a practical way to query the Steam Web API using strongly typed
+//! methods.
+//!
+//! # Endpoints
+//!
+//! You can check the available interfaces for querying from the `QueryBuilder` structs.
+//!
+//! * [`GetQueryBuilder`](struct.GetQueryBuilder.html): has all available interfaces for the GET http method.
+//!
+//! Each time you "select" a interface, such as the `GetQueryBuilder`, a new struct is created where all methods
+//! are endpoints available.
+//!
+//! # Usage
+//!
+//! ```no_run
+//! use steam_web_api::{SteamAPI, Executor};
+//! use steam_web_api::response_types;
+//! use anyhow::Result;
+//! # use tokio;
+//!
+//! # #[tokio::main]
+//! async fn main() -> Result<()> {
+//!     let client = SteamAPI::new(std::env!("STEAM_API"));
+//!     let generic_response = client
+//!         .get()
+//!         .ISteamUser()
+//!         .GetPlayerSummaries(vec!["789451224515".to_string()])
+//!         .execute()
+//!         .await?;
+//!     Ok(())
+//! }
+//! ```
+//!
+//! # Reuse
+//!
+//! There are some endpoints that only returns information for the account vinculated with the api key that you are using at the moment.
+//! `steam_web_api` has a convenience function that circunvents this, allow the user to inject a custom api key before the request is made.
+//!
+//! This can be useful if you don't want to keep instantiating new clients every time you want to call with a different api keys,
+//! but still need to to call agnostic methods that doesn't return api specific information.
+//!
+//! But a "master" api key is still needed to instantiate `SteamAPI` in order to avoid panics.
+//!
+//! ```no_run
+//! use steam_web_api::{SteamAPI, Executor};
+//! use steam_web_api::response_types;
+//! use anyhow::Result;
+//! # use tokio;
+//!
+//! # #[tokio::main]
+//! async fn main() -> Result<()> {
+//!     let client = SteamAPI::new(std::env!("STEAM_API"));
+//!     client
+//!         .get()
+//!         .ISteamUser()
+//!         .GetPlayerSummaries(vec!["789451224515".to_string()])
+//!         .inject_custom_key("C704578DF5E380C5F8A89B8F8A0814B8")
+//!         .execute()
+//!         .await?;
+//!     Ok(())
+//! }
+//! ```
+
 #![allow(non_snake_case)]
 #![allow(unused_imports)]
 
@@ -15,14 +81,14 @@ use async_trait::async_trait;
 pub mod blocking {
     use serde::de::DeserializeOwned;
 
+    /// Requests the endpoint and returns the raw response.
     pub trait Executor {
-        /// Requests the endpoint and returns the raw response.
-        fn execute(self) -> reqwest::Result<reqwest::blocking::Response>;
+        fn execute(self) -> reqwest::Result<String>;
     }
 
+    /// Requests the endpoint and returns the proper deserialized response.
+    /// Response types are exposed on `steam_web_api::response_types`.
     pub trait ExecutorResponse<T: DeserializeOwned> {
-        /// Requests the endpoint and returns the proper deserialized response.
-        /// Response types are exposed on `steam_web_api::response_types`.
         fn execute_with_response(self) -> reqwest::Result<T>;
     }
 
@@ -42,30 +108,37 @@ pub mod blocking {
             }
         }
 
+        pub fn set_api_key<T: ToString>(&mut self, api_key: T) {
+            self.key = api_key.to_string();
+        }
+
         pub fn get(&self) -> GetQueryBuilder {
             self.into()
         }
     }
 
     new_type!(GetQueryBuilder);
+    new_type!(PostQueryBuilder);
+
     from!(@GetQueryBuilder => GET);
+    from!(@PostQueryBuilder => POST);
 }
 
 #[cfg(feature = "async")]
 mod async_client {
-
     use async_trait::async_trait;
     use serde::de::DeserializeOwned;
 
     #[async_trait]
+    /// Requests the endpoint and returns the raw response.
     pub trait Executor {
-        async fn execute(self) -> reqwest::Result<reqwest::Response>;
+        async fn execute(self) -> reqwest::Result<String>;
     }
 
     #[async_trait]
+    /// Requests the endpoint and returns the proper deserialized response.
+    /// Response types are exposed on `steam_web_api::response_types`.
     pub trait ExecutorResponse<T: DeserializeOwned> {
-        /// Requests the endpoint and returns the proper deserialized response.
-        /// Response types are exposed on `steam_web_api::response_types`.
         async fn execute_with_response(self) -> reqwest::Result<T>;
     }
 
@@ -85,13 +158,24 @@ mod async_client {
             }
         }
 
+        pub fn set_api_key<T: ToString>(&mut self, api_key: T) {
+            self.key = api_key.to_string();
+        }
+
         pub fn get(&self) -> GetQueryBuilder {
+            self.into()
+        }
+
+        pub fn post(&self) -> PostQueryBuilder {
             self.into()
         }
     }
 
     new_type!(GetQueryBuilder);
+    new_type!(PostQueryBuilder);
+
     from!(@GetQueryBuilder => GET);
+    from!(@PostQueryBuilder => POST);
 }
 
 #[cfg(feature = "async")]
