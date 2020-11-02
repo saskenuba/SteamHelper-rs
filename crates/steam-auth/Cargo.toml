@@ -21,9 +21,9 @@ backoff = { version = "0.2", features = ["tokio"] }
 base64 = "0.13"
 bytes = "0.6"
 chrono = "0.4"
-const-concat = { git = "https://github.com/reesmanp/const-concat", branch = "master" }
+const_format = "^0.2"
 cookie = { git = "https://github.com/saskenuba/cookie-rs", branch = "master" }
-futures = "0.3"
+futures = "^0.3"
 pin-project = "1" # Required because of conflicts
 hex = "0.4"
 itertools = "0.9"

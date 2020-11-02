@@ -5,7 +5,7 @@ use reqwest::Method;
 use tokio::time::Duration;
 use tracing::debug;
 
-use const_concat::const_concat;
+use const_format::concatcp;
 
 use crate::utils::generate_canonical_device_id;
 use crate::{
@@ -24,7 +24,7 @@ use crate::{
 
 mod types;
 
-const PHONEAJAX_URL: &'static str = const_concat!(STEAM_COMMUNITY_BASE, "/steamguard/phoneajax");
+const PHONEAJAX_URL: &'static str = concatcp!(STEAM_COMMUNITY_BASE, "/steamguard/phoneajax");
 pub(crate) const STEAM_ADD_PHONE_CATCHUP_SECS: u64 = 5;
 
 type LinkerResult<T> = Result<T, LinkerError>;

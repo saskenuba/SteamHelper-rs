@@ -6,7 +6,7 @@ use reqwest::Method;
 use scraper::Html;
 use tracing::{debug, info, trace, warn};
 
-use const_concat::const_concat;
+use const_format::concatcp;
 use cookie::{Cookie, CookieJar};
 use steam_language_gen::generated::enums::EResult;
 use steam_totp::Time;
@@ -29,7 +29,7 @@ pub mod confirmation;
 pub(crate) mod login;
 
 /// used to refresh session
-const MOBILE_AUTH_GETWGTOKEN: &str = const_concat!(STEAM_API_BASE, "/IMobileAuthService/GetWGToken/v0001");
+const MOBILE_AUTH_GETWGTOKEN: &str = concatcp!(STEAM_API_BASE, "/IMobileAuthService/GetWGToken/v0001");
 
 async fn session_refresh() {}
 

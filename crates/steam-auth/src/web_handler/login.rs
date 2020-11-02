@@ -8,7 +8,7 @@ use rsa::{BigUint, PublicKey, RSAPublicKey};
 use tokio::time;
 use tracing::warn;
 
-use const_concat::const_concat;
+use const_format::concatcp;
 use cookie::Cookie;
 use steam_totp::{Secret, Time};
 
@@ -21,8 +21,8 @@ use crate::{
     STEAM_STORE_HOST,
 };
 
-const LOGIN_GETRSA_URL: &str = const_concat!(STEAM_COMMUNITY_BASE, "/login/getrsakey");
-const LOGIN_DO_URL: &str = const_concat!(STEAM_COMMUNITY_BASE, "/login/dologin");
+const LOGIN_GETRSA_URL: &str = concatcp!(STEAM_COMMUNITY_BASE, "/login/getrsakey");
+const LOGIN_DO_URL: &str = concatcp!(STEAM_COMMUNITY_BASE, "/login/dologin");
 
 type LoginResult<T> = Result<T, LoginError>;
 

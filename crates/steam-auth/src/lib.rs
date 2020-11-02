@@ -16,10 +16,10 @@
 use std::{fs::OpenOptions, io::Read};
 
 pub use reqwest::{header::HeaderMap, Method};
+use const_format::concatcp;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use const_concat::const_concat;
 use steam_totp::Secret;
 use steamid_parser::SteamID;
 pub use utils::format_captcha_url;
@@ -55,7 +55,7 @@ const STEAM_STORE_BASE: &str = "https://store.steampowered.com";
 /// Should not be used for cookie retrieval. Use `STEAM_API_HOST` instead.
 const STEAM_API_BASE: &str = "https://api.steampowered.com";
 
-const MOBILE_REFERER: &str = const_concat!(
+const MOBILE_REFERER: &str = concatcp!(
     STEAM_COMMUNITY_BASE,
     "/mobilelogin?oauth_client_id=DE45CD61&oauth_scope=read_profile%20write_profile%20read_client%\
      20write_client"
