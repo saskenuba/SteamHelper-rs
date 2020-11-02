@@ -4,7 +4,7 @@ use crate::types::trade_offer_web::{Asset, AssetList};
 pub struct AssetCollection(pub(crate) Vec<Asset>);
 
 impl AssetCollection {
-    pub fn dump_to_asset_list(self) -> AssetList {
+    pub(crate) fn dump_to_asset_list(self) -> AssetList {
         AssetList {
             assets: self.0,
             ..Default::default()
@@ -42,10 +42,7 @@ mod tests {
         let mut my_assets = AssetCollection::default();
         my_assets.add(570, 2, 17034419698);
         my_assets.add(730, 2, 18465222145);
-        println!(
-            "{:?}",
-            serde_json::to_string(&my_assets.dump_to_asset_list())
-        );
+        println!("{:?}", serde_json::to_string(&my_assets.dump_to_asset_list()));
     }
 }
 

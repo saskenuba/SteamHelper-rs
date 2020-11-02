@@ -1,26 +1,33 @@
+use tracing::info;
+
+use steam_auth::Url;
+
 use crate::{errors::TradeOfferError, types::asset_collection::AssetCollection, TRADE_MAX_ITEMS};
-use reqwest::Url;
 
 #[derive(Debug, PartialEq)]
 pub struct TradeOffer {
-    pub url: String,
+    /// The user who you want to trade with Steam Trade URL.
+    pub their_trade_url: String,
+    /// Assets you want to trade
     pub my_assets: Option<AssetCollection>,
+    /// Assets you want from the other person.
     pub their_assets: Option<AssetCollection>,
+    /// Optional trade offer message.
     pub message: String,
 }
 
 impl TradeOffer {
-    pub fn new(
-        url: String,
-        my_assets: Option<AssetCollection>,
-        their_assets: Option<AssetCollection>,
-        message: String,
-    ) -> Self {
+    pub fn new<MA, TA, S>(their_trade_url: String, my_assets: MA, their_assets: TA, message: S) -> Self
+    where
+        MA: Into<Option<AssetCollection>>,
+        TA: Into<Option<AssetCollection>>,
+        S: Into<Option<String>>,
+    {
         Self {
-            url,
-            my_assets,
-            their_assets,
-            message,
+            their_trade_url,
+            my_assets: my_assets.into(),
+            their_assets: their_assets.into(),
+            message: message.into().unwrap_or_else(|| "".to_string()),
         }
     }
 
@@ -37,8 +44,9 @@ impl TradeOffer {
 
         // TODO: more elegant, please
 
-        let my_length = my_items.as_ref().map(|c| c.0.len()).unwrap();
-        let their_length = their_items.as_ref().map(|c| c.0.len()).unwrap();
+        let my_length = my_items.as_ref().map(|c| c.0.len()).unwrap_or(0);
+        let their_length = their_items.as_ref().map(|c| c.0.len()).unwrap_or(0);
+        info!("Total items being traded: My: {} Their: {}", my_length, their_length);
 
         if my_length >= TRADE_MAX_ITEMS as usize || their_length >= TRADE_MAX_ITEMS as usize {
             return Err(TradeOfferError::InvalidTrade(format!(

@@ -1,5 +1,9 @@
-use crate::types::sessionid::{HasSessionID, SessionID};
 use serde::{Deserialize, Serialize};
+
+use steam_language_gen::generated::enums::EResult;
+
+use crate::types::sessionid::{HasSessionID, SessionID};
+use crate::{AssetCollection, TradeOffer};
 
 macro_rules! impl_sessionid {
     ($name:ident) => {
@@ -38,6 +42,14 @@ pub(crate) struct TradeOfferGenericRequest {
     pub sessionid: SessionID,
 }
 
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub(crate) struct TradeOfferGenericErrorResponse {
+    // #[serde(with = "serde_with::rust::display_fromstr")]
+    // pub tradeofferid: Option<u64>,
+    #[serde(rename = "success")]
+    pub eresult: EResult,
+}
+
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 /// Url: https://steamcommunity.com/tradeoffer/4127395150/accept
 pub(crate) struct TradeOfferAcceptRequest {
@@ -55,7 +67,8 @@ pub(crate) struct TradeOfferAcceptRequest {
 pub struct TradeOfferCreateResponse {
     /// This is the trade offer ID of our offer. We can use this to mobile confirm.
     /// Ex: 4112828817
-    pub tradeofferid: String,
+    #[serde(with = "serde_with::rust::display_fromstr")]
+    pub tradeofferid: u64,
     pub needs_mobile_confirmation: Option<bool>,
     pub needs_email_confirmation: Option<bool>,
     pub email_domain: Option<String>,
@@ -83,8 +96,29 @@ pub(crate) struct TradeOfferCreateRequest {
     pub trade_offer_create_params: Option<TradeOfferParams>,
 }
 
+impl TradeOfferCreateRequest {
+    pub(crate) fn new<T: Into<Option<TradeOfferParams>>>(
+        their_steamid64: u64,
+        tradeoffer: TradeOffer,
+        trade_token: T,
+    ) -> TradeOfferCreateRequest {
+        Self {
+            sessionid: Default::default(),
+            common: TradeOfferCommonParameters {
+                their_steamid: their_steamid64,
+                ..Default::default()
+            },
+            message: tradeoffer.message.clone(),
+            json_tradeoffer: tradeoffer.into(),
+            trade_offer_create_params: trade_token.into(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub(crate) struct TradeOfferParams {
+    /// A trade offer link has an unique token that the user can invalidate at any time.
+    /// We need to insert this token correct at the request.
     pub trade_offer_access_token: String,
 }
 
@@ -100,13 +134,34 @@ impl Default for TradeOfferCreateRequest {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct JsonTradeOffer {
+/// Trade offer format to be sent through Steam.
+pub(crate) struct JsonTradeOffer {
     pub newversion: bool,
     pub version: i32,
     #[serde(rename = "me")]
     pub my_account: AssetList,
     #[serde(rename = "them")]
     pub their_account: AssetList,
+}
+
+impl From<TradeOffer> for JsonTradeOffer {
+    fn from(tradeoffer: TradeOffer) -> Self {
+        let my_account = tradeoffer
+            .my_assets
+            .unwrap_or_else(|| AssetCollection::default())
+            .dump_to_asset_list();
+
+        let their_account = tradeoffer
+            .their_assets
+            .unwrap_or_else(|| AssetCollection::default())
+            .dump_to_asset_list();
+
+        Self {
+            my_account,
+            their_account,
+            ..Default::default()
+        }
+    }
 }
 
 impl Default for JsonTradeOffer {
@@ -121,7 +176,8 @@ impl Default for JsonTradeOffer {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct AssetList {
+/// The correct format for assets inside the trade offer.
+pub(crate) struct AssetList {
     pub assets: Vec<Asset>,
     pub currency: Vec<String>,
     pub ready: bool,
@@ -146,7 +202,7 @@ pub struct Asset {
     // u32
     pub contextid: String,
     /// Amount if the item is stackable.
-    pub amount: i64,
+    pub(crate) amount: i64,
     // u64
     pub assetid: String,
 }
@@ -160,8 +216,7 @@ mod tests {
     use super::*;
 
     fn get_offer() -> JsonTradeOffer {
-        serde_json::from_str::<JsonTradeOffer>(
-            r#"{
+        let json_request = r#"{
   "newversion":true,
   "version":4,
   "me":{
@@ -194,25 +249,7 @@ mod tests {
     "currency":[],
     "ready":false
   }
-}"#,
-        )
-        .unwrap()
-    }
-
-    #[test]
-    fn trade_offer_serialize() {
-        let json_trade_offer = get_offer();
-        let new_trade_offer = TradeOfferCreateRequest {
-            message: "5+e+onibus".to_string(),
-            json_tradeoffer: json_trade_offer,
-            trade_offer_create_params: None,
-            common: Default::default(),
-            ..Default::default()
-        };
-
-        println!(
-            "{:#?}",
-            serde_json::to_string_pretty(&new_trade_offer).unwrap()
-        );
+}"#;
+        serde_json::from_str::<JsonTradeOffer>(json_request).unwrap()
     }
 }

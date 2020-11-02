@@ -8,46 +8,8 @@ use serde_repr::Deserialize_repr;
 
 use steam_language_gen::generated::enums::{ETradeOfferConfirmationMethod, ETradeOfferState};
 
-pub trait HasAssets {
-    fn filter_by<T: Fn(&&CEcon_TradeOffer) -> bool>(self, by: T) -> Vec<CEcon_TradeOffer>;
-}
-
-impl HasAssets for CEcon_GetTradeOffers_Response_Base {
-    fn filter_by<T: Fn(&&CEcon_TradeOffer) -> bool>(self, by: T) -> Vec<CEcon_TradeOffer> {
-
-        match (
-            self.response.trade_offers_sent,
-            self.response.trade_offers_received,
-        ) {
-            (Some(sent), Some(received)) => {
-                let mut all_tradeoffers = vec![];
-                all_tradeoffers.extend(sent.iter());
-                all_tradeoffers.extend(received.iter());
-                all_tradeoffers
-                    .into_iter()
-                    .filter(|c| by(c))
-                    .map(|c: &CEcon_TradeOffer| c.to_owned())
-                    .collect::<Vec<CEcon_TradeOffer>>()
-            }
-            (None, Some(trades)) | (Some(trades), None) => trades
-                .iter()
-                .filter(|c| by(c))
-                .map(|c: &CEcon_TradeOffer| c.to_owned())
-                .collect::<Vec<CEcon_TradeOffer>>(),
-            _ => unreachable!(),
-        }
-    }
-}
-
-// impl HasAssets for CEcon_GetTradeHistory_Response_Trade_Base {
-//     fn filter_tradeoffer_id(&self) {
-//         unimplemented!()
-//     }
-// }
-
-/// Tracks the status of a trade after a trade offer has been accepted.
-/// Received at GetTradeHistory at status field on
-/// CEcon_GetTradeHistory_Response_Trade
+/// Tracks the status of a completed trade. I.e. after a trade offer has been accepted.
+/// Received at GetTradeHistory at status field on CEcon_GetTradeHistory_Response_Trade
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize_repr)]
 #[repr(i32)]
 pub enum ETradeStatus {
@@ -93,22 +55,35 @@ pub struct Descriptions {
 
 #[allow(non_camel_case_types)]
 #[derive(Deserialize, Debug, Clone)]
-pub struct CEcon_GetTradeOffers_Response_Base {
-    response: CEcon_GetTradeOffers_Response,
+pub struct GetTradeOfferResponse {
+    pub response: CEcon_GetTradeOffer_Response,
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Deserialize, Debug, Clone)]
+pub struct CEcon_GetTradeOffer_Response {
+    pub offer: TradeOffer_Trade,
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Deserialize, Debug, Clone)]
+/// Represents the raw CEcon_GetTradeOffers_Response_Base
+pub struct GetTradeOffersResponse {
+    pub(crate) response: CEcon_GetTradeOffers_Response,
 }
 
 #[allow(non_camel_case_types)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct CEcon_GetTradeOffers_Response {
-    pub trade_offers_sent: Option<Vec<CEcon_TradeOffer>>,
-    pub trade_offers_received: Option<Vec<CEcon_TradeOffer>>,
+    pub trade_offers_sent: Option<Vec<TradeOffer_Trade>>,
+    pub trade_offers_received: Option<Vec<TradeOffer_Trade>>,
 }
 
 #[allow(non_camel_case_types)]
 #[derive(Deserialize, Debug, Clone)]
-/// Represents a steam trade offer.
+/// Represents a steam trade offer. CEcon_Trade
 /// Returned by GetTradeOffers (vector) and GetTradeOffer.
-pub struct CEcon_TradeOffer {
+pub struct TradeOffer_Trade {
     /// Unique ID generated when a trade offer is created
     #[serde(with = "serde_with::rust::display_fromstr")]
     pub tradeofferid: u64,
@@ -117,22 +92,24 @@ pub struct CEcon_TradeOffer {
     /// Message included by the creator of the trade offer
     message: String,
     /// Unix time when the offer will expire (or expired, if it is in the past)
-    /// TODO: Maybe convert?
     expiration_time: u64,
     /// State of trade offer
-    trade_offer_state: ETradeOfferState,
+    #[serde(rename = "trade_offer_state")]
+    pub state: ETradeOfferState,
     items_to_give: Option<Vec<CEcon_Asset>>,
     items_to_receive: Option<Vec<CEcon_Asset>>,
     /// Indicates the account binded with the api key requested this trade
-    is_our_offer: bool,
-    time_created: u64,
-    time_updated: u64,
-    /// Tradeid is the historical number of the trade. It is used, for example to find the new
-    /// generated asset ids after the trade is complete.
-    /// Shows up only for completed trades.
+    pub is_our_offer: bool,
+    time_created: i64,
+    time_updated: i64,
+    /// Tradeid is the historical number of the trade.
+    /// It is used, for example to find the new generated asset ids after the trade is completed.
+    ///
+    /// Shows up only after the trade has been completed, and also can be found on the TradeHistory endpoint.
     tradeid: Option<String>,
     from_real_time_trade: bool,
-    escrow_end_date: u8,
+    /// Unix timestamp of when the trade hold period is supposed to be over for this trade offer
+    escrow_end_date: i64,
     confirmation_method: ETradeOfferConfirmationMethod,
 }
 
@@ -140,58 +117,72 @@ pub struct CEcon_TradeOffer {
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct CEcon_Asset {
     #[serde(flatten)]
-    pub asset: BasicAssetParameters,
+    pub asset: AssetFields,
     pub missing: bool,
     pub est_usd: String,
 }
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone, PartialEq, Deserialize)]
-pub struct CEcon_GetTradeHistory_Response_Trade_Base {
-    #[serde(flatten)]
-    pub response: Response,
+/// Represents the raw CEcon_GetTradeHistory_Response_Trade_Base
+pub struct GetTradeHistoryResponse {
+    pub response: CEcon_GetTradeHistory_Response_Trade_Intermediate,
 }
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone, PartialEq, Deserialize)]
-pub struct Response {
+pub struct CEcon_GetTradeHistory_Response_Trade_Intermediate {
     pub more: bool,
-    pub trades: Vec<CEcon_GetTradeHistory_Response_Trade>,
+    pub trades: Vec<TradeHistory_Trade>,
 }
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone, PartialEq, Deserialize)]
-pub struct CEcon_GetTradeHistory_Response_Trade {
-    pub tradeid: String,
-    pub steamid_other: String,
+/// A trade returned by GetTradeHistory
+/// Known as CEcon_GetTradeHistory_Response_Trade
+pub struct TradeHistory_Trade {
+    #[serde(with = "serde_with::rust::display_fromstr")]
+    pub tradeid: u64,
+    #[serde(with = "serde_with::rust::display_fromstr")]
+    pub steamid_other: u64,
+    /// Unix epoch when the trade offer was completed, and turned into a trade.
     pub time_init: i64,
     pub status: ETradeStatus,
-    pub assets_received: Option<Vec<CEcon_GetTradeHistory_Response_Trade_TradedAsset>>,
-    pub assets_given: Option<Vec<CEcon_GetTradeHistory_Response_Trade_TradedAsset>>,
+    pub assets_received: Option<Vec<TradeHistory_TradedAsset>>,
+    pub assets_given: Option<Vec<TradeHistory_TradedAsset>>,
 }
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone, PartialEq, Deserialize)]
-pub struct CEcon_GetTradeHistory_Response_Trade_TradedAsset {
+/// A traded item returned by GetTradeHistory
+/// Known as  CEcon_GetTradeHistory_Response_Trade_TradedAsset
+pub struct TradeHistory_TradedAsset {
     #[serde(flatten)]
-    pub asset: BasicAssetParameters,
-    #[serde(with = "serde_with::rust::display_fromstr")]
-    pub new_assetid: u64,
+    pub assetids: AssetIDHistory,
+    #[serde(flatten)]
+    pub asset: AssetFields,
     #[serde(with = "serde_with::rust::display_fromstr")]
     pub new_contextid: u64,
-    pub rollback_new_assetid: Option<String>,
     pub rollback_new_contextid: Option<String>,
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-pub struct BasicAssetParameters {
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct AssetIDHistory {
+    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde(rename = "assetid")]
+    pub old_assetid: u64,
+    #[serde(with = "serde_with::rust::display_fromstr")]
+    pub new_assetid: u64,
+    pub rollback_new_assetid: Option<String>,
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone, PartialEq, Deserialize)]
+pub struct AssetFields {
     pub appid: u64,
     #[serde(with = "serde_with::rust::display_fromstr")]
     pub contextid: u64,
-    #[serde(with = "serde_with::rust::display_fromstr")]
-    pub assetid: u64,
-
     // #[serde(with = "serde_with::rust::display_fromstr")]
     // pub currencyid: Option<u64>,
     #[serde(with = "serde_with::rust::display_fromstr")]
@@ -200,10 +191,4 @@ pub struct BasicAssetParameters {
     pub instanceid: u64,
     #[serde(with = "serde_with::rust::display_fromstr")]
     pub amount: u64,
-}
-
-impl CEcon_GetTradeHistory_Response_Trade_TradedAsset {
-    fn get_old_new_assetids(&self) -> (u64, u64) {
-        (self.asset.assetid, self.new_assetid)
-    }
 }

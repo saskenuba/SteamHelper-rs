@@ -1,14 +1,12 @@
 use crate::{TradeOffer, TRADEOFFER_BASE, TRADEOFFER_NEW_URL};
 
 pub mod asset_collection;
-pub mod asset_history;
 pub mod sessionid;
 pub(crate) mod trade_api;
 pub mod trade_offer;
-pub(super) mod trade_offer_web;
-pub mod trade_operation;
+pub mod trade_offer_web;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum TradeKind {
     Accept,
     Cancel,
@@ -23,11 +21,12 @@ impl TradeKind {
         }
 
         let tradeofferid = tradeofferid.unwrap();
-        match self {
-            TradeKind::Accept => format!("{}{}/accept", TRADEOFFER_BASE, tradeofferid),
-            TradeKind::Cancel => format!("{}{}/cancel", TRADEOFFER_BASE, tradeofferid),
-            TradeKind::Decline => format!("{}{}/decline", TRADEOFFER_BASE, tradeofferid),
+        let url_path = match self {
+            TradeKind::Accept => "/accept",
+            TradeKind::Cancel => "/cancel",
+            TradeKind::Decline => "/decline",
             _ => unreachable!(),
-        }
+        };
+        TRADEOFFER_BASE.to_owned() + &*tradeofferid.to_string() + url_path
     }
 }
