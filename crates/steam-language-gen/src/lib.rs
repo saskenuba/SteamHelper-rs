@@ -2,18 +2,19 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 
-
 #[macro_use]
 extern crate steam_language_gen_derive;
 
-use downcast_rs::{Downcast, impl_downcast};
+use downcast_rs::{impl_downcast, Downcast};
 use enum_dispatch::enum_dispatch;
 use serde::Serialize;
 
 use crate::generated::headers::{ExtendedMessageHeader, StandardMessageHeader};
 
 pub mod generated;
+#[cfg(feature = "generator")]
 pub mod generator;
+#[cfg(feature = "generator")]
 pub mod parser;
 
 #[enum_dispatch]

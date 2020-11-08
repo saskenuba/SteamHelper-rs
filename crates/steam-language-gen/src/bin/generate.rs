@@ -1,7 +1,6 @@
-use steam_language_gen::generator::{append_to_file, generate_code, write_to_file};
-use steam_language_gen::parser::{parse_classes_to_tree, parse_enums_to_tree};
-
 fn main() {
+    use steam_language_gen::generator::{append_to_file, generate_code, write_to_file};
+    use steam_language_gen::parser::{parse_classes_to_tree, parse_enums_to_tree};
 
     let path_enums_output: &'static str  = "crates/steam-language-gen/src/generated/";
     let path_steamsg_output: &'static str  = "crates/steam-language-gen/src/generated/messages.rs";

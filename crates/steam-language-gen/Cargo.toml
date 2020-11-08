@@ -6,8 +6,17 @@ edition = "2018"
 license = "MIT"
 repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-language-gen"
 description = "Generate Rust bindings to Steam enums and messages."
+autobins = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "generate"
+path = "src/bin/generate.rs"
+
+[features]
+default = []
+generator = ["petgraph", "regex", "nom", "Inflector"]
 
 [dependencies]
 arrayref = "0.3"
@@ -16,12 +25,12 @@ bitflags = "1"
 derive-new = "0.5"
 downcast-rs = "1"
 enum_dispatch = "0.2"
-Inflector = { version = "^0.11", default-features = false }
-nom = "5.0.1"
+Inflector = { version = "^0.11", default-features = false, optional = true }
+nom = { version = "5.0.1", optional = true }
 num-derive = "0.3"
 num-traits = "0.2"
-petgraph = "0.4"
-regex = "1"
+petgraph = { version = "0.4", optional = true }
+regex = { version = "1", optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_repr = "0.1"
 
