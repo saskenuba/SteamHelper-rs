@@ -1,4 +1,5 @@
 use proc_macro::TokenStream;
+
 use proc_macro2::Span;
 use quote::quote;
 use syn::punctuated::Punctuated;
@@ -30,6 +31,7 @@ pub fn interface(_attr: TokenStream, item: TokenStream) -> TokenStream {
         &my_ident[..my_ident.len() - PARAMETERS_LITERAL_LENGTH],
         Span::call_site(),
     );
+    let new_ident_stringified = new_ident.to_string();
 
     let steam_interface_name = Ident::new(&attribute, Span::call_site());
     let struct_fields = get_fields(&input).unwrap();
@@ -40,6 +42,15 @@ pub fn interface(_attr: TokenStream, item: TokenStream) -> TokenStream {
           #input
 
         impl<'a> #steam_interface_name<'a> {
+            #[doc = "A new request to the `"]
+            #[doc = #new_ident_stringified]
+            #[doc = "` endpoint.\n\n"]
+            ///
+            /// The returning struct implements:
+            /// - `execute`, for a raw `String` response; Requires import of trait `Executor`;
+            /// - `execute_with_response`, for a jsonified response into a struct. **Needs to be available for this endpoint**. Requires import of trait `ExecutorResponse`;
+            /// - `inject_custom_key`, for injecting a custom api key different than the one used for instantiating `SteamAPI`, which
+            /// then you can execute with the options above.
              pub fn #new_ident(self, #(#field_idents: #field_types),* ) -> #new_ident<'a> {
                  let mut into: #new_ident = self.into();
                  #(into.parameters.#field_idents = #field_idents;)*
