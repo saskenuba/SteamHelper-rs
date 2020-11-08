@@ -28,9 +28,12 @@ url = "^2"
 
 [dependencies.steam-web-api-derive]
 path = "../steam-web-api-derive"
+version = "0.3.1"
 
 [dependencies.steam-language-gen]
 path = "../steam-language-gen"
+version = "0.1.0"
+
 
 [dev-dependencies]
 anyhow = "1"
