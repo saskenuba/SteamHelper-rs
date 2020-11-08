@@ -223,7 +223,7 @@ impl MobileAuthFile {
     }
 
     /// Creates a new `MobileAuthFile`
-    fn new<T>(identity_secret: String, shared_secret: String, device_id: T) -> Self
+    pub fn new<T>(identity_secret: String, shared_secret: String, device_id: T) -> Self
     where
         T: Into<Option<String>>,
     {
