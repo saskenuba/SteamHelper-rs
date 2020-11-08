@@ -9,27 +9,27 @@ impl_conversions!(@GetQueryBuilder -> @ISteamUser);
 convert_with_endpoint!(@GetQueryBuilder -> @ISteamUser);
 
 #[interface(ISteamUser)]
-#[derive(Parameters, Debug, Default)]
+#[derive(Parameters, Serialize, Debug, Default)]
 pub struct GetPlayerSummariesParameters {
     #[comma]
     steamids: Vec<String>,
 }
 
 #[interface(ISteamUser)]
-#[derive(Parameters, Debug, Default)]
+#[derive(Parameters, Serialize, Debug, Default)]
 pub struct GetPlayerBansParameters {
     #[comma]
     steamids: Vec<String>,
 }
 
 #[interface(ISteamUser)]
-#[derive(Parameters, Debug, Default)]
+#[derive(Parameters, Serialize, Debug, Default)]
 pub struct ResolveVanityURLParameters {
     vanityurl: String,
 }
 
 #[interface(ISteamUser)]
-#[derive(Parameters, Debug, Default)]
+#[derive(Parameters, Serialize, Debug, Default)]
 pub struct GetFriendListParameters {
     steamid: u64,
     relationship: String,

@@ -92,6 +92,10 @@ pub fn derive_parameters(input: TokenStream) -> TokenStream {
                 self.parameters.recover_params()
             }
 
+            pub(crate) fn recover_params_as_form(&self) -> &#struct_parameters_name {
+                &self.parameters
+            }
+
             pub fn inject_custom_key(self, apikey: &'a str) -> Self {
                 let mut endpoint = self;
                 endpoint.key = apikey;

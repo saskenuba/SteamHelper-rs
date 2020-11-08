@@ -1,16 +1,25 @@
 #[cfg(feature = "async")]
 use async_trait::async_trait;
-
 #[cfg(feature = "async")]
 use futures::future;
+
+#[derive(serde::Serialize, Debug)]
+/// We use this struct to wrap this endpoint parameters struct, plus our API Key
+pub(crate) struct FormWrapper<'a, T: serde::Serialize> {
+    #[serde(flatten)]
+    pub(crate) parameters: T,
+    pub(crate) key: &'a str,
+}
 
 #[cfg(feature = "async")]
 macro_rules! import {
     () => {
         use crate::{
-            helpers::{comma_delimited, indexed_array, querify},
             async_client::{Executor, ExecutorResponse, GetQueryBuilder, PostQueryBuilder},
+            errors::headers_error_check,
+            helpers::{comma_delimited, indexed_array, querify},
         };
+        use serde::{Deserialize, Serialize};
     };
 }
 
@@ -78,7 +87,7 @@ macro_rules! exec {
     ($base:ident -> $ret:ident) => {
         #[cfg(feature = "blocking")]
         impl<'a> ExecutorResponse<$ret> for $base<'a> {
-            fn execute_with_response(self) -> reqwest::Result<$ret> {
+            fn execute_with_response(self) -> crate::Result<$ret> {
                 use paste::paste;
 
                 let query: String = self.recover_params();
@@ -98,7 +107,7 @@ macro_rules! exec {
         #[$crate::async_trait]
         #[cfg(feature = "async")]
         impl<'a> ExecutorResponse<$ret> for $base<'a> {
-            async fn execute_with_response(self) -> reqwest::Result<$ret> {
+            async fn execute_with_response(self) -> crate::Result<$ret> {
                 use futures::future::TryFutureExt;
 
                 let query: String = self.recover_params();
@@ -111,6 +120,7 @@ macro_rules! exec {
                     .execute(req)
                     .and_then(|res| res.json::<$ret>())
                     .await
+                    .map_err(|e| e.into())
             }
         }
 
@@ -120,7 +130,7 @@ macro_rules! exec {
     ($base:ident) => {
         #[cfg(feature = "blocking")]
         impl<'a> Executor for $base<'a> {
-            fn execute(self) -> Result<String, reqwest::Error> {
+            fn execute(self) -> crate::Result<String> {
                 let query: String = self.recover_params();
                 let api_key_parameter = format!("key={}", self.key);
                 let mut req = self.request;
@@ -134,16 +144,42 @@ macro_rules! exec {
         #[$crate::async_trait]
         #[cfg(feature = "async")]
         impl<'a> Executor for $base<'a> {
-            async fn execute(self) -> Result<String, reqwest::Error> {
+            async fn execute(self) -> crate::Result<String> {
                 use futures::future::TryFutureExt;
 
-                let query: String = self.recover_params();
-                let api_key_parameter = format!("key={}", self.key);
-                let mut req = self.request;
-                let url = req.url_mut();
-                url.set_query(Some(&(api_key_parameter + "&" + &query)));
+                match self.request.method() {
+                    &reqwest::Method::GET => {
+                        let query: String = self.recover_params();
+                        let api_key_parameter = format!("key={}", self.key);
+                        let mut req = self.request;
+                        let url = req.url_mut();
+                        url.set_query(Some(&(api_key_parameter + "&" + &query)));
 
-                self.client.execute(req).and_then(|res| res.text()).await
+                        let response = self.client.execute(req).await?;
+                        let headers = response.headers();
+                        let status_code = response.status();
+                        headers_error_check(status_code, headers)?;
+                        response.text().await.map_err(|e| e.into())
+                    }
+
+                    &reqwest::Method::POST => {
+                        let data = self.recover_params_as_form();
+                        let url = self.request.url().to_owned();
+
+                        let data = crate::macros::FormWrapper {
+                            parameters: data,
+                            key: self.key,
+                        };
+
+                        let new_req = self.client.post(url).form(&data).build().unwrap();
+                        let response = self.client.execute(new_req).await?;
+                        let headers = response.headers();
+                        let status_code = response.status();
+                        headers_error_check(status_code, headers)?;
+                        response.text().await.map_err(|e| e.into())
+                    }
+                    _ => unimplemented!(),
+                }
             }
         }
     };

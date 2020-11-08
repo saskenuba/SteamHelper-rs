@@ -10,7 +10,7 @@ impl_conversions!(@GetQueryBuilder -> @IEconService);
 convert_with_endpoint!(@GetQueryBuilder -> @IEconService);
 
 #[interface(IEconService)]
-#[derive(Parameters, Debug, Default)]
+#[derive(Parameters, Serialize, Debug, Default)]
 pub struct GetTradeHistoryParameters {
     max_trades: u32,
     include_failed: bool,
@@ -23,14 +23,14 @@ pub struct GetTradeHistoryParameters {
 }
 
 #[interface(IEconService)]
-#[derive(Parameters, Debug, Default)]
+#[derive(Parameters, Serialize, Debug, Default)]
 pub struct GetTradeHoldDurationsParameters {
     steamid_target: u64,
     trade_offer_access_token: String,
 }
 
 #[interface(IEconService)]
-#[derive(Parameters, Debug, Default)]
+#[derive(Parameters, Serialize, Debug, Default)]
 pub struct GetTradeOffersParameters {
     get_sent_offers: bool,
     get_received_offers: bool,
@@ -42,7 +42,7 @@ pub struct GetTradeOffersParameters {
 }
 
 #[interface(IEconService)]
-#[derive(Parameters, Debug, Default)]
+#[derive(Parameters, Serialize, Debug, Default)]
 pub struct GetTradeOfferParameters {
     tradeofferid: u64,
     language: Option<String>,

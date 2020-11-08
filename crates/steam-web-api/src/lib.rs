@@ -67,15 +67,23 @@
 #![allow(non_snake_case)]
 #![allow(unused_imports)]
 
+#[cfg(feature = "async")]
+use async_trait::async_trait;
+
+#[cfg(feature = "async")]
+pub use async_client::*;
+
+use crate::errors::SteamAPIError;
+
 #[macro_use]
 mod macros;
 
 pub mod endpoints;
+pub mod errors;
 mod helpers;
 pub mod response_types;
 
-#[cfg(feature = "async")]
-use async_trait::async_trait;
+pub type Result<T> = std::result::Result<T, SteamAPIError>;
 
 #[cfg(feature = "blocking")]
 pub mod blocking {
@@ -83,13 +91,13 @@ pub mod blocking {
 
     /// Requests the endpoint and returns the raw response.
     pub trait Executor {
-        fn execute(self) -> reqwest::Result<String>;
+        fn execute(self) -> Result<String>;
     }
 
     /// Requests the endpoint and returns the proper deserialized response.
     /// Response types are exposed on `steam_web_api::response_types`.
     pub trait ExecutorResponse<T: DeserializeOwned> {
-        fn execute_with_response(self) -> reqwest::Result<T>;
+        fn execute_with_response(self) -> Result<T>;
     }
 
     #[derive(Debug)]
@@ -129,17 +137,19 @@ mod async_client {
     use async_trait::async_trait;
     use serde::de::DeserializeOwned;
 
+    use crate::Result;
+
     #[async_trait]
     /// Requests the endpoint and returns the raw response.
     pub trait Executor {
-        async fn execute(self) -> reqwest::Result<String>;
+        async fn execute(self) -> Result<String>;
     }
 
     #[async_trait]
     /// Requests the endpoint and returns the proper deserialized response.
     /// Response types are exposed on `steam_web_api::response_types`.
     pub trait ExecutorResponse<T: DeserializeOwned> {
-        async fn execute_with_response(self) -> reqwest::Result<T>;
+        async fn execute_with_response(self) -> Result<T>;
     }
 
     #[derive(Debug)]
@@ -177,6 +187,3 @@ mod async_client {
     from!(@GetQueryBuilder => GET);
     from!(@PostQueryBuilder => POST);
 }
-
-#[cfg(feature = "async")]
-pub use async_client::*;
