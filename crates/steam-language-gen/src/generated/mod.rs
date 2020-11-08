@@ -1,3 +1,4 @@
+use arrayref::array_ref;
 use num_traits::FromPrimitive;
 
 use crate::generated::enums::EMsg;

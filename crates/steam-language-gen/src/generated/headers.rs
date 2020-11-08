@@ -1,9 +1,10 @@
+use derive_new::new;
 use serde::{Deserialize, Serialize};
 
-use steam_protobuf::steam::steammessages_base::CMsgProtoBufHeader;
-
-use crate::{MessageHeader, MessageHeaderExt, SerializableBytes, DeserializableBytes};
 use crate::generated::enums::EMsg;
+use crate::{DeserializableBytes, MessageHeader, MessageHeaderExt, SerializableBytes};
+
+// use steam_protobuf::steam::steammessages_base::CMsgProtoBufHeader;
 
 // add protobuf
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -19,10 +20,7 @@ impl MessageHeaders {
             EMsg::ChannelEncryptRequest | EMsg::ChannelEncryptResponse | EMsg::ChannelEncryptResult => {
                 Some(MessageHeaders::Standard)
             }
-            _ => {
-                Some(MessageHeaders::Extended)
-            }
-            _ => None
+            _ => Some(MessageHeaders::Extended),
         }
     }
 }

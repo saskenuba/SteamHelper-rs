@@ -2,22 +2,12 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 
-#[macro_use]
-extern crate arrayref;
-#[macro_use]
-extern crate bitflags;
-#[macro_use]
-extern crate derive_new;
-#[macro_use]
-extern crate downcast_rs;
-#[macro_use]
-extern crate enum_dispatch;
-#[macro_use]
-extern crate num_derive;
+
 #[macro_use]
 extern crate steam_language_gen_derive;
 
-use downcast_rs::Downcast;
+use downcast_rs::{Downcast, impl_downcast};
+use enum_dispatch::enum_dispatch;
 use serde::Serialize;
 
 use crate::generated::headers::{ExtendedMessageHeader, StandardMessageHeader};
@@ -58,6 +48,8 @@ pub trait DeserializableBytes {
 pub trait MessageHeader: Downcast {
     fn set_target(&mut self, new_target: u64);
     fn set_source(&mut self, new_source: u64);
+    fn source(&self) -> u64;
+    fn target(&self) -> u64;
 }
 impl_downcast!(MessageHeader);
 
@@ -73,7 +65,7 @@ pub trait MessageBodyExt: Downcast {
     fn split_from_bytes(data: &[u8]) -> (&[u8], &[u8]);
 }
 
-    #[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Element {
     File,
     Head,

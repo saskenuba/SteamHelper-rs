@@ -1,14 +1,14 @@
+use derive_new::new;
 use serde::{Deserialize, Serialize};
 
-use crate::{DeserializableBytes, SerializableBytes, MessageBodyExt};
 use crate::generated::enums::*;
+use crate::{DeserializableBytes, MessageBodyExt, SerializableBytes};
 
 pub trait HasEMsg {
     /// Get the linked EMsg variant from Steam Messages.
     fn emsg() -> EMsg;
     fn create() -> Self;
 }
-
 
 #[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize, SteamMsg)]
 struct MsgClientJustStrings;
