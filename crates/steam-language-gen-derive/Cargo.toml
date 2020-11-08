@@ -3,7 +3,9 @@ name = "steam-language-gen-derive"
 version = "0.1.0"
 authors = ["Martin <martin@hotmail.com.br>"]
 edition = "2018"
-publish = false
+license = "MIT"
+description = "Implementation detail of `steam-language-gen` crate."
+repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-language-gen-derive"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -12,5 +14,5 @@ proc-macro = true
 
 [dependencies]
 syn = { version = "1", features = ["full"] }
-quote = "1.0"
-proc-macro2 = "1.0"
+quote = "^1"
+proc-macro2 = "^1"

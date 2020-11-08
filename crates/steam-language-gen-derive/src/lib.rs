@@ -87,6 +87,13 @@ fn impl_header_macro(ast: &DeriveInput) -> TokenStream {
             fn set_source(&mut self, new_source: u64) {
                 self.source_job_id = new_source;
             }
+            fn target(&self) -> u64 {
+                self.target_job_id
+            }
+            fn source(&self) -> u64 {
+                self.source_job_id
+            }
+
         }
     };
     gen.into()

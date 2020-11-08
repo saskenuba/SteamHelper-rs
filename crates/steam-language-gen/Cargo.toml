@@ -3,31 +3,26 @@ name = "steam-language-gen"
 version = "0.1.0"
 authors = ["Martin <martin@hotmail.com.br>"]
 edition = "2018"
+license = "MIT"
+repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-language-gen"
+description = "Generate Rust bindings to Steam enums and messages."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-nom = "5.0.1"
-regex = "1"
-petgraph = "0.4"
 arrayref = "0.3"
-
-#derives
-num-traits = "0.2"
-num-derive = "0.3"
+bincode = "1"
 bitflags = "1"
 derive-new = "*"
 downcast-rs = "1"
 enum_dispatch = "0.2"
-
-# serde
+Inflector = { version = "^0.11", default-features = false }
+nom = "5.0.1"
+num-derive = "0.3"
+num-traits = "0.2"
+petgraph = "0.4"
+regex = "1"
 serde = { version = "1", features = ["derive"] }
 serde_repr = "0.1"
-bincode = "1"
 
 steam-language-gen-derive = { path = "../steam-language-gen-derive" }
-steam-protobuf = { path = "../steam-protobuf" }
-
-[dependencies.Inflector]
-version = "*"
-default-features = false
