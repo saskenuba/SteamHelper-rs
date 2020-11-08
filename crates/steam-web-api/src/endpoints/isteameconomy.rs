@@ -8,6 +8,7 @@ convert_with_endpoint!(@GetQueryBuilder -> @ISteamEconomy);
 
 #[interface(ISteamEconomy)]
 #[derive(Parameters, Serialize, Debug, Default)]
+#[doc(hidden)]
 pub(crate) struct GetAssetClassInfoParameters {
     appid: u32,
     class_count: u32,
@@ -19,4 +20,4 @@ pub(crate) struct GetAssetClassInfoParameters {
 }
 
 convert_with_endpoint!(@ISteamEconomy -> GetAssetClassInfo |> "GetClassInfo/v1");
-exec!(GetAssetClassInfo);
+impl_executor!(GetAssetClassInfo);

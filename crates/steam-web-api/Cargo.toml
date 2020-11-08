@@ -2,7 +2,12 @@
 name = "steam-web-api"
 version = "0.3.0"
 authors = ["Martin <martin@hotmail.com.br>"]
+license = "MIT"
 edition = "2018"
+repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-web-api"
+homepage = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-web-api"
+readme = "README.md"
+keywords = ["steam", "api"]
 
 [features]
 default = ["async"]

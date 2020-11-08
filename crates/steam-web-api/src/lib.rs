@@ -8,7 +8,8 @@
 //!
 //! You can check the available interfaces for querying from the `QueryBuilder` structs.
 //!
-//! * [`GetQueryBuilder`](struct.GetQueryBuilder.html): has all available interfaces for the GET http method.
+//! * [`GetQueryBuilder`](struct.GetQueryBuilder.html): has all available interfaces for the GET method.
+//! * [`PostQueryBuilder`](struct.PostQueryBuilder.html): has all available interfaces for the POST method.
 //!
 //! Each time you "select" a interface, such as the `GetQueryBuilder`, a new struct is created where all methods
 //! are endpoints available.

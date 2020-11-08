@@ -11,6 +11,7 @@ convert_with_endpoint!(@GetQueryBuilder -> @IEconService);
 
 #[interface(IEconService)]
 #[derive(Parameters, Serialize, Debug, Default)]
+#[doc(hidden)]
 pub struct GetTradeHistoryParameters {
     max_trades: u32,
     include_failed: bool,
@@ -24,6 +25,7 @@ pub struct GetTradeHistoryParameters {
 
 #[interface(IEconService)]
 #[derive(Parameters, Serialize, Debug, Default)]
+#[doc(hidden)]
 pub struct GetTradeHoldDurationsParameters {
     steamid_target: u64,
     trade_offer_access_token: String,
@@ -31,6 +33,7 @@ pub struct GetTradeHoldDurationsParameters {
 
 #[interface(IEconService)]
 #[derive(Parameters, Serialize, Debug, Default)]
+#[doc(hidden)]
 pub struct GetTradeOffersParameters {
     get_sent_offers: bool,
     get_received_offers: bool,
@@ -43,6 +46,7 @@ pub struct GetTradeOffersParameters {
 
 #[interface(IEconService)]
 #[derive(Parameters, Serialize, Debug, Default)]
+#[doc(hidden)]
 pub struct GetTradeOfferParameters {
     tradeofferid: u64,
     language: Option<String>,
@@ -53,7 +57,7 @@ convert_with_endpoint!(@IEconService -> GetTradeOffers |> "GetTradeOffers/v1");
 convert_with_endpoint!(@IEconService -> GetTradeOffer |> "GetTradeOffer/v1");
 convert_with_endpoint!(@IEconService -> GetTradeHoldDurations |> "GetTradeHoldDurations/v1");
 
-exec!(GetTradeHistory);
-exec!(GetTradeOffers);
-exec!(GetTradeOffer);
-exec!(GetTradeHoldDurations -> GetTradeHoldDurationsResponseBase);
+impl_executor!(GetTradeHistory);
+impl_executor!(GetTradeOffers);
+impl_executor!(GetTradeOffer);
+impl_executor!(GetTradeHoldDurations -> GetTradeHoldDurationsResponseBase);

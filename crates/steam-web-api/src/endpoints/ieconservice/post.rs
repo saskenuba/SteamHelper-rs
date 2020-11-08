@@ -9,12 +9,14 @@ convert_with_endpoint!(@PostQueryBuilder -> @IEconService);
 
 #[interface(IEconService)]
 #[derive(Parameters, Serialize, Debug, Default)]
+#[doc(hidden)]
 pub struct DeclineTradeOfferParameters {
     tradeofferid: u64,
 }
 
 #[interface(IEconService)]
 #[derive(Parameters, Serialize, Debug, Default)]
+#[doc(hidden)]
 pub struct CancelTradeOfferParameters {
     tradeofferid: u64,
 }
@@ -22,5 +24,5 @@ pub struct CancelTradeOfferParameters {
 convert_with_endpoint!(@IEconService -> CancelTradeOffer |> "CancelTradeOffer/v1");
 convert_with_endpoint!(@IEconService -> DeclineTradeOffer |> "DeclineTradeOffer/v1");
 
-exec!(CancelTradeOffer);
-exec!(DeclineTradeOffer);
+impl_executor!(CancelTradeOffer);
+impl_executor!(DeclineTradeOffer);

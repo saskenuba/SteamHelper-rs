@@ -10,6 +10,7 @@ convert_with_endpoint!(@GetQueryBuilder -> @ISteamDirectory);
 
 #[interface(ISteamDirectory)]
 #[derive(Parameters, Serialize, Debug, Default)]
+#[doc(hidden)]
 pub struct GetCMListParameters {
     cellid: u32,
     maxcount: Option<u32>,
@@ -17,6 +18,7 @@ pub struct GetCMListParameters {
 
 #[interface(ISteamDirectory)]
 #[derive(Parameters, Serialize, Debug, Default)]
+#[doc(hidden)]
 pub struct GetCSListParameters {
     cellid: u32,
     maxcount: Option<u32>,
@@ -25,5 +27,5 @@ pub struct GetCSListParameters {
 convert_with_endpoint!(@ISteamDirectory -> GetCMList |> "GetCMList/v1");
 convert_with_endpoint!(@ISteamDirectory -> GetCSList |> "GetCSList/v1");
 
-exec!(GetCMList -> GetCMListResponseBase);
-exec!(GetCSList);
+impl_executor!(GetCMList -> GetCMListResponseBase);
+impl_executor!(GetCSList);

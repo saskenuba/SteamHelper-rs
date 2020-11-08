@@ -63,7 +63,6 @@ macro_rules! from {
     };
 }
 
-#[allow(unused)]
 macro_rules! new_type {
     ( $f:ident) => {
         #[cfg(feature = "blocking")]
@@ -82,8 +81,7 @@ macro_rules! new_type {
     };
 }
 
-#[allow(unused)]
-macro_rules! exec {
+macro_rules! impl_executor {
     ($base:ident -> $ret:ident) => {
         #[cfg(feature = "blocking")]
         impl<'a> ExecutorResponse<$ret> for $base<'a> {
@@ -125,7 +123,7 @@ macro_rules! exec {
         }
 
         // also implements for raw response
-        exec!($base);
+        impl_executor!($base);
     };
     ($base:ident) => {
         #[cfg(feature = "blocking")]
@@ -190,13 +188,19 @@ macro_rules! exec {
 ///
 /// Also creates the conversion method for the Steam interface that implements the endpoint.
 macro_rules! impl_conversions {
-    (@$base:ident -> @$interface:ident) => {
-        impl<'a> $base<'a> {
+
+    (@$base:ident -> @$interface:ident, $string_ident: expr) => {
+    impl<'a> $base<'a> {
             #[allow(non_snake_case)]
             pub fn $interface(self) -> $interface<'a> {
                 self.into()
             }
         }
+
+    };
+
+    (@$base:ident -> @$interface:ident) => {
+        impl_conversions!(@$base -> @$interface, stringify!($interface));
     };
 }
 
