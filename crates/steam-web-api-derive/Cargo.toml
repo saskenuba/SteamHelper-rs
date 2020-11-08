@@ -4,6 +4,8 @@ version = "0.3.1"
 authors = ["Martin <martin@hotmail.com.br>"]
 edition = "2018"
 description = "Implementation detail of the `steam-web-api` crate."
+repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-web-api-derive"
+homepage = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-web-api-derive"
 license = "MIT"
 
 [lib]
