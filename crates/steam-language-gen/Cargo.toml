@@ -12,7 +12,8 @@ autobins = false
 
 [[bin]]
 name = "generate"
-path = "src/bin/generate.rs"
+path = "src/generate.rs"
+required-features = ["generator"]
 
 [features]
 default = []
