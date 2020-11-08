@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-
-#[derive(FromPrimitive, ToPrimitive, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(FromPrimitive, ToPrimitive, Clone, Debug, PartialEq, Eq, Serialize_repr, Deserialize_repr)]
 #[repr(i32)]
 pub enum EUniverse {
 	Invalid = 0,
@@ -43,7 +42,7 @@ pub enum EPersonaState {
 	Invisible = 7,
 }
 
-#[derive(FromPrimitive, ToPrimitive, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(FromPrimitive, ToPrimitive, Clone, Debug, PartialEq, Eq, Serialize_repr, Deserialize_repr)]
 #[repr(i32)]
 pub enum EAccountType {
 	Invalid = 0,
@@ -1437,7 +1436,7 @@ pub enum EVoiceCallState {
 	Connected = 9,
 }
 
-#[derive(FromPrimitive, ToPrimitive, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(FromPrimitive, ToPrimitive, Clone, Debug, PartialEq, Eq, Serialize_repr, Deserialize_repr)]
 #[repr(i32)]
 pub enum ETradeOfferState {
 	Invalid = 1,
@@ -1453,7 +1452,7 @@ pub enum ETradeOfferState {
 	InEscrow = 11,
 }
 
-#[derive(FromPrimitive, ToPrimitive, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(FromPrimitive, ToPrimitive, Clone, Debug, PartialEq, Eq, Serialize_repr, Deserialize_repr)]
 #[repr(i32)]
 pub enum ETradeOfferConfirmationMethod {
 	Invalid = 0,
