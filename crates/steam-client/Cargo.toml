@@ -1,5 +1,5 @@
 [package]
-name = "steam-api"
+name = "steam-client"
 version = "0.1.0"
 authors = ["Martin <martin@hotmail.com.br>"]
 edition = "2018"

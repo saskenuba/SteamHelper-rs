@@ -9,22 +9,20 @@
 //! Apparently, bytes received are in little endian
 //!
 
-use std::convert::TryInto;
-use std::error::Error;
-use std::future::Future;
+use std::{convert::TryInto, error::Error, future::Future, io::BufRead};
 
-use bytes::{Buf, Bytes, BytesMut};
-use futures::task::Context;
+use bytes::{Buf, BufMut, Bytes, BytesMut};
+use futures::{task::Context, FutureExt, StreamExt, TryFutureExt};
+use serde::{Deserialize, Serialize};
 use tokio::{
-    io::{
-        AsyncRead,
-        AsyncReadExt,
-        AsyncWrite,
-        AsyncWriteExt,
-    },
+    io::AsyncBufReadExt,
+    io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt},
     macros::support::{Pin, Poll},
     net::TcpStream,
+    task,
 };
+// use tokio_util::codec::{Decoder, Encoder};
+use tracing::{info, instrument};
 
 use async_trait::async_trait;
 
@@ -39,8 +37,9 @@ pub struct SteamConnection<S> {
     stream: S,
     /// Address to which the connection is bound.
     endpoint: String,
+    /// Current encryption state
+    state: EncryptionState,
 }
-
 
 #[async_trait]
 trait Connection<S> {
@@ -49,15 +48,17 @@ trait Connection<S> {
     async fn write_packets(&mut self, data: &[u8]) -> Result<(), Box<dyn Error>>;
 }
 
-impl<S> Future for SteamConnection<S>
-    where S: AsyncRead + AsyncWrite + Unpin {
-    type Output = ();
+impl<S> SteamConnection<S> {}
 
-    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        unimplemented!()
+#[cfg(not(feature = "websockets"))]
+impl SteamConnection<TcpStream> {
+    async fn main_loop(&mut self) -> Result<(), Box<dyn Error>> {
+        let (rx, tx) = self.stream.split();
+        loop {
+            tokio::spawn(async move {});
+        }
     }
 }
-
 
 #[cfg(not(feature = "websockets"))]
 #[async_trait]
@@ -67,7 +68,11 @@ impl Connection<TcpStream> for SteamConnection<TcpStream> {
         trace!("Connecting to ip: {}", &ip_addr);
         let stream = TcpStream::connect(ip_addr).await?;
 
-        Ok(SteamConnection { stream, endpoint: ip_addr.to_string() })
+        Ok(SteamConnection {
+            stream,
+            endpoint: ip_addr.to_string(),
+            state: EncryptionState::Disconnected,
+        })
     }
 
     #[inline]
@@ -81,31 +86,34 @@ impl Connection<TcpStream> for SteamConnection<TcpStream> {
         if packet_magic != PACKET_MAGIC_BYTES {
             log::error!("Could not find magic packet on read.");
         }
+
         let data_length = u32::from_le_bytes(data_len);
-        let mut incoming_data = BytesMut::with_capacity(data_length as usize);
-        let oi = self.stream.read_buf(&mut incoming_data).await?;
-        debug!("bytes read from socket {}", oi);
-        debug_assert_eq!(oi as u32, data_length);
+
+        let mut incoming_data = vec![0u8; data_length as usize];
+        let buffer_read_size = self.stream.read(&mut incoming_data).await?;
+        debug_assert_eq!(buffer_read_size as u32, data_length);
 
         // Sanity check
-        debug!("data length: {}", data_length);
-        trace!("data: {:?}", incoming_data.bytes());
+        trace!("data: {:?}", incoming_data);
 
-        Ok(incoming_data.to_vec())
+        Ok(incoming_data)
     }
 
     #[inline]
     async fn write_packets(&mut self, data: &[u8]) -> Result<(), Box<dyn Error>> {
         let mut output_buffer = BytesMut::with_capacity(1024);
 
+        trace!("payload size: {} ", data.len());
+
         output_buffer.extend_from_slice(&(data.len() as u32).to_le_bytes());
-        trace!("Data size: {} ", data.len());
         output_buffer.extend_from_slice(PACKET_MAGIC_BYTES);
         output_buffer.extend_from_slice(data);
-        trace!("Data bytes: {:?}", data);
 
         trace!("Writing {} bytes of data to stream..", output_buffer.len());
-        self.stream.write_all(output_buffer.bytes()).await?;
+        trace!("Payload bytes: {:?}", output_buffer.bytes());
+
+        let write_result = self.stream.write(output_buffer.bytes()).await?;
+        trace!("write result: {}", write_result);
         Ok(())
     }
 }
@@ -127,7 +135,11 @@ mod connection_method {
 
             let (ws_stream, _) = connect_async(&formatted_ws_url).await?;
 
-            Ok(SteamConnection { stream: ws_stream, endpoint: formatted_ws_url })
+            Ok(SteamConnection {
+                stream: ws_stream,
+                endpoint: formatted_ws_url,
+                state: EncryptionState::Disconnected,
+            })
         }
         #[inline]
         async fn read_packets(&mut self) -> Result<Vec<u8>, Box<dyn Error>> {
@@ -158,6 +170,32 @@ mod connection_method {
     }
 }
 
+#[derive(new, Serialize, Deserialize)]
+/// Abstraction over bytes received through the stream connected to Steam3
+struct SteamBytes {
+    data_len: u32,
+    #[new(value = "PACKET_MAGIC_BYTES")]
+    magic: &'static [u8],
+    payload: Vec<u8>,
+}
+
+// impl Encoder for SteamBytes {
+//     type Item = SteamBytes;
+//     type Error = Box<dyn Error>;
+//
+//     fn encode(&mut self, item: Self::Item, dst: &mut BytesMut) -> Result<(), Self::Error> {
+//         dst.reserve(1024);
+//         dst.put(bincode::serialize(&item).unwrap().as_slice());
+//         Ok(())
+//     }
+// }
+
+enum EncryptionState {
+    Disconnected,
+    Connected,
+    Challenged,
+    Encrypted,
+}
 
 #[cfg(test)]
 mod tests {
@@ -188,7 +226,7 @@ mod tests {
     async fn connect_to_web_server() {
         init();
 
-        let cm_servers = CmServerSvList::fetch_servers(env!("STEAM_API")).await;
+        let cm_servers = CmServerSvList::fetch_servers("1").await;
         let dumped_cm_servers = cm_servers.unwrap().dump_tcp_servers();
 
         let steam_connection = SteamConnection::new_connection(&dumped_cm_servers[0]).await;
@@ -196,18 +234,27 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "websockets")]
-    async fn connect_to_ws_server() {
-        init();
+    #[cfg(not(feature = "websockets"))]
+    async fn test_spawn() {
+        let cm_servers = CmServerSvList::fetch_servers("1").await;
+        let dumped_cm_servers = cm_servers.unwrap().dump_tcp_servers();
+        let mut steam_connection =
+            SteamConnection::new_connection(&dumped_cm_servers[0]).await.unwrap();
 
-        let get_results = CmServerSvList::fetch_servers(env!("STEAM_API")).await;
-        let fetched_servers = get_results.unwrap().dump_ws_servers();
+        // let local = tokio::task::LocalSet::new();
+        let data = steam_connection.read_packets().await.unwrap();
+        let message = EMsg::from_raw_message(&data);
+        assert_eq!(message.unwrap(), EMsg::ChannelEncryptRequest);
 
-        let steam_connection = SteamConnection::new_connection(&fetched_servers[0]).await;
-        assert!(steam_connection.is_ok())
+        let answer = handle_encrypt_request(PacketMessage::from_rawdata(&data));
+        steam_connection.write_packets(answer.as_slice()).await.unwrap();
+        // let data = steam_connection.read_packets().await.unwrap();
+        // let message = EMsg::from_raw_message(&data).unwrap();
+        // assert_eq!(message, EMsg::ChannelEncryptResult);
+        steam_connection.main_loop().await.unwrap()
     }
 
-    #[tokio::test]
+    /*#[tokio::test()]
     #[cfg(not(feature = "websockets"))]
     async fn answer_encrypt_request() {
         init();
@@ -222,12 +269,22 @@ mod tests {
         assert_eq!(message.unwrap(), EMsg::ChannelEncryptRequest);
 
         //
-        handle_encrypt_request(PacketMessage::from_rawdata(&data));
-        steam_connection.write_packets(b"\x18\x05\0\0\x17\x05\0\0\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x01\0\0\0\x80\0\0\0").await.unwrap();
+        let answer = handle_encrypt_request(PacketMessage::from_rawdata(&data));
+        steam_connection.write_packets(answer.as_slice()).await.unwrap();
         let data = steam_connection.read_packets().await.unwrap();
-        let message = EMsg::from_raw_message(&data);
-        assert_eq!(message.unwrap(), EMsg::ChannelEncryptResult);
+        let message = EMsg::from_raw_message(&data).unwrap();
+        assert_eq!(message, EMsg::ChannelEncryptResult);
+    }*/
+
+    #[tokio::test(threaded_scheduler)]
+    #[cfg(feature = "websockets")]
+    async fn connect_to_ws_server() {
+        init();
+
+        let get_results = CmServerSvList::fetch_servers("1").await;
+        let fetched_servers = get_results.unwrap().dump_ws_servers();
+
+        let steam_connection = SteamConnection::new_connection(&fetched_servers[0]).await;
+        assert!(steam_connection.is_ok())
     }
 }
-
-

@@ -17,10 +17,20 @@ pub struct SteamClient<S> {
     server_list: CmServerSvList,
     /// SteamID.
     steam_id: SteamID,
+    /// Your API Key if you want to do some commands
+    api_key: Option<String>,
+    /// CellID it is about the region you are going to fetch Steam servers
+    cell_id: Option<String>,
 }
 
 impl<S> SteamClient<S> {
-
+    /// Constructs a basic steam client
+    pub fn builder()  {}
+    pub fn with_configuration(&mut self, cfg: SteamConfiguration)  {}
+    pub async fn connect(&self) -> Result<(), Box<dyn Error>> {
+        CmServerSvList::fetch_servers(self.api_key.as_ref().unwrap().as_ref()).await?;
+        Ok(())
+    }
 }
 
 

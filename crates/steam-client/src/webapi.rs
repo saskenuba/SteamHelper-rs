@@ -1,5 +1,6 @@
-use reqwest::{Error, Response};
 use std::future::Future;
+
+use reqwest::{Error, Response};
 
 const STEAM_API_BASE_ADDRESS: &str = "https://api.steampowered.com/";
 
@@ -23,6 +24,7 @@ impl APIBuilder {
         let whole_address =
             format!("{}{}/{}/v1/{}{}", STEAM_API_BASE_ADDRESS, service, method, key, parameters);
 
+        debug!("Creating call to address: {}", whole_address);
         APIBuilder { request_link: whole_address }
     }
 
@@ -36,7 +38,10 @@ impl APIBuilder {
 
     fn param_builder(params: Option<Vec<Param>>) -> String {
         let mut params_stringify = String::new();
-        params.unwrap().iter().for_each(|t| {
+        match params {
+            Some(x) => x,
+            None => return "".to_string()
+        }.iter().for_each(|t| {
             params_stringify.push('&');
             params_stringify.push_str(&t.0);
             params_stringify.push('=');

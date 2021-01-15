@@ -1,30 +1,35 @@
-use steam_language_gen::{MessageHeader, MessageHeaderExt, SerializableBytes, DeserializableBytes};
+use steam_language_gen::{DeserializableBytes, MessageHeader, MessageHeaderExt, MessageHeaderWrapper, SerializableBytes};
 use steam_language_gen::generated::enums::EMsg;
 use steam_language_gen::generated::headers::{ExtendedMessageHeader, StandardMessageHeader};
+
+use crate::encrypted_connection::MessageKind;
 
 /// Represents a simple unified interface into client messages received from the network.
 /// This is contrasted with [IClientMsg] in that this interface is packet body agnostic
 /// and only allows simple access into the header. This interface is also immutable, and the underlying
 /// data cannot be modified.
 #[derive(Debug)]
-pub(crate) struct PacketMessage<'a> {
+pub(crate) struct PacketMessage {
     emsg: EMsg,
-    target_job_id: u64,
-    source_job_id: u64,
-    data: &'a [u8],
+    header: MessageHeaderWrapper,
+    data: Vec<u8>,
 }
 
-impl<'a> PacketMessage<'a> {
+impl MessageKind for PacketMessage {
     /// Returns underlying message data.
-    pub(crate) fn data(&self) -> &'a [u8] {
+    fn payload(&self) -> &Vec<u8> {
         &self.data
     }
+}
+
+impl PacketMessage {
     /// Returns (source_job_id, target_job_id)
-    pub(crate) fn jobs_ids(&self) -> (&u64, &u64) {
-        (&self.source_job_id, &self.target_job_id)
+    pub(crate) fn jobs_ids(&self) -> (u64, u64) {
+        (self.header.source(), self.header.target())
     }
     /// Returns underlying EMsg.
     pub(crate) fn emsg(&self) -> &EMsg { &self.emsg }
+    pub(crate) fn header(&self) -> &MessageHeaderWrapper { &self.header }
 
     /// This classify the message as:
     /// - Standard message (EncryptRequest, EncryptResponse, EncryptResult)
@@ -39,19 +44,16 @@ impl<'a> PacketMessage<'a> {
         // should do error checking in case emsg not valid
         let extracted_emsg = EMsg::from_raw_message(raw_message_bytes).unwrap();
         let raw_message_data = EMsg::strip_message(raw_message_bytes);
-        let target_job_id;
-        let source_job_id;
         let body_bytes;
 
-        match extracted_emsg {
+        let extracted_header = match extracted_emsg {
             EMsg::ChannelEncryptRequest | EMsg::ChannelEncryptResponse | EMsg::ChannelEncryptResult => {
                 debug!("Found a Standard Header.");
                 let (header, body) = StandardMessageHeader::split_from_bytes(raw_message_data);
                 trace!("Header bytes: {:?} Body bytes: {:?}", header, body);
                 let header = StandardMessageHeader::from_bytes(header);
-                target_job_id = header.target_job_id;
-                source_job_id = header.source_job_id;
                 body_bytes = body;
+                MessageHeaderWrapper::Std(header)
             }
             _ => {
                 if EMsg::is_protobuf(raw_message_data) {
@@ -61,22 +63,22 @@ impl<'a> PacketMessage<'a> {
                     debug!("Found a Extended Header.");
                     let (header, body) = ExtendedMessageHeader::split_from_bytes(raw_message_data);
                     let header = ExtendedMessageHeader::from_bytes(header);
-                    target_job_id = header.target_job_id;
-                    source_job_id = header.source_job_id;
                     body_bytes = body;
+                    MessageHeaderWrapper::Ext(header)
                 }
             }
-        }
-
-        let packet_message = PacketMessage {
-            emsg: extracted_emsg,
-            target_job_id,
-            source_job_id,
-            data: body_bytes,
         };
-        trace!("Packet Message is: {:?}", packet_message);
 
-        packet_message
+        trace!("Packet Message is: {:?}, {:?}, {:?}",
+               &extracted_emsg,
+               &extracted_header,
+               body_bytes
+        );
+        PacketMessage {
+            emsg: extracted_emsg,
+            header: extracted_header,
+            data: body_bytes.to_vec(),
+        }
     }
 }
 
@@ -93,16 +95,3 @@ mod tests {
         // println!("protobuf: {:#?}", teste);
     }
 }
-
-
-// [7:29 PM] Globi::<!>: @Martin an other trait object based approach would be to have an additional
-// trait with your desired behavior that you would implement generically for every Message<B, H>
-// with the serialize bounds, and return a Box<dyn MessageTrait> from the function
-
-
-// Globi::<!>: Otherwise for the trait object approach you can define
-//type DynamicBody = Box<dyn SerializableMessageBody>;
-//type DynamicHeader = Box<dyn SerializableMessageHeader>;
-//impl SerializableMessageBody for DynamicBody { ... }
-//impl SerializableMessageHeader for DynamicHeader { ... }
-// and use Message<DynamicBody, DynamicHeader> as your return type

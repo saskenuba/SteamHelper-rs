@@ -30,14 +30,14 @@ impl CmServerSvList {
     /// Steam calls regions as Cells
     /// reference: https://github.com/SteamDatabase/SteamTracking/blob/master/ClientExtracted/steam/cached/CellMap.vdf
     pub async fn fetch_servers(api_key: &str) -> Result<CmServerSvList, Error> {
-        let parameters = vec![("cellid", "0")];
+        let parameters = vec![("cellid", "25")];
 
         let new_api_call =
             APIBuilder::new(
                 "ISteamDirectory",
                 "GetCMList",
                 api_key,
-                Option::from(parameters),
+                Some(parameters),
             );
 
         let json: CmServerSvList = new_api_call.setup().await?.json().await?;
@@ -64,7 +64,7 @@ mod tests {
     #[tokio::test]
     async fn fetch_servers_web_api() {
         let get_results = CmServerSvList::fetch_servers(env!("STEAM_API")).await;
-        let servers: CmServerSvList = get_results.unwrap();
-//        println!("Fetching servers... {:?}", servers.response.serverlist);
+        let servers = get_results;
+        assert!(servers.is_ok())
     }
 }

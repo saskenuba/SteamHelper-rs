@@ -13,17 +13,18 @@ extern crate arrayref;
 #[macro_use]
 extern crate derive_new;
 #[macro_use]
-extern crate enum_primitive;
-#[macro_use]
 extern crate steam_language_gen_derive;
 #[macro_use]
 extern crate log;
 #[macro_use]
 extern crate lazy_static;
-
-// clean
 #[macro_use]
 extern crate enum_dispatch;
+/*#[macro_use]
+extern crate tracing;
+#[macro_use]
+extern crate tracing_futures;*/
+
 
 mod cmserver;
 mod encrypted_connection;
@@ -31,7 +32,6 @@ pub mod config;
 pub mod connection;
 pub mod handlers;
 pub mod messages;
-pub mod steam_id;
 pub mod steamclient;
 pub mod webapi;
 
