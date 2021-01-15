@@ -1,10 +1,13 @@
 use std::str::FromStr;
 
 use bitvec::prelude::*;
+use lazy_static::lazy_static;
 use num::FromPrimitive;
 use regex::Regex;
 
-use lazy_static::lazy_static;
+#[cfg(feature = "serialize")]
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
 use steam_language_gen::generated::enums::{EAccountType, EUniverse};
 
 // TODO - Error catching
@@ -83,11 +86,7 @@ impl SteamID {
     /// Creates a new SteamID from the Steam3 format.
     /// Defaults to Public universe, and Individual account.
     /// You can use the parse utility function.
-    pub fn from_steam3(
-        steam3: u32,
-        universe: Option<EUniverse>,
-        account_type: Option<EAccountType>,
-    ) -> Self {
+    pub fn from_steam3(steam3: u32, universe: Option<EUniverse>, account_type: Option<EAccountType>) -> Self {
         let parity_check = steam3 & 1;
         let universe = universe.unwrap_or(EUniverse::Public) as u64;
         let account_number = ((steam3 - parity_check) / 2) as u64;
@@ -151,6 +150,27 @@ impl SteamID {
             return Some(Self::from_steam64(u64::from_str(number.as_str()).unwrap()));
         }
         None
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl Serialize for SteamID {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_u64(self.to_steam64())
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl<'de> Deserialize<'de> for SteamID {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let steamid = u64::deserialize(deserializer)?;
+        Ok(SteamID::from_steam64(steamid))
     }
 }
 
@@ -229,5 +249,17 @@ mod tests {
         let formatted_steamid = format!("text {} xxaasssddff", get_steam3_unformatted());
         let steamid = SteamID::parse(&formatted_steamid).unwrap();
         assert_eq!(steamid.to_steam64(), get_steam64_odd());
+    }
+
+    #[cfg(feature = "serialize")]
+    #[test]
+    fn serde_se_de() {
+        let steamid = SteamID::from_steam64(get_steam64_odd());
+
+        let serialized = serde_json::to_string(&steamid).unwrap();
+        let unserialized: SteamID = serde_json::from_str(&serialized).unwrap();
+
+        assert_eq!(steamid, unserialized);
+        assert_eq!(steamid.to_steam3(), unserialized.to_steam3());
     }
 }
