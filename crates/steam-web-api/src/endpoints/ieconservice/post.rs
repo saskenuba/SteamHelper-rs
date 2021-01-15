@@ -11,14 +11,14 @@ convert_with_endpoint!(@PostQueryBuilder -> @IEconService);
 #[derive(Parameters, Serialize, Debug, Default)]
 #[doc(hidden)]
 pub struct DeclineTradeOfferParameters {
-    tradeofferid: u64,
+    tradeofferid: i64,
 }
 
 #[interface(IEconService)]
 #[derive(Parameters, Serialize, Debug, Default)]
 #[doc(hidden)]
 pub struct CancelTradeOfferParameters {
-    tradeofferid: u64,
+    tradeofferid: i64,
 }
 
 convert_with_endpoint!(@IEconService -> CancelTradeOffer |> "CancelTradeOffer/v1");

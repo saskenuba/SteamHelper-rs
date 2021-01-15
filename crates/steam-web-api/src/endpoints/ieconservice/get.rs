@@ -1,8 +1,8 @@
 use steam_web_api_derive::{interface, Parameters};
 
-import!();
-
 use crate::response_types::GetTradeHoldDurationsResponseBase;
+
+import!();
 
 new_type!(IEconService);
 
@@ -17,7 +17,7 @@ pub struct GetTradeHistoryParameters {
     include_failed: bool,
     include_total: bool,
     start_after_time: Option<u32>,
-    start_after_tradeid: Option<u64>,
+    start_after_tradeid: Option<i64>,
     navigating_back: Option<bool>,
     get_descriptions: Option<bool>,
     language: Option<String>,
@@ -48,7 +48,7 @@ pub struct GetTradeOffersParameters {
 #[derive(Parameters, Serialize, Debug, Default)]
 #[doc(hidden)]
 pub struct GetTradeOfferParameters {
-    tradeofferid: u64,
+    tradeofferid: i64,
     language: Option<String>,
 }
 
@@ -57,7 +57,17 @@ convert_with_endpoint!(@IEconService -> GetTradeOffers |> "GetTradeOffers/v1");
 convert_with_endpoint!(@IEconService -> GetTradeOffer |> "GetTradeOffer/v1");
 convert_with_endpoint!(@IEconService -> GetTradeHoldDurations |> "GetTradeHoldDurations/v1");
 
-impl_executor!(GetTradeHistory);
-impl_executor!(GetTradeOffers);
-impl_executor!(GetTradeOffer);
 impl_executor!(GetTradeHoldDurations -> GetTradeHoldDurationsResponseBase);
+
+cfg_if::cfg_if! {
+    if #[cfg(feature = "trading")] {
+        use crate::response_types::{ GetTradeHistoryResponse, GetTradeOffersResponse, GetTradeOfferResponse };
+        impl_executor!(GetTradeHistory -> GetTradeHistoryResponse);
+        impl_executor!(GetTradeOffers -> GetTradeOffersResponse);
+        impl_executor!(GetTradeOffer -> GetTradeOfferResponse);
+    } else {
+        impl_executor!(GetTradeHistory);
+        impl_executor!(GetTradeOffers);
+        impl_executor!(GetTradeOffer);
+    }
+}

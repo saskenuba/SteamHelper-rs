@@ -3,6 +3,14 @@
 
 use serde::{Deserialize, Serialize};
 
+cfg_if::cfg_if! {
+    if #[cfg(feature = "trading")] {
+        pub use crate::trading_types::*;
+        /// Trade offer state from the `GetTradeOffer` or `GetTradeOffers` endpoint.
+        pub use steam_language_gen::generated::enums::ETradeOfferState;
+    }
+}
+
 #[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
 /// Base response for GetPlayerBans endpoint.
 pub struct GetPlayerBansResponseBase {
@@ -45,7 +53,7 @@ pub struct GetPlayerSummariesPlayers {
 pub struct PlayerSummary {
     pub steamid: String,
     pub communityvisibilitystate: i64,
-    pub profilestate: i64,
+    pub profilestate: Option<i64>,
     pub personaname: String,
     pub profileurl: String,
     pub avatar: String,
@@ -78,14 +86,15 @@ pub struct GetCMListServerLists {
 #[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
 /// Base response for GetTradeHoldDurations
 pub struct GetTradeHoldDurationsResponseBase {
-    pub response: GetCMListServerLists,
+    pub response: GetTradeHoldDurations,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct GetTradeHoldDurations {
-    pub my_escrow: EscrowData,
-    pub their_escrow: EscrowData,
-    pub both_escrow: EscrowData,
+    /// This will be [Option::None] if the token is invalid.
+    pub my_escrow: Option<EscrowData>,
+    pub their_escrow: Option<EscrowData>,
+    pub both_escrow: Option<EscrowData>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]

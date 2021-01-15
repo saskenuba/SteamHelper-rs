@@ -84,6 +84,9 @@ pub mod errors;
 mod helpers;
 pub mod response_types;
 
+#[cfg(feature = "trading")]
+mod trading_types;
+
 pub type Result<T> = std::result::Result<T, SteamAPIError>;
 
 #[cfg(feature = "blocking")]

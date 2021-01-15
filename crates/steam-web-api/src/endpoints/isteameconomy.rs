@@ -15,7 +15,7 @@ pub(crate) struct GetAssetClassInfoParameters {
     #[indexed]
     classid: Vec<u32>,
     #[indexed]
-    instanceid: Option<Vec<u64>>,
+    instanceid: Option<Vec<i64>>,
     language: Option<String>,
 }
 
