@@ -11,7 +11,7 @@ impl AssetCollection {
         }
     }
 
-    pub fn add(&mut self, appid: u32, contextid: u32, assetid: u64) {
+    pub fn add(&mut self, appid: u32, contextid: u32, assetid: i64) {
         let asset = Asset {
             appid,
             contextid: contextid.to_string(),

@@ -15,7 +15,7 @@ pub enum TradeKind {
 }
 
 impl TradeKind {
-    pub fn endpoint(&self, tradeofferid: Option<u64>) -> String {
+    pub fn endpoint(&self, tradeofferid: Option<i64>) -> String {
         if let TradeKind::Create(_) = self {
             return TRADEOFFER_NEW_URL.to_string();
         }

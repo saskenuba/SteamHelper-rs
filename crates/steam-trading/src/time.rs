@@ -9,8 +9,8 @@
 
 use chrono::{DateTime, Duration, NaiveDateTime, TimeZone, Utc};
 
-pub(crate) const ONE_HOUR_SECONDS: i64 = 3600;
-pub(crate) const ONE_WEEK_SECONDS: i64 = ONE_HOUR_SECONDS * 24 * 7;
+pub const ONE_HOUR_SECONDS: i64 = 3600;
+pub const ONE_WEEK_SECONDS: i64 = ONE_HOUR_SECONDS * 24 * 7;
 
 // Steam "Midnight" is on 10:00 PST/GMT-8 or 18:00 UTC/GMT.
 const STEAM_MIDNIGHT_OFFSET_UTC_SECONDS: i64 = ONE_HOUR_SECONDS * 18;

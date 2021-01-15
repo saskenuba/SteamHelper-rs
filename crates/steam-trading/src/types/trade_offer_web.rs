@@ -44,10 +44,10 @@ pub(crate) struct TradeOfferGenericRequest {
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub(crate) struct TradeOfferGenericErrorResponse {
-    // #[serde(with = "serde_with::rust::display_fromstr")]
-    // pub tradeofferid: Option<u64>,
     #[serde(rename = "success")]
-    pub eresult: EResult,
+    pub eresult: Option<EResult>,
+    #[serde(rename = "strError")]
+    pub error_message: Option<String>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -57,7 +57,7 @@ pub(crate) struct TradeOfferAcceptRequest {
     pub sessionid: SessionID,
     #[serde(flatten)]
     pub common: TradeOfferCommonParameters,
-    pub tradeofferid: u64,
+    pub tradeofferid: i64,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -68,7 +68,7 @@ pub struct TradeOfferCreateResponse {
     /// This is the trade offer ID of our offer. We can use this to mobile confirm.
     /// Ex: 4112828817
     #[serde(with = "serde_with::rust::display_fromstr")]
-    pub tradeofferid: u64,
+    pub tradeofferid: i64,
     pub needs_mobile_confirmation: Option<bool>,
     pub needs_email_confirmation: Option<bool>,
     pub email_domain: Option<String>,

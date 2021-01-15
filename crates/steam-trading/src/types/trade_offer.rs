@@ -2,7 +2,8 @@ use tracing::info;
 
 use steam_auth::Url;
 
-use crate::{errors::TradeOfferError, types::asset_collection::AssetCollection, TRADE_MAX_ITEMS};
+use crate::{types::asset_collection::AssetCollection, TRADE_MAX_ITEMS};
+use crate::errors::OfferError;
 
 #[derive(Debug, PartialEq)]
 pub struct TradeOffer {
@@ -35,9 +36,9 @@ impl TradeOffer {
     pub fn validate(
         my_items: &Option<AssetCollection>,
         their_items: &Option<AssetCollection>,
-    ) -> Result<(), TradeOfferError> {
+    ) -> Result<(), OfferError> {
         if my_items.is_none() && their_items.is_none() {
-            return Err(TradeOfferError::InvalidTrade(
+            return Err(OfferError::InvalidTrade(
                 "There can't be a trade offer with no items being traded.".to_string(),
             ));
         }
@@ -49,7 +50,7 @@ impl TradeOffer {
         info!("Total items being traded: My: {} Their: {}", my_length, their_length);
 
         if my_length >= TRADE_MAX_ITEMS as usize || their_length >= TRADE_MAX_ITEMS as usize {
-            return Err(TradeOfferError::InvalidTrade(format!(
+            return Err(OfferError::InvalidTrade(format!(
                 "Maximum number of items is: {}",
                 TRADE_MAX_ITEMS
             )));
@@ -58,14 +59,14 @@ impl TradeOffer {
         Ok(())
     }
 
-    pub(crate) fn parse_url(url: &str) -> Result<(String, Option<String>), TradeOfferError> {
+    pub(crate) fn parse_url(url: &str) -> Result<(String, Option<String>), OfferError> {
         let parsed_url = Url::parse(url).unwrap();
 
         // Partner ID is mandatory
         let steam_id3 = parsed_url
             .query_pairs()
             .find(|(param, _)| param == "partner")
-            .ok_or_else(|| TradeOfferError::InvalidTradeOfferUrl)?
+            .ok_or_else(|| OfferError::InvalidTradeOfferUrl)?
             .1
             .to_string();
 

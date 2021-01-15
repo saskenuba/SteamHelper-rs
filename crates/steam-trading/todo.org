@@ -1,22 +1,87 @@
 * TODO
 
+Interessante:
+- https://partner.steamgames.com/doc/features/inventory/economy/TradabilityRestrictions
+
 - Steam Auth needs to be modified, to allow custom requests whilst maintaining store cookies. This would be used to
 create trade offers. To check the trade offer history, we only need the api key.
 
 ** Trade related
-- Create a trade offer from the user logged in, to a determined STEAMID, requesting one or multiple asset ids, and
-offering nothing or something. (trade can't be completely empty, at least one item needs to be requested or sent);
 - Check for transition of trade offers status (?);
 
 *** Notes
 
-- The sessionid cookie needs to be injected automatically, after we check for a successfull session. It should not be
- manually put inside the appropriate request;
-- Trades sent but not yet confirmed, do not show at the trade history API endpoint.
+ESCROW is related to N days where Valve "keep" your asset, and you ARE able to cancel the trade.
+TRADE RESTRICTION is simply that you can't trade/market the item for N days. You CAN'T cancel the trade.
 
+- Trades sent but not yet confirmed, do not show at the GetTradeHistory API endpoint.
+- Trades received but not yet accepted, do not show at the GetTradeHistory API endpoint.
 - TradeHistory can be used to get the new assetids of traded items.
 
 - Accept endpoint response is the trade id, example: {"tradeid":"3151905948734426645"}
 - Decline endpoint response is the tradeofferid, example: {"tradeofferid":"4127436568"}. Request is only sessionid.
 - Completed trades (accepted, for example) have their "trade id" on the GetTradeOffers endpoint. We can use this, to
 check the new asset ids at the GetTradeHistory endpoint, by searching for "trade id" parameter.
+
+** Stuff to test
+
+CEcon_TradeOffer
+- What is escrow? Is only the steam mobile auth sufficient after 7 days to escrow appear as 0 on trade offers?
+- How can we determine exactly the time the item will go out of the market_restriction?
+- Checar o trade_offer_state juntamente com o time_updated para saber o final do market restriction.. TESTAR
+- cache_expiration vindo do inventário é suficiente também para saber o fim do tradelock;
+
+
+
+
+STEAM WORKS ON PST TIMEZONE.
+STEAM MIDNIGHT 10AM PST. Trades after 10am will have "1 + 7 days"
+So steam is with a +10offset ahead of us?
+Steam trade hold is until 7days from actual time on pst, to PST midnight, or PST midnight + the difference to UTC.
+
+
+
+testar situacao de pedir um item, e na hora de aceitar ele nao estar mais la
+
+time_created tempo qdo foi criado tudo, no primeiro status
+time_updated ok
+
+
+8 dias + 1h p/ liberar item
+checar tempo pelo time_updated + status 2 por 10 min de diff
+
+Enviar trade
+
+Trade criado, sem confirmar -> 9 -> Cancelado -> 6
+Trade criado, sem confirmar -> 9 -> Confirmado -> 2 -> Aceito -> 3 | TradeHistory ok
+
+    1o apos confirmar
+
+    "trade_offers_sent": [
+      {
+        "tradeofferid": "4278637554",
+        "accountid_other": 79925588,
+        "message": "basinga e companhia",
+        "expiration_time": 1605207072,
+        "trade_offer_state": 2, // ativa
+        "items_to_give": [
+          {
+            "appid": 730,
+            "contextid": "2",
+            "assetid": "15319724006",
+            "classid": "3035569977",
+            "instanceid": "302028390",
+            "amount": "1",
+            "missing": false,
+            "est_usd": "1"
+          }
+        ],
+        "is_our_offer": true,
+        "time_created": 1603997472,
+        "time_updated": 1603997478,
+        "from_real_time_trade": false,
+        "escrow_end_date": 0,
+        "confirmation_method": 2
+      },
+
+      2o

@@ -3,8 +3,10 @@ use thiserror::Error;
 use steam_auth::errors::AuthError;
 use steam_auth::HttpError;
 use steam_language_gen::generated::enums::EResult;
+use steam_web_api::errors::SteamAPIError;
 
 #[derive(Error, Debug)]
+#[non_exhaustive]
 pub enum TradeError {
     #[error("`{0}`")]
     PayloadError(String),
@@ -13,7 +15,10 @@ pub enum TradeError {
     ConfirmationError(#[from] ConfirmationError),
 
     #[error(transparent)]
-    TradeOfferError(#[from] TradeOfferError),
+    TradeOfferError(#[from] OfferError),
+
+    #[error(transparent)]
+    SteamAPIError(#[from] SteamAPIError),
 
     #[error(transparent)]
     /// request errors
@@ -24,11 +29,20 @@ pub enum TradeError {
     AuthError(#[from] AuthError),
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq, Copy, Clone)]
 ///
-pub enum TradeOfferError {
+pub enum TradelinkError {
+    #[error("The Tradeoffer URL was not valid.")]
+    Invalid,
+}
+
+
+#[derive(Error, Debug, PartialEq)]
+///
+pub enum OfferError {
     #[error("The Tradeoffer URL was not valid.")]
     InvalidTradeOfferUrl,
+
     #[error("`{0}`")]
     InvalidTrade(String),
 
@@ -52,15 +66,15 @@ pub enum ConfirmationError {
     #[error("Could not find the requested confirmation.")]
     NotFound,
     #[error("Could not find the requested confirmation, but offer was created. Trade offer id: `{0}`")]
-    NotFoundButTradeCreated(u64),
+    NotFoundButTradeCreated(i64),
 }
 
-pub(crate) fn tradeoffer_error_from_eresult(eresult: EResult) -> TradeOfferError {
+pub(crate) fn tradeoffer_error_from_eresult(eresult: EResult) -> OfferError {
     match eresult {
-        EResult::Revoked => TradeOfferError::Revoked,
-        EResult::InvalidState => TradeOfferError::InvalidState,
-        EResult::NoMatch => TradeOfferError::NoMatch,
-        e => TradeOfferError::GeneralFailure(format!(
+        EResult::Revoked => OfferError::Revoked,
+        EResult::InvalidState => OfferError::InvalidState,
+        EResult::NoMatch => OfferError::NoMatch,
+        e => OfferError::GeneralFailure(format!(
             "{}{}",
             "Please check: https://steamerrors.com/",
             &*serde_json::to_string(&e).unwrap()
@@ -68,9 +82,28 @@ pub(crate) fn tradeoffer_error_from_eresult(eresult: EResult) -> TradeOfferError
     }
 }
 
-/*pub(crate) fn error_from_strmessage(message: &str) -> Option<TradeOfferError> {
+pub(crate) fn error_from_strmessage(message: &str) -> Option<OfferError> {
     let index_start = message.find(|c: char| c == '(')?;
     let index_end = message.find(|c: char| c == ')')?;
 
-    message[index_start + 1].to_owned() + &message[..index_end - 1]
-}*/
+    let number = message
+        .chars()
+        .skip(index_start + 1)
+        .take(index_end - index_start - 1)
+        .collect::<String>();
+
+    serde_json::from_str::<EResult>(&*number)
+        .map(tradeoffer_error_from_eresult)
+        .ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn error_strmessage() {
+        let error_message = "Something went wrong (26)";
+        assert_eq!(error_from_strmessage(error_message).unwrap(), OfferError::Revoked)
+    }
+}
