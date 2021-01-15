@@ -19,12 +19,12 @@ use crate::{
     web_handler::authenticator::types::FinalizeAddAuthenticatorErrorBase,
     web_handler::authenticator::types::FinalizeAddAuthenticatorRequest,
     web_handler::authenticator::types::{GenericSuccessResponse, HasPhoneResponse, PhoneAjaxRequest},
-    CachedInfo, MobileAuthFile, User, STEAM_API_BASE, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST,
+    CachedInfo, MobileAuthFile, STEAM_API_BASE, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST,
 };
 
 mod types;
 
-const PHONEAJAX_URL: &'static str = concatcp!(STEAM_COMMUNITY_BASE, "/steamguard/phoneajax");
+const PHONEAJAX_URL: &str = concatcp!(STEAM_COMMUNITY_BASE, "/steamguard/phoneajax");
 pub(crate) const STEAM_ADD_PHONE_CATCHUP_SECS: u64 = 5;
 
 type LinkerResult<T> = Result<T, LinkerError>;
@@ -219,6 +219,6 @@ pub(crate) async fn add_authenticator_to_account(
 }
 
 /// Remove authenticator from account.
-pub(crate) async fn remove_authenticator(client: &MobileClient, _cached_data: Ref<'_, CachedInfo>) {
+pub(crate) async fn remove_authenticator(_client: &MobileClient, _cached_data: Ref<'_, CachedInfo>) {
     let _url = format!("{}{}", STEAM_API_BASE, "/ITwoFactorService/AddAuthenticator/v0001");
 }

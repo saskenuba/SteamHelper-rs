@@ -22,7 +22,7 @@ pub struct Confirmation {
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub struct ConfirmationDetails {
     /// ID of the trade offer. Has a value if EConfirmationType::Trade
-    pub trade_offer_id: Option<u64>,
+    pub trade_offer_id: Option<i64>,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, Eq, PartialEq, FromPrimitive)]
@@ -102,15 +102,15 @@ impl Confirmations {
     /// # async fn main() {
     /// // .. authenticator fetch confirmations..
     /// # let mut confirmations = Confirmations::default();
-    /// let trade_offer_ids = vec![40845647u64, 40844784u64]; // Could be a service or api call
-    /// confirmations.filter_by_trade_offer_ids(&*trade_offer_ids);
+    /// let trade_offer_ids = vec![40845647i64, 40844784i64]; // Could be a service or api call
+    /// confirmations.filter_by_trade_offer_ids(&trade_offer_ids);
     /// # }
     /// ```
-    pub fn filter_by_trade_offer_ids<T: AsRef<[u64]>>(&mut self, trade_offer_ids: T) {
+    pub fn filter_by_trade_offer_ids<T: AsRef<[i64]>>(&mut self, trade_offer_ids: T) {
         self.0.retain(|c| {
             if let Some(conf_details) = c.details {
                 let trade_offer_id = conf_details.trade_offer_id.unwrap();
-                return trade_offer_ids.as_ref().into_iter().any(|&id| id == trade_offer_id);
+                return trade_offer_ids.as_ref().iter().any(|&id| id == trade_offer_id);
             }
             false
         });
@@ -126,7 +126,9 @@ impl From<Vec<Confirmation>> for Confirmations {
 /// Either accept the confirmation, or cancel it.
 #[derive(Copy, Clone, Debug)]
 pub enum ConfirmationMethod {
+    /// Discriminant to accept a trade
     Accept,
+    /// Discriminant to deny a trade
     Deny,
 }
 
@@ -170,6 +172,14 @@ mod tests {
             }),
         });
         vec.push(Confirmation {
+            id: "7652555421".to_string(),
+            key: "10704556181383323456".to_string(),
+            kind: EConfirmationType::Trade,
+            details: Some(ConfirmationDetails {
+                trade_offer_id: Some(4000793103),
+            }),
+        });
+        vec.push(Confirmation {
             id: "7652515663".to_string(),
             key: "20845677815483316145".to_string(),
             kind: EConfirmationType::Market,
@@ -181,7 +191,7 @@ mod tests {
     #[test]
     fn filter_confirmation_type() {
         let mut confirmations = get_confirmations();
-        assert_eq!(confirmations.0.len(), 3);
+        assert_eq!(confirmations.0.len(), 4);
         confirmations.filter_by_confirmation_type(EConfirmationType::Market);
         assert_eq!(confirmations.0.len(), 1);
     }
@@ -189,11 +199,21 @@ mod tests {
     #[test]
     fn filter_trade_offer_id() {
         let mut confirmations = get_confirmations();
-        let details = ConfirmationDetails {
-            trade_offer_id: Some(4009687284),
+        let first = 4009687284;
+        let second = 4000793103;
+        let third = 33311221; // no existant
+        let tradeoffer_id = vec![first, second, third];
+
+        let details_0 = ConfirmationDetails {
+            trade_offer_id: Some(first),
         };
-        confirmations.filter_by_trade_offer_ids(&[4009687284]);
-        assert_eq!(confirmations.0.get(0).unwrap().details, Some(details));
-        assert_eq!(confirmations.0.get(1), None);
+        let details_1 = ConfirmationDetails {
+            trade_offer_id: Some(second),
+        };
+
+        confirmations.filter_by_trade_offer_ids(tradeoffer_id);
+        assert_eq!(confirmations.0.get(0).unwrap().details, Some(details_0));
+        assert_eq!(confirmations.0.get(1).unwrap().details, Some(details_1));
+        assert_eq!(confirmations.0.get(2), None);
     }
 }

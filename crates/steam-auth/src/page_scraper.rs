@@ -1,3 +1,5 @@
+//! Responsible for parsing HTML documents for various events.
+
 use std::str::FromStr;
 
 use scraper::{Html, Selector};
@@ -7,17 +9,13 @@ use crate::{
     web_handler::confirmation::{Confirmation, ConfirmationDetails, EConfirmationType},
 };
 
-/// ! Responsible for parsing HTML documents for various events.
-
 /// Get all confirmations by parsing the document.
 /// Returns all confirmations found.
 pub(crate) fn confirmation_retrieve(confirmation_html: Html) -> Option<Vec<Confirmation>> {
     let confirmation_nodes_selector = Selector::parse("div.mobileconf_list_entry").unwrap();
 
     // early return if no confirmations are found
-    let mut entries = confirmation_html
-        .select(&confirmation_nodes_selector)
-        .peekable();
+    let mut entries = confirmation_html.select(&confirmation_nodes_selector).peekable();
     entries.peek()?;
 
     let confirmations = entries
@@ -28,29 +26,19 @@ pub(crate) fn confirmation_retrieve(confirmation_html: Html) -> Option<Vec<Confi
                 .map(|s| EConfirmationType::from_str(s).unwrap())
                 .unwrap_or(EConfirmationType::Unknown);
 
-            let trade_offer_id = element
-                .value()
-                .attr("data-creator")
-                .map(|s| u64::from_str(s).unwrap())
-                .and_then(|id| {
-                    if confirmation_type == EConfirmationType::Trade {
-                        Some(id)
-                    } else {
-                        None
-                    }
-                });
+            let tradeoffer_id = if let EConfirmationType::Trade = confirmation_type {
+                element.value().attr("data-creator").map(|s| i64::from_str(s).unwrap())
+            } else {
+                None
+            };
 
             Confirmation {
                 id: element.value().attr("data-confid").unwrap().to_string(),
                 key: element.value().attr("data-key").unwrap().to_string(),
                 kind: confirmation_type,
-                details: {
-                    if trade_offer_id.is_some() {
-                        Some(ConfirmationDetails { trade_offer_id })
-                    } else {
-                        None
-                    }
-                },
+                details: tradeoffer_id.map(|id| ConfirmationDetails {
+                    trade_offer_id: Some(id),
+                }),
             }
         })
         .collect::<Vec<Confirmation>>();
@@ -80,7 +68,7 @@ pub(crate) fn confirmation_details_single(confirmation_details_html: Html) -> Co
         let tradeofferid_parsed = id.find('_').map(|a| &id[a + 1..]).unwrap();
 
         ConfirmationDetails {
-            trade_offer_id: Some(u64::from_str(tradeofferid_parsed).unwrap()),
+            trade_offer_id: Some(i64::from_str(tradeofferid_parsed).unwrap()),
         }
     } else if confirmation_details_html
         .select(&market_selector)
@@ -88,9 +76,7 @@ pub(crate) fn confirmation_details_single(confirmation_details_html: Html) -> Co
         .peek()
         .is_some()
     {
-        ConfirmationDetails {
-            trade_offer_id: None,
-        }
+        ConfirmationDetails { trade_offer_id: None }
     } else {
         unimplemented!()
         // ConfirmationDetails {

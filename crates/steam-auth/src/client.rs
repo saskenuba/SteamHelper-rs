@@ -58,7 +58,7 @@ impl SteamAuthenticator {
 
     /// Returns current user API Key. Need to login first.
     pub fn api_key(&self) -> Option<String> {
-        let mut api_key = Default::default();
+        let api_key;
 
         {
             api_key = self.cached_data.borrow().api_key().cloned();
@@ -109,7 +109,8 @@ impl SteamAuthenticator {
         }
 
         {
-            cache_resolve(&self.client, self.cached_data.borrow_mut()).await?;
+            let cached_data = Rc::clone(&self.cached_data);
+            cache_resolve(&self.client, cached_data).await?;
         }
         info!("Cached API Key successfully.");
 
@@ -163,7 +164,7 @@ impl SteamAuthenticator {
     pub async fn finalize_authenticator(&self, mafile: &MobileAuthFile, sms_code: &str) -> Result<(), AuthError> {
         // The delay is that Steam need some seconds to catch up with the new phone number associated.
         let account_has_phone_now: bool = check_sms(&self.client, sms_code)
-            .map_ok(|x| tokio::time::delay_for(Duration::from_secs(STEAM_ADD_PHONE_CATCHUP_SECS)))
+            .map_ok(|_| tokio::time::delay_for(Duration::from_secs(STEAM_ADD_PHONE_CATCHUP_SECS)))
             .and_then(|_| account_has_phone(&self.client))
             .await?;
 
@@ -209,7 +210,6 @@ impl SteamAuthenticator {
             .map(Confirmations::from);
         Ok(confirmations)
     }
-
 
     /// Accept or deny confirmations.
     pub async fn process_confirmations(

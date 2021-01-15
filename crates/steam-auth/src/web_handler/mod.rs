@@ -118,11 +118,12 @@ async fn parental_unlock_by_service(
 /// This is done after user logon for the first time in this session.
 pub(crate) async fn cache_resolve(
     client: &MobileClient,
-    mut cached_data: RefMut<'_, CachedInfo>,
+    cached_data: Rc<RefCell<CachedInfo>>,
 ) -> Result<(), ApiKeyError> {
     match api_key_retrieve(client).await? {
         Some(api_key) => {
             debug!("{}", &api_key);
+            let mut cached_data = cached_data.borrow_mut();
             cached_data.set_api_key(api_key);
         }
         None => {
@@ -196,7 +197,7 @@ pub(crate) async fn confirmations_retrieve_all(
     );
     trace!("Confirmation url: {}", confirmation_all_url);
 
-    let html = client.get_html(confirmation_all_url).await.unwrap();
+    let html = client.get_html(confirmation_all_url).await?;
     let user_confirmations = confirmation_retrieve(html);
 
     // There is no need for now for additional details of the confirmation..
@@ -205,6 +206,7 @@ pub(crate) async fn confirmations_retrieve_all(
     }
 
     // FIXME: Is there a need to fetch additional details?
+    // We are not using this for anything yet
 
     let mut user_confirmations = user_confirmations.unwrap();
     let conf_details_fut = user_confirmations
@@ -263,10 +265,13 @@ async fn api_key_retrieve(client: &MobileClient) -> Result<Option<String>, ApiKe
                 .ok()
         }
         Err(ApiKeyError::AccessDenied) => {
-            warn!("Access to API key was denied. .Maybe you don't have a valid email address?");
+            warn!("Access to API key was denied. Maybe you don't have a valid email address?");
             None
         }
-        Err(e) => return Err(e),
+        Err(e) => {
+            warn!("Could not cache API Key. {}", e);
+            None
+        }
     })
 }
 
@@ -279,7 +284,7 @@ async fn api_key_register(client: &MobileClient) -> Result<(), ApiKeyError> {
     let response = client
         .request_with_session_guard(api_register_url, Method::POST, None, Some(register_request))
         .await?;
-    info!("{:?}", response);
+    debug!("{:?}", response);
 
     Ok(())
 }

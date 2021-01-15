@@ -81,13 +81,13 @@ pub(crate) async fn login_website<'a, LC: Into<Option<LoginCaptcha<'a>>>>(
         .headers()
         .get(reqwest::header::SET_COOKIE)
         .map(|cookie| cookie.to_str().unwrap())
-        .and_then(|c| {
+        .map(|c| {
             let index = c.find('=').unwrap();
-            Some((&c[index + 1..index + 25]).to_string())
+            (&c[index + 1..index + 25]).to_string()
         })
-        .ok_or(LoginError::GeneralFailure(
-            "Something went wrong while getting sessionid. Should retry".to_string(),
-        ))?;
+        .ok_or_else(|| {
+            LoginError::GeneralFailure("Something went wrong while getting sessionid. Should retry".to_string())
+        })?;
 
     let mut post_data = HashMap::new();
     let steam_time_offset = (steam_totp::time::Time::offset().await.unwrap() * 1000).to_string();

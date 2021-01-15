@@ -14,7 +14,7 @@
 )]
 
 use std::path::PathBuf;
-use std::{fs::OpenOptions, io::Read};
+use std::{fmt, fs::OpenOptions, io::Read};
 
 use const_format::concatcp;
 /// re-export
@@ -22,6 +22,8 @@ pub use reqwest::{header::HeaderMap, Error as HttpError, Method, Url};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use serde::export::Formatter;
+use std::fmt::{Debug, Display};
 use steam_totp::Secret;
 use steamid_parser::SteamID;
 pub use utils::format_captcha_url;
@@ -180,13 +182,13 @@ impl User {
         self
     }
 
-    fn ma_file(mut self, ma_file: MobileAuthFile) -> Self {
+    pub fn ma_file(mut self, ma_file: MobileAuthFile) -> Self {
         self.linked_mafile = Some(ma_file);
         self
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 /// The MobileAuthFile (.maFile) is the standard file format that custom authenticators use to save auth secrets to disk.
 ///
 /// It follows strictly the JSON format.
@@ -215,6 +217,20 @@ pub struct MobileAuthFile {
     revocation_code: Option<String>,
     /// Account name where this maFile was originated.
     pub account_name: Option<String>,
+}
+
+impl Debug for MobileAuthFile {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("MobileAuthFile")
+            .field("AccountName", &self.account_name)
+            .finish()
+    }
+}
+
+impl Display for MobileAuthFile {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        unimplemented!()
+    }
 }
 
 impl MobileAuthFile {

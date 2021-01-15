@@ -1,6 +1,6 @@
 [package]
 name = "steam-auth"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Martin <martin@hotmail.com.br>"]
 repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-auth/"
 homepage = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-auth/"
@@ -43,7 +43,6 @@ tracing-subscriber = "0.2" # For testing
 thiserror = "1.0.20"
 tokio = { version = "0.2", features = ["rt-core", "macros", "time"] }
 uuid = { version = "0.8.1", features = ["v4"] }
-
 
 strum = "0.19.5"
 strum_macros = "0.19.4"

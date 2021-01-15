@@ -7,7 +7,6 @@ use std::path::PathBuf;
 use anyhow::Result;
 use clap::{App, Arg};
 use dialoguer::{Confirm, Input};
-use futures::io::Error;
 
 use steam_auth::client::SteamAuthenticator;
 use steam_auth::errors::{AuthError, LoginError};
@@ -87,10 +86,7 @@ async fn main() -> Result<()> {
 
         if let Some(add_subcommand) = matches.subcommand_matches("add") {
             let phone_number = add_subcommand.value_of("phone_number").unwrap();
-            let save_path = add_subcommand
-                .value_of("save_path")
-                .as_deref()
-                .map(|path| PathBuf::from(path));
+            let save_path = add_subcommand.value_of("save_path").as_deref().map(PathBuf::from);
 
             let user = User::build().username(account).password(password);
             let authenticator = SteamAuthenticator::new(user);
@@ -139,8 +135,8 @@ async fn main() -> Result<()> {
                             let filename = mafile
                                 .account_name
                                 .as_ref()
-                                .map(|account_name| account_name.clone())
-                                .unwrap_or(account.to_string());
+                                .cloned()
+                                .unwrap_or_else(|| account.to_string());
 
                             mobile_auth_file = mafile.clone();
                             tokio::task::spawn_blocking(move || {
