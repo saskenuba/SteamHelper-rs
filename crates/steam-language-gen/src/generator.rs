@@ -93,8 +93,7 @@ fn generate_enum(graph: &Graph<Token, Element, Directed, u32>, current_node: Nod
             file.push_str("\t#[derive(Serialize, Deserialize)]\n");
             file.push_str(&format!("\tpub struct {}: i32 {{\n", enum_name));
         } else {
-            file.push_str("#[derive(FromPrimitive, ToPrimitive, Clone, Debug, PartialEq, Eq, \
-                Serialize, Deserialize)]\n");
+            file.push_str("#[derive(FromPrimitive, ToPrimitive, Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]\n");
             file.push_str(&format!("#[repr({})]\n", enum_type));
             file.push_str(&format!("pub enum {} {{\n", enum_name));
         }
