@@ -43,7 +43,7 @@ use steam_auth::{
 use steam_language_gen::generated::enums::ETradeOfferState;
 use steam_web_api::{Executor, SteamAPI};
 use steamid_parser::SteamID;
-pub use types::{asset_collection::AssetCollection, trade_offer::TradeOffer};
+pub use types::{asset_collection::AssetCollection, trade_link::Tradelink, trade_offer::TradeOffer};
 
 use crate::api_extensions::{FilterBy, HasAssets};
 use crate::types::trade_api::AssetIDHistory;
