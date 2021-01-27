@@ -22,8 +22,7 @@ pub use reqwest::{header::HeaderMap, Error as HttpError, Method, Url};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use serde::export::Formatter;
-use std::fmt::{Debug, Display};
+use std::fmt::{Debug, Display, Formatter};
 use steam_totp::Secret;
 use steamid_parser::SteamID;
 pub use utils::format_captcha_url;

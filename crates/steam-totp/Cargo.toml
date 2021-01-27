@@ -1,7 +1,7 @@
 [package]
 name = "steam-totp"
 version = "0.2.0"
-authors = ["Martin <martin@hotmail.com.br>","Leorii <leorii@pm.me>"]
+authors = ["Martin <martin@hotmail.com.br>", "Leorii <leorii@pm.me>"]
 edition = "2018"
 publish = false
 
@@ -13,7 +13,7 @@ byteorder = "1.3.4"
 crypto-mac = { version = "0.7.0", features = ["std"] }
 hex = "0.4.2"
 hmac = "0.7.1"
-reqwest = { version = "0.10.0-alpha.1", features = ["json"] }
-serde = { version = "1.0.102", features = ["derive"] }
+reqwest = { version = "^0.10", features = ["json"] }
+serde = { version = "^1", features = ["derive"] }
 sha-1 = "0.8.2"
 url = "2"

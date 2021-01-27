@@ -1,7 +1,7 @@
+use std::fmt::Formatter;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use byteorder::{BigEndian, ByteOrder};
-use serde::export::Formatter;
 
 use super::{
     error::{SteamApiError, TotpError},
