@@ -5,9 +5,6 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 
-#![feature(associated_type_defaults)]
-#![feature(box_syntax)]
-
 #[macro_use]
 extern crate arrayref;
 #[macro_use]

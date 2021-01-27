@@ -24,4 +24,4 @@ trait HandlerKind {
 }
 
 
-/// handles related to friends coming online etc
+// handles related to friends coming online etc

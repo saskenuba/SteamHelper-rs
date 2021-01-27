@@ -9,7 +9,6 @@ use steam_language_gen::{DeserializableBytes, generated::{
     headers::{
         ExtendedMessageHeader,
         MessageHeaders,
-        ProtobufMessageHeader,
         StandardMessageHeader,
     },
     messages::{
@@ -31,7 +30,7 @@ pub(crate) fn handle_encrypt_request(message: PacketMessage) -> Vec<u8> {
 
     // this would be used for selecting the appropriate public key.. but are using only the key for
     // the Public Universe
-    let connected_universe = incoming_message.msg_type.universe.clone();
+    let connected_universe = incoming_message.msg_type.universe;
     let protocol_version = incoming_message.msg_type.protocol_version;
 
     debug!("Got encryption request. Universe: {:?} Protocol Version {:?}",

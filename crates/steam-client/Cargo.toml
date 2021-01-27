@@ -63,7 +63,7 @@ optional = true
 
 # Essential to read Steam Protobuf messages
 [dependencies.protobuf]
-git = "https://github.com/stepancheg/rust-protobuf.git"
+version = "2.20.0"
 branch = "master"
 
 # Essential for serializing steam messages
