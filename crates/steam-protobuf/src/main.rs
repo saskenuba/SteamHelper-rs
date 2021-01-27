@@ -1,11 +1,4 @@
-#![feature(type_ascription)]
-
-extern crate walkdir;
-
-use std::ffi::OsString;
-use std::fs;
-
-use protoc_rust::Customize;
+use std::{ffi::OsString, fs};
 
 use glob::glob;
 
@@ -14,8 +7,12 @@ macro_rules! generate_protos_for {
         let mut entries: Vec<OsString> = Vec::new();
         let mut filenames: Vec<OsString> = Vec::new();
 
-        for entry in
-            glob(concat!("crates/steam-protobuf/assets/Protobufs/", $folder_name, "/*")).unwrap()
+        for entry in glob(concat!(
+            "crates/steam-protobuf/assets/Protobufs/",
+            $folder_name,
+            "/*"
+        ))
+        .unwrap()
         {
             let entry = entry.unwrap();
             entries.insert(0, entry.clone().into());
@@ -42,7 +39,7 @@ macro_rules! generate_protos_for {
         fs::File::create(modfile_path).unwrap();
         fs::write(modfile_path, new_filenames.join("")).unwrap();
 
-        protoc_rust::Args::new()
+        protoc_rust::Codegen::new()
             .out_dir(&concat!("crates/steam-protobuf/src/", $folder_name))
             .inputs(entries_as_slice)
             .includes(&[
@@ -55,8 +52,9 @@ macro_rules! generate_protos_for {
     }};
 }
 
-/// we also need to generate a mod file inside the chosen folder, with pub mod of each module generated
+/// we also need to generate a mod file inside the chosen folder, with pub mod of each module
+/// generated
 fn main() {
-//    generate_protos_for!("google");
+    generate_protos_for!("google");
     generate_protos_for!("steam");
 }

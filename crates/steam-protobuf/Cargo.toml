@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 walkdir = "2.3.1"
 glob = "0.3.0"
-serde = { version = "1.0", features = ["derive"] }
-protobuf = { git = "https://github.com/stepancheg/rust-protobuf.git", branch = "master"}
-protoc-rust = { git = "https://github.com/stepancheg/rust-protobuf.git", branch = "master" }
+serde = { version = "^1", features = ["derive"] }
+protobuf = { version = "2.20.0", features = ["with-bytes", "with-serde"] }
+protoc-rust = { version = "2.20.0" }
 
