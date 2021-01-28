@@ -32,6 +32,35 @@ pub struct StandardMessageHeader {
     pub source_job_id: u64,
 }
 
+impl MessageHeaderExt for CMsgProtoBufHeader {
+    fn create() -> Self {
+        Self::new()
+    }
+
+    fn split_from_bytes(data: &[u8]) -> (&[u8], &[u8]) {
+        let size = std::mem::size_of::<Self>();
+        (&data[..size], &data[size..])
+    }
+}
+
+impl MessageHeader for CMsgProtoBufHeader {
+    fn set_target(&mut self, new_target: u64) {
+        self.set_jobid_target(new_target);
+    }
+
+    fn set_source(&mut self, new_source: u64) {
+        unimplemented!()
+    }
+
+    fn source(&self) -> u64 {
+        unimplemented!()
+    }
+
+    fn target(&self) -> u64 {
+        self.get_jobid_target()
+    }
+}
+
 #[derive(new, Clone, Debug, Serialize, Deserialize, PartialEq, Eq, MsgHeader)]
 pub struct ExtendedMessageHeader {
     #[new(value = "32")]
@@ -61,8 +90,8 @@ struct GCMessageHeader {
     source_job_id: u64,
 }
 
-#[derive(Debug)]
-pub struct ProtobufMessageHeader {
-    header_length: i32,
-    proto_header: CMsgProtoBufHeader,
-}
+// #[derive(Debug)]
+// pub struct ProtobufMessageHeader {
+//     header_length: i32,
+//     proto_header: CMsgProtoBufHeader,
+// }

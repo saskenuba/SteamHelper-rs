@@ -10,6 +10,8 @@ use enum_dispatch::enum_dispatch;
 use serde::Serialize;
 
 use crate::generated::headers::{ExtendedMessageHeader, StandardMessageHeader};
+use steam_protobuf::steam::steammessages_base::CMsgProtoBufHeader;
+use steam_protobuf::Message;
 
 pub mod generated;
 #[cfg(feature = "generator")]
@@ -22,6 +24,7 @@ pub mod parser;
 /// This wraps our headers so we can be generic over them over a Msg type.
 pub enum MessageHeaderWrapper {
     Std(StandardMessageHeader),
+    Proto(CMsgProtoBufHeader),
     Ext(ExtendedMessageHeader),
 }
 
@@ -37,6 +40,7 @@ impl SerializableBytes for MessageHeaderWrapper {
         match self {
             MessageHeaderWrapper::Std(hdr) => hdr.to_bytes(),
             MessageHeaderWrapper::Ext(hdr) => hdr.to_bytes(),
+            MessageHeaderWrapper::Proto(hdr) => hdr.write_to_bytes().expect("Error writing protobuf"),
         }
     }
 }
@@ -56,7 +60,6 @@ impl_downcast!(MessageHeader);
 
 // facilities around headers
 pub trait MessageHeaderExt: Downcast {
-    /// delegate to new
     fn create() -> Self;
     /// Returns header on the left, rest on the right
     fn split_from_bytes(data: &[u8]) -> (&[u8], &[u8]);

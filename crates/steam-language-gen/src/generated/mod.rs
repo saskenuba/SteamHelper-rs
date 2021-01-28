@@ -3,10 +3,9 @@ use num_traits::FromPrimitive;
 
 use crate::generated::enums::EMsg;
 
-pub mod messages;
 pub mod enums;
 pub mod headers;
-
+pub mod messages;
 
 const PROTOMASK: u32 = 0x8000_0000;
 const EMSGMASK: u32 = !PROTOMASK;
@@ -36,7 +35,7 @@ impl EMsg {
         message & PROTOMASK
     }
 
-    /// Strips Emsg and returns
+    /// Strips the [EMsg] from data, and returns the data
     pub fn strip_message(message: &[u8]) -> &[u8] {
         &message[4..]
     }
@@ -58,4 +57,3 @@ pub enum EMsgError {
     MessageNotLongEnough(&'static str),
     ValueNotFound(&'static str),
 }
-

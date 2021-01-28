@@ -1,6 +1,6 @@
+use std::fmt::Formatter;
+
 use bytes::{Buf, BufMut, Bytes, BytesMut};
-use serde::export::fmt::Error;
-use serde::export::Formatter;
 use serde::Serialize;
 
 use steam_crypto::{generate_encrypt_request_handshake, generate_session_key};
@@ -103,7 +103,7 @@ impl<T: MessageBodyExt + HasEMsg + SerializableBytes + DeserializableBytes> Msg<
         // since we already have the correct header from the packet message, we dont need to look up
         // for it again..
         let header_kind = MessageHeaders::header_from_emsg(T::emsg()).unwrap();
-        let incoming_message_header = msg.header().clone();
+        let incoming_message_header = msg.header();
         match header_kind {
             MessageHeaders::Standard => Self {
                 emsg: T::emsg(),
