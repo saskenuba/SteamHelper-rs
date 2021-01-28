@@ -6,21 +6,11 @@
 #![allow(unused_variables)]
 
 #[macro_use]
-extern crate arrayref;
-#[macro_use]
 extern crate derive_new;
 #[macro_use]
 extern crate steam_language_gen_derive;
 #[macro_use]
 extern crate log;
-#[macro_use]
-extern crate lazy_static;
-#[macro_use]
-extern crate enum_dispatch;
-/*#[macro_use]
-extern crate tracing;
-#[macro_use]
-extern crate tracing_futures;*/
 
 
 mod cmserver;

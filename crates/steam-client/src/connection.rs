@@ -21,8 +21,6 @@ use tokio::{
     net::TcpStream,
     task,
 };
-// use tokio_util::codec::{Decoder, Encoder};
-use tracing::{info, instrument};
 
 use async_trait::async_trait;
 
@@ -108,11 +106,12 @@ impl Connection<TcpStream> for SteamConnection<TcpStream> {
         output_buffer.extend_from_slice(&(data.len() as u32).to_le_bytes());
         output_buffer.extend_from_slice(PACKET_MAGIC_BYTES);
         output_buffer.extend_from_slice(data);
+        let output_buffer = output_buffer.freeze();
 
         trace!("Writing {} bytes of data to stream..", output_buffer.len());
-        trace!("Payload bytes: {:?}", output_buffer.bytes());
+        trace!("Payload bytes: {:?}", output_buffer);
 
-        let write_result = self.stream.write(output_buffer.bytes()).await?;
+        let write_result = self.stream.write(&output_buffer).await?;
         trace!("write result: {}", write_result);
         Ok(())
     }

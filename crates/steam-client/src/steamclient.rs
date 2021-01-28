@@ -1,10 +1,6 @@
 use std::error::Error;
 
-use crate::{
-    cmserver::CmServerSvList,
-    config::SteamConfiguration,
-    connection::SteamConnection,
-};
+use crate::{cmserver::CmServerSvList, config::SteamConfiguration, connection::SteamConnection};
 
 use steamid_parser::SteamID;
 
@@ -25,14 +21,15 @@ pub struct SteamClient<S> {
 
 impl<S> SteamClient<S> {
     /// Constructs a basic steam client
-    pub fn builder()  {}
-    pub fn with_configuration(&mut self, cfg: SteamConfiguration)  {}
+    pub fn builder() {}
+
+    pub fn with_configuration(&mut self, cfg: SteamConfiguration) {}
+
     pub async fn connect(&self) -> Result<(), Box<dyn Error>> {
         CmServerSvList::fetch_servers(self.api_key.as_ref().unwrap().as_ref()).await?;
         Ok(())
     }
 }
-
 
 // we need to have handlers for categorized events (friends, trading, profile actions.. etc)
 // and each of these handlers need to have one callback for each action

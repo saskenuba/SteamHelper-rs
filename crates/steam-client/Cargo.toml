@@ -4,77 +4,41 @@ version = "0.1.0"
 authors = ["Martin <martin@hotmail.com.br>"]
 edition = "2018"
 
-# See more keys and their definitions at
-# https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[lib]
-# There are no benchmarks in the library code itself
-bench = false
-
 [features]
 default = []
 
 # Optional Websockets connection to Steam Servers
-websockets = ["tokio-tungstenite", "tokio-tls"]
+websockets = ["tokio-tungstenite"]
 
 [dependencies]
 
-# Serialization Related
-serde_json = "1"
-serde_repr = "0.1"
-bincode = "1"
-
-# Misc
-bytes = "0.5"
+arrayref = "^0.3"
+async-trait = "^0.1"
+bincode = "^1"
 byteorder = "1"
-log = "0.4"
-regex = "1"
+bytes = "^1.0"
+derive-new = "0.5.8"
+erased-serde = "^0.3"
+futures = "^0.3"
 lazy_static = "1"
-bitvec = "0.17"
-enum_dispatch = "0.3.5"
+log = "^0.4"
+num = "^0.3"
+regex = "^1"
+serde = { version = "^1.0", features = ["derive"] }
+serde_json = "^1"
+serde_repr = "^0"
+thiserror = "^1.0"
 
-# Futures related
-async-trait = "0.1"
-futures = "0.3.4"
+# futures
+tokio = { version = "^1.1", features = ["net", "rt", "macros"] }
+tokio-util = "^0.6"
+tokio-tungstenite = { version = "^0.13", optional = true }
 
-# emsg parsing
-arrayref = "0.3"
-derive-new = "*"
-num = "0.2"
-tokio-util = "0.2"
-
-tracing = "0.1"
-tracing-futures = "0.2"
-
-# Dealing asynchronously to streams
-[dependencies.tokio]
-version = "0.2"
-features = ["full"]
-
-# Optional Websockets Connection
-[dependencies.tokio-tungstenite]
-version = "*"
-features = ["tls"]
-optional = true
-
-[dependencies.tokio-tls]
-version = "*"
-optional = true
-
-# Essential to read Steam Protobuf messages
-[dependencies.protobuf]
-version = "2.20.0"
-branch = "master"
-
-# Essential for serializing steam messages
-[dependencies.serde]
-version = "1"
-features = ["derive"]
 
 # Web API calls
 [dependencies.reqwest]
-version = "0.10"
-features = ["blocking", "json"]
+version = "^0.11"
+features = ["json", "blocking"]
 
 # Internal Dependencies
 [dependencies.steam-protobuf]

@@ -9,7 +9,6 @@
 
 #[cfg(test)]
 mod tests {
-    use protobuf::Message;
 
     use steam_language_gen::{MessageHeader, MessageHeaderExt, SerializableBytes, DeserializableBytes};
     use steam_language_gen::generated::enums::{EMsg, EUniverse};
@@ -97,5 +96,5 @@ mod tests {
 // new MessageHeaderProtobuf
 // steammessages_base_pb2. CMSGProtobufHeader
 
-//  if not proto: emsg_enum, raw_data from packet -> extender
+//  if not proto: emsg_enum, raw_data from packet -> extended
 // novo  ExtendedMessageHeader

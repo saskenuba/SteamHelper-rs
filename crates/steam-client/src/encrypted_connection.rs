@@ -4,26 +4,21 @@ use serde::export::Formatter;
 use serde::Serialize;
 
 use steam_crypto::{generate_encrypt_request_handshake, generate_session_key};
-use steam_language_gen::{DeserializableBytes, generated::{
-    enums::EMsg,
-    headers::{
-        ExtendedMessageHeader,
-        MessageHeaders,
-        StandardMessageHeader,
+use steam_language_gen::{
+    generated::{
+        enums::EMsg,
+        headers::{ExtendedMessageHeader, MessageHeaders, StandardMessageHeader},
+        messages::{
+            HasEMsg, MsgChannelEncryptRequest, MsgChannelEncryptResponse, MsgClientChatAction,
+            MsgClientNewLoginKeyAccepted,
+        },
     },
-    messages::{
-        HasEMsg,
-        MsgChannelEncryptRequest,
-        MsgChannelEncryptResponse,
-        MsgClientChatAction,
-        MsgClientNewLoginKeyAccepted,
-    },
-}, MessageBodyExt, MessageHeader, MessageHeaderExt, MessageHeaderWrapper, SerializableBytes};
+    DeserializableBytes, MessageBodyExt, MessageHeader, MessageHeaderExt, MessageHeaderWrapper, SerializableBytes,
+};
 
 use crate::messages::packetmessage::PacketMessage;
 
 pub(crate) fn handle_encrypt_request(message: PacketMessage) -> Vec<u8> {
-
     // let msg = MsgChannelEncryptRequest::from_bytes(message_contents);
     // let (_, payload) = MsgChannelEncryptRequest::split_from_bytes(message_contents);
     let incoming_message: Msg<MsgChannelEncryptRequest> = Msg::from_packet_message(message);
@@ -33,31 +28,33 @@ pub(crate) fn handle_encrypt_request(message: PacketMessage) -> Vec<u8> {
     let connected_universe = incoming_message.msg_type.universe;
     let protocol_version = incoming_message.msg_type.protocol_version;
 
-    debug!("Got encryption request. Universe: {:?} Protocol Version {:?}",
-           connected_universe, protocol_version);
+    println!(
+        "Got encryption request. Universe: {:?} Protocol Version {:?}",
+        connected_universe, protocol_version
+    );
 
     let mut random_challenge = BytesMut::with_capacity(1024);
 
     let payload = incoming_message.payload();
     if incoming_message.payload.len() >= 16 {
-        random_challenge.put(payload.as_slice());
+        random_challenge.put(payload);
     }
 
-    let (session_keys, encrypted_payload) =
-        generate_encrypt_request_handshake(
-            random_challenge.bytes()
-        );
+    let (session_keys, encrypted_payload) = generate_encrypt_request_handshake(&*random_challenge);
 
     // last message source is now our target.. dunno yet about our source, maybe last message target?
     let target = incoming_message.header.target();
     let source = incoming_message.header.source();
 
-    let reply_message: Msg<MsgChannelEncryptResponse> = Msg::new()
-        .set_target(target)
-        .set_payload(encrypted_payload.as_ref());
+    let reply_message: Msg<MsgChannelEncryptResponse> =
+        Msg::new().set_target(target).set_payload(encrypted_payload.as_ref());
 
-    debug!("Incoming message: {}.", incoming_message);
-    debug!("Answering with: {} Payload {:?}.", reply_message, &reply_message.payload()[..128]);
+    println!("Incoming message: {}.", incoming_message);
+    println!(
+        "Answering with: {} Payload {:?}.",
+        reply_message,
+        &reply_message.payload()[..128]
+    );
     reply_message.to_bytes()
 }
 
@@ -71,12 +68,13 @@ struct Msg<M: SerializableBytes + HasEMsg> {
 
 impl<M: std::fmt::Debug + SerializableBytes + HasEMsg> std::fmt::Display for Msg<M> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f,
-               "Message: {:?}, Target ID: {:?} Source ID: {:?} Payload size {} bytes.",
-               self.msg_type,
-               self.header.target(),
-               self.header.source(),
-               self.payload.len()
+        write!(
+            f,
+            "Message: {:?}, Target ID: {:?} Source ID: {:?} Payload size {} bytes.",
+            self.msg_type,
+            self.header.target(),
+            self.header.source(),
+            self.payload.len()
         )
     }
 }
@@ -84,7 +82,7 @@ impl<M: std::fmt::Debug + SerializableBytes + HasEMsg> std::fmt::Display for Msg
 impl<M: HasEMsg + SerializableBytes> SerializableBytes for Msg<M> {
     fn to_bytes(&self) -> Vec<u8> {
         let mut output_buffer = BytesMut::with_capacity(1024);
-        let emsg = self.emsg.clone() as u32;
+        let emsg = self.emsg as u32;
 
         output_buffer.extend(&emsg.to_le_bytes());
         output_buffer.extend(self.header.to_bytes());
@@ -153,11 +151,11 @@ impl<T: MessageBodyExt + HasEMsg + SerializableBytes + DeserializableBytes> Msg<
 }
 
 impl<C: HasEMsg + SerializableBytes> MessageKind for Msg<C> {
-    fn payload(&self) -> &Vec<u8> {
+    fn payload(&self) -> &[u8] {
         &self.payload
     }
 }
 
 pub(crate) trait MessageKind {
-    fn payload(&self) -> &Vec<u8>;
+    fn payload(&self) -> &[u8];
 }

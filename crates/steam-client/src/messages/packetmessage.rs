@@ -15,9 +15,10 @@ pub(crate) struct PacketMessage {
     data: Vec<u8>,
 }
 
+
 impl MessageKind for PacketMessage {
     /// Returns underlying message data.
-    fn payload(&self) -> &Vec<u8> {
+    fn payload(&self) -> &[u8] {
         &self.data
     }
 }
@@ -27,17 +28,24 @@ impl PacketMessage {
     pub(crate) fn jobs_ids(&self) -> (u64, u64) {
         (self.header.source(), self.header.target())
     }
+
     /// Returns underlying EMsg.
-    pub(crate) fn emsg(&self) -> &EMsg { &self.emsg }
-    pub(crate) fn header(&self) -> &MessageHeaderWrapper { &self.header }
+    pub(crate) fn emsg(&self) -> &EMsg {
+        &self.emsg
+    }
+
+    pub(crate) fn header(&self) -> &MessageHeaderWrapper {
+        &self.header
+    }
 
     /// This classify the message as:
     /// - Standard message (EncryptRequest, EncryptResponse, EncryptResult)
     /// - Protobuf message
     /// - Extended message (extended header)
     /// We need to recover TargetJobID and SourceJobID from every header, that is why we have the
-    /// PacketMsg on SteamKit. They are the same but for each header type.
+    /// PacketMsg on SteamKit. They are the same but exists for each header type.
     /// [raw_message_data] are the bytes after the magic bytes received from connection stream.
+    ///
     /// This _should_ be used by the main client to classify the messages from the raw bytes.
     /// Reference: https://github.com/SteamRE/SteamKit/blob/58562fcc6f6972181615a6d1ff98103b06f0e33f/SteamKit2/SteamKit2/Steam/CMClient.cs#L448
     pub(crate) fn from_rawdata(raw_message_bytes: &[u8]) -> PacketMessage {
@@ -69,10 +77,11 @@ impl PacketMessage {
             }
         };
 
-        trace!("Packet Message is: {:?}, {:?}, {:?}",
-               &extracted_emsg,
-               &extracted_header,
-               body_bytes
+        trace!(
+            "Packet Message is: {:?}, {:?}, {:?}",
+            &extracted_emsg,
+            &extracted_header,
+            body_bytes
         );
         PacketMessage {
             emsg: extracted_emsg,
