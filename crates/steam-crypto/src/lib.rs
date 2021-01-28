@@ -6,7 +6,6 @@
 //! Direct Port of
 //! https://github.com/DoctorMcKay/node-steam-crypto
 
-
 #![warn(missing_docs, missing_doc_code_examples)]
 #![deny(
     missing_debug_implementations,
@@ -50,7 +49,7 @@ pub fn verify_signature(data: &[u8], signature: &[u8]) -> Result<bool, ErrorStac
 }
 
 /// Generates a 32 byte random blob of data and encrypts it with RSA 1024
-/// using the Steam system's public key.
+/// using the Steam's public key.
 /// If there is a nonce, it gets concatenated after the generated 32 bytes
 /// Returns SessionsKeys struct.
 pub fn generate_session_key(nonce: Option<&[u8]>) -> Result<SessionKeys, ErrorStack> {
@@ -65,7 +64,7 @@ pub fn generate_session_key(nonce: Option<&[u8]>) -> Result<SessionKeys, ErrorSt
 
     let steam_key: &'static [u8] = *STEAM_KEY;
     let public_key = openssl::rsa::Rsa::public_key_from_pem(&steam_key)?;
-    public_key.public_encrypt(&random_bytes_array, &mut encrypted_array, Padding::PKCS1)?;
+    public_key.public_encrypt(&random_bytes_array, &mut encrypted_array, Padding::PKCS1_OAEP)?;
 
     Ok(SessionKeys {
         plain_text: random_bytes_array,
@@ -74,17 +73,17 @@ pub fn generate_session_key(nonce: Option<&[u8]>) -> Result<SessionKeys, ErrorSt
 }
 
 /// Performs CRC32 on an input byte array
-pub fn crc_hash(input: &[u8]) -> [u8; 4] {
+pub fn crc_hash(input: &[u8]) -> Vec<u8> {
     let mut hasher = Hasher::new();
     hasher.update(&input);
 
     let checksum = hasher.finalize();
     let mut checksum_bytes: [u8; 4] = checksum.to_be_bytes();
     checksum_bytes.reverse();
-    checksum_bytes
+    checksum_bytes.to_vec()
 }
 
-/// Returns ready to send payload for MsgEncryptRequest
+/// Returns both the `SessionKeys` and a ready to send payload for MsgEncryptRequest
 pub fn generate_encrypt_request_handshake(payload: &[u8]) -> (SessionKeys, Bytes) {
     let session_keys = generate_session_key(Some(payload)).unwrap();
     let temp_encrypted_sessionkey = &session_keys.encrypted[..128];
@@ -93,8 +92,7 @@ pub fn generate_encrypt_request_handshake(payload: &[u8]) -> (SessionKeys, Bytes
     let key_hash = crc_hash(temp_encrypted_sessionkey);
 
     response.put(temp_encrypted_sessionkey);
-    // ugly.. fix
-    response.put(key_hash.to_vec().as_slice());
+    response.put(key_hash.as_ref());
     response.put_u32(0);
     (session_keys, response.freeze())
 }
