@@ -36,3 +36,4 @@ serde = { version = "1", features = ["derive"] }
 serde_repr = "0.1"
 
 steam-language-gen-derive = { path = "../steam-language-gen-derive", version = "0.1.0" }
+steam-protobuf = { path = "../steam-protobuf", version = "0.1.0" }

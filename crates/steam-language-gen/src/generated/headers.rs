@@ -1,10 +1,9 @@
 use derive_new::new;
 use serde::{Deserialize, Serialize};
 
-use crate::generated::enums::EMsg;
-use crate::{DeserializableBytes, MessageHeader, MessageHeaderExt, SerializableBytes};
+use crate::{generated::enums::EMsg, DeserializableBytes, MessageHeader, MessageHeaderExt, SerializableBytes};
 
-// use steam_protobuf::steam::steammessages_base::CMsgProtoBufHeader;
+use steam_protobuf::steam::steammessages_base::CMsgProtoBufHeader;
 
 // add protobuf
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -32,7 +31,6 @@ pub struct StandardMessageHeader {
     #[new(value = "std::u64::MAX")]
     pub source_job_id: u64,
 }
-
 
 #[derive(new, Clone, Debug, Serialize, Deserialize, PartialEq, Eq, MsgHeader)]
 pub struct ExtendedMessageHeader {
