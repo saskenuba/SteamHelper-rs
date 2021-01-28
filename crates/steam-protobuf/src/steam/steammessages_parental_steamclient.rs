@@ -24,12 +24,15 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct ParentalApp {
     // message fields
     appid: ::std::option::Option<u32>,
     is_allowed: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -219,6 +222,7 @@ impl ::protobuf::reflect::ProtobufValue for ParentalApp {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct ParentalSettings {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -234,7 +238,9 @@ pub struct ParentalSettings {
     recovery_email: ::protobuf::SingularField<::std::string::String>,
     is_site_license_lock: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -876,6 +882,7 @@ impl ::protobuf::reflect::ProtobufValue for ParentalSettings {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_EnableParentalSettings_Request {
     // message fields
     password: ::protobuf::SingularField<::std::string::String>,
@@ -884,7 +891,9 @@ pub struct CParental_EnableParentalSettings_Request {
     enablecode: ::std::option::Option<u32>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1232,9 +1241,12 @@ impl ::protobuf::reflect::ProtobufValue for CParental_EnableParentalSettings_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_EnableParentalSettings_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1348,12 +1360,15 @@ impl ::protobuf::reflect::ProtobufValue for CParental_EnableParentalSettings_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_DisableParentalSettings_Request {
     // message fields
     password: ::protobuf::SingularField<::std::string::String>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1556,9 +1571,12 @@ impl ::protobuf::reflect::ProtobufValue for CParental_DisableParentalSettings_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_DisableParentalSettings_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1672,11 +1690,14 @@ impl ::protobuf::reflect::ProtobufValue for CParental_DisableParentalSettings_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_GetParentalSettings_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1828,11 +1849,14 @@ impl ::protobuf::reflect::ProtobufValue for CParental_GetParentalSettings_Reques
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_GetParentalSettings_Response {
     // message fields
     pub settings: ::protobuf::SingularPtrField<ParentalSettings>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2002,11 +2026,14 @@ impl ::protobuf::reflect::ProtobufValue for CParental_GetParentalSettings_Respon
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_GetSignedParentalSettings_Request {
     // message fields
     priority: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2158,12 +2185,15 @@ impl ::protobuf::reflect::ProtobufValue for CParental_GetSignedParentalSettings_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_GetSignedParentalSettings_Response {
     // message fields
     serialized_settings: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     signature: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2379,6 +2409,7 @@ impl ::protobuf::reflect::ProtobufValue for CParental_GetSignedParentalSettings_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_SetParentalSettings_Request {
     // message fields
     password: ::protobuf::SingularField<::std::string::String>,
@@ -2387,7 +2418,9 @@ pub struct CParental_SetParentalSettings_Request {
     sessionid: ::protobuf::SingularField<::std::string::String>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2748,9 +2781,12 @@ impl ::protobuf::reflect::ProtobufValue for CParental_SetParentalSettings_Reques
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_SetParentalSettings_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2864,11 +2900,14 @@ impl ::protobuf::reflect::ProtobufValue for CParental_SetParentalSettings_Respon
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_ValidateToken_Request {
     // message fields
     unlock_token: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3033,9 +3072,12 @@ impl ::protobuf::reflect::ProtobufValue for CParental_ValidateToken_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_ValidateToken_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3149,13 +3191,16 @@ impl ::protobuf::reflect::ProtobufValue for CParental_ValidateToken_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_ValidatePassword_Request {
     // message fields
     password: ::protobuf::SingularField<::std::string::String>,
     session: ::protobuf::SingularField<::std::string::String>,
     send_unlock_on_success: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3409,11 +3454,14 @@ impl ::protobuf::reflect::ProtobufValue for CParental_ValidatePassword_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_ValidatePassword_Response {
     // message fields
     token: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3578,11 +3626,14 @@ impl ::protobuf::reflect::ProtobufValue for CParental_ValidatePassword_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_LockClient_Request {
     // message fields
     session: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3747,9 +3798,12 @@ impl ::protobuf::reflect::ProtobufValue for CParental_LockClient_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_LockClient_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3863,9 +3917,12 @@ impl ::protobuf::reflect::ProtobufValue for CParental_LockClient_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_RequestRecoveryCode_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3979,9 +4036,12 @@ impl ::protobuf::reflect::ProtobufValue for CParental_RequestRecoveryCode_Reques
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_RequestRecoveryCode_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4095,12 +4155,15 @@ impl ::protobuf::reflect::ProtobufValue for CParental_RequestRecoveryCode_Respon
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_DisableWithRecoveryCode_Request {
     // message fields
     recovery_code: ::std::option::Option<u32>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4290,9 +4353,12 @@ impl ::protobuf::reflect::ProtobufValue for CParental_DisableWithRecoveryCode_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_DisableWithRecoveryCode_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4406,6 +4472,7 @@ impl ::protobuf::reflect::ProtobufValue for CParental_DisableWithRecoveryCode_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_ParentalSettingsChange_Notification {
     // message fields
     serialized_settings: ::protobuf::SingularField<::std::vec::Vec<u8>>,
@@ -4413,7 +4480,9 @@ pub struct CParental_ParentalSettingsChange_Notification {
     password: ::protobuf::SingularField<::std::string::String>,
     sessionid: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4731,12 +4800,15 @@ impl ::protobuf::reflect::ProtobufValue for CParental_ParentalSettingsChange_Not
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_ParentalUnlock_Notification {
     // message fields
     password: ::protobuf::SingularField<::std::string::String>,
     sessionid: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4952,11 +5024,14 @@ impl ::protobuf::reflect::ProtobufValue for CParental_ParentalUnlock_Notificatio
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParental_ParentalLock_Notification {
     // message fields
     sessionid: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5220,9 +5295,9 @@ static file_descriptor_proto_data: &'static [u8] = b"\
     \x20an\x20unlock\x20has\x20occurred\x20in\x20a\x20browser\x12\x8d\x01\n\
     \nNotifyLock\x12$.CParental_ParentalLock_Notification\x1a\x0b.NoResponse\
     \"L\x82\xb5\x18HNotification\x20from\x20server\x20to\x20client\x20that\
-    \x20a\x20lock\x20has\x20occurred\x20in\x20a\x20browser\x1a.\xc0\xb5\x18\
-    \x02\x82\xb5\x18&Parental\x20settings\x20client\x20notificationsB\x03\
-    \x80\x01\x01\
+    \x20a\x20lock\x20has\x20occurred\x20in\x20a\x20browser\x1a.\x82\xb5\x18&\
+    Parental\x20settings\x20client\x20notifications\xc0\xb5\x18\x02B\x03\x80\
+    \x01\x01\
 ";
 
 static file_descriptor_proto_lazy: ::protobuf::rt::LazyV2<::protobuf::descriptor::FileDescriptorProto> = ::protobuf::rt::LazyV2::INIT;

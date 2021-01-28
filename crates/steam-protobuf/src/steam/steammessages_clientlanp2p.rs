@@ -24,11 +24,14 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientLANP2PRequestChunks {
     // message fields
     pub chunk_keys: ::protobuf::RepeatedField<CMsgClientLANP2PRequestChunks_ChunkKey>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -190,12 +193,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientLANP2PRequestChunks {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientLANP2PRequestChunks_ChunkKey {
     // message fields
     depot_id: ::std::option::Option<u32>,
     sha: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -398,11 +404,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientLANP2PRequestChunks_ChunkK
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientLANP2PRequestChunksResponse {
     // message fields
     pub chunk_responses: ::protobuf::RepeatedField<CMsgClientLANP2PRequestChunksResponse_ChunkData>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -564,6 +573,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientLANP2PRequestChunksRespons
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientLANP2PRequestChunksResponse_ChunkData {
     // message fields
     result: ::std::option::Option<u32>,
@@ -573,7 +583,9 @@ pub struct CMsgClientLANP2PRequestChunksResponse_ChunkData {
     encrypted: ::std::option::Option<bool>,
     compressed: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

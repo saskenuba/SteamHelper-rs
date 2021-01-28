@@ -24,13 +24,16 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteClientStatus {
     // message fields
     client_id: ::std::option::Option<u64>,
     instance_id: ::std::option::Option<u64>,
     pub status: ::protobuf::SingularPtrField<super::steammessages_remoteclient_discovery::CMsgRemoteClientBroadcastStatus>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -276,11 +279,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteClientStatus {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteClientAppStatus {
     // message fields
     pub status_updates: ::protobuf::RepeatedField<CMsgRemoteClientAppStatus_AppStatus>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -442,6 +448,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteClientAppStatus {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteClientAppStatus_AppUpdateInfo {
     // message fields
     time_update_start: ::std::option::Option<u32>,
@@ -453,7 +460,9 @@ pub struct CMsgRemoteClientAppStatus_AppUpdateInfo {
     update_result: ::std::option::Option<i32>,
     update_state: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -871,6 +880,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteClientAppStatus_AppUpdateI
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteClientAppStatus_ShortcutInfo {
     // message fields
     name: ::protobuf::SingularField<::std::string::String>,
@@ -878,7 +888,9 @@ pub struct CMsgRemoteClientAppStatus_ShortcutInfo {
     pub categories: ::protobuf::RepeatedField<::std::string::String>,
     exepath: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1185,6 +1197,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteClientAppStatus_ShortcutIn
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteClientAppStatus_AppStatus {
     // message fields
     app_id: ::std::option::Option<u32>,
@@ -1193,7 +1206,9 @@ pub struct CMsgRemoteClientAppStatus_AppStatus {
     pub shortcut_info: ::protobuf::SingularPtrField<CMsgRemoteClientAppStatus_ShortcutInfo>,
     launch_available: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1533,6 +1548,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteClientAppStatus_AppStatus 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteClientStartStream {
     // message fields
     app_id: ::std::option::Option<u32>,
@@ -1547,7 +1563,9 @@ pub struct CMsgRemoteClientStartStream {
     audio_channel_count: ::std::option::Option<i32>,
     pub supported_transport: ::std::vec::Vec<super::steammessages_remoteclient_discovery::EStreamTransport>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2104,12 +2122,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteClientStartStream {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteClientStartStream_ReservedGamepad {
     // message fields
     controller_type: ::std::option::Option<u32>,
     controller_subtype: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2299,6 +2320,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteClientStartStream_Reserved
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteClientStartStreamResponse {
     // message fields
     e_launch_result: ::std::option::Option<i32>,
@@ -2312,7 +2334,9 @@ pub struct CMsgRemoteClientStartStreamResponse {
     launch_tasks_done: ::std::option::Option<i32>,
     launch_tasks_total: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2856,9 +2880,12 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteClientStartStreamResponse 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteClientPing {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2972,9 +2999,12 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteClientPing {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteClientPingResponse {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3088,13 +3118,16 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteClientPingResponse {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteClientAcceptEULA {
     // message fields
     pub app_id: ::std::vec::Vec<u32>,
     pub eula_id: ::protobuf::RepeatedField<::std::string::String>,
     pub eula_version: ::std::vec::Vec<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3328,12 +3361,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteClientAcceptEULA {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteClientGetControllerConfig {
     // message fields
     app_id: ::std::option::Option<u32>,
     controller_index: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3523,12 +3559,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteClientGetControllerConfig 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteClientGetControllerConfigResponse {
     // message fields
     eresult: ::std::option::Option<i32>,
     config_vdf: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3731,11 +3770,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteClientGetControllerConfigR
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteClientStreamingEnabled {
     // message fields
     enabled: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

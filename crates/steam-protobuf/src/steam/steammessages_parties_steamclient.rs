@@ -24,12 +24,15 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParties_JoinParty_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     beacon_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -219,12 +222,15 @@ impl ::protobuf::reflect::ProtobufValue for CParties_JoinParty_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParties_JoinParty_Response {
     // message fields
     beacon_id: ::std::option::Option<u64>,
     connect_string: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -427,12 +433,15 @@ impl ::protobuf::reflect::ProtobufValue for CParties_JoinParty_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParties_BeaconLocation {
     // message fields
     location_type: ::std::option::Option<u32>,
     location_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -622,6 +631,7 @@ impl ::protobuf::reflect::ProtobufValue for CParties_BeaconLocation {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParties_CreateBeacon_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -630,7 +640,9 @@ pub struct CParties_CreateBeacon_Request {
     connect_string: ::protobuf::SingularField<::std::string::String>,
     metadata: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -970,11 +982,14 @@ impl ::protobuf::reflect::ProtobufValue for CParties_CreateBeacon_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParties_CreateBeacon_Response {
     // message fields
     beacon_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1126,12 +1141,15 @@ impl ::protobuf::reflect::ProtobufValue for CParties_CreateBeacon_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParties_OnReservationCompleted_Request {
     // message fields
     beacon_id: ::std::option::Option<u64>,
     user_steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1321,11 +1339,14 @@ impl ::protobuf::reflect::ProtobufValue for CParties_OnReservationCompleted_Requ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParties_OnReservationCompleted_Response {
     // message fields
     beacon_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1477,12 +1498,15 @@ impl ::protobuf::reflect::ProtobufValue for CParties_OnReservationCompleted_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParties_CancelReservation_Request {
     // message fields
     beacon_id: ::std::option::Option<u64>,
     user_steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1672,11 +1696,14 @@ impl ::protobuf::reflect::ProtobufValue for CParties_CancelReservation_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParties_CancelReservation_Response {
     // message fields
     beacon_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1828,12 +1855,15 @@ impl ::protobuf::reflect::ProtobufValue for CParties_CancelReservation_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParties_ChangeNumOpenSlots_Request {
     // message fields
     beacon_id: ::std::option::Option<u64>,
     num_open_slots: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2023,11 +2053,14 @@ impl ::protobuf::reflect::ProtobufValue for CParties_ChangeNumOpenSlots_Request 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParties_ChangeNumOpenSlots_Response {
     // message fields
     beacon_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2179,11 +2212,14 @@ impl ::protobuf::reflect::ProtobufValue for CParties_ChangeNumOpenSlots_Response
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParties_DestroyBeacon_Request {
     // message fields
     beacon_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2335,11 +2371,14 @@ impl ::protobuf::reflect::ProtobufValue for CParties_DestroyBeacon_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CParties_DestroyBeacon_Response {
     // message fields
     beacon_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

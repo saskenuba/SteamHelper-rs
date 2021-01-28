@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EPublishedFileQueryType {
     k_PublishedFileQueryType_RankedByVote = 0,
     k_PublishedFileQueryType_RankedByPublicationDate = 1,
@@ -128,6 +129,7 @@ impl ::protobuf::reflect::ProtobufValue for EPublishedFileQueryType {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EPublishedFileInappropriateProvider {
     k_EPublishedFileInappropriateProvider_Invalid = 0,
     k_EPublishedFileInappropriateProvider_Google = 1,
@@ -181,6 +183,7 @@ impl ::protobuf::reflect::ProtobufValue for EPublishedFileInappropriateProvider 
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EPublishedFileInappropriateResult {
     k_EPublishedFileInappropriateResult_NotScanned = 0,
     k_EPublishedFileInappropriateResult_VeryUnlikely = 1,
@@ -243,6 +246,7 @@ impl ::protobuf::reflect::ProtobufValue for EPublishedFileInappropriateResult {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EPersonaStateFlag {
     k_EPersonaStateFlag_HasRichPresence = 1,
     k_EPersonaStateFlag_InJoinableGame = 2,
@@ -318,6 +322,7 @@ impl ::protobuf::reflect::ProtobufValue for EPersonaStateFlag {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EContentCheckProvider {
     k_EContentCheckProvider_Invalid = 0,
     k_EContentCheckProvider_Google = 1,
@@ -374,6 +379,7 @@ impl ::protobuf::reflect::ProtobufValue for EContentCheckProvider {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EBanContentCheckResult {
     k_EBanContentCheckResult_NotScanned = 0,
     k_EBanContentCheckResult_Reset = 1,

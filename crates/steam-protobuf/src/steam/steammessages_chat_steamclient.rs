@@ -24,9 +24,12 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChat_RequestFriendPersonaStates_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -140,9 +143,12 @@ impl ::protobuf::reflect::ProtobufValue for CChat_RequestFriendPersonaStates_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChat_RequestFriendPersonaStates_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -256,6 +262,7 @@ impl ::protobuf::reflect::ProtobufValue for CChat_RequestFriendPersonaStates_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_CreateChatRoomGroup_Request {
     // message fields
     steamid_partner: ::std::option::Option<u64>,
@@ -265,7 +272,9 @@ pub struct CChatRoom_CreateChatRoomGroup_Request {
     watching_broadcast_accountid: ::std::option::Option<u32>,
     watching_broadcast_channel_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -620,13 +629,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_CreateChatRoomGroup_Reques
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRole {
     // message fields
     role_id: ::std::option::Option<u64>,
     name: ::protobuf::SingularField<::std::string::String>,
     ordinal: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -867,6 +879,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRole {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoleActions {
     // message fields
     role_id: ::std::option::Option<u64>,
@@ -882,7 +895,9 @@ pub struct CChatRoleActions {
     can_mention_all: ::std::option::Option<bool>,
     can_set_watching_broadcast: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1452,6 +1467,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoleActions {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatPartyBeacon {
     // message fields
     app_id: ::std::option::Option<u32>,
@@ -1459,7 +1475,9 @@ pub struct CChatPartyBeacon {
     beacon_id: ::std::option::Option<u64>,
     game_metadata: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1738,6 +1756,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatPartyBeacon {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoomGroupHeaderState {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
@@ -1756,7 +1775,9 @@ pub struct CChatRoomGroupHeaderState {
     active_minigame_id: ::std::option::Option<u64>,
     avatar_ugc_url: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2522,6 +2543,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoomGroupHeaderState {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoomMember {
     // message fields
     accountid: ::std::option::Option<u32>,
@@ -2530,7 +2552,9 @@ pub struct CChatRoomMember {
     time_kick_expire: ::std::option::Option<u32>,
     pub role_ids: ::std::vec::Vec<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2828,6 +2852,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoomMember {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoomState {
     // message fields
     chat_id: ::std::option::Option<u64>,
@@ -2839,7 +2864,9 @@ pub struct CChatRoomState {
     last_message: ::protobuf::SingularField<::std::string::String>,
     accountid_last_message: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3285,6 +3312,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoomState {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoomGroupState {
     // message fields
     pub header_state: ::protobuf::SingularPtrField<CChatRoomGroupHeaderState>,
@@ -3293,7 +3321,9 @@ pub struct CChatRoomGroupState {
     pub chat_rooms: ::protobuf::RepeatedField<CChatRoomState>,
     pub kicked: ::protobuf::RepeatedField<CChatRoomMember>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3645,6 +3675,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoomGroupState {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserChatRoomState {
     // message fields
     chat_id: ::std::option::Option<u64>,
@@ -3656,7 +3687,9 @@ pub struct CUserChatRoomState {
     unread_indicator_muted: ::std::option::Option<bool>,
     time_first_unread: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4066,6 +4099,7 @@ impl ::protobuf::reflect::ProtobufValue for CUserChatRoomState {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserChatRoomGroupState {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
@@ -4076,7 +4110,9 @@ pub struct CUserChatRoomGroupState {
     time_last_group_ack: ::std::option::Option<u32>,
     unread_indicator_muted: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4458,13 +4494,16 @@ impl ::protobuf::reflect::ProtobufValue for CUserChatRoomGroupState {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_CreateChatRoomGroup_Response {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     pub state: ::protobuf::SingularPtrField<CChatRoomGroupState>,
     pub user_chat_state: ::protobuf::SingularPtrField<CUserChatRoomGroupState>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4728,12 +4767,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_CreateChatRoomGroup_Respon
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SaveChatRoomGroup_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     name: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4936,9 +4978,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SaveChatRoomGroup_Request 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SaveChatRoomGroup_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5052,12 +5097,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SaveChatRoomGroup_Response
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_RenameChatRoomGroup_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     name: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5260,11 +5308,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_RenameChatRoomGroup_Reques
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_RenameChatRoomGroup_Response {
     // message fields
     name: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5429,12 +5480,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_RenameChatRoomGroup_Respon
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SetChatRoomGroupTagline_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     tagline: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5637,9 +5691,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SetChatRoomGroupTagline_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SetChatRoomGroupTagline_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5753,12 +5810,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SetChatRoomGroupTagline_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SetChatRoomGroupAvatar_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     avatar_sha: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5961,9 +6021,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SetChatRoomGroupAvatar_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SetChatRoomGroupAvatar_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6077,13 +6140,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SetChatRoomGroupAvatar_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SetChatRoomGroupWatchingBroadcast_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     watching_broadcast_accountid: ::std::option::Option<u32>,
     watching_broadcast_channel_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6311,9 +6377,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SetChatRoomGroupWatchingBr
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SetChatRoomGroupWatchingBroadcast_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6427,12 +6496,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SetChatRoomGroupWatchingBr
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_JoinMiniGameForChatRoomGroup_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     chat_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6622,11 +6694,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_JoinMiniGameForChatRoomGro
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_JoinMiniGameForChatRoomGroup_Response {
     // message fields
     minigame_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6778,13 +6853,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_JoinMiniGameForChatRoomGro
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_EndMiniGameForChatRoomGroup_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     chat_id: ::std::option::Option<u64>,
     minigame_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7012,9 +7090,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_EndMiniGameForChatRoomGrou
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_EndMiniGameForChatRoomGroup_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7128,13 +7209,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_EndMiniGameForChatRoomGrou
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_MuteUser_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     steamid: ::std::option::Option<u64>,
     expiration: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7362,9 +7446,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_MuteUser_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_MuteUser_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7478,13 +7565,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_MuteUser_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_KickUser_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     steamid: ::std::option::Option<u64>,
     expiration: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7712,9 +7802,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_KickUser_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_KickUser_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7828,13 +7921,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_KickUser_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SetUserBanState_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     steamid: ::std::option::Option<u64>,
     ban_state: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8062,9 +8158,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SetUserBanState_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SetUserBanState_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8178,12 +8277,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SetUserBanState_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_RevokeInvite_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8373,9 +8475,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_RevokeInvite_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_RevokeInvite_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8489,12 +8594,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_RevokeInvite_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_CreateRole_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     name: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8697,11 +8805,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_CreateRole_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_CreateRole_Response {
     // message fields
     pub actions: ::protobuf::SingularPtrField<CChatRoleActions>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8871,11 +8982,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_CreateRole_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetRoles_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9027,11 +9141,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetRoles_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetRoles_Response {
     // message fields
     pub roles: ::protobuf::RepeatedField<CChatRole>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9193,13 +9310,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetRoles_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_RenameRole_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     role_id: ::std::option::Option<u64>,
     name: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9440,9 +9560,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_RenameRole_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_RenameRole_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9556,13 +9679,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_RenameRole_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_ReorderRole_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     role_id: ::std::option::Option<u64>,
     ordinal: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9790,9 +9916,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_ReorderRole_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_ReorderRole_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9906,12 +10035,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_ReorderRole_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_DeleteRole_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     role_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -10101,9 +10233,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_DeleteRole_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_DeleteRole_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -10217,12 +10352,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_DeleteRole_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetRoleActions_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     role_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -10412,11 +10550,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetRoleActions_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetRoleActions_Response {
     // message fields
     pub actions: ::protobuf::RepeatedField<CChatRoleActions>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -10578,13 +10719,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetRoleActions_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_ReplaceRoleActions_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     role_id: ::std::option::Option<u64>,
     pub actions: ::protobuf::SingularPtrField<CChatRoleActions>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -10830,9 +10974,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_ReplaceRoleActions_Request
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_ReplaceRoleActions_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -10946,13 +11093,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_ReplaceRoleActions_Respons
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_AddRoleToUser_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     role_id: ::std::option::Option<u64>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -11180,9 +11330,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_AddRoleToUser_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_AddRoleToUser_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -11296,12 +11449,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_AddRoleToUser_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetRolesForUser_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -11491,11 +11647,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetRolesForUser_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetRolesForUser_Response {
     // message fields
     pub role_ids: ::std::vec::Vec<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -11649,13 +11808,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetRolesForUser_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_DeleteRoleFromUser_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     role_id: ::std::option::Option<u64>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -11883,9 +12045,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_DeleteRoleFromUser_Request
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_DeleteRoleFromUser_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -11999,13 +12164,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_DeleteRoleFromUser_Respons
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_JoinChatRoomGroup_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     invite_code: ::protobuf::SingularField<::std::string::String>,
     chat_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -12246,6 +12414,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_JoinChatRoomGroup_Request 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_JoinChatRoomGroup_Response {
     // message fields
     pub state: ::protobuf::SingularPtrField<CChatRoomGroupState>,
@@ -12253,7 +12422,9 @@ pub struct CChatRoom_JoinChatRoomGroup_Response {
     join_chat_id: ::std::option::Option<u64>,
     time_expire: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -12555,6 +12726,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_JoinChatRoomGroup_Response
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_InviteFriendToChatRoomGroup_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
@@ -12562,7 +12734,9 @@ pub struct CChatRoom_InviteFriendToChatRoomGroup_Request {
     chat_id: ::std::option::Option<u64>,
     skip_friendsui_check: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -12828,9 +13002,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_InviteFriendToChatRoomGrou
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_InviteFriendToChatRoomGroup_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -12944,11 +13121,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_InviteFriendToChatRoomGrou
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_LeaveChatRoomGroup_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13100,9 +13280,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_LeaveChatRoomGroup_Request
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_LeaveChatRoomGroup_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13216,13 +13399,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_LeaveChatRoomGroup_Respons
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_CreateChatRoom_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     name: ::protobuf::SingularField<::std::string::String>,
     allow_voice: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13463,11 +13649,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_CreateChatRoom_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_CreateChatRoom_Response {
     // message fields
     pub chat_room: ::protobuf::SingularPtrField<CChatRoomState>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13637,12 +13826,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_CreateChatRoom_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_DeleteChatRoom_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     chat_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13832,9 +14024,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_DeleteChatRoom_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_DeleteChatRoom_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13948,13 +14143,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_DeleteChatRoom_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_RenameChatRoom_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     chat_id: ::std::option::Option<u64>,
     name: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14195,9 +14393,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_RenameChatRoom_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_RenameChatRoom_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14311,13 +14512,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_RenameChatRoom_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_ReorderChatRoom_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     chat_id: ::std::option::Option<u64>,
     move_after_chat_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14545,9 +14749,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_ReorderChatRoom_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_ReorderChatRoom_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14661,6 +14868,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_ReorderChatRoom_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SendChatMessage_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
@@ -14668,7 +14876,9 @@ pub struct CChatRoom_SendChatMessage_Request {
     message: ::protobuf::SingularField<::std::string::String>,
     echo_to_sender: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14947,6 +15157,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SendChatMessage_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SendChatMessage_Response {
     // message fields
     modified_message: ::protobuf::SingularField<::std::string::String>,
@@ -14954,7 +15165,9 @@ pub struct CChatRoom_SendChatMessage_Response {
     ordinal: ::std::option::Option<u32>,
     message_without_bb_code: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -15246,12 +15459,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SendChatMessage_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_JoinVoiceChat_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     chat_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -15441,11 +15657,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_JoinVoiceChat_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_JoinVoiceChat_Response {
     // message fields
     voice_chatid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -15597,12 +15816,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_JoinVoiceChat_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_LeaveVoiceChat_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     chat_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -15792,9 +16014,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_LeaveVoiceChat_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_LeaveVoiceChat_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -15908,6 +16133,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_LeaveVoiceChat_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetMessageHistory_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
@@ -15918,7 +16144,9 @@ pub struct CChatRoom_GetMessageHistory_Request {
     start_ordinal: ::std::option::Option<u32>,
     max_count: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -16298,13 +16526,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetMessageHistory_Request 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct ServerMessage {
     // message fields
     message: ::std::option::Option<EChatRoomServerMessage>,
     string_param: ::protobuf::SingularField<::std::string::String>,
     accountid_param: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -16541,12 +16772,15 @@ impl ::protobuf::reflect::ProtobufValue for ServerMessage {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetMessageHistory_Response {
     // message fields
     pub messages: ::protobuf::RepeatedField<CChatRoom_GetMessageHistory_Response_ChatMessage>,
     more_available: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -16746,6 +16980,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetMessageHistory_Response
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetMessageHistory_Response_ChatMessage {
     // message fields
     sender: ::std::option::Option<u32>,
@@ -16755,7 +16990,9 @@ pub struct CChatRoom_GetMessageHistory_Response_ChatMessage {
     pub server_message: ::protobuf::SingularPtrField<ServerMessage>,
     deleted: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17128,9 +17365,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetMessageHistory_Response
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetMyChatRoomGroups_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17244,6 +17484,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetMyChatRoomGroups_Reques
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetChatRoomGroupSummary_Response {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
@@ -17268,7 +17509,9 @@ pub struct CChatRoom_GetChatRoomGroupSummary_Response {
     active_minigame_id: ::std::option::Option<u64>,
     avatar_ugc_url: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18262,12 +18505,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetChatRoomGroupSummary_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoomSummaryPair {
     // message fields
     pub user_chat_group_state: ::protobuf::SingularPtrField<CUserChatRoomGroupState>,
     pub group_summary: ::protobuf::SingularPtrField<CChatRoom_GetChatRoomGroupSummary_Response>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18493,11 +18739,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoomSummaryPair {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetMyChatRoomGroups_Response {
     // message fields
     pub chat_room_groups: ::protobuf::RepeatedField<CChatRoomSummaryPair>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18659,11 +18908,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetMyChatRoomGroups_Respon
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetChatRoomGroupState_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18815,11 +19067,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetChatRoomGroupState_Requ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetChatRoomGroupState_Response {
     // message fields
     pub state: ::protobuf::SingularPtrField<CChatRoomGroupState>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18989,11 +19244,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetChatRoomGroupState_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetChatRoomGroupSummary_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19145,12 +19403,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetChatRoomGroupSummary_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SetAppChatRoomGroupForceActive_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     requesting_app_id: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19340,12 +19601,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SetAppChatRoomGroupForceAc
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SetAppChatRoomGroupForceActive_Response {
     // message fields
     result: ::std::option::Option<u32>,
     pub accounts_in_channel: ::std::vec::Vec<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19537,12 +19801,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SetAppChatRoomGroupForceAc
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SetAppChatRoomGroupStopForceActive_Notification {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     requesting_app_id: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19732,13 +19999,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SetAppChatRoomGroupStopFor
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_AckChatMessage_Notification {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     chat_id: ::std::option::Option<u64>,
     timestamp: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19966,13 +20236,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_AckChatMessage_Notificatio
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_CreateInviteLink_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     seconds_valid: ::std::option::Option<u32>,
     chat_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -20200,12 +20473,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_CreateInviteLink_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_CreateInviteLink_Response {
     // message fields
     invite_code: ::protobuf::SingularField<::std::string::String>,
     seconds_valid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -20408,11 +20684,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_CreateInviteLink_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetInviteLinkInfo_Request {
     // message fields
     invite_code: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -20577,6 +20856,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetInviteLinkInfo_Request 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetInviteLinkInfo_Response {
     // message fields
     steamid_sender: ::std::option::Option<u64>,
@@ -20587,7 +20867,9 @@ pub struct CChatRoom_GetInviteLinkInfo_Response {
     time_kick_expire: ::std::option::Option<u32>,
     banned: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -21003,6 +21285,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetInviteLinkInfo_Response
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetInviteInfo_Request {
     // message fields
     steamid_invitee: ::std::option::Option<u64>,
@@ -21010,7 +21293,9 @@ pub struct CChatRoom_GetInviteInfo_Request {
     chat_id: ::std::option::Option<u64>,
     invite_code: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -21289,13 +21574,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetInviteInfo_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetInviteInfo_Response {
     // message fields
     pub group_summary: ::protobuf::SingularPtrField<CChatRoom_GetChatRoomGroupSummary_Response>,
     time_kick_expire: ::std::option::Option<u32>,
     banned: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -21541,11 +21829,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetInviteInfo_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetInviteLinksForGroup_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -21697,11 +21988,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetInviteLinksForGroup_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetInviteLinksForGroup_Response {
     // message fields
     pub invite_links: ::protobuf::RepeatedField<CChatRoom_GetInviteLinksForGroup_Response_LinkInfo>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -21863,6 +22157,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetInviteLinksForGroup_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetInviteLinksForGroup_Response_LinkInfo {
     // message fields
     invite_code: ::protobuf::SingularField<::std::string::String>,
@@ -21870,7 +22165,9 @@ pub struct CChatRoom_GetInviteLinksForGroup_Response_LinkInfo {
     time_expires: ::std::option::Option<u32>,
     chat_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -22149,11 +22446,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetInviteLinksForGroup_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetBanList_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -22305,11 +22605,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetBanList_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetBanList_Response {
     // message fields
     pub bans: ::protobuf::RepeatedField<CChatRoom_GetBanList_Response_BanInfo>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -22471,6 +22774,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetBanList_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetBanList_Response_BanInfo {
     // message fields
     accountid: ::std::option::Option<u32>,
@@ -22478,7 +22782,9 @@ pub struct CChatRoom_GetBanList_Response_BanInfo {
     time_banned: ::std::option::Option<u32>,
     ban_reason: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -22757,11 +23063,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetBanList_Response_BanInf
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetInviteList_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -22913,13 +23222,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetInviteList_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoomGroupInvite {
     // message fields
     accountid: ::std::option::Option<u32>,
     accountid_actor: ::std::option::Option<u32>,
     time_invited: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -23147,11 +23459,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoomGroupInvite {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_GetInviteList_Response {
     // message fields
     pub invites: ::protobuf::RepeatedField<CChatRoomGroupInvite>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -23313,12 +23628,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_GetInviteList_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_DeleteInviteLink_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     invite_code: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -23521,9 +23839,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_DeleteInviteLink_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_DeleteInviteLink_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -23637,13 +23958,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_DeleteInviteLink_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SetSessionActiveChatRoomGroups_Request {
     // message fields
     pub chat_group_ids: ::std::vec::Vec<u64>,
     pub chat_groups_data_requested: ::std::vec::Vec<u64>,
     virtualize_members_threshold: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -23875,12 +24199,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SetSessionActiveChatRoomGr
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SetSessionActiveChatRoomGroups_Response {
     // message fields
     pub chat_states: ::protobuf::RepeatedField<CChatRoomGroupState>,
     pub virtualize_members_chat_group_ids: ::std::vec::Vec<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -24082,13 +24409,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SetSessionActiveChatRoomGr
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SetUserChatGroupPreferences_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     pub chat_group_preferences: ::protobuf::SingularPtrField<CChatRoom_SetUserChatGroupPreferences_Request_ChatGroupPreferences>,
     pub chat_room_preferences: ::protobuf::RepeatedField<CChatRoom_SetUserChatGroupPreferences_Request_ChatRoomPreferences>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -24344,13 +24674,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SetUserChatGroupPreference
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SetUserChatGroupPreferences_Request_ChatGroupPreferences {
     // message fields
     desktop_notification_level: ::std::option::Option<EChatRoomNotificationLevel>,
     mobile_notification_level: ::std::option::Option<EChatRoomNotificationLevel>,
     unread_indicator_muted: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -24570,6 +24903,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SetUserChatGroupPreference
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SetUserChatGroupPreferences_Request_ChatRoomPreferences {
     // message fields
     chat_id: ::std::option::Option<u64>,
@@ -24577,7 +24911,9 @@ pub struct CChatRoom_SetUserChatGroupPreferences_Request_ChatRoomPreferences {
     mobile_notification_level: ::std::option::Option<EChatRoomNotificationLevel>,
     unread_indicator_muted: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -24835,9 +25171,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SetUserChatGroupPreference
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SetUserChatGroupPreferences_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -24951,13 +25290,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SetUserChatGroupPreference
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_DeleteChatMessages_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     chat_id: ::std::option::Option<u64>,
     pub messages: ::protobuf::RepeatedField<CChatRoom_DeleteChatMessages_Request_Message>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -25195,12 +25537,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_DeleteChatMessages_Request
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_DeleteChatMessages_Request_Message {
     // message fields
     server_timestamp: ::std::option::Option<u32>,
     ordinal: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -25390,9 +25735,12 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_DeleteChatMessages_Request
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_DeleteChatMessages_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -25506,6 +25854,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_DeleteChatMessages_Respons
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_UpdateMemberListView_Notification {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
@@ -25517,7 +25866,9 @@ pub struct CChatRoom_UpdateMemberListView_Notification {
     pub persona_subscribe_accountids: ::std::vec::Vec<i32>,
     pub persona_unsubscribe_accountids: ::std::vec::Vec<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -25939,6 +26290,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_UpdateMemberListView_Notif
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SearchMembers_Request {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
@@ -25946,7 +26298,9 @@ pub struct CChatRoom_SearchMembers_Request {
     search_text: ::protobuf::SingularField<::std::string::String>,
     max_results: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -26225,12 +26579,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SearchMembers_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SearchMembers_Response {
     // message fields
     pub matching_members: ::protobuf::RepeatedField<CChatRoom_SearchMembers_Response_MemberMatch>,
     status_flags: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -26430,12 +26787,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SearchMembers_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_SearchMembers_Response_MemberMatch {
     // message fields
     accountid: ::std::option::Option<i32>,
     pub persona: ::protobuf::SingularPtrField<super::steammessages_clientserver_friends::CMsgClientPersonaState_Friend>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -26643,12 +27003,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_SearchMembers_Response_Mem
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClanChatRooms_GetClanChatRoomInfo_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     autocreate: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -26838,11 +27201,14 @@ impl ::protobuf::reflect::ProtobufValue for CClanChatRooms_GetClanChatRoomInfo_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClanChatRooms_GetClanChatRoomInfo_Response {
     // message fields
     pub chat_group_summary: ::protobuf::SingularPtrField<CChatRoom_GetChatRoomGroupSummary_Response>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -27012,12 +27378,15 @@ impl ::protobuf::reflect::ProtobufValue for CClanChatRooms_GetClanChatRoomInfo_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClanChatRooms_SetClanChatRoomPrivate_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     chat_room_private: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -27207,11 +27576,14 @@ impl ::protobuf::reflect::ProtobufValue for CClanChatRooms_SetClanChatRoomPrivat
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClanChatRooms_SetClanChatRoomPrivate_Response {
     // message fields
     chat_room_private: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -27363,13 +27735,16 @@ impl ::protobuf::reflect::ProtobufValue for CClanChatRooms_SetClanChatRoomPrivat
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatMentions {
     // message fields
     mention_all: ::std::option::Option<bool>,
     mention_here: ::std::option::Option<bool>,
     pub mention_accountids: ::std::vec::Vec<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -27599,6 +27974,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatMentions {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_IncomingChatMessage_Notification {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
@@ -27612,7 +27988,9 @@ pub struct CChatRoom_IncomingChatMessage_Notification {
     message_no_bbcode: ::protobuf::SingularField<::std::string::String>,
     chat_name: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -28181,13 +28559,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_IncomingChatMessage_Notifi
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_ChatMessageModified_Notification {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     chat_id: ::std::option::Option<u64>,
     pub messages: ::protobuf::RepeatedField<CChatRoom_ChatMessageModified_Notification_ChatMessage>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -28425,13 +28806,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_ChatMessageModified_Notifi
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_ChatMessageModified_Notification_ChatMessage {
     // message fields
     server_timestamp: ::std::option::Option<u32>,
     ordinal: ::std::option::Option<u32>,
     deleted: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -28659,13 +29043,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_ChatMessageModified_Notifi
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_MemberStateChange_Notification {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     pub member: ::protobuf::SingularPtrField<CChatRoomMember>,
     change: ::std::option::Option<EChatRoomMemberStateChange>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -28907,11 +29294,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_MemberStateChange_Notifica
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_ChatRoomHeaderState_Notification {
     // message fields
     pub header_state: ::protobuf::SingularPtrField<CChatRoomGroupHeaderState>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -29081,13 +29471,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_ChatRoomHeaderState_Notifi
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_ChatRoomGroupRoomsChange_Notification {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
     default_chat_id: ::std::option::Option<u64>,
     pub chat_rooms: ::protobuf::RepeatedField<CChatRoomState>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -29325,12 +29718,15 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_ChatRoomGroupRoomsChange_N
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoom_NotifyShouldRejoinChatRoomVoiceChat_Notification {
     // message fields
     chat_id: ::std::option::Option<u64>,
     chat_group_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -29520,6 +29916,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoom_NotifyShouldRejoinChatRoom
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct ChatRoomClient_NotifyChatGroupUserStateChanged_Notification {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
@@ -29527,7 +29924,9 @@ pub struct ChatRoomClient_NotifyChatGroupUserStateChanged_Notification {
     pub group_summary: ::protobuf::SingularPtrField<CChatRoom_GetChatRoomGroupSummary_Response>,
     user_action: ::std::option::Option<EChatRoomMemberStateChange>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -29825,11 +30224,14 @@ impl ::protobuf::reflect::ProtobufValue for ChatRoomClient_NotifyChatGroupUserSt
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct ChatRoomClient_NotifyChatRoomDisconnect_Notification {
     // message fields
     pub chat_group_ids: ::std::vec::Vec<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -29983,6 +30385,7 @@ impl ::protobuf::reflect::ProtobufValue for ChatRoomClient_NotifyChatRoomDisconn
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoomMemberListView {
     // message fields
     start: ::std::option::Option<i32>,
@@ -29991,7 +30394,9 @@ pub struct CChatRoomMemberListView {
     client_changenumber: ::std::option::Option<i32>,
     server_changenumber: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -30295,13 +30700,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoomMemberListView {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoomMemberSummaryCounts {
     // message fields
     ingame: ::std::option::Option<i32>,
     online: ::std::option::Option<i32>,
     offline: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -30529,6 +30937,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoomMemberSummaryCounts {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoomClient_MemberListViewUpdated_Notification {
     // message fields
     chat_group_id: ::std::option::Option<u64>,
@@ -30539,7 +30948,9 @@ pub struct CChatRoomClient_MemberListViewUpdated_Notification {
     pub member_summary: ::protobuf::SingularPtrField<CChatRoomMemberSummaryCounts>,
     pub subscribed_personas: ::protobuf::RepeatedField<super::steammessages_clientserver_friends::CMsgClientPersonaState_Friend>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -30975,13 +31386,16 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoomClient_MemberListViewUpdate
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatRoomClient_MemberListViewUpdated_Notification_MemberListViewEntry {
     // message fields
     rank: ::std::option::Option<i32>,
     accountid: ::std::option::Option<u32>,
     pub persona: ::protobuf::SingularPtrField<super::steammessages_clientserver_friends::CMsgClientPersonaState_Friend>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -31227,6 +31641,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatRoomClient_MemberListViewUpdate
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatUsability_ClientUsabilityMetrics_Notification {
     // message fields
     metrics_run_id: ::std::option::Option<u32>,
@@ -31238,7 +31653,9 @@ pub struct CChatUsability_ClientUsabilityMetrics_Notification {
     pub ui_state: ::protobuf::SingularPtrField<CChatUsability_ClientUsabilityMetrics_Notification_UIState>,
     pub metrics: ::protobuf::SingularPtrField<CChatUsability_ClientUsabilityMetrics_Notification_Metrics>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -31728,6 +32145,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatUsability_ClientUsabilityMetric
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatUsability_ClientUsabilityMetrics_Notification_Settings {
     // message fields
     notifications_show_ingame: ::std::option::Option<bool>,
@@ -31756,7 +32174,9 @@ pub struct CChatUsability_ClientUsabilityMetrics_Notification_Settings {
     sign_into_friends: ::std::option::Option<bool>,
     animated_avatars: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -32820,6 +33240,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatUsability_ClientUsabilityMetric
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatUsability_ClientUsabilityMetrics_Notification_VoiceSettings {
     // message fields
     voice_input_gain: ::std::option::Option<f32>,
@@ -32834,7 +33255,9 @@ pub struct CChatUsability_ClientUsabilityMetrics_Notification_VoiceSettings {
     push_to_mute_enabled: ::std::option::Option<bool>,
     play_ptt_sounds: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -33366,6 +33789,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatUsability_ClientUsabilityMetric
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatUsability_ClientUsabilityMetrics_Notification_UIState {
     // message fields
     friends_list_height: ::std::option::Option<i32>,
@@ -33385,7 +33809,9 @@ pub struct CChatUsability_ClientUsabilityMetrics_Notification_UIState {
     in_one_on_one_voice_chat: ::std::option::Option<bool>,
     in_group_voice_chat: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -34125,6 +34551,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatUsability_ClientUsabilityMetric
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatUsability_ClientUsabilityMetrics_Notification_UIState_CategoryCollapseState {
     // message fields
     in_game_collapsed: ::std::option::Option<bool>,
@@ -34133,7 +34560,9 @@ pub struct CChatUsability_ClientUsabilityMetrics_Notification_UIState_CategoryCo
     game_groups_collapsed: ::std::option::Option<i32>,
     categories_collapsed: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -34437,6 +34866,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatUsability_ClientUsabilityMetric
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatUsability_ClientUsabilityMetrics_Notification_Metrics {
     // message fields
     friends_count: ::std::option::Option<i32>,
@@ -34450,7 +34880,9 @@ pub struct CChatUsability_ClientUsabilityMetrics_Notification_Metrics {
     group_chat_count: ::std::option::Option<i32>,
     group_chat_favorite_count: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -34944,11 +35376,14 @@ impl ::protobuf::reflect::ProtobufValue for CChatUsability_ClientUsabilityMetric
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CChatUsability_RequestClientUsabilityMetrics_Notification {
     // message fields
     metrics_run_id: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -35100,6 +35535,7 @@ impl ::protobuf::reflect::ProtobufValue for CChatUsability_RequestClientUsabilit
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EChatRoomJoinState {
     k_EChatRoomJoinState_Default = 0,
     k_EChatRoomJoinState_None = 1,
@@ -35156,6 +35592,7 @@ impl ::protobuf::reflect::ProtobufValue for EChatRoomJoinState {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EChatRoomGroupRank {
     k_EChatRoomGroupRank_Default = 0,
     k_EChatRoomGroupRank_Viewer = 10,
@@ -35224,6 +35661,7 @@ impl ::protobuf::reflect::ProtobufValue for EChatRoomGroupRank {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EChatRoomNotificationLevel {
     k_EChatroomNotificationLevel_Invalid = 0,
     k_EChatroomNotificationLevel_None = 1,
@@ -35283,6 +35721,7 @@ impl ::protobuf::reflect::ProtobufValue for EChatRoomNotificationLevel {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EChatRoomServerMessage {
     k_EChatRoomServerMsg_Invalid = 0,
     k_EChatRoomServerMsg_RenameChatRoom = 1,
@@ -35357,6 +35796,7 @@ impl ::protobuf::reflect::ProtobufValue for EChatRoomServerMessage {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EChatRoomMemberStateChange {
     k_EChatRoomMemberStateChange_Invalid = 0,
     k_EChatRoomMemberStateChange_Joined = 1,
@@ -36185,16 +36625,16 @@ static file_descriptor_proto_data: &'static [u8] = b"\
     \x1a\x0b.NoResponse\"t\x82\xb5\x18pThe\x20list\x20of\x20members\x20for\
     \x20a\x20chat\x20room\x20with\x20virtualized\x20member\x20list\x20has\
     \x20changed\x20on\x20the\x20server\x20(or\x20client\x20requested)\x1a,\
-    \xc0\xb5\x18\x02\x82\xb5\x18$Client\x20notifications\x20for\x20chat\x20e\
-    vents2\xc2\x01\n\rChatUsability\x12\x86\x01\n\x1cNotifyClientUsabilityMe\
-    trics\x123.CChatUsability_ClientUsabilityMetrics_Notification\x1a\x0b.No\
-    Response\"$\x82\xb5\x18\x20Incoming\x20metrics\x20from\x20the\x20client\
-    \x1a(\x82\xb5\x18$Client\x20notifications\x20for\x20chat\x20events2\xe2\
-    \x01\n\x13ChatUsabilityClient\x12\x99\x01\n#NotifyRequestClientUsability\
-    Metrics\x12:.CChatUsability_RequestClientUsabilityMetrics_Notification\
-    \x1a\x0b.NoResponse\")\x82\xb5\x18%Request\x20client\x20send\x20usabilit\
-    y\x20metrics\x1a/\xc0\xb5\x18\x02\x82\xb5\x18'Client\x20notifications\
-    \x20for\x20chat\x20usabilityB\x03\x80\x01\x01\
+    \x82\xb5\x18$Client\x20notifications\x20for\x20chat\x20events\xc0\xb5\
+    \x18\x022\xc2\x01\n\rChatUsability\x12\x86\x01\n\x1cNotifyClientUsabilit\
+    yMetrics\x123.CChatUsability_ClientUsabilityMetrics_Notification\x1a\x0b\
+    .NoResponse\"$\x82\xb5\x18\x20Incoming\x20metrics\x20from\x20the\x20clie\
+    nt\x1a(\x82\xb5\x18$Client\x20notifications\x20for\x20chat\x20events2\
+    \xe2\x01\n\x13ChatUsabilityClient\x12\x99\x01\n#NotifyRequestClientUsabi\
+    lityMetrics\x12:.CChatUsability_RequestClientUsabilityMetrics_Notificati\
+    on\x1a\x0b.NoResponse\")\x82\xb5\x18%Request\x20client\x20send\x20usabil\
+    ity\x20metrics\x1a/\x82\xb5\x18'Client\x20notifications\x20for\x20chat\
+    \x20usability\xc0\xb5\x18\x02B\x03\x80\x01\x01\
 ";
 
 static file_descriptor_proto_lazy: ::protobuf::rt::LazyV2<::protobuf::descriptor::FileDescriptorProto> = ::protobuf::rt::LazyV2::INIT;

@@ -25,6 +25,7 @@
 
 // Note: you cannot use pattern matching for enums with allow_alias option
 #[derive(Clone,Eq,Debug)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EMsg {
     k_EMsgInvalid, // 0
     k_EMsgMulti, // 1
@@ -6056,6 +6057,7 @@ impl ::protobuf::reflect::ProtobufValue for EMsg {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EClientPersonaStateFlag {
     k_EClientPersonaStateFlagStatus = 1,
     k_EClientPersonaStateFlagPlayerName = 2,
@@ -6143,6 +6145,7 @@ impl ::protobuf::reflect::ProtobufValue for EClientPersonaStateFlag {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EMsgClanAccountFlags {
     k_EMsgClanAccountFlagPublic = 1,
     k_EMsgClanAccountFlagLarge = 2,
@@ -6203,6 +6206,7 @@ impl ::protobuf::reflect::ProtobufValue for EMsgClanAccountFlags {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum ESteamReviewScore {
     k_ESteamReviewScore_OverwhelminglyPositive = 9,
     k_ESteamReviewScore_VeryPositive = 8,

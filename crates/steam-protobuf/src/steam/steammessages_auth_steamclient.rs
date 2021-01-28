@@ -24,12 +24,15 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloudGaming_CreateNonce_Request {
     // message fields
     platform: ::protobuf::SingularField<::std::string::String>,
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -232,12 +235,15 @@ impl ::protobuf::reflect::ProtobufValue for CCloudGaming_CreateNonce_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloudGaming_CreateNonce_Response {
     // message fields
     nonce: ::protobuf::SingularField<::std::string::String>,
     expiry: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -440,12 +446,15 @@ impl ::protobuf::reflect::ProtobufValue for CCloudGaming_CreateNonce_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloudGaming_GetTimeRemaining_Request {
     // message fields
     platform: ::protobuf::SingularField<::std::string::String>,
     pub appid_list: ::std::vec::Vec<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -650,12 +659,15 @@ impl ::protobuf::reflect::ProtobufValue for CCloudGaming_GetTimeRemaining_Reques
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloudGaming_TimeRemaining {
     // message fields
     appid: ::std::option::Option<u32>,
     minutes_remaining: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -845,11 +857,14 @@ impl ::protobuf::reflect::ProtobufValue for CCloudGaming_TimeRemaining {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloudGaming_GetTimeRemaining_Response {
     // message fields
     pub entries: ::protobuf::RepeatedField<CCloudGaming_TimeRemaining>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

@@ -1,19 +1,14 @@
 use std::{ffi::OsString, fs};
 
 use glob::glob;
+use protoc_rust::Customize;
 
 macro_rules! generate_protos_for {
     ($folder_name:literal) => {{
         let mut entries: Vec<OsString> = Vec::new();
         let mut filenames: Vec<OsString> = Vec::new();
 
-        for entry in glob(concat!(
-            "crates/steam-protobuf/assets/Protobufs/",
-            $folder_name,
-            "/*"
-        ))
-        .unwrap()
-        {
+        for entry in glob(concat!("crates/steam-protobuf/assets/Protobufs/", $folder_name, "/*")).unwrap() {
             let entry = entry.unwrap();
             entries.insert(0, entry.clone().into());
             filenames.insert(0, entry.file_name().unwrap().into());
@@ -39,7 +34,13 @@ macro_rules! generate_protos_for {
         fs::File::create(modfile_path).unwrap();
         fs::write(modfile_path, new_filenames.join("")).unwrap();
 
+        let proto_customization = Customize {
+            serde_derive: Some(true),
+            ..Default::default()
+        };
+
         protoc_rust::Codegen::new()
+            .customize(proto_customization)
             .out_dir(&concat!("crates/steam-protobuf/src/", $folder_name))
             .inputs(entries_as_slice)
             .includes(&[

@@ -24,9 +24,12 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientHeartBeat {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -140,11 +143,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientHeartBeat {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientServerTimestampRequest {
     // message fields
     client_request_timestamp: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -296,12 +302,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientServerTimestampRequest {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientServerTimestampResponse {
     // message fields
     client_request_timestamp: ::std::option::Option<u64>,
     server_timestamp_ms: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -491,6 +500,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientServerTimestampResponse {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientSecret {
     // message fields
     version: ::std::option::Option<u32>,
@@ -499,7 +509,9 @@ pub struct CMsgClientSecret {
     nonce: ::std::option::Option<u64>,
     hmac: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -816,6 +828,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientSecret {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientLogon {
     // message fields
     protocol_version: ::std::option::Option<u32>,
@@ -872,7 +885,9 @@ pub struct CMsgClientLogon {
     pub embedded_client_secret: ::protobuf::SingularPtrField<CMsgClientSecret>,
     disable_partner_autogrants: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3327,6 +3342,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientLogon {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientLogonResponse {
     // message fields
     eresult: ::std::option::Option<i32>,
@@ -3354,7 +3370,9 @@ pub struct CMsgClientLogonResponse {
     client_instance_id: ::std::option::Option<u64>,
     force_client_update_check: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4489,11 +4507,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientLogonResponse {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientRequestWebAPIAuthenticateUserNonce {
     // message fields
     token_type: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4645,13 +4666,16 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientRequestWebAPIAuthenticateU
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientRequestWebAPIAuthenticateUserNonceResponse {
     // message fields
     eresult: ::std::option::Option<i32>,
     webapi_authenticate_user_nonce: ::protobuf::SingularField<::std::string::String>,
     token_type: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4892,9 +4916,12 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientRequestWebAPIAuthenticateU
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientLogOff {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5008,11 +5035,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientLogOff {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientLoggedOff {
     // message fields
     eresult: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5164,12 +5194,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientLoggedOff {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientNewLoginKey {
     // message fields
     unique_id: ::std::option::Option<u32>,
     login_key: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5372,11 +5405,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientNewLoginKey {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientNewLoginKeyAccepted {
     // message fields
     unique_id: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5528,6 +5564,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientNewLoginKeyAccepted {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientAccountInfo {
     // message fields
     persona_name: ::protobuf::SingularField<::std::string::String>,
@@ -5543,7 +5580,9 @@ pub struct CMsgClientAccountInfo {
     is_phone_identifying: ::std::option::Option<bool>,
     is_phone_needing_reverify: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6165,11 +6204,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientAccountInfo {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientChallengeRequest {
     // message fields
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6321,11 +6363,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientChallengeRequest {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientChallengeResponse {
     // message fields
     challenge: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

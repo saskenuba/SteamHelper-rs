@@ -24,9 +24,12 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetMutualFriendsForIncomingInvites_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -140,12 +143,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetMutualFriendsForIncomingI
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_IncomingInviteMutualFriendList {
     // message fields
     steamid: ::std::option::Option<u64>,
     pub mutual_friend_account_ids: ::std::vec::Vec<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -337,11 +343,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_IncomingInviteMutualFriendLi
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetMutualFriendsForIncomingInvites_Response {
     // message fields
     pub incoming_invite_mutual_friends_lists: ::protobuf::RepeatedField<CPlayer_IncomingInviteMutualFriendList>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -503,6 +512,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetMutualFriendsForIncomingI
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetOwnedGames_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -511,7 +521,9 @@ pub struct CPlayer_GetOwnedGames_Request {
     pub appids_filter: ::std::vec::Vec<u32>,
     include_free_sub: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -817,12 +829,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetOwnedGames_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetOwnedGames_Response {
     // message fields
     game_count: ::std::option::Option<u32>,
     pub games: ::protobuf::RepeatedField<CPlayer_GetOwnedGames_Response_Game>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1022,6 +1037,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetOwnedGames_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetOwnedGames_Response_Game {
     // message fields
     appid: ::std::option::Option<i32>,
@@ -1035,7 +1051,9 @@ pub struct CPlayer_GetOwnedGames_Response_Game {
     playtime_mac_forever: ::std::option::Option<i32>,
     playtime_linux_forever: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1568,12 +1586,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetOwnedGames_Response_Game 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetPlayNext_Request {
     // message fields
     max_age_seconds: ::std::option::Option<u32>,
     pub ignore_appids: ::std::vec::Vec<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1765,12 +1786,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetPlayNext_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetPlayNext_Response {
     // message fields
     last_update_time: ::std::option::Option<u32>,
     pub appids: ::std::vec::Vec<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1962,11 +1986,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetPlayNext_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetFriendsGameplayInfo_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2118,6 +2145,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetFriendsGameplayInfo_Reque
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetFriendsGameplayInfo_Response {
     // message fields
     pub your_info: ::protobuf::SingularPtrField<CPlayer_GetFriendsGameplayInfo_Response_OwnGameplayInfo>,
@@ -2127,7 +2155,9 @@ pub struct CPlayer_GetFriendsGameplayInfo_Response {
     pub owns: ::protobuf::RepeatedField<CPlayer_GetFriendsGameplayInfo_Response_FriendsGameplayInfo>,
     pub in_wishlist: ::protobuf::RepeatedField<CPlayer_GetFriendsGameplayInfo_Response_FriendsGameplayInfo>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2537,13 +2567,16 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetFriendsGameplayInfo_Respo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetFriendsGameplayInfo_Response_FriendsGameplayInfo {
     // message fields
     steamid: ::std::option::Option<u64>,
     minutes_played: ::std::option::Option<u32>,
     minutes_played_forever: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2771,6 +2804,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetFriendsGameplayInfo_Respo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetFriendsGameplayInfo_Response_OwnGameplayInfo {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -2779,7 +2813,9 @@ pub struct CPlayer_GetFriendsGameplayInfo_Response_OwnGameplayInfo {
     in_wishlist: ::std::option::Option<bool>,
     owned: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3083,12 +3119,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetFriendsGameplayInfo_Respo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetFriendsAppsActivity_Request {
     // message fields
     news_language: ::protobuf::SingularField<::std::string::String>,
     request_flags: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3291,6 +3330,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetFriendsAppsActivity_Reque
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetFriendsAppsActivity_Response {
     // message fields
     pub trending: ::protobuf::RepeatedField<CPlayer_GetFriendsAppsActivity_Response_AppFriendsInfo>,
@@ -3303,7 +3343,9 @@ pub struct CPlayer_GetFriendsAppsActivity_Response {
     pub returned_to_group: ::protobuf::RepeatedField<CPlayer_GetFriendsAppsActivity_Response_AppFriendsInfo>,
     active_friend_count: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3839,6 +3881,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetFriendsAppsActivity_Respo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetFriendsAppsActivity_Response_FriendPlayTime {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -3847,7 +3890,9 @@ pub struct CPlayer_GetFriendsAppsActivity_Response_FriendPlayTime {
     minutes_played_forever: ::std::option::Option<u32>,
     event_count: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4151,13 +4196,16 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetFriendsAppsActivity_Respo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetFriendsAppsActivity_Response_AppFriendsInfo {
     // message fields
     appid: ::std::option::Option<u32>,
     pub friends: ::protobuf::RepeatedField<CPlayer_GetFriendsAppsActivity_Response_FriendPlayTime>,
     display_order: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4395,11 +4443,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetFriendsAppsActivity_Respo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetGameBadgeLevels_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4551,12 +4602,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetGameBadgeLevels_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetGameBadgeLevels_Response {
     // message fields
     player_level: ::std::option::Option<u32>,
     pub badges: ::protobuf::RepeatedField<CPlayer_GetGameBadgeLevels_Response_Badge>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4756,13 +4810,16 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetGameBadgeLevels_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetGameBadgeLevels_Response_Badge {
     // message fields
     level: ::std::option::Option<i32>,
     series: ::std::option::Option<i32>,
     border_color: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4990,12 +5047,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetGameBadgeLevels_Response_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetProfileBackground_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     language: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5198,6 +5258,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetProfileBackground_Request
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct ProfileItem {
     // message fields
     communityitemid: ::std::option::Option<u64>,
@@ -5215,7 +5276,9 @@ pub struct ProfileItem {
     movie_mp4_small: ::protobuf::SingularField<::std::string::String>,
     equipped_flags: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5978,11 +6041,14 @@ impl ::protobuf::reflect::ProtobufValue for ProfileItem {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetProfileBackground_Response {
     // message fields
     pub profile_background: ::protobuf::SingularPtrField<ProfileItem>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6152,11 +6218,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetProfileBackground_Respons
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_SetProfileBackground_Request {
     // message fields
     communityitemid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6308,9 +6377,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_SetProfileBackground_Request
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_SetProfileBackground_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6424,12 +6496,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_SetProfileBackground_Respons
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetMiniProfileBackground_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     language: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6632,11 +6707,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetMiniProfileBackground_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetMiniProfileBackground_Response {
     // message fields
     pub profile_background: ::protobuf::SingularPtrField<ProfileItem>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6806,11 +6884,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetMiniProfileBackground_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_SetMiniProfileBackground_Request {
     // message fields
     communityitemid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6962,9 +7043,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_SetMiniProfileBackground_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_SetMiniProfileBackground_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7078,12 +7162,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_SetMiniProfileBackground_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetAvatarFrame_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     language: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7286,11 +7373,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetAvatarFrame_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetAvatarFrame_Response {
     // message fields
     pub avatar_frame: ::protobuf::SingularPtrField<ProfileItem>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7460,11 +7550,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetAvatarFrame_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_SetAvatarFrame_Request {
     // message fields
     communityitemid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7616,9 +7709,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_SetAvatarFrame_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_SetAvatarFrame_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7732,12 +7828,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_SetAvatarFrame_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetAnimatedAvatar_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     language: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7940,11 +8039,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetAnimatedAvatar_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetAnimatedAvatar_Response {
     // message fields
     pub avatar: ::protobuf::SingularPtrField<ProfileItem>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8114,11 +8216,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetAnimatedAvatar_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_SetAnimatedAvatar_Request {
     // message fields
     communityitemid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8270,9 +8375,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_SetAnimatedAvatar_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_SetAnimatedAvatar_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8386,11 +8494,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_SetAnimatedAvatar_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetProfileItemsOwned_Request {
     // message fields
     language: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8555,6 +8666,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetProfileItemsOwned_Request
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetProfileItemsOwned_Response {
     // message fields
     pub profile_backgrounds: ::protobuf::RepeatedField<ProfileItem>,
@@ -8563,7 +8675,9 @@ pub struct CPlayer_GetProfileItemsOwned_Response {
     pub animated_avatars: ::protobuf::RepeatedField<ProfileItem>,
     pub profile_modifiers: ::protobuf::RepeatedField<ProfileItem>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8917,12 +9031,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetProfileItemsOwned_Respons
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetProfileItemsEquipped_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     language: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9125,6 +9242,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetProfileItemsEquipped_Requ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetProfileItemsEquipped_Response {
     // message fields
     pub profile_background: ::protobuf::SingularPtrField<ProfileItem>,
@@ -9133,7 +9251,9 @@ pub struct CPlayer_GetProfileItemsEquipped_Response {
     pub animated_avatar: ::protobuf::SingularPtrField<ProfileItem>,
     pub profile_modifier: ::protobuf::SingularPtrField<ProfileItem>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9527,12 +9647,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetProfileItemsEquipped_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_SetEquippedProfileItemFlags_Request {
     // message fields
     communityitemid: ::std::option::Option<u64>,
     flags: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9722,9 +9845,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_SetEquippedProfileItemFlags_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_SetEquippedProfileItemFlags_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9838,9 +9964,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_SetEquippedProfileItemFlags_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetEmoticonList_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9954,11 +10083,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetEmoticonList_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetEmoticonList_Response {
     // message fields
     pub emoticons: ::protobuf::RepeatedField<CPlayer_GetEmoticonList_Response_Emoticon>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -10120,6 +10252,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetEmoticonList_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetEmoticonList_Response_Emoticon {
     // message fields
     name: ::protobuf::SingularField<::std::string::String>,
@@ -10129,7 +10262,9 @@ pub struct CPlayer_GetEmoticonList_Response_Emoticon {
     time_received: ::std::option::Option<u32>,
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -10484,13 +10619,16 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetEmoticonList_Response_Emo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetAchievementsProgress_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     language: ::protobuf::SingularField<::std::string::String>,
     pub appids: ::std::vec::Vec<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -10733,11 +10871,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetAchievementsProgress_Requ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetAchievementsProgress_Response {
     // message fields
     pub achievement_progress: ::protobuf::RepeatedField<CPlayer_GetAchievementsProgress_Response_AchievementProgress>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -10899,6 +11040,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetAchievementsProgress_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetAchievementsProgress_Response_AchievementProgress {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -10908,7 +11050,9 @@ pub struct CPlayer_GetAchievementsProgress_Response_AchievementProgress {
     all_unlocked: ::std::option::Option<bool>,
     cache_time: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -11250,11 +11394,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetAchievementsProgress_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetFavoriteBadge_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -11406,6 +11553,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetFavoriteBadge_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetFavoriteBadge_Response {
     // message fields
     has_favorite_badge: ::std::option::Option<bool>,
@@ -11416,7 +11564,9 @@ pub struct CPlayer_GetFavoriteBadge_Response {
     appid: ::std::option::Option<u32>,
     level: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -11796,12 +11946,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetFavoriteBadge_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_SetFavoriteBadge_Request {
     // message fields
     communityitemid: ::std::option::Option<u64>,
     badgeid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -11991,9 +12144,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_SetFavoriteBadge_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_SetFavoriteBadge_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -12107,12 +12263,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_SetFavoriteBadge_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetProfileCustomization_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     include_inactive_customizations: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -12302,6 +12461,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetProfileCustomization_Requ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct ProfileCustomizationSlot {
     // message fields
     slot: ::std::option::Option<u32>,
@@ -12317,7 +12477,9 @@ pub struct ProfileCustomizationSlot {
     item_classid: ::std::option::Option<u64>,
     item_instanceid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -12913,6 +13075,7 @@ impl ::protobuf::reflect::ProtobufValue for ProfileCustomizationSlot {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct ProfileCustomization {
     // message fields
     customization_type: ::std::option::Option<EProfileCustomizationType>,
@@ -12921,7 +13084,9 @@ pub struct ProfileCustomization {
     active: ::std::option::Option<bool>,
     customization_style: ::std::option::Option<EProfileCustomizationStyle>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13227,12 +13392,15 @@ impl ::protobuf::reflect::ProtobufValue for ProfileCustomization {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct ProfileTheme {
     // message fields
     theme_id: ::protobuf::SingularField<::std::string::String>,
     title: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13448,13 +13616,16 @@ impl ::protobuf::reflect::ProtobufValue for ProfileTheme {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetProfileCustomization_Response {
     // message fields
     pub customizations: ::protobuf::RepeatedField<ProfileCustomization>,
     slots_available: ::std::option::Option<u32>,
     pub profile_theme: ::protobuf::SingularPtrField<ProfileTheme>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13710,9 +13881,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetProfileCustomization_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetProfileThemesAvailable_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13826,11 +14000,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetProfileThemesAvailable_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetProfileThemesAvailable_Response {
     // message fields
     pub profile_themes: ::protobuf::RepeatedField<ProfileTheme>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13992,11 +14169,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetProfileThemesAvailable_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_SetProfileTheme_Request {
     // message fields
     theme_id: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14161,9 +14341,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_SetProfileTheme_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_SetProfileTheme_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14277,12 +14460,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_SetProfileTheme_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_PostStatusToFriends_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     status_text: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14485,9 +14671,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_PostStatusToFriends_Request 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_PostStatusToFriends_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14601,12 +14790,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_PostStatusToFriends_Response
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetPostedStatus_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     postid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14796,6 +14988,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetPostedStatus_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetPostedStatus_Response {
     // message fields
     accountid: ::std::option::Option<u32>,
@@ -14804,7 +14997,9 @@ pub struct CPlayer_GetPostedStatus_Response {
     deleted: ::std::option::Option<bool>,
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -15121,11 +15316,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetPostedStatus_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_DeletePostedStatus_Request {
     // message fields
     postid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -15277,9 +15475,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_DeletePostedStatus_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_DeletePostedStatus_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -15393,11 +15594,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_DeletePostedStatus_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetLastPlayedTimes_Request {
     // message fields
     min_last_played: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -15549,11 +15753,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetLastPlayedTimes_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetLastPlayedTimes_Response {
     // message fields
     pub games: ::protobuf::RepeatedField<CPlayer_GetLastPlayedTimes_Response_Game>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -15715,6 +15922,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetLastPlayedTimes_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetLastPlayedTimes_Response_Game {
     // message fields
     appid: ::std::option::Option<i32>,
@@ -15732,7 +15940,9 @@ pub struct CPlayer_GetLastPlayedTimes_Response_Game {
     last_mac_playtime: ::std::option::Option<u32>,
     last_linux_playtime: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -16378,9 +16588,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetLastPlayedTimes_Response_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_AcceptSSA_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -16494,9 +16707,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_AcceptSSA_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_AcceptSSA_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -16610,9 +16826,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_AcceptSSA_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetNicknameList_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -16726,11 +16945,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetNicknameList_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetNicknameList_Response {
     // message fields
     pub nicknames: ::protobuf::RepeatedField<CPlayer_GetNicknameList_Response_PlayerNickname>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -16892,12 +17114,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetNicknameList_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetNicknameList_Response_PlayerNickname {
     // message fields
     accountid: ::std::option::Option<u32>,
     nickname: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17100,9 +17325,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetNicknameList_Response_Pla
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetPerFriendPreferences_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17216,6 +17444,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetPerFriendPreferences_Requ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct PerFriendPreferences {
     // message fields
     accountid: ::std::option::Option<u32>,
@@ -17228,7 +17457,9 @@ pub struct PerFriendPreferences {
     sounds_showmessages: ::std::option::Option<ENotificationSetting>,
     notifications_sendmobile: ::std::option::Option<ENotificationSetting>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17669,11 +17900,14 @@ impl ::protobuf::reflect::ProtobufValue for PerFriendPreferences {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetPerFriendPreferences_Response {
     // message fields
     pub preferences: ::protobuf::RepeatedField<PerFriendPreferences>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17835,11 +18069,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetPerFriendPreferences_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_SetPerFriendPreferences_Request {
     // message fields
     pub preferences: ::protobuf::SingularPtrField<PerFriendPreferences>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18009,9 +18246,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_SetPerFriendPreferences_Requ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_SetPerFriendPreferences_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18125,11 +18365,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_SetPerFriendPreferences_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_AddFriend_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18281,13 +18524,16 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_AddFriend_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_AddFriend_Response {
     // message fields
     invite_sent: ::std::option::Option<bool>,
     friend_relationship: ::std::option::Option<u32>,
     result: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18515,11 +18761,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_AddFriend_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_RemoveFriend_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18671,11 +18920,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_RemoveFriend_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_RemoveFriend_Response {
     // message fields
     friend_relationship: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18827,12 +19079,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_RemoveFriend_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_IgnoreFriend_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     unignore: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19022,11 +19277,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_IgnoreFriend_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_IgnoreFriend_Response {
     // message fields
     friend_relationship: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19178,9 +19436,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_IgnoreFriend_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetCommunityPreferences_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19294,6 +19555,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetCommunityPreferences_Requ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_CommunityPreferences {
     // message fields
     hide_adult_content_violence: ::std::option::Option<bool>,
@@ -19303,7 +19565,9 @@ pub struct CPlayer_CommunityPreferences {
     text_filter_ignore_friends: ::std::option::Option<bool>,
     timestamp_updated: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19641,11 +19905,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_CommunityPreferences {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetCommunityPreferences_Response {
     // message fields
     pub preferences: ::protobuf::SingularPtrField<CPlayer_CommunityPreferences>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19815,11 +20082,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetCommunityPreferences_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_SetCommunityPreferences_Request {
     // message fields
     pub preferences: ::protobuf::SingularPtrField<CPlayer_CommunityPreferences>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19989,9 +20259,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_SetCommunityPreferences_Requ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_SetCommunityPreferences_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -20105,9 +20378,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_SetCommunityPreferences_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetTextFilterWords_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -20221,12 +20497,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetTextFilterWords_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_TextFilterWords {
     // message fields
     pub text_filter_custom_banned_words: ::protobuf::RepeatedField<::std::string::String>,
     pub text_filter_custom_clean_words: ::protobuf::RepeatedField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -20420,11 +20699,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_TextFilterWords {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetTextFilterWords_Response {
     // message fields
     pub words: ::protobuf::SingularPtrField<CPlayer_TextFilterWords>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -20594,11 +20876,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetTextFilterWords_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetNewSteamAnnouncementState_Request {
     // message fields
     language: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -20750,6 +21035,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetNewSteamAnnouncementState
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetNewSteamAnnouncementState_Response {
     // message fields
     state: ::std::option::Option<i32>,
@@ -20758,7 +21044,9 @@ pub struct CPlayer_GetNewSteamAnnouncementState_Response {
     time_posted: ::std::option::Option<u32>,
     announcement_gid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -21088,12 +21376,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetNewSteamAnnouncementState
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_UpdateSteamAnnouncementLastRead_Request {
     // message fields
     announcement_gid: ::std::option::Option<u64>,
     time_posted: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -21283,9 +21574,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_UpdateSteamAnnouncementLastR
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_UpdateSteamAnnouncementLastRead_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -21399,9 +21693,12 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_UpdateSteamAnnouncementLastR
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetPrivacySettings_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -21515,6 +21812,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetPrivacySettings_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPrivacySettings {
     // message fields
     privacy_state: ::std::option::Option<i32>,
@@ -21524,7 +21822,9 @@ pub struct CPrivacySettings {
     privacy_state_playtime: ::std::option::Option<i32>,
     privacy_state_friendslist: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -21866,11 +22166,14 @@ impl ::protobuf::reflect::ProtobufValue for CPrivacySettings {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetPrivacySettings_Response {
     // message fields
     pub privacy_settings: ::protobuf::SingularPtrField<CPrivacySettings>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -22040,11 +22343,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetPrivacySettings_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetDurationControl_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -22196,6 +22502,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetDurationControl_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_GetDurationControl_Response {
     // message fields
     is_enabled: ::std::option::Option<bool>,
@@ -22205,7 +22512,9 @@ pub struct CPlayer_GetDurationControl_Response {
     is_age_verified: ::std::option::Option<bool>,
     seconds_allowed_today: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -22547,11 +22856,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_GetDurationControl_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_LastPlayedTimes_Notification {
     // message fields
     pub games: ::protobuf::RepeatedField<CPlayer_GetLastPlayedTimes_Response_Game>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -22713,13 +23025,16 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_LastPlayedTimes_Notification
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_FriendNicknameChanged_Notification {
     // message fields
     accountid: ::std::option::Option<u32>,
     nickname: ::protobuf::SingularField<::std::string::String>,
     is_echo_to_self: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -22960,11 +23275,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_FriendNicknameChanged_Notifi
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_FriendEquippedProfileItemsChanged_Notification {
     // message fields
     accountid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -23116,6 +23434,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_FriendEquippedProfileItemsCh
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_NewSteamAnnouncementState_Notification {
     // message fields
     state: ::std::option::Option<i32>,
@@ -23124,7 +23443,9 @@ pub struct CPlayer_NewSteamAnnouncementState_Notification {
     time_posted: ::std::option::Option<u32>,
     announcement_gid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -23454,11 +23775,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_NewSteamAnnouncementState_No
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_CommunityPreferencesChanged_Notification {
     // message fields
     pub preferences: ::protobuf::SingularPtrField<CPlayer_CommunityPreferences>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -23628,11 +23952,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_CommunityPreferencesChanged_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_TextFilterWordsChanged_Notification {
     // message fields
     pub words: ::protobuf::SingularPtrField<CPlayer_TextFilterWords>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -23802,12 +24129,15 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_TextFilterWordsChanged_Notif
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_PerFriendPreferencesChanged_Notification {
     // message fields
     accountid: ::std::option::Option<u32>,
     pub preferences: ::protobuf::SingularPtrField<PerFriendPreferences>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -24015,11 +24345,14 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_PerFriendPreferencesChanged_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPlayer_PrivacySettingsChanged_Notification {
     // message fields
     pub privacy_settings: ::protobuf::SingularPtrField<CPrivacySettings>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -24189,6 +24522,7 @@ impl ::protobuf::reflect::ProtobufValue for CPlayer_PrivacySettingsChanged_Notif
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EProfileCustomizationType {
     k_EProfileCustomizationTypeInvalid = 0,
     k_EProfileCustomizationTypeRareAchievementShowcase = 1,
@@ -24296,6 +24630,7 @@ impl ::protobuf::reflect::ProtobufValue for EProfileCustomizationType {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EProfileCustomizationStyle {
     k_EProfileCustomizationStyleDefault = 0,
     k_EProfileCustomizationStyleSelected = 1,
@@ -24358,6 +24693,7 @@ impl ::protobuf::reflect::ProtobufValue for EProfileCustomizationStyle {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum ENotificationSetting {
     k_ENotificationSettingNotifyUseDefault = 0,
     k_ENotificationSettingAlways = 1,
@@ -24411,6 +24747,7 @@ impl ::protobuf::reflect::ProtobufValue for ENotificationSetting {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum ETextFilterSetting {
     k_ETextFilterSettingSteamLabOptedOut = 0,
     k_ETextFilterSettingEnabled = 1,
@@ -25041,8 +25378,8 @@ static file_descriptor_proto_data: &'static [u8] = b"\
     \x20have\x20changed\x12\x9c\x01\n#NotifyPrivacyPrivacySettingsChanged\
     \x12,.CPlayer_PrivacySettingsChanged_Notification\x1a\x0b.NoResponse\":\
     \x82\xb5\x186Notification\x20from\x20server\x20that\x20privacy\x20settin\
-    gs\x20changed\x1a.\x82\xb5\x18&Steam\x20player\x20data\x20client\x20noti\
-    fications\xc0\xb5\x18\x02B\x03\x80\x01\x01\
+    gs\x20changed\x1a.\xc0\xb5\x18\x02\x82\xb5\x18&Steam\x20player\x20data\
+    \x20client\x20notificationsB\x03\x80\x01\x01\
 ";
 
 static file_descriptor_proto_lazy: ::protobuf::rt::LazyV2<::protobuf::descriptor::FileDescriptorProto> = ::protobuf::rt::LazyV2::INIT;

@@ -24,11 +24,14 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgIPAddress {
     // message oneof groups
     pub ip: ::std::option::Option<CMsgIPAddress_oneof_ip>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -39,6 +42,7 @@ impl<'a> ::std::default::Default for &'a CMsgIPAddress {
 }
 
 #[derive(Clone,PartialEq,Debug)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CMsgIPAddress_oneof_ip {
     v4(u32),
     v6(::std::vec::Vec<u8>),
@@ -266,12 +270,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgIPAddress {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgIPAddressBucket {
     // message fields
     pub original_ip_address: ::protobuf::SingularPtrField<CMsgIPAddress>,
     bucket: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -479,6 +486,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgIPAddressBucket {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgProtoBufHeader {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -508,7 +516,9 @@ pub struct CMsgProtoBufHeader {
     // message oneof groups
     pub ip_addr: ::std::option::Option<CMsgProtoBufHeader_oneof_ip_addr>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -519,6 +529,7 @@ impl<'a> ::std::default::Default for &'a CMsgProtoBufHeader {
 }
 
 #[derive(Clone,PartialEq,Debug)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CMsgProtoBufHeader_oneof_ip_addr {
     ip(u32),
     ip_v6(::std::vec::Vec<u8>),
@@ -1699,12 +1710,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgProtoBufHeader {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgMulti {
     // message fields
     size_unzipped: ::std::option::Option<u32>,
     message_body: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1907,11 +1921,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgMulti {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgProtobufWrapped {
     // message fields
     message_body: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2076,6 +2093,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgProtobufWrapped {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgAuthTicket {
     // message fields
     estate: ::std::option::Option<u32>,
@@ -2086,7 +2104,9 @@ pub struct CMsgAuthTicket {
     ticket_crc: ::std::option::Option<u32>,
     ticket: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2479,6 +2499,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgAuthTicket {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCDDBAppDetailCommon {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -2494,7 +2515,9 @@ pub struct CCDDBAppDetailCommon {
     propagation: ::protobuf::SingularField<::std::string::String>,
     has_adult_content: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3142,6 +3165,7 @@ impl ::protobuf::reflect::ProtobufValue for CCDDBAppDetailCommon {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgAppRights {
     // message fields
     edit_info: ::std::option::Option<bool>,
@@ -3161,7 +3185,9 @@ pub struct CMsgAppRights {
     broadcast_live: ::std::option::Option<bool>,
     view_marketing_traffic: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3883,6 +3909,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgAppRights {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCuratorPreferences {
     // message fields
     supported_languages: ::std::option::Option<u32>,
@@ -3900,7 +3927,9 @@ pub struct CCuratorPreferences {
     discussion_url: ::protobuf::SingularField<::std::string::String>,
     show_broadcast: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4589,12 +4618,15 @@ impl ::protobuf::reflect::ProtobufValue for CCuratorPreferences {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CLocalizationToken {
     // message fields
     language: ::std::option::Option<u32>,
     localized_string: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4797,6 +4829,7 @@ impl ::protobuf::reflect::ProtobufValue for CLocalizationToken {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClanEventUserNewsTuple {
     // message fields
     clanid: ::std::option::Option<u32>,
@@ -4810,7 +4843,9 @@ pub struct CClanEventUserNewsTuple {
     appid: ::std::option::Option<u32>,
     rtime32_last_modified: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5304,6 +5339,7 @@ impl ::protobuf::reflect::ProtobufValue for CClanEventUserNewsTuple {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClanMatchEventByRange {
     // message fields
     rtime_before: ::std::option::Option<u32>,
@@ -5311,7 +5347,9 @@ pub struct CClanMatchEventByRange {
     qualified: ::std::option::Option<u32>,
     pub events: ::protobuf::RepeatedField<CClanEventUserNewsTuple>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5587,6 +5625,7 @@ impl ::protobuf::reflect::ProtobufValue for CClanMatchEventByRange {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCommunity_ClanAnnouncementInfo {
     // message fields
     gid: ::std::option::Option<u64>,
@@ -5605,7 +5644,9 @@ pub struct CCommunity_ClanAnnouncementInfo {
     voteupcount: ::std::option::Option<i32>,
     votedowncount: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6317,6 +6358,7 @@ impl ::protobuf::reflect::ProtobufValue for CCommunity_ClanAnnouncementInfo {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClanEventData {
     // message fields
     gid: ::std::option::Option<u64>,
@@ -6348,7 +6390,9 @@ pub struct CClanEventData {
     featured_app_tagid: ::std::option::Option<u32>,
     pub referenced_appids: ::std::vec::Vec<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7607,6 +7651,7 @@ impl ::protobuf::reflect::ProtobufValue for CClanEventData {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBilling_Address {
     // message fields
     first_name: ::protobuf::SingularField<::std::string::String>,
@@ -7620,7 +7665,9 @@ pub struct CBilling_Address {
     zip_plus4: ::std::option::Option<i32>,
     phone: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8231,6 +8278,7 @@ impl ::protobuf::reflect::ProtobufValue for CBilling_Address {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPackageReservationStatus {
     // message fields
     packageid: ::std::option::Option<u32>,
@@ -8242,7 +8290,9 @@ pub struct CPackageReservationStatus {
     time_expires: ::std::option::Option<u32>,
     time_reserved: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8673,6 +8723,7 @@ impl ::protobuf::reflect::ProtobufValue for CPackageReservationStatus {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EProtoClanEventType {
     k_EClanOtherEvent = 1,
     k_EClanGameEvent = 2,
@@ -8823,6 +8874,7 @@ impl ::protobuf::reflect::ProtobufValue for EProtoClanEventType {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum PartnerEventNotificationType {
     k_EEventStart = 0,
     k_EEventBroadcastStart = 1,

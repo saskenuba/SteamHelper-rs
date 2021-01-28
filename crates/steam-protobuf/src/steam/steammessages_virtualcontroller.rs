@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CVirtualControllerElement {
     // message fields
     field_type: ::std::option::Option<EControllerElementType>,
@@ -33,7 +34,9 @@ pub struct CVirtualControllerElement {
     x_scale: ::std::option::Option<f32>,
     y_scale: ::std::option::Option<f32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -371,6 +374,7 @@ impl ::protobuf::reflect::ProtobufValue for CVirtualControllerElement {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CVirtualControllerColor {
     // message fields
     r: ::std::option::Option<f32>,
@@ -378,7 +382,9 @@ pub struct CVirtualControllerColor {
     b: ::std::option::Option<f32>,
     a: ::std::option::Option<f32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -644,6 +650,7 @@ impl ::protobuf::reflect::ProtobufValue for CVirtualControllerColor {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CVirtualControllerLayout {
     // message fields
     layout_version: ::std::option::Option<i32>,
@@ -651,7 +658,9 @@ pub struct CVirtualControllerLayout {
     pub elements: ::protobuf::RepeatedField<CVirtualControllerElement>,
     pub color: ::protobuf::SingularPtrField<CVirtualControllerColor>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -945,6 +954,7 @@ impl ::protobuf::reflect::ProtobufValue for CVirtualControllerLayout {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CVirtualControllerLayouts {
     // message fields
     pub layouts: ::protobuf::RepeatedField<CVirtualControllerLayout>,
@@ -958,7 +968,9 @@ pub struct CVirtualControllerLayouts {
     shaken: ::std::option::Option<bool>,
     mouse_offscreen: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1454,13 +1466,16 @@ impl ::protobuf::reflect::ProtobufValue for CVirtualControllerLayouts {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CVirtualControllerConfig {
     // message fields
     name: ::protobuf::SingularField<::std::string::String>,
     pub actionsets: ::protobuf::RepeatedField<CVirtualControllerConfig_ActionSet>,
     default_mouse_mode: ::std::option::Option<EMouseMode>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1707,6 +1722,7 @@ impl ::protobuf::reflect::ProtobufValue for CVirtualControllerConfig {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CVirtualControllerConfig_Control {
     // message fields
     name: ::protobuf::SingularField<::std::string::String>,
@@ -1725,7 +1741,9 @@ pub struct CVirtualControllerConfig_Control {
     long_press_ms: ::std::option::Option<i32>,
     double_press_ms: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2461,6 +2479,7 @@ impl ::protobuf::reflect::ProtobufValue for CVirtualControllerConfig_Control {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CVirtualControllerConfig_ActionSet {
     // message fields
     id: ::std::option::Option<i32>,
@@ -2468,7 +2487,9 @@ pub struct CVirtualControllerConfig_ActionSet {
     name: ::protobuf::SingularField<::std::string::String>,
     pub controls: ::protobuf::RepeatedField<CVirtualControllerConfig_Control>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2757,6 +2778,7 @@ impl ::protobuf::reflect::ProtobufValue for CVirtualControllerConfig_ActionSet {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CVirtualControllerLayoutPackage {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -2766,7 +2788,9 @@ pub struct CVirtualControllerLayoutPackage {
     pub config: ::protobuf::SingularPtrField<CVirtualControllerConfig>,
     pub layouts: ::protobuf::SingularPtrField<CVirtualControllerLayouts>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3144,6 +3168,7 @@ impl ::protobuf::reflect::ProtobufValue for CVirtualControllerLayoutPackage {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CVirtualControllerGlobalConfig {
     // message fields
     feedback_enabled: ::std::option::Option<bool>,
@@ -3152,7 +3177,9 @@ pub struct CVirtualControllerGlobalConfig {
     rumble_enabled: ::std::option::Option<bool>,
     shake_fade_enabled: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3456,6 +3483,7 @@ impl ::protobuf::reflect::ProtobufValue for CVirtualControllerGlobalConfig {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EInputMode {
     k_EInputModeUnknown = 0,
     k_EInputModeMouse = 1,
@@ -3512,6 +3540,7 @@ impl ::protobuf::reflect::ProtobufValue for EInputMode {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EMouseMode {
     k_EMouseModeUnknown = 0,
     k_EMouseModeRelativeCursor = 1,
@@ -3571,6 +3600,7 @@ impl ::protobuf::reflect::ProtobufValue for EMouseMode {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EControllerElementType {
     k_EControllerElementTypeNone = -1,
     k_EControllerElementTypeThumb = 0,

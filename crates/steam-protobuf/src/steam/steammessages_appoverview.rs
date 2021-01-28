@@ -24,12 +24,15 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAppOverview_AppAssociation {
     // message fields
     field_type: ::std::option::Option<EAppAssociationType>,
     name: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -228,6 +231,7 @@ impl ::protobuf::reflect::ProtobufValue for CAppOverview_AppAssociation {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAppOverview_PerClientData {
     // message fields
     clientid: ::std::option::Option<u64>,
@@ -243,7 +247,9 @@ pub struct CAppOverview_PerClientData {
     is_invalid_os_type: ::std::option::Option<bool>,
     playtime_left: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -835,6 +841,7 @@ impl ::protobuf::reflect::ProtobufValue for CAppOverview_PerClientData {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAppOverview {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -883,7 +890,9 @@ pub struct CAppOverview {
     mastersub_includedwith_logo: ::protobuf::SingularField<::std::string::String>,
     compat_allowlist_setting: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2866,12 +2875,15 @@ impl ::protobuf::reflect::ProtobufValue for CAppOverview {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAppOverview_Change {
     // message fields
     pub app_overview: ::protobuf::RepeatedField<CAppOverview>,
     pub removed_appid: ::std::vec::Vec<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3073,13 +3085,16 @@ impl ::protobuf::reflect::ProtobufValue for CAppOverview_Change {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAppBootstrapData {
     // message fields
     appid: ::std::option::Option<u32>,
     hidden: ::std::option::Option<bool>,
     pub user_tag: ::protobuf::RepeatedField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3309,11 +3324,14 @@ impl ::protobuf::reflect::ProtobufValue for CAppBootstrapData {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CLibraryBootstrapData {
     // message fields
     pub app_data: ::protobuf::RepeatedField<CAppBootstrapData>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3475,6 +3493,7 @@ impl ::protobuf::reflect::ProtobufValue for CLibraryBootstrapData {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EDisplayStatus {
     k_EDisplayStatusInvalid = 0,
     k_EDisplayStatusLaunching = 1,
@@ -3615,6 +3634,7 @@ impl ::protobuf::reflect::ProtobufValue for EDisplayStatus {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EProtoAppType {
     k_EAppTypeInvalid = 0,
     k_EAppTypeGame = 1,
@@ -3719,6 +3739,7 @@ impl ::protobuf::reflect::ProtobufValue for EProtoAppType {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EAppAssociationType {
     k_EAppAssociationTypeInvalid = 0,
     k_EAppAssociationTypePublisher = 1,
@@ -3775,6 +3796,7 @@ impl ::protobuf::reflect::ProtobufValue for EAppAssociationType {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EAppControllerSupportLevel {
     k_EAppControllerSupportLevelNone = 0,
     k_EAppControllerSupportLevelPartial = 1,

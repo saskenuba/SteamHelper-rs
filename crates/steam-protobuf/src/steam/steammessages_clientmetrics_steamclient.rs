@@ -24,12 +24,15 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClientMetrics_AppInterfaceCreation {
     // message fields
     raw_version: ::protobuf::SingularField<::std::string::String>,
     requested_interface_type: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -245,13 +248,16 @@ impl ::protobuf::reflect::ProtobufValue for CClientMetrics_AppInterfaceCreation 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClientMetrics_AppInterfaceMethodCounts {
     // message fields
     interface_name: ::protobuf::SingularField<::std::string::String>,
     method_name: ::protobuf::SingularField<::std::string::String>,
     call_count: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -505,6 +511,7 @@ impl ::protobuf::reflect::ProtobufValue for CClientMetrics_AppInterfaceMethodCou
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClientMetrics_AppInterfaceStats_Notification {
     // message fields
     game_id: ::std::option::Option<u64>,
@@ -512,7 +519,9 @@ pub struct CClientMetrics_AppInterfaceStats_Notification {
     pub methods_called: ::protobuf::RepeatedField<CClientMetrics_AppInterfaceMethodCounts>,
     session_length_seconds: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -798,12 +807,15 @@ impl ::protobuf::reflect::ProtobufValue for CClientMetrics_AppInterfaceStats_Not
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClientMetrics_IPv6Connectivity_Result {
     // message fields
     protocol_tested: ::std::option::Option<u32>,
     connectivity_state: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -993,13 +1005,16 @@ impl ::protobuf::reflect::ProtobufValue for CClientMetrics_IPv6Connectivity_Resu
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClientMetrics_IPv6Connectivity_Notification {
     // message fields
     cell_id: ::std::option::Option<u32>,
     pub results: ::protobuf::RepeatedField<CClientMetrics_IPv6Connectivity_Result>,
     private_ip_is_rfc6598: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1237,6 +1252,7 @@ impl ::protobuf::reflect::ProtobufValue for CClientMetrics_IPv6Connectivity_Noti
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClientMetrics_SteamPipeWorkStats_Operation {
     // message fields
     field_type: ::std::option::Option<ESteamPipeOperationType>,
@@ -1247,7 +1263,9 @@ pub struct CClientMetrics_SteamPipeWorkStats_Operation {
     sum_run_time_ms: ::std::option::Option<u64>,
     sum_wait_time_ms: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1623,6 +1641,7 @@ impl ::protobuf::reflect::ProtobufValue for CClientMetrics_SteamPipeWorkStats_Op
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClientMetrics_SteamPipeWorkStats_Notification {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -1630,7 +1649,9 @@ pub struct CClientMetrics_SteamPipeWorkStats_Notification {
     work_type: ::std::option::Option<ESteamPipeWorkType>,
     pub operations: ::protobuf::RepeatedField<CClientMetrics_SteamPipeWorkStats_Operation>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1902,13 +1923,16 @@ impl ::protobuf::reflect::ProtobufValue for CClientMetrics_SteamPipeWorkStats_No
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClientMetrics_ReportClientError_Notification {
     // message fields
     product: ::protobuf::SingularField<::std::string::String>,
     version: ::protobuf::SingularField<::std::string::String>,
     pub errors: ::protobuf::RepeatedField<CClientMetrics_ReportClientError_Notification_Error>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2172,13 +2196,16 @@ impl ::protobuf::reflect::ProtobufValue for CClientMetrics_ReportClientError_Not
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClientMetrics_ReportClientError_Notification_Error {
     // message fields
     identifier: ::protobuf::SingularField<::std::string::String>,
     message: ::protobuf::SingularField<::std::string::String>,
     count: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2432,11 +2459,14 @@ impl ::protobuf::reflect::ProtobufValue for CClientMetrics_ReportClientError_Not
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClientMetrics_ClientBootstrap_Notification {
     // message fields
     pub summary: ::protobuf::SingularPtrField<super::clientmetrics::CClientMetrics_ClientBootstrap_Summary>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2606,6 +2636,7 @@ impl ::protobuf::reflect::ProtobufValue for CClientMetrics_ClientBootstrap_Notif
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum ESteamPipeWorkType {
     k_ESteamPipeClientWorkType_Invalid = 0,
     k_ESteamPipeClientWorkType_StageFromChunkStores = 1,
@@ -2656,6 +2687,7 @@ impl ::protobuf::reflect::ProtobufValue for ESteamPipeWorkType {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum ESteamPipeOperationType {
     k_ESteamPipeOperationType_Invalid = 0,
     k_ESteamPipeOperationType_DecryptCPU = 1,

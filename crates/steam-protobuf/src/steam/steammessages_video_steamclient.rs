@@ -24,12 +24,15 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CVideo_ClientGetVideoURL_Request {
     // message fields
     video_id: ::std::option::Option<u64>,
     client_cellid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -219,12 +222,15 @@ impl ::protobuf::reflect::ProtobufValue for CVideo_ClientGetVideoURL_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CVideo_ClientGetVideoURL_Response {
     // message fields
     video_id: ::std::option::Option<u64>,
     video_url: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -427,6 +433,7 @@ impl ::protobuf::reflect::ProtobufValue for CVideo_ClientGetVideoURL_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct VideoBookmark {
     // message fields
     app_id: ::std::option::Option<u32>,
@@ -438,7 +445,9 @@ pub struct VideoBookmark {
     hide_from_watch_history: ::std::option::Option<bool>,
     hide_from_library: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -856,11 +865,14 @@ impl ::protobuf::reflect::ProtobufValue for VideoBookmark {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CVideo_SetVideoBookmark_Notification {
     // message fields
     pub bookmarks: ::protobuf::RepeatedField<VideoBookmark>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1022,12 +1034,15 @@ impl ::protobuf::reflect::ProtobufValue for CVideo_SetVideoBookmark_Notification
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CVideo_GetVideoBookmarks_Request {
     // message fields
     pub appids: ::std::vec::Vec<u32>,
     updated_since: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1219,11 +1234,14 @@ impl ::protobuf::reflect::ProtobufValue for CVideo_GetVideoBookmarks_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CVideo_GetVideoBookmarks_Response {
     // message fields
     pub bookmarks: ::protobuf::RepeatedField<VideoBookmark>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1385,11 +1403,14 @@ impl ::protobuf::reflect::ProtobufValue for CVideo_GetVideoBookmarks_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CVideo_UnlockedH264_Notification {
     // message fields
     encryption_key: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1554,12 +1575,15 @@ impl ::protobuf::reflect::ProtobufValue for CVideo_UnlockedH264_Notification {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CFovasVideo_ClientGetOPFSettings_Request {
     // message fields
     app_id: ::std::option::Option<u32>,
     client_cellid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1749,12 +1773,15 @@ impl ::protobuf::reflect::ProtobufValue for CFovasVideo_ClientGetOPFSettings_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CFovasVideo_ClientGetOPFSettings_Response {
     // message fields
     app_id: ::std::option::Option<u32>,
     opf_settings: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

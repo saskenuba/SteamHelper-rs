@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentServerDirectory_GetServersForSteamPipe_Request {
     // message fields
     cell_id: ::std::option::Option<u32>,
@@ -32,7 +33,9 @@ pub struct CContentServerDirectory_GetServersForSteamPipe_Request {
     launcher_type: ::std::option::Option<i32>,
     ipv6_public: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -362,6 +365,7 @@ impl ::protobuf::reflect::ProtobufValue for CContentServerDirectory_GetServersFo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentServerDirectory_ServerInfo {
     // message fields
     field_type: ::protobuf::SingularField<::std::string::String>,
@@ -379,7 +383,9 @@ pub struct CContentServerDirectory_ServerInfo {
     pub allowed_app_ids: ::std::vec::Vec<u32>,
     preferred_server: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1092,11 +1098,14 @@ impl ::protobuf::reflect::ProtobufValue for CContentServerDirectory_ServerInfo {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentServerDirectory_GetServersForSteamPipe_Response {
     // message fields
     pub servers: ::protobuf::RepeatedField<CContentServerDirectory_ServerInfo>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1258,6 +1267,7 @@ impl ::protobuf::reflect::ProtobufValue for CContentServerDirectory_GetServersFo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentServerDirectory_GetDepotPatchInfo_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -1265,7 +1275,9 @@ pub struct CContentServerDirectory_GetDepotPatchInfo_Request {
     source_manifestid: ::std::option::Option<u64>,
     target_manifestid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1531,11 +1543,14 @@ impl ::protobuf::reflect::ProtobufValue for CContentServerDirectory_GetDepotPatc
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentServerDirectory_GetDepotPatchInfo_Response {
     // message fields
     is_available: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1687,11 +1702,14 @@ impl ::protobuf::reflect::ProtobufValue for CContentServerDirectory_GetDepotPatc
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentServerDirectory_GetClientUpdateHosts_Request {
     // message fields
     cached_signature: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1856,13 +1874,16 @@ impl ::protobuf::reflect::ProtobufValue for CContentServerDirectory_GetClientUpd
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentServerDirectory_GetClientUpdateHosts_Response {
     // message fields
     hosts_kv: ::protobuf::SingularField<::std::string::String>,
     valid_until_time: ::std::option::Option<u64>,
     ip_country: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

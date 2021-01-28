@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_Login_Request {
     // message fields
     username: ::protobuf::SingularField<::std::string::String>,
@@ -31,7 +32,9 @@ pub struct SiteServerUI_Login_Request {
     steamguardcode: ::protobuf::SingularField<::std::string::String>,
     remember_password: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -336,12 +339,15 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_Login_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_Login_Response {
     // message fields
     logon_state: ::std::option::Option<i32>,
     logon_eresult: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -531,9 +537,12 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_Login_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_LoginStatus_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -647,6 +656,7 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_LoginStatus_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_LoginStatus_Response {
     // message fields
     username: ::protobuf::SingularField<::std::string::String>,
@@ -654,7 +664,9 @@ pub struct SiteServerUI_LoginStatus_Response {
     logon_state: ::std::option::Option<i32>,
     logon_eresult: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -933,9 +945,12 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_LoginStatus_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_CancelLogin_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1049,12 +1064,15 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_CancelLogin_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_CancelLogin_Response {
     // message fields
     logon_state: ::std::option::Option<i32>,
     logon_eresult: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1244,9 +1262,12 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_CancelLogin_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_Logout_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1360,12 +1381,15 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_Logout_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_Logout_Response {
     // message fields
     logon_state: ::std::option::Option<i32>,
     logout_eresult: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1555,11 +1579,14 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_Logout_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_Quit_Request {
     // message fields
     restart: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1711,9 +1738,12 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_Quit_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_Quit_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1827,9 +1857,12 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_Quit_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_Status_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1943,6 +1976,7 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_Status_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_Status_Response {
     // message fields
     logon_state: ::std::option::Option<i32>,
@@ -1951,7 +1985,9 @@ pub struct SiteServerUI_Status_Response {
     cache_enabled: ::std::option::Option<bool>,
     acct_status: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2255,9 +2291,12 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_Status_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_GetLanguage_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2371,11 +2410,14 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_GetLanguage_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_GetLanguage_Response {
     // message fields
     language: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2540,11 +2582,14 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_GetLanguage_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_SetLanguage_Request {
     // message fields
     language: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2709,9 +2754,12 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_SetLanguage_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_SetLanguage_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2825,9 +2873,12 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_SetLanguage_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_ClientStatus_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2941,12 +2992,15 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_ClientStatus_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_ClientStatus_Response {
     // message fields
     pub clients: ::protobuf::RepeatedField<SiteServerUI_ClientStatus_Response_ClientInfo>,
     pub payments: ::protobuf::RepeatedField<SiteServerUI_ClientStatus_Response_Payment>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3156,6 +3210,7 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_ClientStatus_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_ClientStatus_Response_ClientInfo {
     // message fields
     ip: ::std::option::Option<u32>,
@@ -3163,7 +3218,9 @@ pub struct SiteServerUI_ClientStatus_Response_ClientInfo {
     connected: ::std::option::Option<bool>,
     instance_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3442,6 +3499,7 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_ClientStatus_Response_C
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_ClientStatus_Response_Payment {
     // message fields
     transid: ::std::option::Option<u64>,
@@ -3454,7 +3512,9 @@ pub struct SiteServerUI_ClientStatus_Response_Payment {
     profile_url: ::protobuf::SingularField<::std::string::String>,
     avatar_url: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3975,9 +4035,12 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_ClientStatus_Response_P
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_ContentCacheStatus_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4091,6 +4154,7 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_ContentCacheStatus_Requ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_ContentCacheStatus_Response {
     // message fields
     enabled: ::std::option::Option<bool>,
@@ -4104,7 +4168,9 @@ pub struct SiteServerUI_ContentCacheStatus_Response {
     current_bw: ::std::option::Option<u64>,
     total_bytes_served: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4624,6 +4690,7 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_ContentCacheStatus_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_ContentCacheConfig_Request {
     // message fields
     enabled: ::std::option::Option<bool>,
@@ -4634,7 +4701,9 @@ pub struct SiteServerUI_ContentCacheConfig_Request {
     external_process: ::std::option::Option<bool>,
     explicit_ip_address: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5040,9 +5109,12 @@ impl ::protobuf::reflect::ProtobufValue for SiteServerUI_ContentCacheConfig_Requ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct SiteServerUI_ContentCacheConfig_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

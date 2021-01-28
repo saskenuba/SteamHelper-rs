@@ -24,11 +24,14 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserAccount_GetAvailableValveDiscountPromotions_Request {
     // message fields
     country_code: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -193,11 +196,14 @@ impl ::protobuf::reflect::ProtobufValue for CUserAccount_GetAvailableValveDiscou
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserAccount_GetAvailableValveDiscountPromotions_Response {
     // message fields
     pub promotions: ::protobuf::RepeatedField<CUserAccount_GetAvailableValveDiscountPromotions_Response_ValveDiscountPromotionDetails>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -359,6 +365,7 @@ impl ::protobuf::reflect::ProtobufValue for CUserAccount_GetAvailableValveDiscou
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserAccount_GetAvailableValveDiscountPromotions_Response_ValveDiscountPromotionDetails {
     // message fields
     promotionid: ::std::option::Option<u32>,
@@ -373,7 +380,9 @@ pub struct CUserAccount_GetAvailableValveDiscountPromotions_Response_ValveDiscou
     localized_name_token: ::protobuf::SingularField<::std::string::String>,
     max_use_count: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -931,9 +940,12 @@ impl ::protobuf::reflect::ProtobufValue for CUserAccount_GetAvailableValveDiscou
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserAccount_GetAccountLinkStatus_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1047,13 +1059,16 @@ impl ::protobuf::reflect::ProtobufValue for CUserAccount_GetAccountLinkStatus_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserAccount_GetAccountLinkStatus_Response {
     // message fields
     pwid: ::std::option::Option<u32>,
     identity_verification: ::std::option::Option<u32>,
     performed_age_verification: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1281,11 +1296,14 @@ impl ::protobuf::reflect::ProtobufValue for CUserAccount_GetAccountLinkStatus_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserAccount_CancelLicenseForApp_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1437,9 +1455,12 @@ impl ::protobuf::reflect::ProtobufValue for CUserAccount_CancelLicenseForApp_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserAccount_CancelLicenseForApp_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1553,13 +1574,16 @@ impl ::protobuf::reflect::ProtobufValue for CUserAccount_CancelLicenseForApp_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserAccount_CreateFriendInviteToken_Request {
     // message fields
     invite_limit: ::std::option::Option<u32>,
     invite_duration: ::std::option::Option<u32>,
     invite_note: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1800,6 +1824,7 @@ impl ::protobuf::reflect::ProtobufValue for CUserAccount_CreateFriendInviteToken
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserAccount_CreateFriendInviteToken_Response {
     // message fields
     invite_token: ::protobuf::SingularField<::std::string::String>,
@@ -1808,7 +1833,9 @@ pub struct CUserAccount_CreateFriendInviteToken_Response {
     time_created: ::std::option::Option<u32>,
     valid: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2125,9 +2152,12 @@ impl ::protobuf::reflect::ProtobufValue for CUserAccount_CreateFriendInviteToken
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserAccount_GetFriendInviteTokens_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2241,11 +2271,14 @@ impl ::protobuf::reflect::ProtobufValue for CUserAccount_GetFriendInviteTokens_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserAccount_GetFriendInviteTokens_Response {
     // message fields
     pub tokens: ::protobuf::RepeatedField<CUserAccount_CreateFriendInviteToken_Response>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2407,12 +2440,15 @@ impl ::protobuf::reflect::ProtobufValue for CUserAccount_GetFriendInviteTokens_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserAccount_ViewFriendInviteToken_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     invite_token: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2615,13 +2651,16 @@ impl ::protobuf::reflect::ProtobufValue for CUserAccount_ViewFriendInviteToken_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserAccount_ViewFriendInviteToken_Response {
     // message fields
     valid: ::std::option::Option<bool>,
     steamid: ::std::option::Option<u64>,
     invite_duration: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2849,12 +2888,15 @@ impl ::protobuf::reflect::ProtobufValue for CUserAccount_ViewFriendInviteToken_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserAccount_RedeemFriendInviteToken_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     invite_token: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3057,9 +3099,12 @@ impl ::protobuf::reflect::ProtobufValue for CUserAccount_RedeemFriendInviteToken
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserAccount_RedeemFriendInviteToken_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3173,11 +3218,14 @@ impl ::protobuf::reflect::ProtobufValue for CUserAccount_RedeemFriendInviteToken
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserAccount_RevokeFriendInviteToken_Request {
     // message fields
     invite_token: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3342,9 +3390,12 @@ impl ::protobuf::reflect::ProtobufValue for CUserAccount_RevokeFriendInviteToken
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserAccount_RevokeFriendInviteToken_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3458,11 +3509,14 @@ impl ::protobuf::reflect::ProtobufValue for CUserAccount_RevokeFriendInviteToken
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserAccount_RegisterCompatTool_Request {
     // message fields
     compat_tool: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3614,9 +3668,12 @@ impl ::protobuf::reflect::ProtobufValue for CUserAccount_RegisterCompatTool_Requ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CUserAccount_RegisterCompatTool_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3730,6 +3787,7 @@ impl ::protobuf::reflect::ProtobufValue for CUserAccount_RegisterCompatTool_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountLinking_GetLinkedAccountInfo_Request {
     // message fields
     account_type: ::std::option::Option<EInternalAccountType>,
@@ -3737,7 +3795,9 @@ pub struct CAccountLinking_GetLinkedAccountInfo_Request {
     filter: ::std::option::Option<EExternalAccountType>,
     return_access_token: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3995,11 +4055,14 @@ impl ::protobuf::reflect::ProtobufValue for CAccountLinking_GetLinkedAccountInfo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountLinking_GetLinkedAccountInfo_Response {
     // message fields
     pub external_accounts: ::protobuf::RepeatedField<CAccountLinking_GetLinkedAccountInfo_Response_CExternalAccountTuple_Response>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4161,6 +4224,7 @@ impl ::protobuf::reflect::ProtobufValue for CAccountLinking_GetLinkedAccountInfo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountLinking_GetLinkedAccountInfo_Response_CExternalAccountTuple_Response {
     // message fields
     external_type: ::std::option::Option<EExternalAccountType>,
@@ -4171,7 +4235,9 @@ pub struct CAccountLinking_GetLinkedAccountInfo_Response_CExternalAccountTuple_R
     access_token_secret: ::protobuf::SingularField<::std::string::String>,
     is_valid: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4612,6 +4678,7 @@ impl ::protobuf::reflect::ProtobufValue for CAccountLinking_GetLinkedAccountInfo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CEmbeddedClient_AuthorizeCurrentDevice_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -4619,7 +4686,9 @@ pub struct CEmbeddedClient_AuthorizeCurrentDevice_Request {
     device_info: ::protobuf::SingularField<::std::string::String>,
     deviceid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4898,6 +4967,7 @@ impl ::protobuf::reflect::ProtobufValue for CEmbeddedClient_AuthorizeCurrentDevi
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CEmbeddedClient_Token {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -4905,7 +4975,9 @@ pub struct CEmbeddedClient_Token {
     expiry: ::std::option::Option<u32>,
     deviceid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5184,12 +5256,15 @@ impl ::protobuf::reflect::ProtobufValue for CEmbeddedClient_Token {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CEmbeddedClient_AuthorizeDevice_Response {
     // message fields
     result: ::std::option::Option<u32>,
     pub token: ::protobuf::SingularPtrField<CEmbeddedClient_Token>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5397,6 +5472,7 @@ impl ::protobuf::reflect::ProtobufValue for CEmbeddedClient_AuthorizeDevice_Resp
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EInternalAccountType {
     k_EInternalSteamAccountType = 1,
     k_EInternalClanType = 2,
@@ -5454,6 +5530,7 @@ impl ::protobuf::reflect::ProtobufValue for EInternalAccountType {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EExternalAccountType {
     k_EExternalNone = 0,
     k_EExternalSteamAccount = 1,

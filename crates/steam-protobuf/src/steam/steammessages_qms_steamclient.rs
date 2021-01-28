@@ -24,12 +24,15 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct GameSearchParam {
     // message fields
     key_name: ::protobuf::SingularField<::std::string::String>,
     pub value: ::protobuf::RepeatedField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -234,6 +237,7 @@ impl ::protobuf::reflect::ProtobufValue for GameSearchParam {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CQueuedMatchmaking_SearchForGame_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -244,7 +248,9 @@ pub struct CQueuedMatchmaking_SearchForGame_Request {
     steamidlobby: ::std::option::Option<u64>,
     searchid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -630,6 +636,7 @@ impl ::protobuf::reflect::ProtobufValue for CQueuedMatchmaking_SearchForGame_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CQueuedMatchmaking_SearchForGame_Response {
     // message fields
     gamesearchresult: ::std::option::Option<EGameSearchResult>,
@@ -645,7 +652,9 @@ pub struct CQueuedMatchmaking_SearchForGame_Response {
     rtime_now: ::std::option::Option<u32>,
     steamid_canceled_search: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1224,6 +1233,7 @@ impl ::protobuf::reflect::ProtobufValue for CQueuedMatchmaking_SearchForGame_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CQueuedMatchmakingGameHost_SearchForPlayers_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -1235,7 +1245,9 @@ pub struct CQueuedMatchmakingGameHost_SearchForPlayers_Request {
     connection_string: ::protobuf::SingularField<::std::string::String>,
     searchid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1672,6 +1684,7 @@ impl ::protobuf::reflect::ProtobufValue for CQueuedMatchmakingGameHost_SearchFor
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct PlayerFound {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -1679,7 +1692,9 @@ pub struct PlayerFound {
     pub params: ::protobuf::RepeatedField<GameSearchParam>,
     team_number: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1951,6 +1966,7 @@ impl ::protobuf::reflect::ProtobufValue for PlayerFound {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CQueuedMatchmakingGameHost_SearchForPlayers_Response {
     // message fields
     gamesearchresult: ::std::option::Option<EGameSearchResult>,
@@ -1961,7 +1977,9 @@ pub struct CQueuedMatchmakingGameHost_SearchForPlayers_Response {
     rtime_match_made: ::std::option::Option<u32>,
     rtime_now: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2347,12 +2365,15 @@ impl ::protobuf::reflect::ProtobufValue for CQueuedMatchmakingGameHost_SearchFor
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct PlayerResult {
     // message fields
     steamid: ::std::option::Option<u64>,
     value: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2542,13 +2563,16 @@ impl ::protobuf::reflect::ProtobufValue for PlayerResult {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CQueuedMatchmakingGameHost_SubmitPlayerResult_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     matchid: ::std::option::Option<u64>,
     pub player_results: ::protobuf::RepeatedField<PlayerResult>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2786,9 +2810,12 @@ impl ::protobuf::reflect::ProtobufValue for CQueuedMatchmakingGameHost_SubmitPla
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CQueuedMatchmakingGameHost_SubmitPlayerResult_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2902,12 +2929,15 @@ impl ::protobuf::reflect::ProtobufValue for CQueuedMatchmakingGameHost_SubmitPla
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CQueuedMatchmakingGameHost_EndGame_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     matchid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3097,9 +3127,12 @@ impl ::protobuf::reflect::ProtobufValue for CQueuedMatchmakingGameHost_EndGame_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CQueuedMatchmakingGameHost_EndGame_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3213,6 +3246,7 @@ impl ::protobuf::reflect::ProtobufValue for CQueuedMatchmakingGameHost_EndGame_R
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EGameSearchAction {
     k_EGameSearchAction_None = 0,
     k_EGameSearchAction_Accept = 1,
@@ -3269,6 +3303,7 @@ impl ::protobuf::reflect::ProtobufValue for EGameSearchAction {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EGameSearchResult {
     k_EGameSearchResult_Invalid = 0,
     k_EGameSearchResult_SearchInProgress = 1,

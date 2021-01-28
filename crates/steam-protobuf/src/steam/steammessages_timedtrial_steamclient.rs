@@ -24,11 +24,14 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTimedTrial_GetTimeRemaining_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -180,6 +183,7 @@ impl ::protobuf::reflect::ProtobufValue for CTimedTrial_GetTimeRemaining_Request
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTimedTrial_GetTimeRemaining_Response {
     // message fields
     seconds_played: ::std::option::Option<u32>,
@@ -187,7 +191,9 @@ pub struct CTimedTrial_GetTimeRemaining_Response {
     packageid: ::std::option::Option<u32>,
     mastersub_appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -453,12 +459,15 @@ impl ::protobuf::reflect::ProtobufValue for CTimedTrial_GetTimeRemaining_Respons
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTimedTrial_RecordPlaytime_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     seconds_played: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -648,12 +657,15 @@ impl ::protobuf::reflect::ProtobufValue for CTimedTrial_RecordPlaytime_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTimedTrial_RecordPlaytime_Response {
     // message fields
     seconds_played: ::std::option::Option<u32>,
     seconds_allowed: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -843,11 +855,14 @@ impl ::protobuf::reflect::ProtobufValue for CTimedTrial_RecordPlaytime_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTimedTrial_ResetPlaytime_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -999,12 +1014,15 @@ impl ::protobuf::reflect::ProtobufValue for CTimedTrial_ResetPlaytime_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTimedTrial_ResetPlaytime_Response {
     // message fields
     seconds_played: ::std::option::Option<u32>,
     seconds_allowed: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

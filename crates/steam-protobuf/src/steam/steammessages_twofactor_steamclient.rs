@@ -24,11 +24,14 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTwoFactor_Status_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -180,6 +183,7 @@ impl ::protobuf::reflect::ProtobufValue for CTwoFactor_Status_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTwoFactor_Status_Response {
     // message fields
     state: ::std::option::Option<u32>,
@@ -196,7 +200,9 @@ pub struct CTwoFactor_Status_Response {
     allow_external_authenticator: ::std::option::Option<bool>,
     time_transferred: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -843,6 +849,7 @@ impl ::protobuf::reflect::ProtobufValue for CTwoFactor_Status_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTwoFactor_AddAuthenticator_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -853,7 +860,9 @@ pub struct CTwoFactor_AddAuthenticator_Request {
     sms_phone_id: ::protobuf::SingularField<::std::string::String>,
     pub http_headers: ::protobuf::RepeatedField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1261,6 +1270,7 @@ impl ::protobuf::reflect::ProtobufValue for CTwoFactor_AddAuthenticator_Request 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTwoFactor_AddAuthenticator_Response {
     // message fields
     shared_secret: ::protobuf::SingularField<::std::vec::Vec<u8>>,
@@ -1274,7 +1284,9 @@ pub struct CTwoFactor_AddAuthenticator_Response {
     secret_1: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     status: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1859,13 +1871,16 @@ impl ::protobuf::reflect::ProtobufValue for CTwoFactor_AddAuthenticator_Response
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTwoFactor_SendEmail_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     email_type: ::std::option::Option<u32>,
     include_activation_code: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2093,9 +2108,12 @@ impl ::protobuf::reflect::ProtobufValue for CTwoFactor_SendEmail_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTwoFactor_SendEmail_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2209,6 +2227,7 @@ impl ::protobuf::reflect::ProtobufValue for CTwoFactor_SendEmail_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTwoFactor_FinalizeAddAuthenticator_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -2217,7 +2236,9 @@ pub struct CTwoFactor_FinalizeAddAuthenticator_Request {
     activation_code: ::protobuf::SingularField<::std::string::String>,
     pub http_headers: ::protobuf::RepeatedField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2549,6 +2570,7 @@ impl ::protobuf::reflect::ProtobufValue for CTwoFactor_FinalizeAddAuthenticator_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTwoFactor_FinalizeAddAuthenticator_Response {
     // message fields
     success: ::std::option::Option<bool>,
@@ -2556,7 +2578,9 @@ pub struct CTwoFactor_FinalizeAddAuthenticator_Response {
     server_time: ::std::option::Option<u64>,
     status: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2822,6 +2846,7 @@ impl ::protobuf::reflect::ProtobufValue for CTwoFactor_FinalizeAddAuthenticator_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTwoFactor_RemoveAuthenticator_Request {
     // message fields
     revocation_code: ::protobuf::SingularField<::std::string::String>,
@@ -2829,7 +2854,9 @@ pub struct CTwoFactor_RemoveAuthenticator_Request {
     steamguard_scheme: ::std::option::Option<u32>,
     remove_all_steamguard_cookies: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3108,13 +3135,16 @@ impl ::protobuf::reflect::ProtobufValue for CTwoFactor_RemoveAuthenticator_Reque
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTwoFactor_RemoveAuthenticator_Response {
     // message fields
     success: ::std::option::Option<bool>,
     server_time: ::std::option::Option<u64>,
     revocation_attempts_remaining: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3342,11 +3372,14 @@ impl ::protobuf::reflect::ProtobufValue for CTwoFactor_RemoveAuthenticator_Respo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTwoFactor_CreateEmergencyCodes_Request {
     // message fields
     code: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3511,11 +3544,14 @@ impl ::protobuf::reflect::ProtobufValue for CTwoFactor_CreateEmergencyCodes_Requ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTwoFactor_CreateEmergencyCodes_Response {
     // message fields
     pub codes: ::protobuf::RepeatedField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3669,11 +3705,14 @@ impl ::protobuf::reflect::ProtobufValue for CTwoFactor_CreateEmergencyCodes_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTwoFactor_DestroyEmergencyCodes_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3825,9 +3864,12 @@ impl ::protobuf::reflect::ProtobufValue for CTwoFactor_DestroyEmergencyCodes_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTwoFactor_DestroyEmergencyCodes_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3941,11 +3983,14 @@ impl ::protobuf::reflect::ProtobufValue for CTwoFactor_DestroyEmergencyCodes_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTwoFactor_ValidateToken_Request {
     // message fields
     code: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4110,11 +4155,14 @@ impl ::protobuf::reflect::ProtobufValue for CTwoFactor_ValidateToken_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CTwoFactor_ValidateToken_Response {
     // message fields
     valid: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

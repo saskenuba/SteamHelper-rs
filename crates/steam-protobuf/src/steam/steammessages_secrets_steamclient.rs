@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CKeyEscrow_Request {
     // message fields
     rsa_oaep_sha_ticket: ::protobuf::SingularField<::std::vec::Vec<u8>>,
@@ -31,7 +32,9 @@ pub struct CKeyEscrow_Request {
     usage: ::std::option::Option<EKeyEscrowUsage>,
     device_name: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -332,6 +335,7 @@ impl ::protobuf::reflect::ProtobufValue for CKeyEscrow_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CKeyEscrow_Ticket {
     // message fields
     password: ::protobuf::SingularField<::std::vec::Vec<u8>>,
@@ -344,7 +348,9 @@ pub struct CKeyEscrow_Ticket {
     device_serial: ::protobuf::SingularField<::std::string::String>,
     device_provisioning_id: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -861,11 +867,14 @@ impl ::protobuf::reflect::ProtobufValue for CKeyEscrow_Ticket {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CKeyEscrow_Response {
     // message fields
     pub ticket: ::protobuf::SingularPtrField<CKeyEscrow_Ticket>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1035,6 +1044,7 @@ impl ::protobuf::reflect::ProtobufValue for CKeyEscrow_Response {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EKeyEscrowUsage {
     k_EKeyEscrowUsageStreamingDevice = 0,
 }

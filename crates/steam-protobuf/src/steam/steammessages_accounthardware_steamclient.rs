@@ -24,12 +24,15 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_RegisterSteamController_Request {
     // message fields
     serial_number: ::protobuf::SingularField<::std::string::String>,
     controller_code: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -245,9 +248,12 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_RegisterSteamContro
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_RegisterSteamController_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -361,12 +367,15 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_RegisterSteamContro
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_CompleteSteamControllerRegistration_Request {
     // message fields
     serial_number: ::protobuf::SingularField<::std::string::String>,
     controller_code: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -582,9 +591,12 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_CompleteSteamContro
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_CompleteSteamControllerRegistration_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -698,12 +710,15 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_CompleteSteamContro
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_QueryAccountsRegisteredToSerial_Request {
     // message fields
     serial_number: ::protobuf::SingularField<::std::string::String>,
     controller_code: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -919,12 +934,15 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_QueryAccountsRegist
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_QueryAccountsRegisteredToSerial_Accounts {
     // message fields
     accountid: ::std::option::Option<u32>,
     registration_complete: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1114,11 +1132,14 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_QueryAccountsRegist
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_QueryAccountsRegisteredToSerial_Response {
     // message fields
     pub accounts: ::protobuf::RepeatedField<CAccountHardware_QueryAccountsRegisteredToSerial_Accounts>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1280,13 +1301,16 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_QueryAccountsRegist
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_SteamControllerSetConfig_ControllerConfig {
     // message fields
     appidorname: ::protobuf::SingularField<::std::string::String>,
     publishedfileid: ::std::option::Option<u64>,
     templatename: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1540,6 +1564,7 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_SteamControllerSetC
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_SteamControllerSetConfig_Request {
     // message fields
     serial_number: ::protobuf::SingularField<::std::string::String>,
@@ -1549,7 +1574,9 @@ pub struct CAccountHardware_SteamControllerSetConfig_Request {
     controller_type: ::std::option::Option<i32>,
     only_for_this_serial: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1927,9 +1954,12 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_SteamControllerSetC
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_SteamControllerSetConfig_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2043,6 +2073,7 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_SteamControllerSetC
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_SteamControllerGetConfig_Request {
     // message fields
     serial_number: ::protobuf::SingularField<::std::string::String>,
@@ -2052,7 +2083,9 @@ pub struct CAccountHardware_SteamControllerGetConfig_Request {
     controller_type: ::std::option::Option<i32>,
     only_for_this_serial: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2433,6 +2466,7 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_SteamControllerGetC
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_SteamControllerGetConfig_ControllerConfig {
     // message fields
     appidorname: ::protobuf::SingularField<::std::string::String>,
@@ -2440,7 +2474,9 @@ pub struct CAccountHardware_SteamControllerGetConfig_ControllerConfig {
     templatename: ::protobuf::SingularField<::std::string::String>,
     serial_number: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2745,11 +2781,14 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_SteamControllerGetC
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_SteamControllerGetConfig_Response {
     // message fields
     pub configurations: ::protobuf::RepeatedField<CAccountHardware_SteamControllerGetConfig_ControllerConfig>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2911,13 +2950,16 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_SteamControllerGetC
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_DeRegisterSteamController_Request {
     // message fields
     serial_number: ::protobuf::SingularField<::std::string::String>,
     controller_code: ::protobuf::SingularField<::std::string::String>,
     accountid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3171,9 +3213,12 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_DeRegisterSteamCont
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_DeRegisterSteamController_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3287,13 +3332,16 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_DeRegisterSteamCont
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_SetPersonalizationFile_Request {
     // message fields
     serial_number: ::protobuf::SingularField<::std::string::String>,
     publishedfileid: ::std::option::Option<u64>,
     accountid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3534,9 +3582,12 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_SetPersonalizationF
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_SetPersonalizationFile_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3650,12 +3701,15 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_SetPersonalizationF
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_GetPersonalizationFile_Request {
     // message fields
     serial_number: ::protobuf::SingularField<::std::string::String>,
     accountid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3858,11 +3912,14 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_GetPersonalizationF
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_GetPersonalizationFile_Response {
     // message fields
     publishedfileid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4014,12 +4071,15 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_GetPersonalizationF
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_VRCompatibilityCheck_Request {
     // message fields
     product_name: ::protobuf::SingularField<::std::string::String>,
     pub values: ::protobuf::RepeatedField<CAccountHardware_VRCompatibilityCheck_Request_Pair>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4232,12 +4292,15 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_VRCompatibilityChec
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_VRCompatibilityCheck_Request_Pair {
     // message fields
     key: ::protobuf::SingularField<::std::string::String>,
     value: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4453,12 +4516,15 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_VRCompatibilityChec
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_VRCompatibilityCheck_Response {
     // message fields
     pub values: ::protobuf::RepeatedField<CAccountHardware_VRCompatibilityCheck_Response_Pair>,
     pub components: ::protobuf::RepeatedField<CAccountHardware_VRCompatibilityCheck_Response_ComponentDisplay>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4668,12 +4734,15 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_VRCompatibilityChec
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_VRCompatibilityCheck_Response_Pair {
     // message fields
     key: ::protobuf::SingularField<::std::string::String>,
     value: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4889,13 +4958,16 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_VRCompatibilityChec
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_VRCompatibilityCheck_Response_ComponentDisplay {
     // message fields
     name: ::protobuf::SingularField<::std::string::String>,
     image: ::protobuf::SingularField<::std::string::String>,
     value: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5162,6 +5234,7 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_VRCompatibilityChec
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_RegisterValveIndexComponent_Request {
     // message fields
     serial_number: ::protobuf::SingularField<::std::string::String>,
@@ -5170,7 +5243,9 @@ pub struct CAccountHardware_RegisterValveIndexComponent_Request {
     component_type: ::std::option::Option<EValveIndexComponent>,
     estimated_time_registered: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5509,9 +5584,12 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_RegisterValveIndexC
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CAccountHardware_RegisterValveIndexComponent_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5625,6 +5703,7 @@ impl ::protobuf::reflect::ProtobufValue for CAccountHardware_RegisterValveIndexC
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EValveIndexComponent {
     k_EValveIndexComponentUnknown = 0,
     k_EValveIndexComponentHMD = 1,

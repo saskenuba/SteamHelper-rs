@@ -24,12 +24,15 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameServers_GetServerList_Request {
     // message fields
     filter: ::protobuf::SingularField<::std::string::String>,
     limit: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -232,11 +235,14 @@ impl ::protobuf::reflect::ProtobufValue for CGameServers_GetServerList_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameServers_GetServerList_Response {
     // message fields
     pub servers: ::protobuf::RepeatedField<CGameServers_GetServerList_Response_Server>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -398,6 +404,7 @@ impl ::protobuf::reflect::ProtobufValue for CGameServers_GetServerList_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameServers_GetServerList_Response_Server {
     // message fields
     addr: ::protobuf::SingularField<::std::string::String>,
@@ -419,7 +426,9 @@ pub struct CGameServers_GetServerList_Response_Server {
     os: ::protobuf::SingularField<::std::string::String>,
     gametype: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1321,11 +1330,14 @@ impl ::protobuf::reflect::ProtobufValue for CGameServers_GetServerList_Response_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameServers_GetServerSteamIDsByIP_Request {
     // message fields
     pub server_ips: ::protobuf::RepeatedField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1479,11 +1491,14 @@ impl ::protobuf::reflect::ProtobufValue for CGameServers_GetServerSteamIDsByIP_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameServers_IPsWithSteamIDs_Response {
     // message fields
     pub servers: ::protobuf::RepeatedField<CGameServers_IPsWithSteamIDs_Response_Server>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1645,12 +1660,15 @@ impl ::protobuf::reflect::ProtobufValue for CGameServers_IPsWithSteamIDs_Respons
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameServers_IPsWithSteamIDs_Response_Server {
     // message fields
     addr: ::protobuf::SingularField<::std::string::String>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1853,11 +1871,14 @@ impl ::protobuf::reflect::ProtobufValue for CGameServers_IPsWithSteamIDs_Respons
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameServers_GetServerIPsBySteamID_Request {
     // message fields
     pub server_steamids: ::std::vec::Vec<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

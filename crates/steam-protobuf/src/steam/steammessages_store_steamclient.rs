@@ -24,11 +24,14 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CStore_GetMostPopularTags_Request {
     // message fields
     language: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -193,11 +196,14 @@ impl ::protobuf::reflect::ProtobufValue for CStore_GetMostPopularTags_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CStore_GetMostPopularTags_Response {
     // message fields
     pub tags: ::protobuf::RepeatedField<CStore_GetMostPopularTags_Response_Tag>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -359,12 +365,15 @@ impl ::protobuf::reflect::ProtobufValue for CStore_GetMostPopularTags_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CStore_GetMostPopularTags_Response_Tag {
     // message fields
     tagid: ::std::option::Option<u32>,
     name: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -567,12 +576,15 @@ impl ::protobuf::reflect::ProtobufValue for CStore_GetMostPopularTags_Response_T
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CStore_GetLocalizedNameForTags_Request {
     // message fields
     language: ::protobuf::SingularField<::std::string::String>,
     pub tagids: ::std::vec::Vec<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -777,11 +789,14 @@ impl ::protobuf::reflect::ProtobufValue for CStore_GetLocalizedNameForTags_Reque
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CStore_GetLocalizedNameForTags_Response {
     // message fields
     pub tags: ::protobuf::RepeatedField<CStore_GetLocalizedNameForTags_Response_Tag>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -943,13 +958,16 @@ impl ::protobuf::reflect::ProtobufValue for CStore_GetLocalizedNameForTags_Respo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CStore_GetLocalizedNameForTags_Response_Tag {
     // message fields
     tagid: ::std::option::Option<u32>,
     english_name: ::protobuf::SingularField<::std::string::String>,
     name: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1203,9 +1221,12 @@ impl ::protobuf::reflect::ProtobufValue for CStore_GetLocalizedNameForTags_Respo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CStore_GetStorePreferences_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1319,6 +1340,7 @@ impl ::protobuf::reflect::ProtobufValue for CStore_GetStorePreferences_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CStore_UserPreferences {
     // message fields
     primary_language: ::std::option::Option<u32>,
@@ -1333,7 +1355,9 @@ pub struct CStore_UserPreferences {
     review_score_preference: ::std::option::Option<EUserReviewScorePreference>,
     timestamp_content_descriptor_preferences_updated: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1861,11 +1885,14 @@ impl ::protobuf::reflect::ProtobufValue for CStore_UserPreferences {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CStore_UserTagPreferences {
     // message fields
     pub tags_to_exclude: ::protobuf::RepeatedField<CStore_UserTagPreferences_Tag>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2027,13 +2054,16 @@ impl ::protobuf::reflect::ProtobufValue for CStore_UserTagPreferences {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CStore_UserTagPreferences_Tag {
     // message fields
     tagid: ::std::option::Option<u32>,
     name: ::protobuf::SingularField<::std::string::String>,
     timestamp_added: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2274,11 +2304,14 @@ impl ::protobuf::reflect::ProtobufValue for CStore_UserTagPreferences_Tag {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CStore_UserContentDescriptorPreferences {
     // message fields
     pub content_descriptors_to_exclude: ::protobuf::RepeatedField<CStore_UserContentDescriptorPreferences_ContentDescriptor>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2440,12 +2473,15 @@ impl ::protobuf::reflect::ProtobufValue for CStore_UserContentDescriptorPreferen
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CStore_UserContentDescriptorPreferences_ContentDescriptor {
     // message fields
     content_descriptorid: ::std::option::Option<u32>,
     timestamp_added: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2635,13 +2671,16 @@ impl ::protobuf::reflect::ProtobufValue for CStore_UserContentDescriptorPreferen
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CStore_GetStorePreferences_Response {
     // message fields
     pub preferences: ::protobuf::SingularPtrField<CStore_UserPreferences>,
     pub tag_preferences: ::protobuf::SingularPtrField<CStore_UserTagPreferences>,
     pub content_descriptor_preferences: ::protobuf::SingularPtrField<CStore_UserContentDescriptorPreferences>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2923,13 +2962,16 @@ impl ::protobuf::reflect::ProtobufValue for CStore_GetStorePreferences_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CStore_StorePreferencesChanged_Notification {
     // message fields
     pub preferences: ::protobuf::SingularPtrField<CStore_UserPreferences>,
     pub tag_preferences: ::protobuf::SingularPtrField<CStore_UserTagPreferences>,
     pub content_descriptor_preferences: ::protobuf::SingularPtrField<CStore_UserContentDescriptorPreferences>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3211,6 +3253,7 @@ impl ::protobuf::reflect::ProtobufValue for CStore_StorePreferencesChanged_Notif
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EUserReviewScorePreference {
     k_EUserReviewScorePreference_Unset = 0,
     k_EUserReviewScorePreference_IncludeAll = 1,
@@ -3327,8 +3370,8 @@ static file_descriptor_proto_data: &'static [u8] = b"\
     NotifyStorePreferencesChanged\x12,.CStore_StorePreferencesChanged_Notifi\
     cation\x1a\x0b.NoResponse\"U\x82\xb5\x18QNotification\x20from\x20server\
     \x20to\x20client\x20that\x20the\x20user's\x20store\x20preferences\x20hav\
-    e\x20changed\x1a+\xc0\xb5\x18\x02\x82\xb5\x18#Steam\x20store\x20to\x20cl\
-    ient\x20notificationsB\x03\x80\x01\x01\
+    e\x20changed\x1a+\x82\xb5\x18#Steam\x20store\x20to\x20client\x20notifica\
+    tions\xc0\xb5\x18\x02B\x03\x80\x01\x01\
 ";
 
 static file_descriptor_proto_lazy: ::protobuf::rt::LazyV2<::protobuf::descriptor::FileDescriptorProto> = ::protobuf::rt::LazyV2::INIT;

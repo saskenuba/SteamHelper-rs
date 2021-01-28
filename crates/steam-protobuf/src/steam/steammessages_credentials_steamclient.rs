@@ -24,13 +24,16 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCredentials_TestAvailablePassword_Request {
     // message fields
     password: ::protobuf::SingularField<::std::string::String>,
     sha_digest_password: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     account_name: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -297,11 +300,14 @@ impl ::protobuf::reflect::ProtobufValue for CCredentials_TestAvailablePassword_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCredentials_TestAvailablePassword_Response {
     // message fields
     is_valid: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -453,6 +459,7 @@ impl ::protobuf::reflect::ProtobufValue for CCredentials_TestAvailablePassword_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCredentials_GetSteamGuardDetails_Request {
     // message fields
     include_new_authentications: ::std::option::Option<bool>,
@@ -460,7 +467,9 @@ pub struct CCredentials_GetSteamGuardDetails_Request {
     timestamp_minimum_wanted: ::std::option::Option<u32>,
     ipaddress: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -739,6 +748,7 @@ impl ::protobuf::reflect::ProtobufValue for CCredentials_GetSteamGuardDetails_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCredentials_GetSteamGuardDetails_Response {
     // message fields
     is_steamguard_enabled: ::std::option::Option<bool>,
@@ -753,7 +763,9 @@ pub struct CCredentials_GetSteamGuardDetails_Response {
     timestamp_twofactor_enabled: ::std::option::Option<u32>,
     is_phone_verified: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1318,6 +1330,7 @@ impl ::protobuf::reflect::ProtobufValue for CCredentials_GetSteamGuardDetails_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCredentials_GetSteamGuardDetails_Response_NewAuthentication {
     // message fields
     timestamp_steamguard_enabled: ::std::option::Option<u32>,
@@ -1328,7 +1341,9 @@ pub struct CCredentials_GetSteamGuardDetails_Response_NewAuthentication {
     machine_name_user_supplied: ::protobuf::SingularField<::std::string::String>,
     status: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1734,6 +1749,7 @@ impl ::protobuf::reflect::ProtobufValue for CCredentials_GetSteamGuardDetails_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCredentials_GetSteamGuardDetails_Response_SessionData {
     // message fields
     machine_id: ::std::option::Option<u64>,
@@ -1745,7 +1761,9 @@ pub struct CCredentials_GetSteamGuardDetails_Response_SessionData {
     public_ipv4: ::std::option::Option<u32>,
     public_ip_address: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2199,12 +2217,15 @@ impl ::protobuf::reflect::ProtobufValue for CCredentials_GetSteamGuardDetails_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCredentials_NewMachineNotificationDialog_Request {
     // message fields
     is_approved: ::std::option::Option<bool>,
     is_wizard_complete: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2394,9 +2415,12 @@ impl ::protobuf::reflect::ProtobufValue for CCredentials_NewMachineNotificationD
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCredentials_NewMachineNotificationDialog_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2510,11 +2534,14 @@ impl ::protobuf::reflect::ProtobufValue for CCredentials_NewMachineNotificationD
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCredentials_ValidateEmailAddress_Request {
     // message fields
     stoken: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2679,11 +2706,14 @@ impl ::protobuf::reflect::ProtobufValue for CCredentials_ValidateEmailAddress_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCredentials_ValidateEmailAddress_Response {
     // message fields
     was_validated: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2835,12 +2865,15 @@ impl ::protobuf::reflect::ProtobufValue for CCredentials_ValidateEmailAddress_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCredentials_SteamGuardPhishingReport_Request {
     // message fields
     param_string: ::protobuf::SingularField<::std::string::String>,
     ipaddress_actual: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3056,6 +3089,7 @@ impl ::protobuf::reflect::ProtobufValue for CCredentials_SteamGuardPhishingRepor
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCredentials_SteamGuardPhishingReport_Response {
     // message fields
     ipaddress_loginattempt: ::protobuf::SingularField<::std::string::String>,
@@ -3068,7 +3102,9 @@ pub struct CCredentials_SteamGuardPhishingReport_Response {
     cityname_actual: ::protobuf::SingularField<::std::string::String>,
     steamguard_code: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3641,11 +3677,14 @@ impl ::protobuf::reflect::ProtobufValue for CCredentials_SteamGuardPhishingRepor
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCredentials_LastCredentialChangeTime_Request {
     // message fields
     user_changes_only: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3797,13 +3836,16 @@ impl ::protobuf::reflect::ProtobufValue for CCredentials_LastCredentialChangeTim
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCredentials_LastCredentialChangeTime_Response {
     // message fields
     timestamp_last_password_change: ::std::option::Option<u32>,
     timestamp_last_email_change: ::std::option::Option<u32>,
     timestamp_last_password_reset: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4031,9 +4073,12 @@ impl ::protobuf::reflect::ProtobufValue for CCredentials_LastCredentialChangeTim
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCredentials_GetAccountAuthSecret_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4147,12 +4192,15 @@ impl ::protobuf::reflect::ProtobufValue for CCredentials_GetAccountAuthSecret_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCredentials_GetAccountAuthSecret_Response {
     // message fields
     secret_id: ::std::option::Option<i32>,
     secret: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

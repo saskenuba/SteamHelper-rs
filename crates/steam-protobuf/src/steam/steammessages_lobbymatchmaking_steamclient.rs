@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct LobbyMatchmakingLegacy_GetLobbyStatus_Request {
     // message fields
     app_id: ::std::option::Option<u32>,
@@ -32,7 +33,9 @@ pub struct LobbyMatchmakingLegacy_GetLobbyStatus_Request {
     claim_membership: ::std::option::Option<bool>,
     version_num: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -336,13 +339,16 @@ impl ::protobuf::reflect::ProtobufValue for LobbyMatchmakingLegacy_GetLobbyStatu
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct LobbyMatchmakingLegacy_GetLobbyStatus_Response {
     // message fields
     app_id: ::std::option::Option<u32>,
     steamid_lobby: ::std::option::Option<u64>,
     lobby_status: ::std::option::Option<ELobbyStatus>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -566,6 +572,7 @@ impl ::protobuf::reflect::ProtobufValue for LobbyMatchmakingLegacy_GetLobbyStatu
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum ELobbyStatus {
     k_ELobbyStatusInvalid = 0,
     k_ELobbyStatusExists = 1,

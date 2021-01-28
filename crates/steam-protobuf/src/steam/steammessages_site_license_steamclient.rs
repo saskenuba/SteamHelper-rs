@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSiteManagerClient_IncomingClient_Request {
     // message fields
     site_instanceid: ::std::option::Option<u64>,
@@ -31,7 +32,9 @@ pub struct CSiteManagerClient_IncomingClient_Request {
     client_local_ip: ::std::option::Option<u32>,
     connection_key: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -310,9 +313,12 @@ impl ::protobuf::reflect::ProtobufValue for CSiteManagerClient_IncomingClient_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSiteManagerClient_IncomingClient_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -426,12 +432,15 @@ impl ::protobuf::reflect::ProtobufValue for CSiteManagerClient_IncomingClient_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSiteLicense_ClientSeatCheckout_Notification {
     // message fields
     appid: ::std::option::Option<u32>,
     eresult: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -621,12 +630,15 @@ impl ::protobuf::reflect::ProtobufValue for CSiteLicense_ClientSeatCheckout_Noti
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSiteManagerClient_TrackedPayments_Notification {
     // message fields
     site_id: ::std::option::Option<u64>,
     pub payments: ::protobuf::RepeatedField<CSiteManagerClient_TrackedPayments_Notification_Payment>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -826,6 +838,7 @@ impl ::protobuf::reflect::ProtobufValue for CSiteManagerClient_TrackedPayments_N
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSiteManagerClient_TrackedPayments_Notification_Payment {
     // message fields
     transid: ::std::option::Option<u64>,
@@ -839,7 +852,9 @@ pub struct CSiteManagerClient_TrackedPayments_Notification_Payment {
     profile_url: ::protobuf::SingularField<::std::string::String>,
     avatar_url: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1385,13 +1400,16 @@ impl ::protobuf::reflect::ProtobufValue for CSiteManagerClient_TrackedPayments_N
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSiteLicense_InitiateAssociation_Request {
     // message fields
     site_steamid: ::std::option::Option<u64>,
     site_instanceid: ::std::option::Option<u64>,
     client_local_ip: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1619,11 +1637,14 @@ impl ::protobuf::reflect::ProtobufValue for CSiteLicense_InitiateAssociation_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSiteLicense_InitiateAssociation_Response {
     // message fields
     connection_key: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1788,11 +1809,14 @@ impl ::protobuf::reflect::ProtobufValue for CSiteLicense_InitiateAssociation_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSiteLicense_LCSAuthenticate_Request {
     // message fields
     instanceid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1944,6 +1968,7 @@ impl ::protobuf::reflect::ProtobufValue for CSiteLicense_LCSAuthenticate_Request
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSiteLicense_LCSAuthenticate_Response {
     // message fields
     site_id: ::std::option::Option<u64>,
@@ -1951,7 +1976,9 @@ pub struct CSiteLicense_LCSAuthenticate_Response {
     new_session: ::std::option::Option<bool>,
     no_site_licenses: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2230,6 +2257,7 @@ impl ::protobuf::reflect::ProtobufValue for CSiteLicense_LCSAuthenticate_Respons
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSiteLicense_LCSAssociateUser_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -2237,7 +2265,9 @@ pub struct CSiteLicense_LCSAssociateUser_Request {
     instanceid: ::std::option::Option<u64>,
     machine_name: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2516,9 +2546,12 @@ impl ::protobuf::reflect::ProtobufValue for CSiteLicense_LCSAssociateUser_Reques
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSiteLicense_LCSAssociateUser_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2632,13 +2665,16 @@ impl ::protobuf::reflect::ProtobufValue for CSiteLicense_LCSAssociateUser_Respon
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSiteLicense_ClientSeatCheckout_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     instanceid: ::std::option::Option<u64>,
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2866,9 +2902,12 @@ impl ::protobuf::reflect::ProtobufValue for CSiteLicense_ClientSeatCheckout_Requ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSiteLicense_ClientSeatCheckout_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2982,13 +3021,16 @@ impl ::protobuf::reflect::ProtobufValue for CSiteLicense_ClientSeatCheckout_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSiteLicense_ClientGetAvailableSeats_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     instanceid: ::std::option::Option<u64>,
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3216,11 +3258,14 @@ impl ::protobuf::reflect::ProtobufValue for CSiteLicense_ClientGetAvailableSeats
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSiteLicense_ClientGetAvailableSeats_Response {
     // message fields
     available_seats: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3424,11 +3469,11 @@ static file_descriptor_proto_data: &'static [u8] = b"\
     \x20result\x12\x9a\x01\n\x1bTrackedPaymentsNotification\x120.CSiteManage\
     rClient_TrackedPayments_Notification\x1a\x0b.NoResponse\"<\x82\xb5\x188R\
     ack\x20informing\x20site\x20manager\x20of\x20existing\x20tracked\x20paym\
-    ents\x1a)\xc0\xb5\x18\x02\x82\xb5\x18!Local\x20site\x20manager\x20client\
-    \x20service2\xd5\x06\n\x0bSiteLicense\x12\xa4\x01\n\x13InitiateAssociati\
-    on\x12).CSiteLicense_InitiateAssociation_Request\x1a*.CSiteLicense_Initi\
-    ateAssociation_Response\"6\x82\xb5\x182Client\x20is\x20requesting\x20con\
-    netion\x20info\x20for\x20local\x20site\x12\x86\x01\n\x0fLCSAuthenticate\
+    ents\x1a)\x82\xb5\x18!Local\x20site\x20manager\x20client\x20service\xc0\
+    \xb5\x18\x022\xd5\x06\n\x0bSiteLicense\x12\xa4\x01\n\x13InitiateAssociat\
+    ion\x12).CSiteLicense_InitiateAssociation_Request\x1a*.CSiteLicense_Init\
+    iateAssociation_Response\"6\x82\xb5\x182Client\x20is\x20requesting\x20co\
+    nnetion\x20info\x20for\x20local\x20site\x12\x86\x01\n\x0fLCSAuthenticate\
     \x12%.CSiteLicense_LCSAuthenticate_Request\x1a&.CSiteLicense_LCSAuthenti\
     cate_Response\"$\x82\xb5\x18\x20Local\x20cafe\x20server\x20authenticatio\
     n\x12\x9d\x01\n\x10LCSAssociateUser\x12&.CSiteLicense_LCSAssociateUser_R\

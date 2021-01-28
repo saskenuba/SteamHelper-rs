@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_Subscribe_Request {
     // message fields
     publishedfileid: ::std::option::Option<u64>,
@@ -31,7 +32,9 @@ pub struct CPublishedFile_Subscribe_Request {
     appid: ::std::option::Option<i32>,
     notify_client: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -297,9 +300,12 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_Subscribe_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_Subscribe_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -413,6 +419,7 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_Subscribe_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_Unsubscribe_Request {
     // message fields
     publishedfileid: ::std::option::Option<u64>,
@@ -420,7 +427,9 @@ pub struct CPublishedFile_Unsubscribe_Request {
     appid: ::std::option::Option<i32>,
     notify_client: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -686,9 +695,12 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_Unsubscribe_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_Unsubscribe_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -802,11 +814,14 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_Unsubscribe_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_CanSubscribe_Request {
     // message fields
     publishedfileid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -958,11 +973,14 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_CanSubscribe_Request 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_CanSubscribe_Response {
     // message fields
     can_subscribe: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1114,6 +1132,7 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_CanSubscribe_Response
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_Publish_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -1133,7 +1152,9 @@ pub struct CPublishedFile_Publish_Request {
     game_type: ::protobuf::SingularField<::std::string::String>,
     url: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2000,12 +2021,15 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_Publish_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_Publish_Response {
     // message fields
     publishedfileid: ::std::option::Option<u64>,
     redirect_uri: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2208,6 +2232,7 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_Publish_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetDetails_Request {
     // message fields
     pub publishedfileids: ::std::vec::Vec<u64>,
@@ -2226,7 +2251,9 @@ pub struct CPublishedFile_GetDetails_Request {
     desired_revision: ::std::option::Option<EPublishedFileRevision>,
     includereactions: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2906,6 +2933,7 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetDetails_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct PublishedFileDetails {
     // message fields
     result: ::std::option::Option<u32>,
@@ -2978,7 +3006,9 @@ pub struct PublishedFileDetails {
     pub reactions: ::protobuf::RepeatedField<PublishedFileDetails_Reaction>,
     ban_text_check_result: ::std::option::Option<super::enums::EBanContentCheckResult>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5981,12 +6011,15 @@ impl ::protobuf::reflect::ProtobufValue for PublishedFileDetails {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct PublishedFileDetails_Tag {
     // message fields
     tag: ::protobuf::SingularField<::std::string::String>,
     adminonly: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6189,6 +6222,7 @@ impl ::protobuf::reflect::ProtobufValue for PublishedFileDetails_Tag {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct PublishedFileDetails_Preview {
     // message fields
     previewid: ::std::option::Option<u64>,
@@ -6200,7 +6234,9 @@ pub struct PublishedFileDetails_Preview {
     preview_type: ::std::option::Option<u32>,
     external_reference: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6670,13 +6706,16 @@ impl ::protobuf::reflect::ProtobufValue for PublishedFileDetails_Preview {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct PublishedFileDetails_Child {
     // message fields
     publishedfileid: ::std::option::Option<u64>,
     sortorder: ::std::option::Option<u32>,
     file_type: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6904,12 +6943,15 @@ impl ::protobuf::reflect::ProtobufValue for PublishedFileDetails_Child {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct PublishedFileDetails_KVTag {
     // message fields
     key: ::protobuf::SingularField<::std::string::String>,
     value: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7125,13 +7167,16 @@ impl ::protobuf::reflect::ProtobufValue for PublishedFileDetails_KVTag {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct PublishedFileDetails_VoteData {
     // message fields
     score: ::std::option::Option<f32>,
     votes_up: ::std::option::Option<u32>,
     votes_down: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7359,6 +7404,7 @@ impl ::protobuf::reflect::ProtobufValue for PublishedFileDetails_VoteData {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct PublishedFileDetails_ForSaleData {
     // message fields
     is_for_sale: ::std::option::Option<bool>,
@@ -7368,7 +7414,9 @@ pub struct PublishedFileDetails_ForSaleData {
     price_is_pay_what_you_want: ::std::option::Option<bool>,
     discount_percentage: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7706,12 +7754,15 @@ impl ::protobuf::reflect::ProtobufValue for PublishedFileDetails_ForSaleData {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct PublishedFileDetails_PlaytimeStats {
     // message fields
     playtime_seconds: ::std::option::Option<u64>,
     num_sessions: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7901,12 +7952,15 @@ impl ::protobuf::reflect::ProtobufValue for PublishedFileDetails_PlaytimeStats {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct PublishedFileDetails_Reaction {
     // message fields
     reactionid: ::std::option::Option<u32>,
     count: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8096,11 +8150,14 @@ impl ::protobuf::reflect::ProtobufValue for PublishedFileDetails_Reaction {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetDetails_Response {
     // message fields
     pub publishedfiledetails: ::protobuf::RepeatedField<PublishedFileDetails>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8262,13 +8319,16 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetDetails_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetItemInfo_Request {
     // message fields
     app_id: ::std::option::Option<u32>,
     last_time_updated: ::std::option::Option<u32>,
     pub workshop_items: ::protobuf::RepeatedField<CPublishedFile_GetItemInfo_Request_WorkshopItem>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8506,13 +8566,16 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetItemInfo_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetItemInfo_Request_WorkshopItem {
     // message fields
     published_file_id: ::std::option::Option<u64>,
     time_updated: ::std::option::Option<u32>,
     desired_revision: ::std::option::Option<EPublishedFileRevision>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8736,13 +8799,16 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetItemInfo_Request_W
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetItemInfo_Response {
     // message fields
     update_time: ::std::option::Option<u32>,
     pub workshop_items: ::protobuf::RepeatedField<CPublishedFile_GetItemInfo_Response_WorkshopItemInfo>,
     pub private_items: ::std::vec::Vec<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8980,6 +9046,7 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetItemInfo_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetItemInfo_Response_WorkshopItemInfo {
     // message fields
     published_file_id: ::std::option::Option<u64>,
@@ -8987,7 +9054,9 @@ pub struct CPublishedFile_GetItemInfo_Response_WorkshopItemInfo {
     manifest_id: ::std::option::Option<u64>,
     flags: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9253,6 +9322,7 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetItemInfo_Response_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetUserFiles_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -9286,7 +9356,9 @@ pub struct CPublishedFile_GetUserFiles_Request {
     return_reactions: ::std::option::Option<bool>,
     desired_revision: ::std::option::Option<EPublishedFileRevision>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -10599,12 +10671,15 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetUserFiles_Request 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetUserFiles_Request_KVTag {
     // message fields
     key: ::protobuf::SingularField<::std::string::String>,
     value: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -10820,11 +10895,14 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetUserFiles_Request_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetUserFiles_Request_TagGroup {
     // message fields
     pub tags: ::protobuf::RepeatedField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -10978,6 +11056,7 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetUserFiles_Request_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetUserFiles_Response {
     // message fields
     total: ::std::option::Option<u32>,
@@ -10985,7 +11064,9 @@ pub struct CPublishedFile_GetUserFiles_Response {
     pub publishedfiledetails: ::protobuf::RepeatedField<PublishedFileDetails>,
     pub apps: ::protobuf::RepeatedField<CPublishedFile_GetUserFiles_Response_App>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -11271,6 +11352,7 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetUserFiles_Response
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetUserFiles_Response_App {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -11278,7 +11360,9 @@ pub struct CPublishedFile_GetUserFiles_Response_App {
     shortcutid: ::std::option::Option<u32>,
     private: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -11557,6 +11641,7 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetUserFiles_Response
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_AreFilesInSubscriptionList_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -11565,7 +11650,9 @@ pub struct CPublishedFile_AreFilesInSubscriptionList_Request {
     filetype: ::std::option::Option<u32>,
     workshopfiletype: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -11869,11 +11956,14 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_AreFilesInSubscriptio
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_AreFilesInSubscriptionList_Response {
     // message fields
     pub files: ::protobuf::RepeatedField<CPublishedFile_AreFilesInSubscriptionList_Response_InList>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -12035,12 +12125,15 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_AreFilesInSubscriptio
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_AreFilesInSubscriptionList_Response_InList {
     // message fields
     publishedfileid: ::std::option::Option<u64>,
     inlist: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -12230,6 +12323,7 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_AreFilesInSubscriptio
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_Update_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -12243,7 +12337,9 @@ pub struct CPublishedFile_Update_Request {
     image_width: ::std::option::Option<u32>,
     image_height: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -12791,9 +12887,12 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_Update_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_Update_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -12907,13 +13006,16 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_Update_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetChangeHistoryEntry_Request {
     // message fields
     publishedfileid: ::std::option::Option<u64>,
     timestamp: ::std::option::Option<u32>,
     language: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13141,12 +13243,15 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetChangeHistoryEntry
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetChangeHistoryEntry_Response {
     // message fields
     change_description: ::protobuf::SingularField<::std::string::String>,
     language: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13349,6 +13454,7 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetChangeHistoryEntry
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetChangeHistory_Request {
     // message fields
     publishedfileid: ::std::option::Option<u64>,
@@ -13357,7 +13463,9 @@ pub struct CPublishedFile_GetChangeHistory_Request {
     count: ::std::option::Option<u32>,
     language: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13661,12 +13769,15 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetChangeHistory_Requ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetChangeHistory_Response {
     // message fields
     pub changes: ::protobuf::RepeatedField<CPublishedFile_GetChangeHistory_Response_ChangeLog>,
     total: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13866,13 +13977,16 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetChangeHistory_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetChangeHistory_Response_ChangeLog {
     // message fields
     timestamp: ::std::option::Option<u32>,
     change_description: ::protobuf::SingularField<::std::string::String>,
     language: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14113,6 +14227,7 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetChangeHistory_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_RefreshVotingQueue_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -14123,7 +14238,9 @@ pub struct CPublishedFile_RefreshVotingQueue_Request {
     desired_queue_size: ::std::option::Option<u32>,
     desired_revision: ::std::option::Option<EPublishedFileRevision>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14503,9 +14620,12 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_RefreshVotingQueue_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_RefreshVotingQueue_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14619,6 +14739,7 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_RefreshVotingQueue_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_QueryFiles_Request {
     // message fields
     query_type: ::std::option::Option<u32>,
@@ -14657,7 +14778,9 @@ pub struct CPublishedFile_QueryFiles_Request {
     desired_revision: ::std::option::Option<EPublishedFileRevision>,
     return_reactions: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -16151,12 +16274,15 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_QueryFiles_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_QueryFiles_Request_KVTag {
     // message fields
     key: ::protobuf::SingularField<::std::string::String>,
     value: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -16372,11 +16498,14 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_QueryFiles_Request_KV
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_QueryFiles_Request_TagGroup {
     // message fields
     pub tags: ::protobuf::RepeatedField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -16530,13 +16659,16 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_QueryFiles_Request_Ta
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_QueryFiles_Response {
     // message fields
     total: ::std::option::Option<u32>,
     pub publishedfiledetails: ::protobuf::RepeatedField<PublishedFileDetails>,
     next_cursor: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -16787,13 +16919,16 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_QueryFiles_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_AddAppRelationship_Request {
     // message fields
     publishedfileid: ::std::option::Option<u64>,
     appid: ::std::option::Option<u32>,
     relationship: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17021,9 +17156,12 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_AddAppRelationship_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_AddAppRelationship_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17137,13 +17275,16 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_AddAppRelationship_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_RemoveAppRelationship_Request {
     // message fields
     publishedfileid: ::std::option::Option<u64>,
     appid: ::std::option::Option<u32>,
     relationship: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17371,9 +17512,12 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_RemoveAppRelationship
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_RemoveAppRelationship_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17487,11 +17631,14 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_RemoveAppRelationship
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetAppRelationships_Request {
     // message fields
     publishedfileid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17643,11 +17790,14 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetAppRelationships_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetAppRelationships_Response {
     // message fields
     pub app_relationships: ::protobuf::RepeatedField<CPublishedFile_GetAppRelationships_Response_AppRelationship>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17809,12 +17959,15 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetAppRelationships_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetAppRelationships_Response_AppRelationship {
     // message fields
     appid: ::std::option::Option<u32>,
     relationship: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18004,12 +18157,15 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetAppRelationships_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_StartPlaytimeTracking_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     pub publishedfileids: ::std::vec::Vec<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18201,9 +18357,12 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_StartPlaytimeTracking
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_StartPlaytimeTracking_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18317,12 +18476,15 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_StartPlaytimeTracking
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_StopPlaytimeTracking_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     pub publishedfileids: ::std::vec::Vec<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18514,9 +18676,12 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_StopPlaytimeTracking_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_StopPlaytimeTracking_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18630,11 +18795,14 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_StopPlaytimeTracking_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_StopPlaytimeTrackingForAllAppItems_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18786,9 +18954,12 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_StopPlaytimeTrackingF
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_StopPlaytimeTrackingForAllAppItems_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18902,12 +19073,15 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_StopPlaytimeTrackingF
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_SetPlaytimeForControllerConfigs_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     pub controller_config_usage: ::protobuf::RepeatedField<CPublishedFile_SetPlaytimeForControllerConfigs_Request_ControllerConfigUsage>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19107,12 +19281,15 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_SetPlaytimeForControl
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_SetPlaytimeForControllerConfigs_Request_ControllerConfigUsage {
     // message fields
     publishedfileid: ::std::option::Option<u64>,
     seconds_active: ::std::option::Option<f32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19302,9 +19479,12 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_SetPlaytimeForControl
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_SetPlaytimeForControllerConfigs_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19418,12 +19598,15 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_SetPlaytimeForControl
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_AddChild_Request {
     // message fields
     publishedfileid: ::std::option::Option<u64>,
     child_publishedfileid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19613,9 +19796,12 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_AddChild_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_AddChild_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19729,12 +19915,15 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_AddChild_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_RemoveChild_Request {
     // message fields
     publishedfileid: ::std::option::Option<u64>,
     child_publishedfileid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19924,9 +20113,12 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_RemoveChild_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_RemoveChild_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -20040,11 +20232,14 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_RemoveChild_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetUserVoteSummary_Request {
     // message fields
     pub publishedfileids: ::std::vec::Vec<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -20196,11 +20391,14 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetUserVoteSummary_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetUserVoteSummary_Response {
     // message fields
     pub summaries: ::protobuf::RepeatedField<CPublishedFile_GetUserVoteSummary_Response_VoteSummary>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -20362,6 +20560,7 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetUserVoteSummary_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_GetUserVoteSummary_Response_VoteSummary {
     // message fields
     publishedfileid: ::std::option::Option<u64>,
@@ -20369,7 +20568,9 @@ pub struct CPublishedFile_GetUserVoteSummary_Response_VoteSummary {
     vote_against: ::std::option::Option<bool>,
     reported: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -20635,6 +20836,7 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_GetUserVoteSummary_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_FileSubscribed_Notification {
     // message fields
     published_file_id: ::std::option::Option<u64>,
@@ -20646,7 +20848,9 @@ pub struct CPublishedFile_FileSubscribed_Notification {
     rtime_updated: ::std::option::Option<u32>,
     pub revisions: ::protobuf::RepeatedField<CPublishedFile_FileSubscribed_Notification_RevisionData>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -21074,13 +21278,16 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_FileSubscribed_Notifi
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_FileSubscribed_Notification_RevisionData {
     // message fields
     revision: ::std::option::Option<EPublishedFileRevision>,
     file_hcontent: ::std::option::Option<u64>,
     rtime_updated: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -21304,12 +21511,15 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_FileSubscribed_Notifi
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_FileUnsubscribed_Notification {
     // message fields
     published_file_id: ::std::option::Option<u64>,
     app_id: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -21499,12 +21709,15 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_FileUnsubscribed_Noti
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPublishedFile_FileDeleted_Client_Notification {
     // message fields
     published_file_id: ::std::option::Option<u64>,
     app_id: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -21694,6 +21907,7 @@ impl ::protobuf::reflect::ProtobufValue for CPublishedFile_FileDeleted_Client_No
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EPublishedFileRevision {
     k_EPublishedFileRevision_Default = 0,
     k_EPublishedFileRevision_Latest = 1,
@@ -21756,6 +21970,7 @@ impl ::protobuf::reflect::ProtobufValue for EPublishedFileRevision {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EPublishedFileForSaleStatus {
     k_PFFSS_NotForSale = 0,
     k_PFFSS_PendingApproval = 1,
@@ -22430,8 +22645,8 @@ static file_descriptor_proto_data: &'static [u8] = b"\
     file\x12\x94\x01\n\x11NotifyFileDeleted\x12/.CPublishedFile_FileDeleted_\
     Client_Notification\x1a\x0b.NoResponse\"A\x82\xb5\x18=Notification\x20fr\
     om\x20the\x20server\x20when\x20a\x20published\x20file\x20is\x20deleted\
-    \x1a+\xc0\xb5\x18\x02\x82\xb5\x18#Published\x20file\x20client\x20notific\
-    ationsB\x03\x80\x01\x01\
+    \x1a+\x82\xb5\x18#Published\x20file\x20client\x20notifications\xc0\xb5\
+    \x18\x02B\x03\x80\x01\x01\
 ";
 
 static file_descriptor_proto_lazy: ::protobuf::rt::LazyV2<::protobuf::descriptor::FileDescriptorProto> = ::protobuf::rt::LazyV2::INIT;

@@ -24,12 +24,15 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSTAR_KeyValueQuery {
     // message fields
     key: ::protobuf::SingularField<::std::string::String>,
     value: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -245,12 +248,15 @@ impl ::protobuf::reflect::ProtobufValue for CSTAR_KeyValueQuery {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSTAR_GlyphQueryParams {
     // message fields
     bundle_id: ::std::option::Option<u64>,
     pub queries: ::protobuf::RepeatedField<CSTAR_KeyValueQuery>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -450,12 +456,15 @@ impl ::protobuf::reflect::ProtobufValue for CSTAR_GlyphQueryParams {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSTAR_ReadGlyphData_Request {
     // message fields
     pub query_params: ::protobuf::SingularPtrField<CSTAR_GlyphQueryParams>,
     last_modified_time_lower_limit: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -676,13 +685,16 @@ impl ::protobuf::reflect::ProtobufValue for CSTAR_ReadGlyphData_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSTAR_GlyphData {
     // message fields
     glyph_guid: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     glyph_last_modified: ::protobuf::SingularField<::std::string::String>,
     glyph_json_data: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -949,12 +961,15 @@ impl ::protobuf::reflect::ProtobufValue for CSTAR_GlyphData {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSTAR_WriteGlyphData_Request {
     // message fields
     bundle_id: ::std::option::Option<u64>,
     pub glyph_data: ::protobuf::RepeatedField<CSTAR_GlyphData>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1154,12 +1169,15 @@ impl ::protobuf::reflect::ProtobufValue for CSTAR_WriteGlyphData_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSTAR_Request {
     // message fields
     pub read_glyph_data: ::protobuf::SingularPtrField<CSTAR_ReadGlyphData_Request>,
     pub write_glyph_data: ::protobuf::SingularPtrField<CSTAR_WriteGlyphData_Request>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1385,12 +1403,15 @@ impl ::protobuf::reflect::ProtobufValue for CSTAR_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSTAR_ReadGlyphData_Response {
     // message fields
     bundle_id: ::std::option::Option<u64>,
     pub glyph_data: ::protobuf::RepeatedField<CSTAR_GlyphData>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1590,11 +1611,14 @@ impl ::protobuf::reflect::ProtobufValue for CSTAR_ReadGlyphData_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSTAR_WriteGlyphData_Response {
     // message fields
     pub result: ::std::vec::Vec<E_STAR_GlyphWriteResult>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1748,12 +1772,15 @@ impl ::protobuf::reflect::ProtobufValue for CSTAR_WriteGlyphData_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CSTAR_Response {
     // message fields
     pub read_glyph_data: ::protobuf::SingularPtrField<CSTAR_ReadGlyphData_Response>,
     pub write_glyph_data: ::protobuf::SingularPtrField<CSTAR_WriteGlyphData_Response>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1979,6 +2006,7 @@ impl ::protobuf::reflect::ProtobufValue for CSTAR_Response {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum E_STAR_GlyphWriteResult {
     k_E_STAR_GlyphWriteResult_Success = 0,
     k_E_STAR_GlyphWriteResult_InvalidMessage = 1,

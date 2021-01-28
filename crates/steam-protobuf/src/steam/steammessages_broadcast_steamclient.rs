@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_BeginBroadcastSession_Request {
     // message fields
     permission: ::std::option::Option<i32>,
@@ -37,7 +38,9 @@ pub struct CBroadcast_BeginBroadcastSession_Request {
     sysid: ::std::option::Option<u32>,
     allow_webrtc: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -557,6 +560,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_BeginBroadcastSession_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_BeginBroadcastSession_Response {
     // message fields
     broadcast_id: ::std::option::Option<u64>,
@@ -565,7 +569,9 @@ pub struct CBroadcast_BeginBroadcastSession_Response {
     thumbnail_interval_seconds: ::std::option::Option<u32>,
     heartbeat_interval_seconds: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -895,11 +901,14 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_BeginBroadcastSession_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_EndBroadcastSession_Request {
     // message fields
     broadcast_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1051,9 +1060,12 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_EndBroadcastSession_Reque
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_EndBroadcastSession_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1167,6 +1179,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_EndBroadcastSession_Respo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_StartBroadcastUpload_Request {
     // message fields
     broadcast_id: ::std::option::Option<u64>,
@@ -1178,7 +1191,9 @@ pub struct CBroadcast_StartBroadcastUpload_Request {
     is_replay: ::std::option::Option<bool>,
     sysid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1596,6 +1611,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_StartBroadcastUpload_Requ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_StartBroadcastUpload_Response {
     // message fields
     upload_token: ::protobuf::SingularField<::std::string::String>,
@@ -1604,7 +1620,9 @@ pub struct CBroadcast_StartBroadcastUpload_Response {
     enable_replay: ::std::option::Option<bool>,
     http_address: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1947,12 +1965,15 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_StartBroadcastUpload_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_NotifyBroadcastUploadStop_Notification {
     // message fields
     broadcast_upload_id: ::std::option::Option<u64>,
     upload_result: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2142,6 +2163,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_NotifyBroadcastUploadStop
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WatchBroadcast_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -2152,7 +2174,9 @@ pub struct CBroadcast_WatchBroadcast_Request {
     watch_location: ::std::option::Option<EBroadcastWatchLocation>,
     is_webrtc: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2528,6 +2552,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WatchBroadcast_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WatchBroadcast_Response {
     // message fields
     response: ::std::option::Option<CBroadcast_WatchBroadcast_Response_EWatchResponse>,
@@ -2551,7 +2576,9 @@ pub struct CBroadcast_WatchBroadcast_Response {
     duration: ::std::option::Option<i32>,
     cdn_auth_url_parameters: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3512,6 +3539,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WatchBroadcast_Response {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CBroadcast_WatchBroadcast_Response_EWatchResponse {
     k_EWatchResponseReady = 1,
     k_EWatchResponseNotAvailable = 2,
@@ -3593,6 +3621,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WatchBroadcast_Response_E
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_HeartbeatBroadcast_Notification {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -3600,7 +3629,9 @@ pub struct CBroadcast_HeartbeatBroadcast_Notification {
     viewer_token: ::std::option::Option<u64>,
     representation: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3866,13 +3897,16 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_HeartbeatBroadcast_Notifi
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_StopWatchingBroadcast_Notification {
     // message fields
     steamid: ::std::option::Option<u64>,
     broadcast_id: ::std::option::Option<u64>,
     viewer_token: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4100,12 +4134,15 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_StopWatchingBroadcast_Not
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetBroadcastStatus_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     broadcast_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4295,6 +4332,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetBroadcastStatus_Reques
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetBroadcastStatus_Response {
     // message fields
     gameid: ::std::option::Option<u64>,
@@ -4312,7 +4350,9 @@ pub struct CBroadcast_GetBroadcastStatus_Response {
     is_capturing_vod: ::std::option::Option<bool>,
     is_store_whitelisted: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4984,12 +5024,15 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetBroadcastStatus_Respon
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetBroadcastThumbnail_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     broadcast_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5179,6 +5222,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetBroadcastThumbnail_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetBroadcastThumbnail_Response {
     // message fields
     thumbnail_url: ::protobuf::SingularField<::std::string::String>,
@@ -5186,7 +5230,9 @@ pub struct CBroadcast_GetBroadcastThumbnail_Response {
     num_viewers: ::std::option::Option<i32>,
     duration: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5465,12 +5511,15 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetBroadcastThumbnail_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_InviteToBroadcast_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     approval_response: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5660,11 +5709,14 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_InviteToBroadcast_Request
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_InviteToBroadcast_Response {
     // message fields
     success: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5816,6 +5868,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_InviteToBroadcast_Respons
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_SendBroadcastStateToServer_Request {
     // message fields
     permission: ::std::option::Option<i32>,
@@ -5823,7 +5876,9 @@ pub struct CBroadcast_SendBroadcastStateToServer_Request {
     title: ::protobuf::SingularField<::std::string::String>,
     game_data_config: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6115,9 +6170,12 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_SendBroadcastStateToServe
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_SendBroadcastStateToServer_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6231,11 +6289,14 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_SendBroadcastStateToServe
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_NotifyBroadcastSessionHeartbeat_Notification {
     // message fields
     broadcast_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6387,6 +6448,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_NotifyBroadcastSessionHea
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetBroadcastChatInfo_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -6394,7 +6456,9 @@ pub struct CBroadcast_GetBroadcastChatInfo_Request {
     client_ip: ::std::option::Option<u32>,
     client_cell: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6660,13 +6724,16 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetBroadcastChatInfo_Requ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetBroadcastChatInfo_Response {
     // message fields
     chat_id: ::std::option::Option<u64>,
     view_url_template: ::protobuf::SingularField<::std::string::String>,
     pub flair_group_ids: ::std::vec::Vec<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6909,6 +6976,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetBroadcastChatInfo_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_PostChatMessage_Request {
     // message fields
     chat_id: ::std::option::Option<u64>,
@@ -6917,7 +6985,9 @@ pub struct CBroadcast_PostChatMessage_Request {
     language: ::std::option::Option<u32>,
     country_code: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7247,6 +7317,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_PostChatMessage_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_PostChatMessage_Response {
     // message fields
     persona_name: ::protobuf::SingularField<::std::string::String>,
@@ -7254,7 +7325,9 @@ pub struct CBroadcast_PostChatMessage_Response {
     result: ::std::option::Option<i32>,
     cooldown_time_seconds: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7533,12 +7606,15 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_PostChatMessage_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_UpdateChatMessageFlair_Request {
     // message fields
     chat_id: ::std::option::Option<u64>,
     flair: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7741,13 +7817,16 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_UpdateChatMessageFlair_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_UpdateChatMessageFlair_Response {
     // message fields
     result: ::std::option::Option<i32>,
     chat_id: ::std::option::Option<u64>,
     flair: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7988,13 +8067,16 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_UpdateChatMessageFlair_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_MuteBroadcastChatUser_Request {
     // message fields
     chat_id: ::std::option::Option<u64>,
     user_steamid: ::std::option::Option<u64>,
     muted: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8222,9 +8304,12 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_MuteBroadcastChatUser_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_MuteBroadcastChatUser_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8338,12 +8423,15 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_MuteBroadcastChatUser_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_RemoveUserChatText_Request {
     // message fields
     chat_id: ::std::option::Option<u64>,
     user_steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8533,9 +8621,12 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_RemoveUserChatText_Reques
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_RemoveUserChatText_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8649,12 +8740,15 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_RemoveUserChatText_Respon
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetBroadcastChatUserNames_Request {
     // message fields
     chat_id: ::std::option::Option<u64>,
     pub user_steamid: ::std::vec::Vec<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8844,11 +8938,14 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetBroadcastChatUserNames
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetBroadcastChatUserNames_Response {
     // message fields
     pub persona_names: ::protobuf::RepeatedField<CBroadcast_GetBroadcastChatUserNames_Response_PersonaName>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9010,12 +9107,15 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetBroadcastChatUserNames
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetBroadcastChatUserNames_Response_PersonaName {
     // message fields
     steam_id: ::std::option::Option<u64>,
     persona: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9218,6 +9318,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetBroadcastChatUserNames
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_StartBuildClip_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -9226,7 +9327,9 @@ pub struct CBroadcast_StartBuildClip_Request {
     num_segments: ::std::option::Option<i32>,
     clip_description: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9543,11 +9646,14 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_StartBuildClip_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_StartBuildClip_Response {
     // message fields
     broadcast_clip_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9699,11 +9805,14 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_StartBuildClip_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetBuildClipStatus_Request {
     // message fields
     broadcast_clip_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9855,9 +9964,12 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetBuildClipStatus_Reques
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetBuildClipStatus_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9971,6 +10083,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetBuildClipStatus_Respon
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_SetClipDetails_Request {
     // message fields
     broadcast_clip_id: ::std::option::Option<u64>,
@@ -9978,7 +10091,9 @@ pub struct CBroadcast_SetClipDetails_Request {
     end_time: ::std::option::Option<u32>,
     video_description: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -10257,9 +10372,12 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_SetClipDetails_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_SetClipDetails_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -10373,11 +10491,14 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_SetClipDetails_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetClipDetails_Request {
     // message fields
     broadcast_clip_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -10529,6 +10650,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetClipDetails_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetClipDetails_Response {
     // message fields
     broadcast_clip_id: ::std::option::Option<u64>,
@@ -10542,7 +10664,9 @@ pub struct CBroadcast_GetClipDetails_Response {
     length_milliseconds: ::std::option::Option<u32>,
     thumbnail_path: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -11062,6 +11186,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetClipDetails_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_SetRTMPInfo_Request {
     // message fields
     broadcast_permission: ::std::option::Option<i32>,
@@ -11075,7 +11200,9 @@ pub struct CBroadcast_SetRTMPInfo_Request {
     chat_rate_limit: ::std::option::Option<u32>,
     enable_replay: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -11565,9 +11692,12 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_SetRTMPInfo_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_SetRTMPInfo_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -11681,12 +11811,15 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_SetRTMPInfo_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetRTMPInfo_Request {
     // message fields
     ip: ::std::option::Option<u32>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -11876,6 +12009,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetRTMPInfo_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetRTMPInfo_Response {
     // message fields
     broadcast_permission: ::std::option::Option<i32>,
@@ -11890,7 +12024,9 @@ pub struct CBroadcast_GetRTMPInfo_Response {
     chat_rate_limit: ::std::option::Option<u32>,
     enable_replay: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -12444,12 +12580,15 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetRTMPInfo_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTCHaveTURNServer_Notification {
     // message fields
     broadcast_session_id: ::std::option::Option<u64>,
     turn_server: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -12652,6 +12791,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTCHaveTURNServer_Noti
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTCStartResult_Request {
     // message fields
     webrtc_session_id: ::std::option::Option<u64>,
@@ -12661,7 +12801,9 @@ pub struct CBroadcast_WebRTCStartResult_Request {
     resolution_y: ::std::option::Option<u32>,
     fps: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13016,9 +13158,12 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTCStartResult_Request
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTCStartResult_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13132,11 +13277,14 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTCStartResult_Respons
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTCStopped_Request {
     // message fields
     webrtc_session_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13288,9 +13436,12 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTCStopped_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTCStopped_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13404,13 +13555,16 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTCStopped_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTCSetAnswer_Request {
     // message fields
     broadcaster_steamid: ::std::option::Option<u64>,
     webrtc_session_id: ::std::option::Option<u64>,
     answer: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13651,9 +13805,12 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTCSetAnswer_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTCSetAnswer_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13767,11 +13924,14 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTCSetAnswer_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTCLookupTURNServer_Request {
     // message fields
     cellid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13923,11 +14083,14 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTCLookupTURNServer_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTCLookupTURNServer_Response {
     // message fields
     turn_server: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14092,13 +14255,16 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTCLookupTURNServer_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTC_Candidate {
     // message fields
     sdp_mid: ::protobuf::SingularField<::std::string::String>,
     sdp_mline_index: ::std::option::Option<i32>,
     candidate: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14352,12 +14518,15 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTC_Candidate {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTCAddHostCandidate_Request {
     // message fields
     webrtc_session_id: ::std::option::Option<u64>,
     pub candidate: ::protobuf::SingularPtrField<CBroadcast_WebRTC_Candidate>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14565,9 +14734,12 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTCAddHostCandidate_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTCAddHostCandidate_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14681,13 +14853,16 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTCAddHostCandidate_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTCAddViewerCandidate_Request {
     // message fields
     broadcaster_steamid: ::std::option::Option<u64>,
     webrtc_session_id: ::std::option::Option<u64>,
     pub candidate: ::protobuf::SingularPtrField<CBroadcast_WebRTC_Candidate>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14933,9 +15108,12 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTCAddViewerCandidate_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTCAddViewerCandidate_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -15049,13 +15227,16 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTCAddViewerCandidate_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTCGetHostCandidates_Request {
     // message fields
     broadcaster_steamid: ::std::option::Option<u64>,
     webrtc_session_id: ::std::option::Option<u64>,
     candidate_generation: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -15283,12 +15464,15 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTCGetHostCandidates_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTCGetHostCandidates_Response {
     // message fields
     candidate_generation: ::std::option::Option<u32>,
     pub candidates: ::protobuf::RepeatedField<CBroadcast_WebRTC_Candidate>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -15488,6 +15672,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTCGetHostCandidates_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetBroadcastUploadStats_Request {
     // message fields
     row_limit: ::std::option::Option<u32>,
@@ -15496,7 +15681,9 @@ pub struct CBroadcast_GetBroadcastUploadStats_Request {
     steamid: ::std::option::Option<u64>,
     session_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -15800,11 +15987,14 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetBroadcastUploadStats_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetBroadcastUploadStats_Response {
     // message fields
     pub upload_stats: ::protobuf::RepeatedField<CBroadcast_GetBroadcastUploadStats_Response_UploadStats>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -15966,6 +16156,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetBroadcastUploadStats_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetBroadcastUploadStats_Response_UploadStats {
     // message fields
     upload_result: ::std::option::Option<u32>,
@@ -15989,7 +16180,9 @@ pub struct CBroadcast_GetBroadcastUploadStats_Response_UploadStats {
     is_replay: ::std::option::Option<bool>,
     session_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -16902,12 +17095,15 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetBroadcastUploadStats_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetBroadcastViewerStats_Request {
     // message fields
     upload_id: ::std::option::Option<u64>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17097,12 +17293,15 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetBroadcastViewerStats_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetBroadcastViewerStats_Response {
     // message fields
     pub viewer_stats: ::protobuf::RepeatedField<CBroadcast_GetBroadcastViewerStats_Response_ViewerStats>,
     pub country_stats: ::protobuf::RepeatedField<CBroadcast_GetBroadcastViewerStats_Response_CountryStats>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17312,12 +17511,15 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetBroadcastViewerStats_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetBroadcastViewerStats_Response_ViewerStats {
     // message fields
     time: ::std::option::Option<u32>,
     num_viewers: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17507,12 +17709,15 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetBroadcastViewerStats_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_GetBroadcastViewerStats_Response_CountryStats {
     // message fields
     country_code: ::protobuf::SingularField<::std::string::String>,
     num_viewers: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17715,12 +17920,15 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_GetBroadcastViewerStats_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_BroadcastViewerState_Notification {
     // message fields
     steamid: ::std::option::Option<u64>,
     state: ::std::option::Option<CBroadcast_BroadcastViewerState_Notification_EViewerState>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17906,6 +18114,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_BroadcastViewerState_Noti
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CBroadcast_BroadcastViewerState_Notification_EViewerState {
     k_EViewerNeedsApproval = 1,
     k_EViewerWatching = 2,
@@ -17960,11 +18169,14 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_BroadcastViewerState_Noti
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WaitingBroadcastViewer_Notification {
     // message fields
     broadcast_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18116,6 +18328,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WaitingBroadcastViewer_No
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_BroadcastUploadStarted_Notification {
     // message fields
     broadcast_id: ::std::option::Option<u64>,
@@ -18126,7 +18339,9 @@ pub struct CBroadcast_BroadcastUploadStarted_Notification {
     heartbeat_interval_seconds: ::std::option::Option<u32>,
     is_rtmp: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18545,6 +18760,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_BroadcastUploadStarted_No
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_StopBroadcastUpload_Notification {
     // message fields
     broadcast_id: ::std::option::Option<u64>,
@@ -18552,7 +18768,9 @@ pub struct CBroadcast_StopBroadcastUpload_Notification {
     upload_result: ::std::option::Option<u32>,
     too_many_poor_uploads: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18818,11 +19036,14 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_StopBroadcastUpload_Notif
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_SessionClosed_Notification {
     // message fields
     broadcast_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18974,11 +19195,14 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_SessionClosed_Notificatio
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_ViewerBroadcastInvite_Notification {
     // message fields
     broadcaster_steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19130,12 +19354,15 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_ViewerBroadcastInvite_Not
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_BroadcastStatus_Notification {
     // message fields
     broadcast_id: ::std::option::Option<u64>,
     num_viewers: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19325,13 +19552,16 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_BroadcastStatus_Notificat
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_BroadcastChannelLive_Notification {
     // message fields
     broadcast_channel_id: ::std::option::Option<u64>,
     broadcast_channel_name: ::protobuf::SingularField<::std::string::String>,
     broadcast_channel_avatar: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19585,6 +19815,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_BroadcastChannelLive_Noti
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_SendThumbnailToRelay_Notification {
     // message fields
     thumbnail_upload_token: ::protobuf::SingularField<::std::string::String>,
@@ -19593,7 +19824,9 @@ pub struct CBroadcast_SendThumbnailToRelay_Notification {
     thumbnail_width: ::std::option::Option<u32>,
     thumbnail_height: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19923,11 +20156,14 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_SendThumbnailToRelay_Noti
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTCNeedTURNServer_Notification {
     // message fields
     broadcast_session_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -20079,6 +20315,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTCNeedTURNServer_Noti
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTCStart_Notification {
     // message fields
     broadcast_session_id: ::std::option::Option<u64>,
@@ -20086,7 +20323,9 @@ pub struct CBroadcast_WebRTCStart_Notification {
     viewer_steamid: ::std::option::Option<u64>,
     viewer_token: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -20352,13 +20591,16 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTCStart_Notification 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTCSetAnswer_Notification {
     // message fields
     broadcast_session_id: ::std::option::Option<u64>,
     webrtc_session_id: ::std::option::Option<u64>,
     answer: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -20599,13 +20841,16 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTCSetAnswer_Notificat
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBroadcast_WebRTCAddViewerCandidate_Notification {
     // message fields
     broadcast_session_id: ::std::option::Option<u64>,
     webrtc_session_id: ::std::option::Option<u64>,
     pub candidate: ::protobuf::SingularPtrField<CBroadcast_WebRTC_Candidate>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -20851,6 +21096,7 @@ impl ::protobuf::reflect::ProtobufValue for CBroadcast_WebRTCAddViewerCandidate_
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EBroadcastWatchLocation {
     k_EBroadcastWatchLocation_Invalid = 0,
     k_EBroadcastWatchLocation_SteamTV_Tab = 1,
@@ -20937,6 +21183,7 @@ impl ::protobuf::reflect::ProtobufValue for EBroadcastWatchLocation {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EBroadcastChatPermission {
     k_EBroadcastChatPermissionPublic = 0,
     k_EBroadcastChatPermissionOwnsApp = 1,

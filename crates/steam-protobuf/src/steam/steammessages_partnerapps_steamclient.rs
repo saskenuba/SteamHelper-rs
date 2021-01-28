@@ -24,12 +24,15 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPartnerApps_RequestUploadToken_Request {
     // message fields
     filename: ::protobuf::SingularField<::std::string::String>,
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -232,13 +235,16 @@ impl ::protobuf::reflect::ProtobufValue for CPartnerApps_RequestUploadToken_Requ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPartnerApps_RequestUploadToken_Response {
     // message fields
     upload_token: ::std::option::Option<u64>,
     location: ::protobuf::SingularField<::std::string::String>,
     routing_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -479,13 +485,16 @@ impl ::protobuf::reflect::ProtobufValue for CPartnerApps_RequestUploadToken_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPartnerApps_FinishUpload_Request {
     // message fields
     upload_token: ::std::option::Option<u64>,
     routing_id: ::std::option::Option<u64>,
     app_id: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -713,11 +722,14 @@ impl ::protobuf::reflect::ProtobufValue for CPartnerApps_FinishUpload_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPartnerApps_FinishUploadKVSign_Response {
     // message fields
     signed_installscript: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -882,6 +894,7 @@ impl ::protobuf::reflect::ProtobufValue for CPartnerApps_FinishUploadKVSign_Resp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPartnerApps_FinishUploadLegacyDRM_Request {
     // message fields
     upload_token: ::std::option::Option<u64>,
@@ -890,7 +903,9 @@ pub struct CPartnerApps_FinishUploadLegacyDRM_Request {
     flags: ::std::option::Option<u32>,
     tool_name: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1207,11 +1222,14 @@ impl ::protobuf::reflect::ProtobufValue for CPartnerApps_FinishUploadLegacyDRM_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPartnerApps_FinishUploadLegacyDRM_Response {
     // message fields
     file_id: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1376,9 +1394,12 @@ impl ::protobuf::reflect::ProtobufValue for CPartnerApps_FinishUploadLegacyDRM_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPartnerApps_FinishUpload_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1492,6 +1513,7 @@ impl ::protobuf::reflect::ProtobufValue for CPartnerApps_FinishUpload_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPartnerApps_FinishUploadDepot_Request {
     // message fields
     upload_token: ::std::option::Option<u64>,
@@ -1500,7 +1522,9 @@ pub struct CPartnerApps_FinishUploadDepot_Request {
     depot_id: ::std::option::Option<u32>,
     build_flags: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1804,9 +1828,12 @@ impl ::protobuf::reflect::ProtobufValue for CPartnerApps_FinishUploadDepot_Reque
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPartnerApps_FinishUploadDepot_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1920,12 +1947,15 @@ impl ::protobuf::reflect::ProtobufValue for CPartnerApps_FinishUploadDepot_Respo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPartnerApps_GetDepotBuildResult_Request {
     // message fields
     upload_token: ::std::option::Option<u64>,
     routing_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2115,12 +2145,15 @@ impl ::protobuf::reflect::ProtobufValue for CPartnerApps_GetDepotBuildResult_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPartnerApps_GetDepotBuildResult_Response {
     // message fields
     manifest_id: ::std::option::Option<u64>,
     error_msg: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2323,11 +2356,14 @@ impl ::protobuf::reflect::ProtobufValue for CPartnerApps_GetDepotBuildResult_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPartnerApps_FindDRMUploads_Request {
     // message fields
     app_id: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2479,6 +2515,7 @@ impl ::protobuf::reflect::ProtobufValue for CPartnerApps_FindDRMUploads_Request 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPartnerApps_ExistingDRMUpload {
     // message fields
     file_id: ::protobuf::SingularField<::std::string::String>,
@@ -2490,7 +2527,9 @@ pub struct CPartnerApps_ExistingDRMUpload {
     timestamp: ::std::option::Option<u32>,
     orig_file_id: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2960,11 +2999,14 @@ impl ::protobuf::reflect::ProtobufValue for CPartnerApps_ExistingDRMUpload {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPartnerApps_FindDRMUploads_Response {
     // message fields
     pub uploads: ::protobuf::RepeatedField<CPartnerApps_ExistingDRMUpload>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3126,12 +3168,15 @@ impl ::protobuf::reflect::ProtobufValue for CPartnerApps_FindDRMUploads_Response
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPartnerApps_Download_Request {
     // message fields
     file_id: ::protobuf::SingularField<::std::string::String>,
     app_id: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3334,12 +3379,15 @@ impl ::protobuf::reflect::ProtobufValue for CPartnerApps_Download_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPartnerApps_Download_Response {
     // message fields
     download_url: ::protobuf::SingularField<::std::string::String>,
     app_id: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

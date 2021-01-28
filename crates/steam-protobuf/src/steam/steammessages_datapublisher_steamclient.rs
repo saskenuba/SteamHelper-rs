@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDataPublisher_ClientContentCorruptionReport_Notification {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -37,7 +38,9 @@ pub struct CDataPublisher_ClientContentCorruptionReport_Notification {
     used_https: ::std::option::Option<bool>,
     oc_proxy_detected: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -557,12 +560,15 @@ impl ::protobuf::reflect::ProtobufValue for CDataPublisher_ClientContentCorrupti
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CValveHWSurvey_GetSurveySchedule_Request {
     // message fields
     surveydatetoken: ::protobuf::SingularField<::std::string::String>,
     surveydatetokenversion: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -765,12 +771,15 @@ impl ::protobuf::reflect::ProtobufValue for CValveHWSurvey_GetSurveySchedule_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CValveHWSurvey_GetSurveySchedule_Response {
     // message fields
     surveydatetoken: ::std::option::Option<u32>,
     surveydatetokenversion: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

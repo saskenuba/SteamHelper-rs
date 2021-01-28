@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramRouterPingReply {
     // message fields
     client_timestamp: ::std::option::Option<u32>,
@@ -40,7 +41,9 @@ pub struct CMsgSteamDatagramRouterPingReply {
     pub route_exceptions: ::protobuf::RepeatedField<CMsgSteamDatagramRouterPingReply_RouteException>,
     pub alt_addresses: ::protobuf::RepeatedField<CMsgSteamDatagramRouterPingReply_AltAddress>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -682,13 +685,16 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramRouterPingReply {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramRouterPingReply_RouteException {
     // message fields
     data_center_id: ::std::option::Option<u32>,
     flags: ::std::option::Option<u32>,
     penalty: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -916,6 +922,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramRouterPingReply_Rou
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramRouterPingReply_AltAddress {
     // message fields
     ipv4: ::std::option::Option<u32>,
@@ -924,7 +931,9 @@ pub struct CMsgSteamDatagramRouterPingReply_AltAddress {
     protocol: ::std::option::Option<CMsgSteamDatagramRouterPingReply_AltAddress_Protocol>,
     id: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1237,6 +1246,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramRouterPingReply_Alt
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CMsgSteamDatagramRouterPingReply_AltAddress_Protocol {
     DefaultProtocol = 0,
     NetworkNext = 1,
@@ -1287,6 +1297,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramRouterPingReply_Alt
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CMsgSteamDatagramRouterPingReply_Flags {
     FLAG_MAYBE_MORE_DATA_CENTERS = 1,
     FLAG_MAYBE_MORE_ALT_ADDRESSES = 2,
@@ -1338,6 +1349,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramRouterPingReply_Fla
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramGameserverPingRequest {
     // message fields
     your_public_ip: ::std::option::Option<u32>,
@@ -1346,7 +1358,9 @@ pub struct CMsgSteamDatagramGameserverPingRequest {
     challenge: ::std::option::Option<u64>,
     router_timestamp: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1650,12 +1664,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramGameserverPingReque
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramLegacyGameserverPingReply {
     // message fields
     router_timestamp: ::std::option::Option<u32>,
     dummy_pad: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1845,13 +1862,16 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramLegacyGameserverPin
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramGameserverPingReply {
     // message fields
     pub cert: ::protobuf::SingularPtrField<super::steamnetworkingsockets_messages_certs::CMsgSteamDatagramCertificateSigned>,
     signed_data: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     signature: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2123,6 +2143,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramGameserverPingReply
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramGameserverPingReply_SignedData {
     // message fields
     challenge_time: ::std::option::Option<u32>,
@@ -2131,7 +2152,9 @@ pub struct CMsgSteamDatagramGameserverPingReply_SignedData {
     data_center_id: ::std::option::Option<u32>,
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2435,6 +2458,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramGameserverPingReply
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramNoSessionRelayToClient {
     // message fields
     connection_id: ::std::option::Option<u32>,
@@ -2444,7 +2468,9 @@ pub struct CMsgSteamDatagramNoSessionRelayToClient {
     challenge: ::std::option::Option<u64>,
     seconds_until_shutdown: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2786,6 +2812,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramNoSessionRelayToCli
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramNoSessionRelayToPeer {
     // message fields
     legacy_relay_session_id: ::std::option::Option<u32>,
@@ -2793,7 +2820,9 @@ pub struct CMsgSteamDatagramNoSessionRelayToPeer {
     from_connection_id: ::std::option::Option<u32>,
     kludge_pad: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3059,11 +3088,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramNoSessionRelayToPee
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramClientPingSampleRequest {
     // message fields
     connection_id: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3215,6 +3247,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramClientPingSampleReq
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramClientPingSampleReply {
     // message fields
     connection_id: ::std::option::Option<u32>,
@@ -3222,7 +3255,9 @@ pub struct CMsgSteamDatagramClientPingSampleReply {
     pub pops: ::protobuf::RepeatedField<CMsgSteamDatagramClientPingSampleReply_POP>,
     pub legacy_data_centers: ::protobuf::RepeatedField<CMsgSteamDatagramClientPingSampleReply_LegacyDataCenter>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3508,6 +3543,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramClientPingSampleRep
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramClientPingSampleReply_POP {
     // message fields
     pop_id: ::std::option::Option<u32>,
@@ -3527,7 +3563,9 @@ pub struct CMsgSteamDatagramClientPingSampleReply_POP {
     test_dc_score: ::std::option::Option<u32>,
     test_dc_via_relay_pop_id: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4259,13 +4297,16 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramClientPingSampleRep
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramClientPingSampleReply_POP_AltAddress {
     // message fields
     id: ::protobuf::SingularField<::std::string::String>,
     front_ping_ms: ::std::option::Option<u32>,
     penalty: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4506,13 +4547,16 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramClientPingSampleRep
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramClientPingSampleReply_LegacyDataCenter {
     // message fields
     data_center_id: ::std::option::Option<u32>,
     best_dc_via_relay_pop_id: ::std::option::Option<u32>,
     best_dc_ping_ms: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4740,6 +4784,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramClientPingSampleRep
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramClientSwitchedPrimary {
     // message fields
     connection_id: ::std::option::Option<u32>,
@@ -4755,7 +4800,9 @@ pub struct CMsgSteamDatagramClientSwitchedPrimary {
     pub from_quality_then: ::protobuf::SingularPtrField<CMsgSteamDatagramClientSwitchedPrimary_RouterQuality>,
     pub to_quality_then: ::protobuf::SingularPtrField<CMsgSteamDatagramClientSwitchedPrimary_RouterQuality>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5410,6 +5457,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramClientSwitchedPrima
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramClientSwitchedPrimary_RouterQuality {
     // message fields
     score: ::std::option::Option<u32>,
@@ -5417,7 +5465,9 @@ pub struct CMsgSteamDatagramClientSwitchedPrimary_RouterQuality {
     back_ping: ::std::option::Option<u32>,
     seconds_until_down: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5683,6 +5733,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramClientSwitchedPrima
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramConnectRequest {
     // message fields
     connection_id: ::std::option::Option<u32>,
@@ -5695,7 +5746,9 @@ pub struct CMsgSteamDatagramConnectRequest {
     routing_secret: ::std::option::Option<u64>,
     legacy_client_steam_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6187,6 +6240,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramConnectRequest {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramConnectOK {
     // message fields
     client_connection_id: ::std::option::Option<u32>,
@@ -6197,7 +6251,9 @@ pub struct CMsgSteamDatagramConnectOK {
     pub crypt: ::protobuf::SingularPtrField<super::steamnetworkingsockets_messages::CMsgSteamDatagramSessionCryptInfoSigned>,
     pub cert: ::protobuf::SingularPtrField<super::steamnetworkingsockets_messages_certs::CMsgSteamDatagramCertificateSigned>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6613,6 +6669,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramConnectOK {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamNetworkingP2PSDRRoutingSummary {
     // message fields
     initial_ping: ::std::option::Option<u32>,
@@ -6624,7 +6681,9 @@ pub struct CMsgSteamNetworkingP2PSDRRoutingSummary {
     negotiation_ms: ::std::option::Option<u32>,
     selected_seconds: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7042,12 +7101,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamNetworkingP2PSDRRoutingSumm
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramP2PRoutingSummary {
     // message fields
     pub ice: ::protobuf::SingularPtrField<super::steamnetworkingsockets_messages::CMsgSteamNetworkingICESessionSummary>,
     pub sdr: ::protobuf::SingularPtrField<CMsgSteamNetworkingP2PSDRRoutingSummary>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7273,6 +7335,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramP2PRoutingSummary {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramConnectionClosed {
     // message fields
     to_connection_id: ::std::option::Option<u32>,
@@ -7295,7 +7358,9 @@ pub struct CMsgSteamDatagramConnectionClosed {
     pub quality_e2e: ::protobuf::SingularPtrField<super::steamnetworkingsockets_messages::CMsgSteamDatagramConnectionQuality>,
     pub p2p_routing_summary: ::protobuf::SingularPtrField<CMsgSteamDatagramP2PRoutingSummary>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8238,6 +8303,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramConnectionClosed {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CMsgSteamDatagramConnectionClosed_ERelayMode {
     None = 0,
     EndToEnd = 1,
@@ -8291,6 +8357,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramConnectionClosed_ER
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramNoConnection {
     // message fields
     to_connection_id: ::std::option::Option<u32>,
@@ -8309,7 +8376,9 @@ pub struct CMsgSteamDatagramNoConnection {
     routing_secret: ::std::option::Option<u64>,
     dummy_pad: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9060,6 +9129,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramNoConnection {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramGameserverSessionRequest {
     // message fields
     ticket: ::protobuf::SingularField<::std::vec::Vec<u8>>,
@@ -9070,7 +9140,9 @@ pub struct CMsgSteamDatagramGameserverSessionRequest {
     network_config_version: ::std::option::Option<u32>,
     protocol_version: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9463,6 +9535,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramGameserverSessionRe
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramGameserverSessionEstablished {
     // message fields
     connection_id: ::std::option::Option<u32>,
@@ -9472,7 +9545,9 @@ pub struct CMsgSteamDatagramGameserverSessionEstablished {
     dummy_legacy_identity_binary: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     legacy_gameserver_steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9840,6 +9915,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramGameserverSessionEs
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramConnectionStatsClientToRouter {
     // message fields
     pub quality_relay: ::protobuf::SingularPtrField<super::steamnetworkingsockets_messages::CMsgSteamDatagramConnectionQuality>,
@@ -9851,7 +9927,9 @@ pub struct CMsgSteamDatagramConnectionStatsClientToRouter {
     seq_num_c2r: ::std::option::Option<u32>,
     seq_num_e2e: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -10305,6 +10383,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramConnectionStatsClie
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CMsgSteamDatagramConnectionStatsClientToRouter_Flags {
     ACK_REQUEST_RELAY = 1,
     ACK_REQUEST_E2E = 2,
@@ -10362,6 +10441,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramConnectionStatsClie
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramConnectionStatsRouterToClient {
     // message fields
     pub quality_relay: ::protobuf::SingularPtrField<super::steamnetworkingsockets_messages::CMsgSteamDatagramConnectionQuality>,
@@ -10377,7 +10457,9 @@ pub struct CMsgSteamDatagramConnectionStatsRouterToClient {
     seq_num_r2c: ::std::option::Option<u32>,
     seq_num_e2e: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -10983,6 +11065,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramConnectionStatsRout
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CMsgSteamDatagramConnectionStatsRouterToClient_Flags {
     ACK_REQUEST_RELAY = 1,
     ACK_REQUEST_E2E = 2,
@@ -11037,6 +11120,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramConnectionStatsRout
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramConnectionStatsRouterToServer {
     // message fields
     pub quality_relay: ::protobuf::SingularPtrField<super::steamnetworkingsockets_messages::CMsgSteamDatagramConnectionQuality>,
@@ -11053,7 +11137,9 @@ pub struct CMsgSteamDatagramConnectionStatsRouterToServer {
     server_connection_id: ::std::option::Option<u32>,
     routing_secret: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -11710,6 +11796,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramConnectionStatsRout
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CMsgSteamDatagramConnectionStatsRouterToServer_Flags {
     ACK_REQUEST_RELAY = 1,
     ACK_REQUEST_E2E = 2,
@@ -11764,6 +11851,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramConnectionStatsRout
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramConnectionStatsServerToRouter {
     // message fields
     pub quality_relay: ::protobuf::SingularPtrField<super::steamnetworkingsockets_messages::CMsgSteamDatagramConnectionQuality>,
@@ -11777,7 +11865,9 @@ pub struct CMsgSteamDatagramConnectionStatsServerToRouter {
     client_connection_id: ::std::option::Option<u32>,
     server_connection_id: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -12307,6 +12397,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramConnectionStatsServ
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CMsgSteamDatagramConnectionStatsServerToRouter_Flags {
     ACK_REQUEST_RELAY = 1,
     ACK_REQUEST_E2E = 2,
@@ -12361,6 +12452,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramConnectionStatsServ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramP2PSessionRequestBody {
     // message fields
     challenge_time: ::std::option::Option<u32>,
@@ -12373,7 +12465,9 @@ pub struct CMsgSteamDatagramP2PSessionRequestBody {
     network_config_version: ::std::option::Option<u32>,
     unused_public_ip: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -12842,13 +12936,16 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramP2PSessionRequestBo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramP2PSessionRequest {
     // message fields
     pub cert: ::protobuf::SingularPtrField<super::steamnetworkingsockets_messages_certs::CMsgSteamDatagramCertificateSigned>,
     body: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     signature: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13120,6 +13217,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramP2PSessionRequest {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramP2PSessionEstablished {
     // message fields
     connection_id: ::std::option::Option<u32>,
@@ -13127,7 +13225,9 @@ pub struct CMsgSteamDatagramP2PSessionEstablished {
     relay_routing_token: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     seq_num_r2c: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -13406,6 +13506,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramP2PSessionEstablish
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramConnectionStatsP2PClientToRouter {
     // message fields
     pub quality_relay: ::protobuf::SingularPtrField<super::steamnetworkingsockets_messages::CMsgSteamDatagramConnectionQuality>,
@@ -13422,7 +13523,9 @@ pub struct CMsgSteamDatagramConnectionStatsP2PClientToRouter {
     seq_num_c2r: ::std::option::Option<u32>,
     seq_num_e2e: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14110,6 +14213,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramConnectionStatsP2PC
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CMsgSteamDatagramConnectionStatsP2PClientToRouter_Flags {
     ACK_REQUEST_RELAY = 1,
     ACK_REQUEST_E2E = 2,
@@ -14170,6 +14274,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramConnectionStatsP2PC
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramConnectionStatsP2PRouterToClient {
     // message fields
     pub quality_relay: ::protobuf::SingularPtrField<super::steamnetworkingsockets_messages::CMsgSteamDatagramConnectionQuality>,
@@ -14188,7 +14293,9 @@ pub struct CMsgSteamDatagramConnectionStatsP2PRouterToClient {
     seq_num_r2c: ::std::option::Option<u32>,
     seq_num_e2e: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -14921,6 +15028,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramConnectionStatsP2PR
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CMsgSteamDatagramConnectionStatsP2PRouterToClient_Flags {
     ACK_REQUEST_RELAY = 1,
     ACK_REQUEST_E2E = 2,
@@ -14978,6 +15086,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramConnectionStatsP2PR
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramP2PBadRouteRouterToClient {
     // message fields
     connection_id: ::std::option::Option<u32>,
@@ -14985,7 +15094,9 @@ pub struct CMsgSteamDatagramP2PBadRouteRouterToClient {
     ack_forward_target_revision: ::std::option::Option<u32>,
     kludge_pad: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -15264,13 +15375,16 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramP2PBadRouteRouterTo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramP2PRoutes {
     // message fields
     pub relay_clusters: ::protobuf::RepeatedField<CMsgSteamDatagramP2PRoutes_RelayCluster>,
     pub routes: ::protobuf::RepeatedField<CMsgSteamDatagramP2PRoutes_Route>,
     revision: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -15518,6 +15632,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramP2PRoutes {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramP2PRoutes_RelayCluster {
     // message fields
     pop_id: ::std::option::Option<u32>,
@@ -15525,7 +15640,9 @@ pub struct CMsgSteamDatagramP2PRoutes_RelayCluster {
     score_penalty: ::std::option::Option<u32>,
     session_relay_routing_token: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -15804,13 +15921,16 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramP2PRoutes_RelayClus
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramP2PRoutes_Route {
     // message fields
     my_pop_id: ::std::option::Option<u32>,
     your_pop_id: ::std::option::Option<u32>,
     score: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -16038,12 +16158,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramP2PRoutes_Route {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramGameServerSample {
     // message fields
     ipv4: ::std::option::Option<u32>,
     port: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -16233,12 +16356,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramGameServerSample {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramGameServerSampleDataCenter {
     // message fields
     datacenter_id: ::std::option::Option<u32>,
     pub servers: ::protobuf::RepeatedField<CMsgSteamDatagramGameServerSample>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -16438,6 +16564,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramGameServerSampleDat
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramRelayToRelayPing {
     // message fields
     request_timestamp: ::std::option::Option<u32>,
@@ -16447,7 +16574,9 @@ pub struct CMsgSteamDatagramRelayToRelayPing {
     checksum: ::std::option::Option<u32>,
     pub data_centers: ::protobuf::RepeatedField<CMsgSteamDatagramGameServerSampleDataCenter>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -16799,11 +16928,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramRelayToRelayPing {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramDataCenterState {
     // message fields
     pub data_centers: ::protobuf::RepeatedField<CMsgSteamDatagramDataCenterState_DataCenter>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -16965,12 +17097,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramDataCenterState {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramDataCenterState_Server {
     // message fields
     address: ::protobuf::SingularField<::std::string::String>,
     ping_ms: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17173,13 +17308,16 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramDataCenterState_Ser
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramDataCenterState_DataCenter {
     // message fields
     code: ::protobuf::SingularField<::std::string::String>,
     pub server_sample: ::protobuf::RepeatedField<CMsgSteamDatagramDataCenterState_Server>,
     pub relay_sample: ::protobuf::RepeatedField<CMsgSteamDatagramDataCenterState_Server>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17440,6 +17578,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramDataCenterState_Dat
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramRouterHealth {
     // message fields
     cpu_load: ::std::option::Option<f32>,
@@ -17453,7 +17592,9 @@ pub struct CMsgSteamDatagramRouterHealth {
     pub data_centers: ::protobuf::RepeatedField<CMsgSteamDatagramRouterHealth_DataCenter>,
     magic: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -17957,13 +18098,16 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramRouterHealth {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramRouterHealth_DataCenter {
     // message fields
     datacenter_id: ::std::option::Option<u32>,
     state: ::std::option::Option<u32>,
     pub servers: ::protobuf::RepeatedField<CMsgSteamDatagramGameServerSample>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18201,6 +18345,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramRouterHealth_DataCe
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramConnectionStatsP2PRouterToRouter {
     // message fields
     pub quality_relay: ::protobuf::SingularPtrField<super::steamnetworkingsockets_messages::CMsgSteamDatagramConnectionQuality>,
@@ -18219,7 +18364,9 @@ pub struct CMsgSteamDatagramConnectionStatsP2PRouterToRouter {
     seq_num_r2r: ::std::option::Option<u32>,
     seq_num_e2e: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -18952,6 +19099,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramConnectionStatsP2PR
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CMsgSteamDatagramConnectionStatsP2PRouterToRouter_Flags {
     ACK_REQUEST_RELAY = 1,
     ACK_REQUEST_E2E = 2,
@@ -19009,13 +19157,16 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramConnectionStatsP2PR
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramNetworkNextRouterPingRequestExtraData {
     // message fields
     client_id: ::protobuf::SingularField<::std::string::String>,
     app_id: ::std::option::Option<u32>,
     protocol_ver: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19256,9 +19407,12 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramNetworkNextRouterPi
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramNetworkNextRouterPingReplyExtraData {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -19372,6 +19526,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramNetworkNextRouterPi
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum ESteamDatagramMsgID {
     k_ESteamDatagramMsg_Invalid = 0,
     k_ESteamDatagramMsg_RouterPingRequest = 1,

@@ -24,13 +24,16 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCommunity_GetLinkFilterHashPrefixes_Request {
     // message fields
     hit_type: ::std::option::Option<u32>,
     count: ::std::option::Option<u32>,
     start: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -258,11 +261,14 @@ impl ::protobuf::reflect::ProtobufValue for CCommunity_GetLinkFilterHashPrefixes
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCommunity_GetLinkFilterHashPrefixes_Response {
     // message fields
     pub hash_prefixes: ::std::vec::Vec<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -416,13 +422,16 @@ impl ::protobuf::reflect::ProtobufValue for CCommunity_GetLinkFilterHashPrefixes
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCommunity_GetLinkFilterHashes_Request {
     // message fields
     hit_type: ::std::option::Option<u32>,
     count: ::std::option::Option<u32>,
     start: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -650,11 +659,14 @@ impl ::protobuf::reflect::ProtobufValue for CCommunity_GetLinkFilterHashes_Reque
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCommunity_GetLinkFilterHashes_Response {
     // message fields
     pub hashes: ::protobuf::RepeatedField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -808,11 +820,14 @@ impl ::protobuf::reflect::ProtobufValue for CCommunity_GetLinkFilterHashes_Respo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCommunity_GetLinkFilterListVersion_Request {
     // message fields
     hit_type: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -964,12 +979,15 @@ impl ::protobuf::reflect::ProtobufValue for CCommunity_GetLinkFilterListVersion_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCommunity_GetLinkFilterListVersion_Response {
     // message fields
     version: ::protobuf::SingularField<::std::string::String>,
     count: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

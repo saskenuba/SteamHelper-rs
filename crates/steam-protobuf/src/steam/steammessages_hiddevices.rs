@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDDeviceInfo {
     // message fields
     location: ::std::option::Option<EHIDDeviceLocation>,
@@ -45,7 +46,9 @@ pub struct CHIDDeviceInfo {
     eControllerType: ::std::option::Option<u32>,
     is_xinput_device: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -891,6 +894,7 @@ impl ::protobuf::reflect::ProtobufValue for CHIDDeviceInfo {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDDeviceInputReport {
     // message fields
     full_report: ::protobuf::SingularField<::std::vec::Vec<u8>>,
@@ -898,7 +902,9 @@ pub struct CHIDDeviceInputReport {
     delta_report_size: ::std::option::Option<u32>,
     delta_report_crc: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1190,13 +1196,16 @@ impl ::protobuf::reflect::ProtobufValue for CHIDDeviceInputReport {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageToRemote {
     // message fields
     request_id: ::std::option::Option<u32>,
     // message oneof groups
     pub command: ::std::option::Option<CHIDMessageToRemote_oneof_command>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1207,6 +1216,7 @@ impl<'a> ::std::default::Default for &'a CHIDMessageToRemote {
 }
 
 #[derive(Clone,PartialEq,Debug)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CHIDMessageToRemote_oneof_command {
     device_open(CHIDMessageToRemote_DeviceOpen),
     device_close(CHIDMessageToRemote_DeviceClose),
@@ -2272,11 +2282,14 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageToRemote {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageToRemote_DeviceOpen {
     // message fields
     pub info: ::protobuf::SingularPtrField<CHIDDeviceInfo>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2446,11 +2459,14 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageToRemote_DeviceOpen {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageToRemote_DeviceClose {
     // message fields
     device: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2602,12 +2618,15 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageToRemote_DeviceClose {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageToRemote_DeviceWrite {
     // message fields
     device: ::std::option::Option<u32>,
     data: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2810,13 +2829,16 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageToRemote_DeviceWrite {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageToRemote_DeviceRead {
     // message fields
     device: ::std::option::Option<u32>,
     length: ::std::option::Option<u32>,
     timeout_ms: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3044,12 +3066,15 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageToRemote_DeviceRead {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageToRemote_DeviceSendFeatureReport {
     // message fields
     device: ::std::option::Option<u32>,
     data: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3252,13 +3277,16 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageToRemote_DeviceSendFeatur
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageToRemote_DeviceGetFeatureReport {
     // message fields
     device: ::std::option::Option<u32>,
     report_number: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     length: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3499,11 +3527,14 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageToRemote_DeviceGetFeature
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageToRemote_DeviceGetVendorString {
     // message fields
     device: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3655,11 +3686,14 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageToRemote_DeviceGetVendorS
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageToRemote_DeviceGetProductString {
     // message fields
     device: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3811,11 +3845,14 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageToRemote_DeviceGetProduct
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageToRemote_DeviceGetSerialNumberString {
     // message fields
     device: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3967,12 +4004,15 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageToRemote_DeviceGetSerialN
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageToRemote_DeviceStartInputReports {
     // message fields
     device: ::std::option::Option<u32>,
     length: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4162,11 +4202,14 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageToRemote_DeviceStartInput
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageToRemote_DeviceRequestFullReport {
     // message fields
     device: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4318,13 +4361,16 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageToRemote_DeviceRequestFul
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageToRemote_DeviceDisconnect {
     // message fields
     device: ::std::option::Option<u32>,
     disconnectMethod: ::std::option::Option<EHIDDeviceDisconnectMethod>,
     data: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4561,11 +4607,14 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageToRemote_DeviceDisconnect
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageFromRemote {
     // message oneof groups
     pub command: ::std::option::Option<CHIDMessageFromRemote_oneof_command>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4576,6 +4625,7 @@ impl<'a> ::std::default::Default for &'a CHIDMessageFromRemote {
 }
 
 #[derive(Clone,PartialEq,Debug)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CHIDMessageFromRemote_oneof_command {
     update_device_list(CHIDMessageFromRemote_UpdateDeviceList),
     response(CHIDMessageFromRemote_RequestResponse),
@@ -5071,11 +5121,14 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageFromRemote {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageFromRemote_UpdateDeviceList {
     // message fields
     pub devices: ::protobuf::RepeatedField<CHIDDeviceInfo>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5237,13 +5290,16 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageFromRemote_UpdateDeviceLi
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageFromRemote_RequestResponse {
     // message fields
     request_id: ::std::option::Option<u32>,
     result: ::std::option::Option<i32>,
     data: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5484,11 +5540,14 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageFromRemote_RequestRespons
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageFromRemote_DeviceInputReports {
     // message fields
     pub device_reports: ::protobuf::RepeatedField<CHIDMessageFromRemote_DeviceInputReports_DeviceInputReport>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5650,12 +5709,15 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageFromRemote_DeviceInputRep
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageFromRemote_DeviceInputReports_DeviceInputReport {
     // message fields
     device: ::std::option::Option<u32>,
     pub reports: ::protobuf::RepeatedField<CHIDDeviceInputReport>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5855,11 +5917,14 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageFromRemote_DeviceInputRep
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageFromRemote_CloseDevice {
     // message fields
     device: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6011,9 +6076,12 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageFromRemote_CloseDevice {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CHIDMessageFromRemote_CloseAllDevices {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6127,6 +6195,7 @@ impl ::protobuf::reflect::ProtobufValue for CHIDMessageFromRemote_CloseAllDevice
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EHIDDeviceLocation {
     k_EDeviceLocationLocal = 0,
     k_EDeviceLocationRemote = 2,
@@ -6180,6 +6249,7 @@ impl ::protobuf::reflect::ProtobufValue for EHIDDeviceLocation {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EHIDDeviceDisconnectMethod {
     k_EDeviceDisconnectMethodUnknown = 0,
     k_EDeviceDisconnectMethodBluetooth = 1,

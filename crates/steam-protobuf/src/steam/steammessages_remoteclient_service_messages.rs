@@ -24,9 +24,12 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_CreateSession_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -140,12 +143,15 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_CreateSession_Request 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_CreateSession_Response {
     // message fields
     session_id: ::std::option::Option<u64>,
     euniverse: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -335,11 +341,14 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_CreateSession_Response
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_StartPairing_Request {
     // message fields
     session_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -491,11 +500,14 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_StartPairing_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_StartPairing_Response {
     // message fields
     pin: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -647,13 +659,16 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_StartPairing_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_SetPairingInfo_Request {
     // message fields
     session_id: ::std::option::Option<u64>,
     device_id: ::std::option::Option<u64>,
     request: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -894,9 +909,12 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_SetPairingInfo_Request
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_SetPairingInfo_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1010,11 +1028,14 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_SetPairingInfo_Respons
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_GetPairingInfo_Request {
     // message fields
     pin: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1166,13 +1187,16 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_GetPairingInfo_Request
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_GetPairingInfo_Response {
     // message fields
     session_id: ::std::option::Option<u64>,
     device_id: ::std::option::Option<u64>,
     request: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1413,11 +1437,14 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_GetPairingInfo_Respons
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_CancelPairing_Request {
     // message fields
     session_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1569,9 +1596,12 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_CancelPairing_Request 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_CancelPairing_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1685,13 +1715,16 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_CancelPairing_Response
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_RegisterStatusUpdate_Notification {
     // message fields
     session_id: ::std::option::Option<u64>,
     steamid: ::std::option::Option<u64>,
     device_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1919,12 +1952,15 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_RegisterStatusUpdate_N
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_UnregisterStatusUpdate_Notification {
     // message fields
     session_id: ::std::option::Option<u64>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2114,11 +2150,14 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_UnregisterStatusUpdate
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_Online_Notification {
     // message fields
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2270,13 +2309,16 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_Online_Notification {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_RemotePacket_Notification {
     // message fields
     session_id: ::std::option::Option<u64>,
     steamid: ::std::option::Option<u64>,
     payload: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2517,12 +2559,15 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_RemotePacket_Notificat
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_ReplyPacket_Notification {
     // message fields
     session_id: ::std::option::Option<u64>,
     payload: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2725,11 +2770,14 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_ReplyPacket_Notificati
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_GetReplies_Request {
     // message fields
     session_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2881,11 +2929,14 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_GetReplies_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_GetReplies_Response {
     // message fields
     pub payload: ::protobuf::RepeatedField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3039,12 +3090,15 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_GetReplies_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_AllocateTURNServer_Request {
     // message fields
     cellid: ::std::option::Option<u32>,
     credentials: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3247,11 +3301,14 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_AllocateTURNServer_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_AllocateTURNServer_Response {
     // message fields
     turn_server: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3416,12 +3473,15 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_AllocateTURNServer_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_AllocateRelayServer_Request {
     // message fields
     cellid: ::std::option::Option<u32>,
     credentials: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3624,11 +3684,14 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_AllocateRelayServer_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_AllocateRelayServer_Response {
     // message fields
     relay_server: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3793,11 +3856,14 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_AllocateRelayServer_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_AllocateSDR_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3949,9 +4015,12 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_AllocateSDR_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_AllocateSDR_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4065,13 +4134,16 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_AllocateSDR_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_SteamBroadcast_Notification {
     // message fields
     steamid: ::std::option::Option<u64>,
     clientid: ::std::option::Option<u64>,
     payload: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4312,6 +4384,7 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_SteamBroadcast_Notific
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemoteClient_SteamToSteam_Notification {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -4320,7 +4393,9 @@ pub struct CRemoteClient_SteamToSteam_Notification {
     secretid: ::std::option::Option<u32>,
     encrypted_payload: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4637,6 +4712,7 @@ impl ::protobuf::reflect::ProtobufValue for CRemoteClient_SteamToSteam_Notificat
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemotePlay_SessionStarted_Request {
     // message fields
     host_account_id: ::std::option::Option<u32>,
@@ -4644,7 +4720,9 @@ pub struct CRemotePlay_SessionStarted_Request {
     appid: ::std::option::Option<u32>,
     device_form_factor: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4910,11 +4988,14 @@ impl ::protobuf::reflect::ProtobufValue for CRemotePlay_SessionStarted_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemotePlay_SessionStarted_Response {
     // message fields
     record_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5066,6 +5147,7 @@ impl ::protobuf::reflect::ProtobufValue for CRemotePlay_SessionStarted_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemotePlay_SessionStopped_Notification {
     // message fields
     record_id: ::std::option::Option<u64>,
@@ -5073,7 +5155,9 @@ pub struct CRemotePlay_SessionStopped_Notification {
     used_h264: ::std::option::Option<bool>,
     used_hevc: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5339,13 +5423,16 @@ impl ::protobuf::reflect::ProtobufValue for CRemotePlay_SessionStopped_Notificat
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemotePlayTogether_Notification {
     // message fields
     steamid: ::std::option::Option<u64>,
     // message oneof groups
     pub Message: ::std::option::Option<CRemotePlayTogether_Notification_oneof_Message>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5356,6 +5443,7 @@ impl<'a> ::std::default::Default for &'a CRemotePlayTogether_Notification {
 }
 
 #[derive(Clone,PartialEq,Debug)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CRemotePlayTogether_Notification_oneof_Message {
     group_updated(CRemotePlayTogether_Notification_GroupUpdated),
 }
@@ -5585,12 +5673,15 @@ impl ::protobuf::reflect::ProtobufValue for CRemotePlayTogether_Notification {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemotePlayTogether_Notification_ControllerSlots {
     // message fields
     slotid: ::std::option::Option<u32>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5780,6 +5871,7 @@ impl ::protobuf::reflect::ProtobufValue for CRemotePlayTogether_Notification_Con
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CRemotePlayTogether_Notification_GroupUpdated {
     // message fields
     host_steamid: ::std::option::Option<u64>,
@@ -5788,7 +5880,9 @@ pub struct CRemotePlayTogether_Notification_GroupUpdated {
     host_gameid: ::std::option::Option<u64>,
     pub controller_slots: ::protobuf::RepeatedField<CRemotePlayTogether_Notification_ControllerSlots>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

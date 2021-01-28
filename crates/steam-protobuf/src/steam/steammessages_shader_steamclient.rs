@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CShader_RegisterShader_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -31,7 +32,9 @@ pub struct CShader_RegisterShader_Request {
     driver_desc: ::protobuf::SingularField<::std::string::String>,
     pub shaders: ::protobuf::RepeatedField<CShader_RegisterShader_Request_Shader>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -333,12 +336,15 @@ impl ::protobuf::reflect::ProtobufValue for CShader_RegisterShader_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CShader_RegisterShader_Request_Shader {
     // message fields
     cache_key_sha: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     shader_code_sha: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -554,11 +560,14 @@ impl ::protobuf::reflect::ProtobufValue for CShader_RegisterShader_Request_Shade
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CShader_RegisterShader_Response {
     // message fields
     pub requested_codeids: ::std::vec::Vec<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -712,12 +721,15 @@ impl ::protobuf::reflect::ProtobufValue for CShader_RegisterShader_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CShader_SendShader_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     pub shaders: ::protobuf::RepeatedField<CShader_SendShader_Request_ShaderCode>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -917,12 +929,15 @@ impl ::protobuf::reflect::ProtobufValue for CShader_SendShader_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CShader_SendShader_Request_ShaderCode {
     // message fields
     shader_code_sha: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     shader_code: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1138,9 +1153,12 @@ impl ::protobuf::reflect::ProtobufValue for CShader_SendShader_Request_ShaderCod
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CShader_SendShader_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1254,13 +1272,16 @@ impl ::protobuf::reflect::ProtobufValue for CShader_SendShader_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CShader_GetBucketManifest_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     gpu_desc: ::protobuf::SingularField<::std::string::String>,
     driver_desc: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1514,13 +1535,16 @@ impl ::protobuf::reflect::ProtobufValue for CShader_GetBucketManifest_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CShader_GetBucketManifest_Response {
     // message fields
     manifestid: ::std::option::Option<u64>,
     depotsize: ::std::option::Option<u32>,
     bucketid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1748,12 +1772,15 @@ impl ::protobuf::reflect::ProtobufValue for CShader_GetBucketManifest_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CShader_GetStaleBucket_Request {
     // message fields
     gpu_desc: ::protobuf::SingularField<::std::string::String>,
     driver_desc: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1969,13 +1996,16 @@ impl ::protobuf::reflect::ProtobufValue for CShader_GetStaleBucket_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CShader_GetStaleBucket_Response {
     // message fields
     bucketid: ::std::option::Option<u64>,
     appid: ::std::option::Option<u32>,
     manifestid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2203,6 +2233,7 @@ impl ::protobuf::reflect::ProtobufValue for CShader_GetStaleBucket_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CShader_ReportExternalBuild_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -2212,7 +2243,9 @@ pub struct CShader_ReportExternalBuild_Request {
     source_gpu_desc: ::protobuf::SingularField<::std::string::String>,
     source_driver_desc: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2606,9 +2639,12 @@ impl ::protobuf::reflect::ProtobufValue for CShader_ReportExternalBuild_Request 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CShader_ReportExternalBuild_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

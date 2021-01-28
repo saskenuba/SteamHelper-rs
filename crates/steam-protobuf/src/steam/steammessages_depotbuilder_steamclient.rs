@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentBuilder_InitDepotBuild_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -31,7 +32,9 @@ pub struct CContentBuilder_InitDepotBuild_Request {
     workshop_itemid: ::std::option::Option<u64>,
     for_local_cs: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -297,6 +300,7 @@ impl ::protobuf::reflect::ProtobufValue for CContentBuilder_InitDepotBuild_Reque
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentBuilder_InitDepotBuild_Response {
     // message fields
     baseline_manifestid: ::std::option::Option<u64>,
@@ -311,7 +315,9 @@ pub struct CContentBuilder_InitDepotBuild_Response {
     offset_detection_max_distance_pre: ::std::option::Option<u32>,
     offset_detection_max_distance_post: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -882,6 +888,7 @@ impl ::protobuf::reflect::ProtobufValue for CContentBuilder_InitDepotBuild_Respo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentBuilder_StartDepotUpload_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -891,7 +898,9 @@ pub struct CContentBuilder_StartDepotUpload_Request {
     baseline_manifestid: ::std::option::Option<u64>,
     manifest_size: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1233,11 +1242,14 @@ impl ::protobuf::reflect::ProtobufValue for CContentBuilder_StartDepotUpload_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentBuilder_StartDepotUpload_Response {
     // message fields
     depot_build_handle: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1389,12 +1401,15 @@ impl ::protobuf::reflect::ProtobufValue for CContentBuilder_StartDepotUpload_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentBuilder_GetMissingDepotChunks_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     depot_build_handle: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1584,13 +1599,16 @@ impl ::protobuf::reflect::ProtobufValue for CContentBuilder_GetMissingDepotChunk
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentBuilder_GetMissingDepotChunks_Response {
     // message fields
     pub missing_chunks: ::protobuf::RepeatedField<CContentBuilder_GetMissingDepotChunks_Response_Chunks>,
     total_missing_chunks: ::std::option::Option<u32>,
     total_missing_bytes: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1828,11 +1846,14 @@ impl ::protobuf::reflect::ProtobufValue for CContentBuilder_GetMissingDepotChunk
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentBuilder_GetMissingDepotChunks_Response_Chunks {
     // message fields
     sha: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1997,12 +2018,15 @@ impl ::protobuf::reflect::ProtobufValue for CContentBuilder_GetMissingDepotChunk
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentBuilder_FinishDepotUpload_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     depot_build_handle: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2192,12 +2216,15 @@ impl ::protobuf::reflect::ProtobufValue for CContentBuilder_FinishDepotUpload_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentBuilder_FinishDepotUpload_Response {
     // message fields
     manifestid: ::std::option::Option<u64>,
     prev_reused: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2387,6 +2414,7 @@ impl ::protobuf::reflect::ProtobufValue for CContentBuilder_FinishDepotUpload_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentBuilder_CommitAppBuild_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -2394,7 +2422,9 @@ pub struct CContentBuilder_CommitAppBuild_Request {
     build_notes: ::protobuf::SingularField<::std::string::String>,
     live_branch: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2696,12 +2726,15 @@ impl ::protobuf::reflect::ProtobufValue for CContentBuilder_CommitAppBuild_Reque
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentBuilder_CommitAppBuild_Request_Depots {
     // message fields
     depotid: ::std::option::Option<u32>,
     manifestid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2891,11 +2924,14 @@ impl ::protobuf::reflect::ProtobufValue for CContentBuilder_CommitAppBuild_Reque
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentBuilder_CommitAppBuild_Response {
     // message fields
     buildid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3047,13 +3083,16 @@ impl ::protobuf::reflect::ProtobufValue for CContentBuilder_CommitAppBuild_Respo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentBuilder_SignInstallScript_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     depotid: ::std::option::Option<u32>,
     install_script: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3294,11 +3333,14 @@ impl ::protobuf::reflect::ProtobufValue for CContentBuilder_SignInstallScript_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CContentBuilder_SignInstallScript_Response {
     // message fields
     signed_install_script: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

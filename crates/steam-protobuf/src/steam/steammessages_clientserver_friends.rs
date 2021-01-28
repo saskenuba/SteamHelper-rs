@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientFriendMsg {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -32,7 +33,9 @@ pub struct CMsgClientFriendMsg {
     rtime32_server_timestamp: ::std::option::Option<u32>,
     echo_to_sender: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -349,6 +352,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientFriendMsg {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientFriendMsgIncoming {
     // message fields
     steamid_from: ::std::option::Option<u64>,
@@ -357,7 +361,9 @@ pub struct CMsgClientFriendMsgIncoming {
     message: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     rtime32_server_timestamp: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -674,12 +680,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientFriendMsgIncoming {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientAddFriend {
     // message fields
     steamid_to_add: ::std::option::Option<u64>,
     accountname_or_email_to_add: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -882,13 +891,16 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientAddFriend {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientAddFriendResponse {
     // message fields
     eresult: ::std::option::Option<i32>,
     steam_id_added: ::std::option::Option<u64>,
     persona_name_added: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1129,11 +1141,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientAddFriendResponse {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientRemoveFriend {
     // message fields
     friendid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1285,12 +1300,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientRemoveFriend {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientHideFriend {
     // message fields
     friendid: ::std::option::Option<u64>,
     hide: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1480,6 +1498,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientHideFriend {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientFriendsList {
     // message fields
     bincremental: ::std::option::Option<bool>,
@@ -1488,7 +1507,9 @@ pub struct CMsgClientFriendsList {
     active_friend_count: ::std::option::Option<u32>,
     friends_limit_hit: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1802,12 +1823,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientFriendsList {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientFriendsList_Friend {
     // message fields
     ulfriendid: ::std::option::Option<u64>,
     efriendrelationship: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1997,6 +2021,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientFriendsList_Friend {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientFriendsGroupsList {
     // message fields
     bremoval: ::std::option::Option<bool>,
@@ -2004,7 +2029,9 @@ pub struct CMsgClientFriendsGroupsList {
     pub friendGroups: ::protobuf::RepeatedField<CMsgClientFriendsGroupsList_FriendGroup>,
     pub memberships: ::protobuf::RepeatedField<CMsgClientFriendsGroupsList_FriendGroupsMembership>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2290,12 +2317,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientFriendsGroupsList {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientFriendsGroupsList_FriendGroup {
     // message fields
     nGroupID: ::std::option::Option<i32>,
     strGroupName: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2498,12 +2528,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientFriendsGroupsList_FriendGr
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientFriendsGroupsList_FriendGroupsMembership {
     // message fields
     ulSteamID: ::std::option::Option<u64>,
     nGroupID: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2693,13 +2726,16 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientFriendsGroupsList_FriendGr
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientPlayerNicknameList {
     // message fields
     removal: ::std::option::Option<bool>,
     incremental: ::std::option::Option<bool>,
     pub nicknames: ::protobuf::RepeatedField<CMsgClientPlayerNicknameList_PlayerNickname>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2937,12 +2973,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientPlayerNicknameList {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientPlayerNicknameList_PlayerNickname {
     // message fields
     steamid: ::std::option::Option<u64>,
     nickname: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3145,12 +3184,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientPlayerNicknameList_PlayerN
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientSetPlayerNickname {
     // message fields
     steamid: ::std::option::Option<u64>,
     nickname: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3353,11 +3395,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientSetPlayerNickname {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientSetPlayerNicknameResponse {
     // message fields
     eresult: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3509,12 +3554,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientSetPlayerNicknameResponse 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientRequestFriendData {
     // message fields
     persona_state_requested: ::std::option::Option<u32>,
     pub friends: ::std::vec::Vec<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3704,6 +3752,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientRequestFriendData {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientChangeStatus {
     // message fields
     persona_state: ::std::option::Option<u32>,
@@ -3715,7 +3764,9 @@ pub struct CMsgClientChangeStatus {
     need_persona_response: ::std::option::Option<bool>,
     is_client_idle: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4146,12 +4197,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientChangeStatus {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgPersonaChangeResponse {
     // message fields
     result: ::std::option::Option<u32>,
     player_name: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4354,12 +4408,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgPersonaChangeResponse {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientPersonaState {
     // message fields
     status_flags: ::std::option::Option<u32>,
     pub friends: ::protobuf::RepeatedField<CMsgClientPersonaState_Friend>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4559,6 +4616,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientPersonaState {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientPersonaState_Friend {
     // message fields
     friendid: ::std::option::Option<u64>,
@@ -4590,7 +4648,9 @@ pub struct CMsgClientPersonaState_Friend {
     watching_broadcast_viewers: ::std::option::Option<u32>,
     watching_broadcast_title: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5874,12 +5934,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientPersonaState_Friend {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientPersonaState_Friend_ClanData {
     // message fields
     ogg_app_id: ::std::option::Option<u32>,
     chat_group_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6069,12 +6132,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientPersonaState_Friend_ClanDa
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientPersonaState_Friend_KV {
     // message fields
     key: ::protobuf::SingularField<::std::string::String>,
     value: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6290,11 +6356,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientPersonaState_Friend_KV {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientFriendProfileInfo {
     // message fields
     steamid_friend: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6446,6 +6515,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientFriendProfileInfo {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientFriendProfileInfoResponse {
     // message fields
     eresult: ::std::option::Option<i32>,
@@ -6458,7 +6528,9 @@ pub struct CMsgClientFriendProfileInfoResponse {
     headline: ::protobuf::SingularField<::std::string::String>,
     summary: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6992,13 +7064,16 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientFriendProfileInfoResponse 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientCreateFriendsGroup {
     // message fields
     steamid: ::std::option::Option<u64>,
     groupname: ::protobuf::SingularField<::std::string::String>,
     pub steamid_friends: ::std::vec::Vec<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7239,12 +7314,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientCreateFriendsGroup {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientCreateFriendsGroupResponse {
     // message fields
     eresult: ::std::option::Option<u32>,
     groupid: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7434,12 +7512,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientCreateFriendsGroupResponse
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientDeleteFriendsGroup {
     // message fields
     steamid: ::std::option::Option<u64>,
     groupid: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7629,11 +7710,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientDeleteFriendsGroup {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientDeleteFriendsGroupResponse {
     // message fields
     eresult: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7785,6 +7869,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientDeleteFriendsGroupResponse
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientManageFriendsGroup {
     // message fields
     groupid: ::std::option::Option<i32>,
@@ -7792,7 +7877,9 @@ pub struct CMsgClientManageFriendsGroup {
     pub steamid_friends_added: ::std::vec::Vec<u64>,
     pub steamid_friends_removed: ::std::vec::Vec<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8071,11 +8158,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientManageFriendsGroup {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientManageFriendsGroupResponse {
     // message fields
     eresult: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8227,12 +8317,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientManageFriendsGroupResponse
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientAddFriendToGroup {
     // message fields
     groupid: ::std::option::Option<i32>,
     steamiduser: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8422,11 +8515,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientAddFriendToGroup {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientAddFriendToGroupResponse {
     // message fields
     eresult: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8578,12 +8674,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientAddFriendToGroupResponse {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientRemoveFriendFromGroup {
     // message fields
     groupid: ::std::option::Option<i32>,
     steamiduser: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8773,11 +8872,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientRemoveFriendFromGroup {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientRemoveFriendFromGroupResponse {
     // message fields
     eresult: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8929,9 +9031,12 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientRemoveFriendFromGroupRespo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientGetEmoticonList {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9045,13 +9150,16 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientGetEmoticonList {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientEmoticonList {
     // message fields
     pub emoticons: ::protobuf::RepeatedField<CMsgClientEmoticonList_Emoticon>,
     pub stickers: ::protobuf::RepeatedField<CMsgClientEmoticonList_Sticker>,
     pub effects: ::protobuf::RepeatedField<CMsgClientEmoticonList_Effect>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9309,6 +9417,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientEmoticonList {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientEmoticonList_Emoticon {
     // message fields
     name: ::protobuf::SingularField<::std::string::String>,
@@ -9318,7 +9427,9 @@ pub struct CMsgClientEmoticonList_Emoticon {
     time_received: ::std::option::Option<u32>,
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -9673,6 +9784,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientEmoticonList_Emoticon {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientEmoticonList_Sticker {
     // message fields
     name: ::protobuf::SingularField<::std::string::String>,
@@ -9682,7 +9794,9 @@ pub struct CMsgClientEmoticonList_Sticker {
     time_last_used: ::std::option::Option<u32>,
     use_count: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -10037,6 +10151,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientEmoticonList_Sticker {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientEmoticonList_Effect {
     // message fields
     name: ::protobuf::SingularField<::std::string::String>,
@@ -10045,7 +10160,9 @@ pub struct CMsgClientEmoticonList_Effect {
     infinite_use: ::std::option::Option<bool>,
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

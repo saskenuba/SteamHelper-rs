@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteClientBroadcastHeader {
     // message fields
     client_id: ::std::option::Option<u64>,
@@ -32,7 +33,9 @@ pub struct CMsgRemoteClientBroadcastHeader {
     device_id: ::std::option::Option<u64>,
     device_token: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -345,6 +348,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteClientBroadcastHeader {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteClientBroadcastStatus {
     // message fields
     version: ::std::option::Option<i32>,
@@ -368,7 +372,9 @@ pub struct CMsgRemoteClientBroadcastStatus {
     public_ip_address: ::protobuf::SingularField<::std::string::String>,
     remoteplay_active: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1282,12 +1288,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteClientBroadcastStatus {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteClientBroadcastStatus_User {
     // message fields
     steamid: ::std::option::Option<u64>,
     auth_key_id: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1477,12 +1486,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteClientBroadcastStatus_User
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteClientBroadcastDiscovery {
     // message fields
     seq_num: ::std::option::Option<u32>,
     pub client_ids: ::std::vec::Vec<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1674,11 +1686,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteClientBroadcastDiscovery {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteClientBroadcastClientIDDeconflict {
     // message fields
     pub client_ids: ::std::vec::Vec<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1832,13 +1847,16 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteClientBroadcastClientIDDec
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteDeviceAuthorizationRequest {
     // message fields
     device_token: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     device_name: ::protobuf::SingularField<::std::string::String>,
     encrypted_request: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2111,6 +2129,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteDeviceAuthorizationRequest
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteDeviceAuthorizationRequest_CKeyEscrow_Ticket {
     // message fields
     password: ::protobuf::SingularField<::std::vec::Vec<u8>>,
@@ -2123,7 +2142,9 @@ pub struct CMsgRemoteDeviceAuthorizationRequest_CKeyEscrow_Ticket {
     device_serial: ::protobuf::SingularField<::std::string::String>,
     device_provisioning_id: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2640,6 +2661,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteDeviceAuthorizationRequest
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CMsgRemoteDeviceAuthorizationRequest_EKeyEscrowUsage {
     k_EKeyEscrowUsageStreamingDevice = 0,
 }
@@ -2687,9 +2709,12 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteDeviceAuthorizationRequest
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteDeviceAuthorizationCancelRequest {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2803,12 +2828,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteDeviceAuthorizationCancelR
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteDeviceAuthorizationResponse {
     // message fields
     result: ::std::option::Option<ERemoteDeviceAuthorizationResult>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2997,6 +3025,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteDeviceAuthorizationRespons
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteDeviceStreamingRequest {
     // message fields
     request_id: ::std::option::Option<u32>,
@@ -3020,7 +3049,9 @@ pub struct CMsgRemoteDeviceStreamingRequest {
     gameid: ::std::option::Option<u64>,
     stream_interface: ::std::option::Option<EStreamInterface>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3940,12 +3971,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteDeviceStreamingRequest {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteDeviceStreamingRequest_ReservedGamepad {
     // message fields
     controller_type: ::std::option::Option<u32>,
     controller_subtype: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4135,11 +4169,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteDeviceStreamingRequest_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteDeviceStreamingCancelRequest {
     // message fields
     request_id: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4294,12 +4331,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteDeviceStreamingCancelReque
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteDeviceStreamingProgress {
     // message fields
     request_id: ::std::option::Option<u32>,
     progress: ::std::option::Option<f32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4492,6 +4532,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteDeviceStreamingProgress {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteDeviceStreamingResponse {
     // message fields
     request_id: ::std::option::Option<u32>,
@@ -4502,7 +4543,9 @@ pub struct CMsgRemoteDeviceStreamingResponse {
     relay_server: ::protobuf::SingularField<::std::string::String>,
     cert: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4919,12 +4962,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteDeviceStreamingResponse {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteDeviceProofRequest {
     // message fields
     challenge: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     request_id: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5130,12 +5176,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteDeviceProofRequest {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteDeviceProofResponse {
     // message fields
     response: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     request_id: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5341,12 +5390,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteDeviceProofResponse {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgRemoteDeviceStreamTransportSignal {
     // message fields
     token: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     payload: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5562,6 +5614,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgRemoteDeviceStreamTransportSigna
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum ERemoteClientBroadcastMsg {
     k_ERemoteClientBroadcastMsgDiscovery = 0,
     k_ERemoteClientBroadcastMsgStatus = 1,
@@ -5648,6 +5701,7 @@ impl ::protobuf::reflect::ProtobufValue for ERemoteClientBroadcastMsg {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum ERemoteClientService {
     k_ERemoteClientServiceNone = 0,
     k_ERemoteClientServiceRemoteControl = 1,
@@ -5707,6 +5761,7 @@ impl ::protobuf::reflect::ProtobufValue for ERemoteClientService {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum ERemoteDeviceAuthorizationResult {
     k_ERemoteDeviceAuthorizationSuccess = 0,
     k_ERemoteDeviceAuthorizationDenied = 1,
@@ -5778,6 +5833,7 @@ impl ::protobuf::reflect::ProtobufValue for ERemoteDeviceAuthorizationResult {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EStreamDeviceFormFactor {
     k_EStreamDeviceFormFactorUnknown = 0,
     k_EStreamDeviceFormFactorPhone = 1,
@@ -5837,6 +5893,7 @@ impl ::protobuf::reflect::ProtobufValue for EStreamDeviceFormFactor {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EStreamTransport {
     k_EStreamTransportNone = 0,
     k_EStreamTransportUDP = 1,
@@ -5902,6 +5959,7 @@ impl ::protobuf::reflect::ProtobufValue for EStreamTransport {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EStreamInterface {
     k_EStreamInterfaceDefault = 0,
     k_EStreamInterfaceRecentGames = 1,
@@ -5958,6 +6016,7 @@ impl ::protobuf::reflect::ProtobufValue for EStreamInterface {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum ERemoteDeviceStreamingResult {
     k_ERemoteDeviceStreamingSuccess = 0,
     k_ERemoteDeviceStreamingUnauthorized = 1,

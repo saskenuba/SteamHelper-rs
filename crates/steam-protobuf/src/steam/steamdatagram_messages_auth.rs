@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramRelayAuthTicket {
     // message fields
     time_expiry: ::std::option::Option<u32>,
@@ -41,7 +42,9 @@ pub struct CMsgSteamDatagramRelayAuthTicket {
     legacy_authorized_client_identity_binary: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     legacy_gameserver_identity_binary: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -762,6 +765,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramRelayAuthTicket {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramRelayAuthTicket_ExtraField {
     // message fields
     name: ::protobuf::SingularField<::std::string::String>,
@@ -769,7 +773,9 @@ pub struct CMsgSteamDatagramRelayAuthTicket_ExtraField {
     int64_value: ::std::option::Option<i64>,
     fixed64_value: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1061,6 +1067,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramRelayAuthTicket_Ext
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramSignedRelayAuthTicket {
     // message fields
     reserved_do_not_use: ::std::option::Option<u64>,
@@ -1068,7 +1075,9 @@ pub struct CMsgSteamDatagramSignedRelayAuthTicket {
     ticket: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     signature: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1360,13 +1369,16 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramSignedRelayAuthTick
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramCachedCredentialsForApp {
     // message fields
     private_key: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     cert: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     pub relay_tickets: ::protobuf::RepeatedField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1622,6 +1634,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramCachedCredentialsFo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramGameCoordinatorServerLogin {
     // message fields
     time_generated: ::std::option::Option<u32>,
@@ -1632,7 +1645,9 @@ pub struct CMsgSteamDatagramGameCoordinatorServerLogin {
     identity_string: ::protobuf::SingularField<::std::string::String>,
     dummy_steam_id: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2064,13 +2079,16 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramGameCoordinatorServ
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramSignedGameCoordinatorServerLogin {
     // message fields
     pub cert: ::protobuf::SingularPtrField<super::steamnetworkingsockets_messages_certs::CMsgSteamDatagramCertificateSigned>,
     login: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     signature: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2342,6 +2360,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramSignedGameCoordinat
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramHostedServerAddressPlaintext {
     // message fields
     ipv4: ::std::option::Option<u32>,
@@ -2349,7 +2368,9 @@ pub struct CMsgSteamDatagramHostedServerAddressPlaintext {
     port: ::std::option::Option<u32>,
     routing_secret: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

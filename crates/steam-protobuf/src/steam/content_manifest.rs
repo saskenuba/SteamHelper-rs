@@ -24,11 +24,14 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct ContentManifestPayload {
     // message fields
     pub mappings: ::protobuf::RepeatedField<ContentManifestPayload_FileMapping>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -190,6 +193,7 @@ impl ::protobuf::reflect::ProtobufValue for ContentManifestPayload {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct ContentManifestPayload_FileMapping {
     // message fields
     filename: ::protobuf::SingularField<::std::string::String>,
@@ -200,7 +204,9 @@ pub struct ContentManifestPayload_FileMapping {
     pub chunks: ::protobuf::RepeatedField<ContentManifestPayload_FileMapping_ChunkData>,
     linktarget: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -642,6 +648,7 @@ impl ::protobuf::reflect::ProtobufValue for ContentManifestPayload_FileMapping {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct ContentManifestPayload_FileMapping_ChunkData {
     // message fields
     sha: ::protobuf::SingularField<::std::vec::Vec<u8>>,
@@ -650,7 +657,9 @@ pub struct ContentManifestPayload_FileMapping_ChunkData {
     cb_original: ::std::option::Option<u32>,
     cb_compressed: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -967,6 +976,7 @@ impl ::protobuf::reflect::ProtobufValue for ContentManifestPayload_FileMapping_C
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct ContentManifestMetadata {
     // message fields
     depot_id: ::std::option::Option<u32>,
@@ -979,7 +989,9 @@ pub struct ContentManifestMetadata {
     crc_encrypted: ::std::option::Option<u32>,
     crc_clear: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1435,11 +1447,14 @@ impl ::protobuf::reflect::ProtobufValue for ContentManifestMetadata {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct ContentManifestSignature {
     // message fields
     signature: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1604,6 +1619,7 @@ impl ::protobuf::reflect::ProtobufValue for ContentManifestSignature {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct ContentDeltaChunks {
     // message fields
     depot_id: ::std::option::Option<u32>,
@@ -1612,7 +1628,9 @@ pub struct ContentDeltaChunks {
     pub deltaChunks: ::protobuf::RepeatedField<ContentDeltaChunks_DeltaChunk>,
     chunk_data_location: ::std::option::Option<EContentDeltaChunkDataLocation>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1922,6 +1940,7 @@ impl ::protobuf::reflect::ProtobufValue for ContentDeltaChunks {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct ContentDeltaChunks_DeltaChunk {
     // message fields
     sha_source: ::protobuf::SingularField<::std::vec::Vec<u8>>,
@@ -1931,7 +1950,9 @@ pub struct ContentDeltaChunks_DeltaChunk {
     chunk: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     size_delta: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2312,6 +2333,7 @@ impl ::protobuf::reflect::ProtobufValue for ContentDeltaChunks_DeltaChunk {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EContentDeltaChunkDataLocation {
     k_EContentDeltaChunkDataLocationInProtobuf = 0,
     k_EContentDeltaChunkDataLocationAfterProtobuf = 1,

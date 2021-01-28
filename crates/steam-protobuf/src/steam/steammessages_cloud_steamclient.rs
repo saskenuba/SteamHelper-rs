@@ -24,11 +24,14 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_GetUploadServerInfo_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -180,11 +183,14 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_GetUploadServerInfo_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_GetUploadServerInfo_Response {
     // message fields
     server_url: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -349,6 +355,7 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_GetUploadServerInfo_Response 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_BeginHTTPUpload_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -360,7 +367,9 @@ pub struct CCloud_BeginHTTPUpload_Request {
     pub request_headers_names: ::protobuf::RepeatedField<::std::string::String>,
     pub request_headers_values: ::protobuf::RepeatedField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -810,6 +819,7 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_BeginHTTPUpload_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_BeginHTTPUpload_Response {
     // message fields
     ugcid: ::std::option::Option<u64>,
@@ -819,7 +829,9 @@ pub struct CCloud_BeginHTTPUpload_Response {
     use_https: ::std::option::Option<bool>,
     pub request_headers: ::protobuf::RepeatedField<CCloud_BeginHTTPUpload_Response_HTTPHeaders>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1197,12 +1209,15 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_BeginHTTPUpload_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_BeginHTTPUpload_Response_HTTPHeaders {
     // message fields
     name: ::protobuf::SingularField<::std::string::String>,
     value: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1418,6 +1433,7 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_BeginHTTPUpload_Response_HTTP
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_CommitHTTPUpload_Request {
     // message fields
     transfer_succeeded: ::std::option::Option<bool>,
@@ -1425,7 +1441,9 @@ pub struct CCloud_CommitHTTPUpload_Request {
     file_sha: ::protobuf::SingularField<::std::string::String>,
     filename: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1717,11 +1735,14 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_CommitHTTPUpload_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_CommitHTTPUpload_Response {
     // message fields
     file_committed: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1873,12 +1894,15 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_CommitHTTPUpload_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_GetFileDetails_Request {
     // message fields
     ugcid: ::std::option::Option<u64>,
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2068,6 +2092,7 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_GetFileDetails_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_UserFile {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -2081,7 +2106,9 @@ pub struct CCloud_UserFile {
     pub platforms_to_sync: ::protobuf::RepeatedField<::std::string::String>,
     file_sha: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2616,11 +2643,14 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_UserFile {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_GetFileDetails_Response {
     // message fields
     pub details: ::protobuf::SingularPtrField<CCloud_UserFile>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2790,6 +2820,7 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_GetFileDetails_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_EnumerateUserFiles_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -2797,7 +2828,9 @@ pub struct CCloud_EnumerateUserFiles_Request {
     count: ::std::option::Option<u32>,
     start_index: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3063,12 +3096,15 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_EnumerateUserFiles_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_EnumerateUserFiles_Response {
     // message fields
     pub files: ::protobuf::RepeatedField<CCloud_UserFile>,
     total_files: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3268,12 +3304,15 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_EnumerateUserFiles_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_Delete_Request {
     // message fields
     filename: ::protobuf::SingularField<::std::string::String>,
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3476,9 +3515,12 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_Delete_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_Delete_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3592,9 +3634,12 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_Delete_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_GetClientEncryptionKey_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3708,12 +3753,15 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_GetClientEncryptionKey_Reques
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_GetClientEncryptionKey_Response {
     // message fields
     key: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     crc: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3916,6 +3964,7 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_GetClientEncryptionKey_Respon
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_CDNReport_Notification {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -3926,7 +3975,9 @@ pub struct CCloud_CDNReport_Notification {
     received_bytes: ::std::option::Option<u64>,
     duration: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4319,6 +4370,7 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_CDNReport_Notification {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_ExternalStorageTransferReport_Notification {
     // message fields
     host: ::protobuf::SingularField<::std::string::String>,
@@ -4334,7 +4386,9 @@ pub struct CCloud_ExternalStorageTransferReport_Notification {
     ipv6_local: ::std::option::Option<bool>,
     ipv6_remote: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4930,6 +4984,7 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_ExternalStorageTransferReport
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_ClientBeginFileUpload_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -4944,7 +4999,9 @@ pub struct CCloud_ClientBeginFileUpload_Request {
     is_shared_file: ::std::option::Option<bool>,
     realm: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5502,6 +5559,7 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_ClientBeginFileUpload_Request
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct ClientCloudFileUploadBlockDetails {
     // message fields
     url_host: ::protobuf::SingularField<::std::string::String>,
@@ -5514,7 +5572,9 @@ pub struct ClientCloudFileUploadBlockDetails {
     explicit_body_data: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     may_parallelize: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6019,12 +6079,15 @@ impl ::protobuf::reflect::ProtobufValue for ClientCloudFileUploadBlockDetails {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct ClientCloudFileUploadBlockDetails_HTTPHeaders {
     // message fields
     name: ::protobuf::SingularField<::std::string::String>,
     value: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6240,12 +6303,15 @@ impl ::protobuf::reflect::ProtobufValue for ClientCloudFileUploadBlockDetails_HT
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_ClientBeginFileUpload_Response {
     // message fields
     encrypt_file: ::std::option::Option<bool>,
     pub block_requests: ::protobuf::RepeatedField<ClientCloudFileUploadBlockDetails>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6445,6 +6511,7 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_ClientBeginFileUpload_Respons
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_ClientCommitFileUpload_Request {
     // message fields
     transfer_succeeded: ::std::option::Option<bool>,
@@ -6452,7 +6519,9 @@ pub struct CCloud_ClientCommitFileUpload_Request {
     file_sha: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     filename: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6744,11 +6813,14 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_ClientCommitFileUpload_Reques
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_ClientCommitFileUpload_Response {
     // message fields
     file_committed: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -6900,13 +6972,16 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_ClientCommitFileUpload_Respon
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_ClientFileDownload_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     filename: ::protobuf::SingularField<::std::string::String>,
     realm: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7147,6 +7222,7 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_ClientFileDownload_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_ClientFileDownload_Response {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -7161,7 +7237,9 @@ pub struct CCloud_ClientFileDownload_Response {
     pub request_headers: ::protobuf::RepeatedField<CCloud_ClientFileDownload_Response_HTTPHeaders>,
     encrypted: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7742,12 +7820,15 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_ClientFileDownload_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_ClientFileDownload_Response_HTTPHeaders {
     // message fields
     name: ::protobuf::SingularField<::std::string::String>,
     value: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -7963,13 +8044,16 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_ClientFileDownload_Response_H
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_ClientDeleteFile_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     filename: ::protobuf::SingularField<::std::string::String>,
     is_explicit_delete: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8210,9 +8294,12 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_ClientDeleteFile_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_ClientDeleteFile_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8326,12 +8413,15 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_ClientDeleteFile_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_ClientConflictResolution_Notification {
     // message fields
     appid: ::std::option::Option<u32>,
     chose_local_files: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8521,9 +8611,12 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_ClientConflictResolution_Noti
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_EnumerateUserApps_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8637,11 +8730,14 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_EnumerateUserApps_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_EnumerateUserApps_Response {
     // message fields
     pub apps: ::protobuf::RepeatedField<CCloud_EnumerateUserApps_Response_Apps>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -8803,13 +8899,16 @@ impl ::protobuf::reflect::ProtobufValue for CCloud_EnumerateUserApps_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCloud_EnumerateUserApps_Response_Apps {
     // message fields
     appid: ::std::option::Option<u32>,
     totalcount: ::std::option::Option<i32>,
     totalsize: ::std::option::Option<i64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

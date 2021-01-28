@@ -24,11 +24,14 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CEconMarket_IsMarketplaceAllowed_Request {
     // message fields
     webcookie: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -193,6 +196,7 @@ impl ::protobuf::reflect::ProtobufValue for CEconMarket_IsMarketplaceAllowed_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CEconMarket_IsMarketplaceAllowed_Response {
     // message fields
     allowed: ::std::option::Option<bool>,
@@ -203,7 +207,9 @@ pub struct CEconMarket_IsMarketplaceAllowed_Response {
     forms_require_verification: ::std::option::Option<bool>,
     new_device_cooldown_days: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

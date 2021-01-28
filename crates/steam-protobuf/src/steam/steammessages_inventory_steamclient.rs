@@ -24,12 +24,15 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_GetInventory_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -219,6 +222,7 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_GetInventory_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_Response {
     // message fields
     etag: ::protobuf::SingularField<::std::string::String>,
@@ -228,7 +232,9 @@ pub struct CInventory_Response {
     ticket: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     replayed: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -624,6 +630,7 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_ExchangeItem_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -632,7 +639,9 @@ pub struct CInventory_ExchangeItem_Request {
     pub materialsquantity: ::std::vec::Vec<u32>,
     outputitemdefid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -940,12 +949,15 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_ExchangeItem_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_GetEligiblePromoItemDefIDs_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1135,11 +1147,14 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_GetEligiblePromoItemDefID
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_GetEligiblePromoItemDefIDs_Response {
     // message fields
     pub itemdefids: ::std::vec::Vec<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1293,6 +1308,7 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_GetEligiblePromoItemDefID
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_AddItem_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -1304,7 +1320,9 @@ pub struct CInventory_AddItem_Request {
     trade_restriction: ::std::option::Option<bool>,
     is_purchase: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1726,6 +1744,7 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_AddItem_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_ModifyItems_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -1733,7 +1752,9 @@ pub struct CInventory_ModifyItems_Request {
     pub updates: ::protobuf::RepeatedField<CInventory_ModifyItems_Request_ItemPropertyUpdate>,
     timestamp: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2009,6 +2030,7 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_ModifyItems_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_ModifyItems_Request_ItemPropertyUpdate {
     // message fields
     itemid: ::std::option::Option<u64>,
@@ -2019,7 +2041,9 @@ pub struct CInventory_ModifyItems_Request_ItemPropertyUpdate {
     property_value_string: ::protobuf::SingularField<::std::string::String>,
     property_value_float: ::std::option::Option<f32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2425,12 +2449,15 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_ModifyItems_Request_ItemP
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_ConsumePlaytime_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     itemdefid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2620,6 +2647,7 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_ConsumePlaytime_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_ConsumeItem_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -2629,7 +2657,9 @@ pub struct CInventory_ConsumeItem_Request {
     steamid: ::std::option::Option<u64>,
     requestid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2984,13 +3014,16 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_ConsumeItem_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_DevSetNextDrop_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     itemdefid: ::std::option::Option<u64>,
     droptime: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3231,6 +3264,7 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_DevSetNextDrop_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_SplitItemStack_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -3238,7 +3272,9 @@ pub struct CInventory_SplitItemStack_Request {
     quantity: ::std::option::Option<u32>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3504,6 +3540,7 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_SplitItemStack_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_CombineItemStacks_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -3512,7 +3549,9 @@ pub struct CInventory_CombineItemStacks_Request {
     quantity: ::std::option::Option<u32>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3816,11 +3855,14 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_CombineItemStacks_Request
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_GetItemDefMeta_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3972,12 +4014,15 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_GetItemDefMeta_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_GetItemDefMeta_Response {
     // message fields
     modified: ::std::option::Option<u32>,
     digest: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4180,9 +4225,12 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_GetItemDefMeta_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_GetUserPurchaseInfo_Request {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4296,11 +4344,14 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_GetUserPurchaseInfo_Reque
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_GetUserPurchaseInfo_Response {
     // message fields
     ecurrency: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4452,13 +4503,16 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_GetUserPurchaseInfo_Respo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_PurchaseInit_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     language: ::std::option::Option<i32>,
     pub line_items: ::protobuf::RepeatedField<CInventory_PurchaseInit_Request_LineItem>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4696,12 +4750,15 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_PurchaseInit_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_PurchaseInit_Request_LineItem {
     // message fields
     itemdefid: ::std::option::Option<u64>,
     quantity: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4891,12 +4948,15 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_PurchaseInit_Request_Line
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_PurchaseInit_Response {
     // message fields
     orderid: ::std::option::Option<u64>,
     transid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5086,13 +5146,16 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_PurchaseInit_Response {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_PurchaseFinalize_Request {
     // message fields
     appid: ::std::option::Option<u32>,
     language: ::std::option::Option<i32>,
     orderid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5320,13 +5383,16 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_PurchaseFinalize_Request 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventory_InspectItem_Request {
     // message fields
     itemdefid: ::std::option::Option<u64>,
     itemid: ::std::option::Option<u64>,
     tags: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5567,12 +5633,15 @@ impl ::protobuf::reflect::ProtobufValue for CInventory_InspectItem_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CInventoryClient_NewItems_Notification {
     // message fields
     appid: ::std::option::Option<u32>,
     pub inventory_response: ::protobuf::SingularPtrField<CInventory_Response>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

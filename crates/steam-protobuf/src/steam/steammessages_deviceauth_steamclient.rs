@@ -24,12 +24,15 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_GetOwnAuthorizedDevices_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     include_canceled: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -219,11 +222,14 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_GetOwnAuthorizedDevices_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_GetOwnAuthorizedDevices_Response {
     // message fields
     pub devices: ::protobuf::RepeatedField<CDeviceAuth_GetOwnAuthorizedDevices_Response_Device>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -385,6 +391,7 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_GetOwnAuthorizedDevices_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_GetOwnAuthorizedDevices_Response_Device {
     // message fields
     auth_device_token: ::std::option::Option<u64>,
@@ -396,7 +403,9 @@ pub struct CDeviceAuth_GetOwnAuthorizedDevices_Response_Device {
     last_app_played: ::std::option::Option<u32>,
     is_limited: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -827,6 +836,7 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_GetOwnAuthorizedDevices_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_AcceptAuthorizationRequest_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -834,7 +844,9 @@ pub struct CDeviceAuth_AcceptAuthorizationRequest_Request {
     auth_code: ::std::option::Option<u64>,
     from_steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1100,9 +1112,12 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_AcceptAuthorizationReque
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_AcceptAuthorizationRequest_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1216,12 +1231,15 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_AcceptAuthorizationReque
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_AuthorizeRemoteDevice_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     auth_device_token: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1411,9 +1429,12 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_AuthorizeRemoteDevice_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_AuthorizeRemoteDevice_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1527,12 +1548,15 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_AuthorizeRemoteDevice_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_DeauthorizeRemoteDevice_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     auth_device_token: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1722,9 +1746,12 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_DeauthorizeRemoteDevice_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_DeauthorizeRemoteDevice_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1838,11 +1865,14 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_DeauthorizeRemoteDevice_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_GetUsedAuthorizedDevices_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1994,11 +2024,14 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_GetUsedAuthorizedDevices
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_GetUsedAuthorizedDevices_Response {
     // message fields
     pub devices: ::protobuf::RepeatedField<CDeviceAuth_GetUsedAuthorizedDevices_Response_Device>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2160,6 +2193,7 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_GetUsedAuthorizedDevices
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_GetUsedAuthorizedDevices_Response_Device {
     // message fields
     auth_device_token: ::std::option::Option<u64>,
@@ -2168,7 +2202,9 @@ pub struct CDeviceAuth_GetUsedAuthorizedDevices_Response_Device {
     last_time_used: ::std::option::Option<u32>,
     last_app_played: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2485,13 +2521,16 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_GetUsedAuthorizedDevices
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_GetAuthorizedBorrowers_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     include_canceled: ::std::option::Option<bool>,
     include_pending: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2719,11 +2758,14 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_GetAuthorizedBorrowers_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_GetAuthorizedBorrowers_Response {
     // message fields
     pub borrowers: ::protobuf::RepeatedField<CDeviceAuth_GetAuthorizedBorrowers_Response_Borrower>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2885,6 +2927,7 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_GetAuthorizedBorrowers_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_GetAuthorizedBorrowers_Response_Borrower {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -2892,7 +2935,9 @@ pub struct CDeviceAuth_GetAuthorizedBorrowers_Response_Borrower {
     is_canceled: ::std::option::Option<bool>,
     time_created: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3158,12 +3203,15 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_GetAuthorizedBorrowers_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_AddAuthorizedBorrowers_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     pub steamid_borrower: ::std::vec::Vec<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3353,11 +3401,14 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_AddAuthorizedBorrowers_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_AddAuthorizedBorrowers_Response {
     // message fields
     seconds_to_wait: ::std::option::Option<i32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3509,12 +3560,15 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_AddAuthorizedBorrowers_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_RemoveAuthorizedBorrowers_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     pub steamid_borrower: ::std::vec::Vec<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3704,9 +3758,12 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_RemoveAuthorizedBorrower
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_RemoveAuthorizedBorrowers_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3820,13 +3877,16 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_RemoveAuthorizedBorrower
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_GetAuthorizedAsBorrower_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     include_canceled: ::std::option::Option<bool>,
     include_pending: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4054,11 +4114,14 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_GetAuthorizedAsBorrower_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_GetAuthorizedAsBorrower_Response {
     // message fields
     pub lenders: ::protobuf::RepeatedField<CDeviceAuth_GetAuthorizedAsBorrower_Response_Lender>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4220,6 +4283,7 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_GetAuthorizedAsBorrower_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_GetAuthorizedAsBorrower_Response_Lender {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -4228,7 +4292,9 @@ pub struct CDeviceAuth_GetAuthorizedAsBorrower_Response_Lender {
     is_canceled: ::std::option::Option<bool>,
     is_used: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4532,11 +4598,14 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_GetAuthorizedAsBorrower_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_GetExcludedGamesInLibrary_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4688,11 +4757,14 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_GetExcludedGamesInLibrar
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_GetExcludedGamesInLibrary_Response {
     // message fields
     pub excluded_games: ::protobuf::RepeatedField<CDeviceAuth_GetExcludedGamesInLibrary_Response_ExcludedGame>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4854,6 +4926,7 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_GetExcludedGamesInLibrar
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_GetExcludedGamesInLibrary_Response_ExcludedGame {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -4861,7 +4934,9 @@ pub struct CDeviceAuth_GetExcludedGamesInLibrary_Response_ExcludedGame {
     vac_banned: ::std::option::Option<bool>,
     package_excluded: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5140,11 +5215,14 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_GetExcludedGamesInLibrar
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_GetBorrowerPlayHistory_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5296,11 +5374,14 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_GetBorrowerPlayHistory_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_GetBorrowerPlayHistory_Response {
     // message fields
     pub lender_history: ::protobuf::RepeatedField<CDeviceAuth_GetBorrowerPlayHistory_Response_LenderHistory>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5462,13 +5543,16 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_GetBorrowerPlayHistory_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_GetBorrowerPlayHistory_Response_GameHistory {
     // message fields
     appid: ::std::option::Option<u32>,
     time_last: ::std::option::Option<u32>,
     time_total: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -5696,12 +5780,15 @@ impl ::protobuf::reflect::ProtobufValue for CDeviceAuth_GetBorrowerPlayHistory_R
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CDeviceAuth_GetBorrowerPlayHistory_Response_LenderHistory {
     // message fields
     steamid: ::std::option::Option<u64>,
     pub game_history: ::protobuf::RepeatedField<CDeviceAuth_GetBorrowerPlayHistory_Response_GameHistory>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamNetworkingIdentityLegacyBinary {
     // message fields
     steam_id: ::std::option::Option<u64>,
@@ -32,7 +33,9 @@ pub struct CMsgSteamNetworkingIdentityLegacyBinary {
     generic_string: ::protobuf::SingularField<::std::string::String>,
     ipv6_and_port: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -388,6 +391,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamNetworkingIdentityLegacyBin
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramCertificate {
     // message fields
     key_type: ::std::option::Option<CMsgSteamDatagramCertificate_EKeyType>,
@@ -400,7 +404,9 @@ pub struct CMsgSteamDatagramCertificate {
     time_expiry: ::std::option::Option<u32>,
     pub app_ids: ::std::vec::Vec<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -898,6 +904,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramCertificate {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CMsgSteamDatagramCertificate_EKeyType {
     INVALID = 0,
     ED25519 = 1,
@@ -948,6 +955,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramCertificate_EKeyTyp
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramCertificateSigned {
     // message fields
     cert: ::protobuf::SingularField<::std::vec::Vec<u8>>,
@@ -955,7 +963,9 @@ pub struct CMsgSteamDatagramCertificateSigned {
     ca_signature: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     private_key_data: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1260,11 +1270,14 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamDatagramCertificateSigned {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamDatagramCertificateRequest {
     // message fields
     pub cert: ::protobuf::SingularPtrField<CMsgSteamDatagramCertificate>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

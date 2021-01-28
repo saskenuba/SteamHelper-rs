@@ -24,12 +24,15 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameNotifications_Variable {
     // message fields
     key: ::protobuf::SingularField<::std::string::String>,
     value: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -245,13 +248,16 @@ impl ::protobuf::reflect::ProtobufValue for CGameNotifications_Variable {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameNotifications_LocalizedText {
     // message fields
     token: ::protobuf::SingularField<::std::string::String>,
     pub variables: ::protobuf::RepeatedField<CGameNotifications_Variable>,
     rendered_text: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -515,6 +521,7 @@ impl ::protobuf::reflect::ProtobufValue for CGameNotifications_LocalizedText {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameNotifications_UserStatus {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -522,7 +529,9 @@ pub struct CGameNotifications_UserStatus {
     pub title: ::protobuf::SingularPtrField<CGameNotifications_LocalizedText>,
     pub message: ::protobuf::SingularPtrField<CGameNotifications_LocalizedText>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -837,6 +846,7 @@ impl ::protobuf::reflect::ProtobufValue for CGameNotifications_UserStatus {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameNotifications_CreateSession_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -845,7 +855,9 @@ pub struct CGameNotifications_CreateSession_Request {
     pub users: ::protobuf::RepeatedField<CGameNotifications_UserStatus>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1177,11 +1189,14 @@ impl ::protobuf::reflect::ProtobufValue for CGameNotifications_CreateSession_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameNotifications_CreateSession_Response {
     // message fields
     sessionid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1333,13 +1348,16 @@ impl ::protobuf::reflect::ProtobufValue for CGameNotifications_CreateSession_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameNotifications_DeleteSession_Request {
     // message fields
     sessionid: ::std::option::Option<u64>,
     appid: ::std::option::Option<u32>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1567,9 +1585,12 @@ impl ::protobuf::reflect::ProtobufValue for CGameNotifications_DeleteSession_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameNotifications_DeleteSession_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1683,6 +1704,7 @@ impl ::protobuf::reflect::ProtobufValue for CGameNotifications_DeleteSession_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameNotifications_UpdateSession_Request {
     // message fields
     sessionid: ::std::option::Option<u64>,
@@ -1691,7 +1713,9 @@ pub struct CGameNotifications_UpdateSession_Request {
     pub users: ::protobuf::RepeatedField<CGameNotifications_UserStatus>,
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2023,9 +2047,12 @@ impl ::protobuf::reflect::ProtobufValue for CGameNotifications_UpdateSession_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameNotifications_UpdateSession_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2139,6 +2166,7 @@ impl ::protobuf::reflect::ProtobufValue for CGameNotifications_UpdateSession_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameNotifications_EnumerateSessions_Request {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -2146,7 +2174,9 @@ pub struct CGameNotifications_EnumerateSessions_Request {
     include_auth_user_message: ::std::option::Option<bool>,
     language: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2425,6 +2455,7 @@ impl ::protobuf::reflect::ProtobufValue for CGameNotifications_EnumerateSessions
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameNotifications_Session {
     // message fields
     sessionid: ::std::option::Option<u64>,
@@ -2435,7 +2466,9 @@ pub struct CGameNotifications_Session {
     time_updated: ::std::option::Option<u32>,
     pub user_status: ::protobuf::RepeatedField<CGameNotifications_UserStatus>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2843,11 +2876,14 @@ impl ::protobuf::reflect::ProtobufValue for CGameNotifications_Session {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameNotifications_EnumerateSessions_Response {
     // message fields
     pub sessions: ::protobuf::RepeatedField<CGameNotifications_Session>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3009,13 +3045,16 @@ impl ::protobuf::reflect::ProtobufValue for CGameNotifications_EnumerateSessions
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameNotifications_GetSessionDetails_Request {
     // message fields
     pub sessions: ::protobuf::RepeatedField<CGameNotifications_GetSessionDetails_Request_RequestedSession>,
     appid: ::std::option::Option<u32>,
     language: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3266,12 +3305,15 @@ impl ::protobuf::reflect::ProtobufValue for CGameNotifications_GetSessionDetails
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameNotifications_GetSessionDetails_Request_RequestedSession {
     // message fields
     sessionid: ::std::option::Option<u64>,
     include_auth_user_message: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3461,11 +3503,14 @@ impl ::protobuf::reflect::ProtobufValue for CGameNotifications_GetSessionDetails
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameNotifications_GetSessionDetails_Response {
     // message fields
     pub sessions: ::protobuf::RepeatedField<CGameNotifications_Session>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3627,12 +3672,15 @@ impl ::protobuf::reflect::ProtobufValue for CGameNotifications_GetSessionDetails
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct GameNotificationSettings {
     // message fields
     appid: ::std::option::Option<u32>,
     allow_notifications: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3822,11 +3870,14 @@ impl ::protobuf::reflect::ProtobufValue for GameNotificationSettings {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameNotifications_UpdateNotificationSettings_Request {
     // message fields
     pub game_notification_settings: ::protobuf::RepeatedField<GameNotificationSettings>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3988,9 +4039,12 @@ impl ::protobuf::reflect::ProtobufValue for CGameNotifications_UpdateNotificatio
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameNotifications_UpdateNotificationSettings_Response {
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4104,12 +4158,15 @@ impl ::protobuf::reflect::ProtobufValue for CGameNotifications_UpdateNotificatio
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameNotifications_OnNotificationsRequested_Notification {
     // message fields
     steamid: ::std::option::Option<u64>,
     appid: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -4299,6 +4356,7 @@ impl ::protobuf::reflect::ProtobufValue for CGameNotifications_OnNotificationsRe
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CGameNotifications_OnUserStatusChanged_Notification {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -4307,7 +4365,9 @@ pub struct CGameNotifications_OnUserStatusChanged_Notification {
     pub status: ::protobuf::SingularPtrField<CGameNotifications_UserStatus>,
     removed: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

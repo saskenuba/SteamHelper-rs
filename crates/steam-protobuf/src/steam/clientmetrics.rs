@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClientMetrics_ClientBootstrap_RequestInfo {
     // message fields
     original_hostname: ::protobuf::SingularField<::std::string::String>,
@@ -37,7 +38,9 @@ pub struct CClientMetrics_ClientBootstrap_RequestInfo {
     bytes_received: ::std::option::Option<u64>,
     num_retries: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -596,6 +599,7 @@ impl ::protobuf::reflect::ProtobufValue for CClientMetrics_ClientBootstrap_Reque
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClientMetrics_ClientBootstrap_Summary {
     // message fields
     launcher_type: ::std::option::Option<u32>,
@@ -606,7 +610,9 @@ pub struct CClientMetrics_ClientBootstrap_Summary {
     pub manifest_requests: ::protobuf::RepeatedField<CClientMetrics_ClientBootstrap_RequestInfo>,
     pub package_requests: ::protobuf::RepeatedField<CClientMetrics_ClientBootstrap_RequestInfo>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

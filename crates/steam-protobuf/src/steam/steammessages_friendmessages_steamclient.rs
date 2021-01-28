@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CFriendMessages_GetRecentMessages_Request {
     // message fields
     steamid1: ::std::option::Option<u64>,
@@ -36,7 +37,9 @@ pub struct CFriendMessages_GetRecentMessages_Request {
     time_last: ::std::option::Option<u32>,
     ordinal_last: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -492,12 +495,15 @@ impl ::protobuf::reflect::ProtobufValue for CFriendMessages_GetRecentMessages_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CFriendMessages_GetRecentMessages_Response {
     // message fields
     pub messages: ::protobuf::RepeatedField<CFriendMessages_GetRecentMessages_Response_FriendMessage>,
     more_available: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -697,6 +703,7 @@ impl ::protobuf::reflect::ProtobufValue for CFriendMessages_GetRecentMessages_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CFriendMessages_GetRecentMessages_Response_FriendMessage {
     // message fields
     accountid: ::std::option::Option<u32>,
@@ -704,7 +711,9 @@ pub struct CFriendMessages_GetRecentMessages_Response_FriendMessage {
     message: ::protobuf::SingularField<::std::string::String>,
     ordinal: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -983,12 +992,15 @@ impl ::protobuf::reflect::ProtobufValue for CFriendMessages_GetRecentMessages_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CFriendsMessages_GetActiveMessageSessions_Request {
     // message fields
     lastmessage_since: ::std::option::Option<u32>,
     only_sessions_with_messages: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1178,12 +1190,15 @@ impl ::protobuf::reflect::ProtobufValue for CFriendsMessages_GetActiveMessageSes
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CFriendsMessages_GetActiveMessageSessions_Response {
     // message fields
     pub message_sessions: ::protobuf::RepeatedField<CFriendsMessages_GetActiveMessageSessions_Response_FriendMessageSession>,
     timestamp: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1383,6 +1398,7 @@ impl ::protobuf::reflect::ProtobufValue for CFriendsMessages_GetActiveMessageSes
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CFriendsMessages_GetActiveMessageSessions_Response_FriendMessageSession {
     // message fields
     accountid_friend: ::std::option::Option<u32>,
@@ -1390,7 +1406,9 @@ pub struct CFriendsMessages_GetActiveMessageSessions_Response_FriendMessageSessi
     last_view: ::std::option::Option<u32>,
     unread_message_count: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1656,6 +1674,7 @@ impl ::protobuf::reflect::ProtobufValue for CFriendsMessages_GetActiveMessageSes
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CFriendMessages_SendMessage_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -1666,7 +1685,9 @@ pub struct CFriendMessages_SendMessage_Request {
     low_priority: ::std::option::Option<bool>,
     client_message_id: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2072,6 +2093,7 @@ impl ::protobuf::reflect::ProtobufValue for CFriendMessages_SendMessage_Request 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CFriendMessages_SendMessage_Response {
     // message fields
     modified_message: ::protobuf::SingularField<::std::string::String>,
@@ -2079,7 +2101,9 @@ pub struct CFriendMessages_SendMessage_Response {
     ordinal: ::std::option::Option<u32>,
     message_without_bb_code: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2371,12 +2395,15 @@ impl ::protobuf::reflect::ProtobufValue for CFriendMessages_SendMessage_Response
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CFriendMessages_AckMessage_Notification {
     // message fields
     steamid_partner: ::std::option::Option<u64>,
     timestamp: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2566,11 +2593,14 @@ impl ::protobuf::reflect::ProtobufValue for CFriendMessages_AckMessage_Notificat
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CFriendMessages_IsInFriendsUIBeta_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2722,12 +2752,15 @@ impl ::protobuf::reflect::ProtobufValue for CFriendMessages_IsInFriendsUIBeta_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CFriendMessages_IsInFriendsUIBeta_Response {
     // message fields
     online_in_friendsui: ::std::option::Option<bool>,
     has_used_friendsui: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2917,6 +2950,7 @@ impl ::protobuf::reflect::ProtobufValue for CFriendMessages_IsInFriendsUIBeta_Re
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CFriendMessages_IncomingMessage_Notification {
     // message fields
     steamid_friend: ::std::option::Option<u64>,
@@ -2929,7 +2963,9 @@ pub struct CFriendMessages_IncomingMessage_Notification {
     message_no_bbcode: ::protobuf::SingularField<::std::string::String>,
     low_priority: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

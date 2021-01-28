@@ -24,6 +24,7 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CFileVerification_SignatureCheck_Request {
     // message fields
     steamid: ::std::option::Option<u64>,
@@ -36,7 +37,9 @@ pub struct CFileVerification_SignatureCheck_Request {
     client_package_version: ::std::option::Option<u32>,
     sha1hash: ::protobuf::SingularField<::std::vec::Vec<u8>>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -518,11 +521,14 @@ impl ::protobuf::reflect::ProtobufValue for CFileVerification_SignatureCheck_Req
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CFileVerification_SignatureCheck_Response {
     // message fields
     deny_operation: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -674,6 +680,7 @@ impl ::protobuf::reflect::ProtobufValue for CFileVerification_SignatureCheck_Res
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CFileVerification_SteamServiceCheck_Request {
     // message fields
     service_status: ::std::option::Option<u32>,
@@ -682,7 +689,9 @@ pub struct CFileVerification_SteamServiceCheck_Request {
     os_type: ::std::option::Option<u32>,
     service_repair: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -986,11 +995,14 @@ impl ::protobuf::reflect::ProtobufValue for CFileVerification_SteamServiceCheck_
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CFileVerification_SteamServiceCheck_Response {
     // message fields
     attempt_repair: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 

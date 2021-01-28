@@ -24,13 +24,16 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamSockets_UDP_ChallengeRequest {
     // message fields
     connection_id: ::std::option::Option<u32>,
     my_timestamp: ::std::option::Option<u64>,
     protocol_version: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -258,6 +261,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamSockets_UDP_ChallengeReques
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamSockets_UDP_ChallengeReply {
     // message fields
     connection_id: ::std::option::Option<u32>,
@@ -265,7 +269,9 @@ pub struct CMsgSteamSockets_UDP_ChallengeReply {
     your_timestamp: ::std::option::Option<u64>,
     protocol_version: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -531,6 +537,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamSockets_UDP_ChallengeReply 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamSockets_UDP_ConnectRequest {
     // message fields
     client_connection_id: ::std::option::Option<u32>,
@@ -544,7 +551,9 @@ pub struct CMsgSteamSockets_UDP_ConnectRequest {
     legacy_client_steam_id: ::std::option::Option<u64>,
     pub legacy_identity_binary: ::protobuf::SingularPtrField<super::steamnetworkingsockets_messages_certs::CMsgSteamNetworkingIdentityLegacyBinary>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1105,6 +1114,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamSockets_UDP_ConnectRequest 
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamSockets_UDP_ConnectOK {
     // message fields
     client_connection_id: ::std::option::Option<u32>,
@@ -1117,7 +1127,9 @@ pub struct CMsgSteamSockets_UDP_ConnectOK {
     legacy_server_steam_id: ::std::option::Option<u64>,
     pub legacy_identity_binary: ::protobuf::SingularPtrField<super::steamnetworkingsockets_messages_certs::CMsgSteamNetworkingIdentityLegacyBinary>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1640,6 +1652,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamSockets_UDP_ConnectOK {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamSockets_UDP_ConnectionClosed {
     // message fields
     to_connection_id: ::std::option::Option<u32>,
@@ -1647,7 +1660,9 @@ pub struct CMsgSteamSockets_UDP_ConnectionClosed {
     debug: ::protobuf::SingularField<::std::string::String>,
     reason_code: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1926,12 +1941,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamSockets_UDP_ConnectionClose
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamSockets_UDP_NoConnection {
     // message fields
     from_connection_id: ::std::option::Option<u32>,
     to_connection_id: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2121,12 +2139,15 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamSockets_UDP_NoConnection {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgSteamSockets_UDP_Stats {
     // message fields
     pub stats: ::protobuf::SingularPtrField<super::steamnetworkingsockets_messages::CMsgSteamDatagramConnectionQuality>,
     flags: ::std::option::Option<u32>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -2334,6 +2355,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamSockets_UDP_Stats {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CMsgSteamSockets_UDP_Stats_Flags {
     ACK_REQUEST_E2E = 2,
     ACK_REQUEST_IMMEDIATE = 4,
@@ -2388,6 +2410,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgSteamSockets_UDP_Stats_Flags {
 }
 
 #[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum ESteamNetworkingUDPMsgID {
     k_ESteamNetworkingUDPMsg_ChallengeRequest = 32,
     k_ESteamNetworkingUDPMsg_ChallengeReply = 33,

@@ -24,11 +24,14 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CEcon_GetTradeOfferAccessToken_Request {
     // message fields
     generate_new_token: ::std::option::Option<bool>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -180,11 +183,14 @@ impl ::protobuf::reflect::ProtobufValue for CEcon_GetTradeOfferAccessToken_Reque
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CEcon_GetTradeOfferAccessToken_Response {
     // message fields
     trade_offer_access_token: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -349,11 +355,14 @@ impl ::protobuf::reflect::ProtobufValue for CEcon_GetTradeOfferAccessToken_Respo
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CEcon_ClientGetItemShopOverlayAuthURL_Request {
     // message fields
     return_url: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -518,11 +527,14 @@ impl ::protobuf::reflect::ProtobufValue for CEcon_ClientGetItemShopOverlayAuthUR
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CEcon_ClientGetItemShopOverlayAuthURL_Response {
     // message fields
     url: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -687,13 +699,16 @@ impl ::protobuf::reflect::ProtobufValue for CEcon_ClientGetItemShopOverlayAuthUR
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CEcon_GetAssetClassInfo_Request {
     // message fields
     language: ::protobuf::SingularField<::std::string::String>,
     appid: ::std::option::Option<u32>,
     pub classes: ::protobuf::RepeatedField<CEcon_GetAssetClassInfo_Request_Class>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -944,12 +959,15 @@ impl ::protobuf::reflect::ProtobufValue for CEcon_GetAssetClassInfo_Request {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CEcon_GetAssetClassInfo_Request_Class {
     // message fields
     classid: ::std::option::Option<u64>,
     instanceid: ::std::option::Option<u64>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1139,6 +1157,7 @@ impl ::protobuf::reflect::ProtobufValue for CEcon_GetAssetClassInfo_Request_Clas
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CEconItem_DescriptionLine {
     // message fields
     field_type: ::protobuf::SingularField<::std::string::String>,
@@ -1146,7 +1165,9 @@ pub struct CEconItem_DescriptionLine {
     color: ::protobuf::SingularField<::std::string::String>,
     label: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1464,12 +1485,15 @@ impl ::protobuf::reflect::ProtobufValue for CEconItem_DescriptionLine {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CEconItem_Action {
     // message fields
     link: ::protobuf::SingularField<::std::string::String>,
     name: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -1685,6 +1709,7 @@ impl ::protobuf::reflect::ProtobufValue for CEconItem_Action {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CEconItem_Description {
     // message fields
     appid: ::std::option::Option<i32>,
@@ -1718,7 +1743,9 @@ pub struct CEconItem_Description {
     market_buy_country_restriction: ::protobuf::SingularField<::std::string::String>,
     market_sell_country_restriction: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3208,6 +3235,7 @@ impl ::protobuf::reflect::ProtobufValue for CEconItem_Description {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CEconItem_Tag {
     // message fields
     appid: ::std::option::Option<u32>,
@@ -3217,7 +3245,9 @@ pub struct CEconItem_Tag {
     localized_tag_name: ::protobuf::SingularField<::std::string::String>,
     color: ::protobuf::SingularField<::std::string::String>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
@@ -3624,11 +3654,14 @@ impl ::protobuf::reflect::ProtobufValue for CEconItem_Tag {
 }
 
 #[derive(PartialEq,Clone,Default)]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CEcon_GetAssetClassInfo_Response {
     // message fields
     pub descriptions: ::protobuf::RepeatedField<CEconItem_Description>,
     // special fields
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub unknown_fields: ::protobuf::UnknownFields,
+    #[cfg_attr(feature = "with-serde", serde(skip))]
     pub cached_size: ::protobuf::CachedSize,
 }
 
