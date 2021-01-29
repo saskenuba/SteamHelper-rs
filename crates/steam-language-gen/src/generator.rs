@@ -58,11 +58,11 @@ fn generate_struct(graph: &Graph<Token, Element, Directed, u32>, current_node: N
         println!("{:?}", struct_name);
 
         file.push_str(&format!("#[linked_emsg({})]", struct_type));
-        file.push_str("#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize, SteamMsg)]\n");
+        file.push_str("#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize, SteamMsg)]\n");
+        file.push_str("#[repr(packed)]\n");
         file.push_str(&format!("pub struct {} {{\n", struct_name));
 
         let mut member_edges = graph.edges_directed(type_node, Direction::Outgoing);
-
 
         while let Some(member) = member_edges.next() {
             let member_node = member.target();
@@ -132,7 +132,7 @@ pub fn write_to_file(path: &str, buffer: &str) {
     fs::write(path, buffer).unwrap();
 }
 
-pub fn append_to_file(buffer: &str, path: &str) {
+ pub fn append_to_file(buffer: &str, path: &str) {
     let mut file = fs::OpenOptions::new().append(true).open(path).unwrap();
     file.write_all(buffer.as_bytes()).unwrap();
 }

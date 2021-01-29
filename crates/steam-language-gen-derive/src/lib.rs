@@ -27,8 +27,7 @@ fn impl_steammsg_macro(ast: &DeriveInput) -> TokenStream {
         }
         impl DeserializableBytes for #name {
             fn from_bytes(packet_data: &[u8]) -> Self {
-                let decoded: Self = bincode::deserialize(packet_data).unwrap();
-                decoded
+                bincode::deserialize(packet_data).unwrap()
             }
         }
         impl MessageBodyExt for #name {
