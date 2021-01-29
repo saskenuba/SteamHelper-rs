@@ -12,6 +12,7 @@ websockets = ["tokio-tungstenite"]
 
 [dependencies]
 
+anyhow = "^1.0"
 arrayref = "^0.3"
 async-trait = "^0.1"
 bincode = "^1"
@@ -33,6 +34,7 @@ thiserror = "^1.0"
 tokio = { version = "^1.1", features = ["net", "rt", "macros"] }
 tokio-util = "^0.6"
 tokio-tungstenite = { version = "^0.13", optional = true }
+tokio-compat-02 = "0.2.0"
 
 
 # Web API calls
@@ -52,6 +54,9 @@ path = "../steam-language-gen"
 
 [dependencies.steam-language-gen-derive]
 path = "../steam-language-gen-derive"
+
+[dependencies.steam-web-api]
+path = "../steam-web-api"
 
 [dependencies.steamid-parser]
 path = "../steamid-parser"

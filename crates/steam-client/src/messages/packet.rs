@@ -1,13 +1,16 @@
-use steam_language_gen::{DeserializableBytes, MessageHeader, MessageHeaderExt, MessageHeaderWrapper, SerializableBytes};
-use steam_language_gen::generated::enums::EMsg;
-use steam_language_gen::generated::headers::{ExtendedMessageHeader, StandardMessageHeader};
+use bytes::{Buf, BytesMut};
+use tokio_util::codec::{Decoder, Encoder};
+
 use steam_language_gen::{
+    generated::{
+        enums::EMsg,
+        headers::{ExtendedMessageHeader, StandardMessageHeader},
+    },
     DeserializableBytes, MessageHeader, MessageHeaderExt, MessageHeaderWrapper, SerializableBytes,
 };
-use steam_protobuf::steam::steammessages_base::CMsgProtoBufHeader;
-use steam_protobuf::Message;
+use steam_protobuf::{steam::steammessages_base::CMsgProtoBufHeader, Message};
 
-use crate::encrypted_connection::MessageKind;
+use crate::messages::MessageKind;
 
 /// Represents a simple unified interface into client messages received directly from the socket.
 /// This is contrasted with [IClientMsg] in that this interface is packet body agnostic
@@ -20,7 +23,6 @@ pub(crate) struct PacketMessage {
     header: MessageHeaderWrapper,
     data: Vec<u8>,
 }
-
 
 impl MessageKind for PacketMessage {
     /// Returns underlying message data.
@@ -60,7 +62,7 @@ impl PacketMessage {
         let emsg = EMsg::from_raw_message(raw_message_bytes).unwrap();
         let raw_data = EMsg::strip_message(raw_message_bytes);
 
-        let (extracted_header, body) = match emsg {
+        let (header, body) = match emsg {
             EMsg::ChannelEncryptRequest | EMsg::ChannelEncryptResponse | EMsg::ChannelEncryptResult => {
                 let (header, body) = StandardMessageHeader::split_from_bytes(raw_data);
                 let header = StandardMessageHeader::from_bytes(header);
@@ -68,41 +70,27 @@ impl PacketMessage {
                 println!("Header bytes: {:?} Body bytes: {:?}", header, body);
                 (MessageHeaderWrapper::Std(header), body)
             }
+            // We can only check with the raw bytes, with the EMsg still inside
+            _ if EMsg::is_protobuf(raw_message_bytes) => {
+                println!("Found a Protobuf Header.");
+                let (header, body) = CMsgProtoBufHeader::split_from_bytes(raw_data);
+                let header = CMsgProtoBufHeader::parse_from_bytes(header).unwrap();
+                (MessageHeaderWrapper::Proto(header), body)
+            }
             _ => {
-                if EMsg::is_protobuf(raw_data) {
-                    debug!("Found a Protobuf Header.");
-                    let (header, body) = CMsgProtoBufHeader::split_from_bytes(raw_data);
-                    let header = CMsgProtoBufHeader::parse_from_bytes(header).unwrap();
-                    (MessageHeaderWrapper::Proto(header), body)
-                } else {
-                    let (header, body) = ExtendedMessageHeader::split_from_bytes(raw_data);
-                    let header = ExtendedMessageHeader::from_bytes(header);
-                    debug!("Found a Extended Header.");
-                    (MessageHeaderWrapper::Ext(header), body)
-                }
+                let (header, body) = ExtendedMessageHeader::split_from_bytes(raw_data);
+                let header = ExtendedMessageHeader::from_bytes(header);
+                println!("Found a Extended Header.");
+                (MessageHeaderWrapper::Ext(header), body)
             }
         };
 
-        println!("Packet Message is: {:?}, {:?}, {:?}", &emsg, &extracted_header, body);
+        println!("Packet Message is: {:?}, {:?}, {:?}", &emsg, &header, body);
 
         PacketMessage {
             emsg,
-            header: extracted_header,
+            header,
             data: body.to_vec(),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use protobuf::Message;
-
-    use steam_protobuf::steam::steammessages_clientserver_login::CMsgClientHeartBeat;
-
-    #[test]
-    fn test_proto() {
-        let oi = CMsgClientHeartBeat::new();
-        let teste = oi.write_to_bytes().unwrap();
-        // println!("protobuf: {:#?}", teste);
     }
 }

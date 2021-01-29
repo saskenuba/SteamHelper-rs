@@ -1,26 +1,37 @@
-//! This API is not final
-
 #![allow(dead_code)]
-#![allow(non_upper_case_globals)]
-#![allow(unused_imports)]
-#![allow(unused_variables)]
+#![warn(missing_docs, missing_doc_code_examples)]
+#![deny(
+    missing_debug_implementations,
+    missing_copy_implementations,
+    trivial_casts,
+    trivial_numeric_casts,
+    unsafe_code,
+    unused_import_braces,
+    unused_qualifications
+)]
 
-#[macro_use]
-extern crate derive_new;
-#[macro_use]
-extern crate steam_language_gen_derive;
 #[macro_use]
 extern crate log;
 
+use std::sync::Arc;
 
-mod cmserver;
-mod encrypted_connection;
+use lazy_static::lazy_static;
+
+use steam_web_api::SteamAPI;
+
+pub mod client;
+mod content_manager;
 pub mod config;
 pub mod connection;
+pub mod errors;
 pub mod handlers;
 pub mod messages;
-pub mod steamclient;
-pub mod webapi;
+pub(crate) mod utils;
+
+lazy_static! {
+    /// Internal Steam web API client
+    pub(crate) static ref API_CLIENT: Arc<SteamAPI> = Arc::new(SteamAPI::new("1"));
+}
 
 struct SteamCMClient {
     /// steam_id of client
