@@ -32,8 +32,13 @@ mod symm;
 lazy_static_include_bytes!(STEAM_KEY, "assets/steam_public.pem");
 
 #[derive(Debug)]
+/// Used by SteamConnection to encrypt messages.
+///
+/// You should use the one from `encrypted` field.
 pub struct SessionKeys {
-    pub plain_text: Vec<u8>,
+    plain_text: Vec<u8>,
+    /// Generated encryption key after the initial handshake with Steam.
+    /// Used to encrypt every message until the end of the Session, where it is discarded.
     pub encrypted: Vec<u8>,
 }
 
@@ -48,10 +53,12 @@ pub fn verify_signature(data: &[u8], signature: &[u8]) -> Result<bool, ErrorStac
     verifier.verify(&signature)
 }
 
+/// Returns SessionsKeys struct.
+///
 /// Generates a 32 byte random blob of data and encrypts it with RSA 1024
 /// using the Steam's public key.
+///
 /// If there is a nonce, it gets concatenated after the generated 32 bytes
-/// Returns SessionsKeys struct.
 pub fn generate_session_key(nonce: Option<&[u8]>) -> Result<SessionKeys, ErrorStack> {
     let mut random_bytes_array = vec![0u8; 32];
     let mut encrypted_array = vec![0u8; 256];
