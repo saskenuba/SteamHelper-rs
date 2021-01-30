@@ -2,7 +2,6 @@ use std::io;
 
 use thiserror::Error;
 
-
 #[derive(Debug, Error)]
 pub enum ConnectionError {
     #[error("Connection with Steam CM server was dropped.")]

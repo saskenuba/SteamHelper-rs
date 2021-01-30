@@ -1,14 +1,53 @@
 use bytes::{BufMut, BytesMut};
-
 use steam_crypto::generate_encrypt_request_handshake;
-use steam_language_gen::generated::messages::{MsgChannelEncryptRequest, MsgChannelEncryptResponse};
-use steam_language_gen::{MessageHeader, MessageHeaderExt, SerializableBytes};
+use steam_language_gen::generated::enums::EMsg;
+use steam_language_gen::generated::messages::{
+    MsgChannelEncryptRequest, MsgChannelEncryptResponse, MsgChannelEncryptResult,
+};
+use steam_language_gen::{MessageHeader, SerializableBytes};
 
+use crate::connection::{BytesTx, EncryptionState};
+use crate::errors::PacketError;
 use crate::messages::message::ClientMessage;
 use crate::messages::packet::PacketMessage;
 use crate::messages::MessageKind;
+use atomic::{Atomic, Ordering};
 
-pub(crate) fn handle_encrypt_request(message: PacketMessage) -> Vec<u8> {
+pub(crate) fn handle_encryption_negotiation(
+    tx: BytesTx,
+    conn_encryption_state: &mut Atomic<EncryptionState>,
+    message: PacketMessage,
+) -> anyhow::Result<()> {
+
+    // asddassdj
+    match message.emsg() {
+        EMsg::ChannelEncryptRequest => {
+            let encrypt_response: Box<dyn SerializableBytes> = Box::new(handle_encrypt_request(message));
+
+            println!("req current state: {:?}", conn_encryption_state);
+            conn_encryption_state.swap(EncryptionState::Challenged, Ordering::AcqRel);
+            tx.send(encrypt_response)
+                .map_err::<PacketError, _>(|_| PacketError::Malformed)?;
+        }
+        EMsg::ChannelEncryptResult => {
+            println!("result matched current state: {:?}", conn_encryption_state);
+            conn_encryption_state.swap(EncryptionState::Encrypted, Ordering::AcqRel);
+            handle_encrypt_result(message).unwrap();
+        }
+        _ => unreachable!(),
+    }
+
+    Ok(())
+}
+
+fn handle_encrypt_result(message: PacketMessage) -> anyhow::Result<()> {
+    let incoming_message: ClientMessage<MsgChannelEncryptResult> = ClientMessage::from_packet_message(message);
+    println!("{:?}", incoming_message.body.result);
+
+    Ok(())
+}
+
+pub(crate) fn handle_encrypt_request(message: PacketMessage) -> ClientMessage<MsgChannelEncryptResponse> {
     let incoming_message: ClientMessage<MsgChannelEncryptRequest> = ClientMessage::from_packet_message(message);
 
     let connected_universe = incoming_message.body.universe;
@@ -32,8 +71,9 @@ pub(crate) fn handle_encrypt_request(message: PacketMessage) -> Vec<u8> {
     let target = incoming_message.wrapped_header.target();
     let source = incoming_message.wrapped_header.source();
 
-    let reply_message: ClientMessage<MsgChannelEncryptResponse> =
-        ClientMessage::new().set_target(target).set_payload(encrypted_payload.as_ref());
+    let reply_message: ClientMessage<MsgChannelEncryptResponse> = ClientMessage::new()
+        .set_target(target)
+        .set_payload(encrypted_payload.as_ref());
 
     println!("Incoming message: {}.", incoming_message);
     println!(
@@ -41,5 +81,5 @@ pub(crate) fn handle_encrypt_request(message: PacketMessage) -> Vec<u8> {
         reply_message,
         &reply_message.payload()[..128]
     );
-    reply_message.to_bytes()
+    reply_message
 }

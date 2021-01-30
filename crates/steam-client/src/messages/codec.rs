@@ -1,4 +1,6 @@
-use bytes::{Buf, BytesMut};
+use std::io::Write;
+
+use bytes::{Buf, BufMut, BytesMut};
 use tokio_util::codec::{Decoder, Encoder};
 
 use crate::connection::EncryptionState;
@@ -35,12 +37,21 @@ impl Default for PacketMessageCodec {
     }
 }
 
-impl Encoder<&[u8]> for PacketMessageCodec {
+impl Encoder<Vec<u8>> for PacketMessageCodec {
     type Error = PacketError;
 
-    fn encode(&mut self, item: &[u8], dst: &mut BytesMut) -> Result<(), Self::Error> {
-        let encryption_state = self.encryption_state;
-        unimplemented!()
+    fn encode(&mut self, item: Vec<u8>, dst: &mut BytesMut) -> Result<(), Self::Error> {
+        dst.reserve(1024);
+
+        println!("This is writing something");
+        println!("{:?}", item);
+
+        let message_size = item.len() as u32;
+        dst.extend_from_slice(&(message_size).to_le_bytes());
+        dst.extend_from_slice(PACKET_MAGIC_BYTES);
+        dst.extend_from_slice(&item);
+
+        Ok(())
     }
 }
 
@@ -51,7 +62,9 @@ impl Decoder for PacketMessageCodec {
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         let encryption_state = self.encryption_state;
 
-        if self.remaining_msg_bytes > src.len() {
+        println!("ehlo!");
+
+        if self.remaining_msg_bytes > src.len() || src.is_empty() {
             return Ok(None);
         }
 

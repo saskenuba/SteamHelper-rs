@@ -1,6 +1,4 @@
 use bytes::{Buf, BytesMut};
-use tokio_util::codec::{Decoder, Encoder};
-
 use steam_language_gen::{
     generated::{
         enums::EMsg,
@@ -17,7 +15,7 @@ use crate::messages::MessageKind;
 /// and allows simple access into its header and underlying data.
 ///
 /// Messages built by `PacketMessage` should be abstracted from the user.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct PacketMessage {
     emsg: EMsg,
     header: MessageHeaderWrapper,

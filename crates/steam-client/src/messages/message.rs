@@ -10,7 +10,6 @@
 use std::fmt::Formatter;
 
 use bytes::BytesMut;
-
 use steam_language_gen::generated::enums::EMsg;
 use steam_language_gen::generated::headers::{ExtendedMessageHeader, MessageHeaders, StandardMessageHeader};
 use steam_language_gen::generated::messages::HasEMsg;
@@ -38,7 +37,8 @@ use crate::messages::MessageKind;
 /// Extended Header, body and payload;
 pub struct ClientMessage<M> {
     /// The vinculated `EMsg` of this `ClientMessage`.
-    emsg: EMsg,
+    // FIXME: Should be HasEMsg trait
+    pub emsg: EMsg,
     /// A client message header wrapped in `MessageHeaderWrapper`.
     pub wrapped_header: MessageHeaderWrapper,
     pub body: M,
@@ -159,7 +159,7 @@ mod tests {
             headers::{ExtendedMessageHeader, StandardMessageHeader},
             messages::{MsgChannelEncryptRequest, MsgClientChatEnter},
         },
-        DeserializableBytes, MessageHeader, MessageHeaderExt, SerializableBytes,
+        DeserializableBytes, MessageHeaderExt, SerializableBytes,
     };
 
     /// ChannelEncryptRequest

@@ -1,9 +1,5 @@
 //! Handle events through [PacketMessage] matching.
 
-use std::collections::HashMap;
-
-use steam_language_gen::generated::enums::EMsg;
-
 use crate::messages::packet::PacketMessage;
 
 // we try to keep the same nomenclature as SteamKit2

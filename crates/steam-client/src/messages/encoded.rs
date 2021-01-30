@@ -19,12 +19,9 @@ mod tests {
     };
 
     // Note this useful idiom: importing names from outer (for mod tests) scope.
-    use crate::{
-        messages::packet::PacketMessage,
-        utils::str_from_u8_nul_utf8,
-    };
     use crate::messages::message::ClientMessage;
     use crate::messages::MessageKind;
+    use crate::{messages::packet::PacketMessage, utils::str_from_u8_nul_utf8};
 
     /// ChannelEncryptRequest
     fn get_channel_encrypt_request() -> [u8; 44] {

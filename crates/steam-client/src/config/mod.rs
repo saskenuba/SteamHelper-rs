@@ -1,12 +1,9 @@
 //! Application configuration and configuration parameter retrieval.
-//!
-//!
 
 use std::path::PathBuf;
 
 const STEAM_USER: &str = "STEAM_USER";
 const STEAM_PASS: &str = "STEAM_PASS";
-
 
 #[derive(Debug)]
 /// Huge explanation about SteamConfiguration
@@ -34,7 +31,7 @@ impl SteamConfiguration {
     /// ``` [details]
     /// user = xxxx
     /// pass = xxxx
-    ///```
+    /// ```
     fn from_file(_path: PathBuf) {}
 
     /// this requires the environment variables

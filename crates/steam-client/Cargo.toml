@@ -15,6 +15,7 @@ websockets = ["tokio-tungstenite"]
 anyhow = "^1.0"
 arrayref = "^0.3"
 async-trait = "^0.1"
+atomic = "^0.5"
 bincode = "^1"
 byteorder = "1"
 bytes = "^1.0"

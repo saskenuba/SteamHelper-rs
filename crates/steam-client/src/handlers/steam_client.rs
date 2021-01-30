@@ -29,10 +29,11 @@ impl HandlerKind for SteamClient {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use steam_protobuf::steam::{
         steammessages_base::CMsgProtoBufHeader, steammessages_clientserver_login::CMsgClientLogonResponse,
     };
+
+    use super::*;
 
     #[test]
     fn aa() {
