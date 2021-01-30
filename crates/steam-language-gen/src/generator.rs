@@ -72,7 +72,7 @@ fn generate_struct(graph: &Graph<Token, Element, Directed, u32>, current_node: N
             let member_type_node = member_edges.next().unwrap().target();
             let member_type = graph[member_type_node].get_value().to_owned();
 
-            file.push_str(&format!("\t{}: {},\n", member_name, member_type));
+            file.push_str(&format!("\tpub {}: {},\n", member_name, member_type));
         }
         file.push_str("}\n\n");
     }

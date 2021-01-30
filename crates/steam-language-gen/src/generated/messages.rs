@@ -44,7 +44,7 @@ pub struct MsgChannelEncryptResponse {
 #[repr(packed)]
 pub struct MsgChannelEncryptResult {
     #[new(value = "EResult::Invalid")]
-    result: EResult,
+    pub result: EResult,
 }
 
 #[derive(Clone, Copy, Eq, PartialEq, Debug, Serialize, Deserialize, SteamMsg)]
