@@ -1,26 +1,25 @@
-use std::cell::RefMut;
-use std::{cell::RefCell, rc::Rc};
-
-use futures::FutureExt;
-use reqwest::Method;
-use scraper::Html;
-use tracing::{debug, info, trace, warn};
+use std::cell::{RefCell, RefMut};
+use std::rc::Rc;
 
 use const_format::concatcp;
 use cookie::{Cookie, CookieJar};
+use futures::FutureExt;
+use reqwest::Method;
+use scraper::Html;
 use steam_language_gen::generated::enums::EResult;
 use steam_totp::Time;
+use tracing::{debug, info, trace, warn};
 
+use crate::client::MobileClient;
+use crate::errors::{ApiKeyError, LoginError};
+use crate::page_scraper::{api_key_resolve_status, confirmation_details_single, confirmation_retrieve};
+use crate::types::{
+    ApiKeyRegisterRequest, BooleanResponse, ConfirmationDetailsResponse, ConfirmationMultiAcceptRequest,
+    ParentalUnlockRequest, ParentalUnlockResponse,
+};
+use crate::utils::{dump_cookie_from_header, dump_cookies_by_name};
+use crate::web_handler::confirmation::{Confirmation, ConfirmationMethod};
 use crate::{
-    client::MobileClient,
-    errors::{ApiKeyError, LoginError},
-    page_scraper::{api_key_resolve_status, confirmation_details_single, confirmation_retrieve},
-    types::{
-        ApiKeyRegisterRequest, BooleanResponse, ConfirmationDetailsResponse, ConfirmationMultiAcceptRequest,
-        ParentalUnlockRequest, ParentalUnlockResponse,
-    },
-    utils::{dump_cookie_from_header, dump_cookies_by_name},
-    web_handler::confirmation::{Confirmation, ConfirmationMethod},
     CachedInfo, User, STEAM_API_BASE, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_STORE_BASE, STEAM_STORE_HOST,
 };
 

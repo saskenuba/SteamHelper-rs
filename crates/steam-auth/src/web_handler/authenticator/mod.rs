@@ -1,26 +1,20 @@
 use std::cell::Ref;
 
+use const_format::concatcp;
 use futures::TryFutureExt;
 use reqwest::Method;
 use tokio::time::Duration;
 use tracing::debug;
 
-use const_format::concatcp;
-
-use crate::utils::generate_canonical_device_id;
-use crate::{
-    client::MobileClient,
-    errors::LinkerError,
-    utils::dump_cookies_by_name,
-    web_handler::authenticator::types::AddAuthenticatorErrorResponseBase,
-    web_handler::authenticator::types::AddAuthenticatorRequest,
-    web_handler::authenticator::types::AddAuthenticatorResponseBase,
-    web_handler::authenticator::types::FinalizeAddAuthenticatorBase,
-    web_handler::authenticator::types::FinalizeAddAuthenticatorErrorBase,
-    web_handler::authenticator::types::FinalizeAddAuthenticatorRequest,
-    web_handler::authenticator::types::{GenericSuccessResponse, HasPhoneResponse, PhoneAjaxRequest},
-    CachedInfo, MobileAuthFile, STEAM_API_BASE, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST,
+use crate::client::MobileClient;
+use crate::errors::LinkerError;
+use crate::utils::{dump_cookies_by_name, generate_canonical_device_id};
+use crate::web_handler::authenticator::types::{
+    AddAuthenticatorErrorResponseBase, AddAuthenticatorRequest, AddAuthenticatorResponseBase,
+    FinalizeAddAuthenticatorBase, FinalizeAddAuthenticatorErrorBase, FinalizeAddAuthenticatorRequest,
+    GenericSuccessResponse, HasPhoneResponse, PhoneAjaxRequest,
 };
+use crate::{CachedInfo, MobileAuthFile, STEAM_API_BASE, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST};
 
 mod types;
 
@@ -207,7 +201,8 @@ pub(crate) async fn add_authenticator_to_account(
             return match error_resp.response.status {
                 29 => Err(LinkerError::AuthenticatorPresent),
                 2 => Err(LinkerError::GeneralFailure(
-                    "After too many failed attempts, this may be a lock on the phone number or account. Going to test this tomorrow."
+                    "After too many failed attempts, this may be a lock on the phone number or account. Going to test \
+                     this tomorrow."
                         .to_string(),
                 )),
                 _ => Err(LinkerError::GeneralFailure("Something went wrong".to_string())),

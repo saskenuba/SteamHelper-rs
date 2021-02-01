@@ -2,8 +2,8 @@ use crate::{TradeOffer, TRADEOFFER_BASE, TRADEOFFER_NEW_URL};
 
 pub mod asset_collection;
 pub mod sessionid;
-pub mod trade_offer;
 pub mod trade_link;
+pub mod trade_offer;
 pub mod trade_offer_web;
 
 #[derive(Debug, PartialEq)]

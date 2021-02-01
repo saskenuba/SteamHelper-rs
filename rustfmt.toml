@@ -11,5 +11,5 @@ use_field_init_shorthand = true
 wrap_comments = true
 
 group_imports = "StdExternalCrate"
-imports_granularity = "Crate"
+imports_granularity = "Module"
 newline_style = "Unix"

@@ -1,22 +1,22 @@
-use std::{cell::RefMut, collections::HashMap, time::Duration};
+use std::cell::RefMut;
+use std::collections::HashMap;
+use std::time::Duration;
 
 use chrono::Offset;
+use const_format::concatcp;
+use cookie::Cookie;
 use rand::thread_rng;
 use reqwest::{Client, Method};
 use rsa::padding::PaddingScheme;
 use rsa::{BigUint, PublicKey, RSAPublicKey};
+use steam_totp::{Secret, Time};
 use tokio::time;
 use tracing::warn;
 
-use const_format::concatcp;
-use cookie::Cookie;
-use steam_totp::{Secret, Time};
-
-use crate::types::{LoginCaptcha, LoginErrorCaptcha};
+use crate::client::MobileClient;
+use crate::errors::LoginError;
+use crate::types::{LoginCaptcha, LoginErrorCaptcha, LoginRequest, LoginResponseMobile, RSAResponse};
 use crate::{
-    client::MobileClient,
-    errors::LoginError,
-    types::{LoginRequest, LoginResponseMobile, RSAResponse},
     CachedInfo, User, MOBILE_REFERER, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_DELAY_MS, STEAM_HELP_HOST,
     STEAM_STORE_HOST,
 };

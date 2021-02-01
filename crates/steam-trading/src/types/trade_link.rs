@@ -1,11 +1,12 @@
+use std::convert::TryFrom;
+use std::str::FromStr;
+
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use steamid_parser::SteamID;
 
 use crate::errors::TradelinkError;
-use std::convert::TryFrom;
-use std::str::FromStr;
-use steamid_parser::SteamID;
 
 lazy_static! {
     static ref TRADE_LINK_REGEX: Regex = Regex::new(

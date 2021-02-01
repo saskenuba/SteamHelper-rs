@@ -61,7 +61,8 @@ impl FilterBy<TradeHistory_Trade> for GetTradeHistoryResponse {
 impl HasAssets for GetTradeHistoryResponse {
     type Asset = TradeHistory_TradedAsset;
 
-    /// Returns every asset given or received for the `GetTradeHistory`, also known as `CEcon_GetTradeHistory_Response_Trade_Base`.
+    /// Returns every asset given or received for the `GetTradeHistory`, also known as
+    /// `CEcon_GetTradeHistory_Response_Trade_Base`.
     fn every_asset(self) -> Vec<TradeHistory_TradedAsset> {
         let mut traded_assets = vec![];
 

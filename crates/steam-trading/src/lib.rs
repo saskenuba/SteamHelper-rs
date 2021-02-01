@@ -1,15 +1,15 @@
 //! Steam trade manager is the module that allows you to automate trade offers, by extending `SteamAuthenticator`.
 //!
-//! It inherently needs SteamAuthenticator as a dependency, since we need cookies from Steam Community and Steam Store to be able to
-//! create and accept trade offers, along with mobile confirmations.
+//! It inherently needs SteamAuthenticator as a dependency, since we need cookies from Steam Community and Steam Store
+//! to be able to create and accept trade offers, along with mobile confirmations.
 //!
 //! **IT IS VERY IMPORTANT THAT STEAM GUARD IS ENABLED ON THE ACCOUNT BEING USED, WITH MOBILE CONFIRMATIONS.**
 //!
 //! Currently, `SteamAuthenticator` is "stateless", in comparison of alternatives such as Node.js.
 //! This means that it does not need to stay up running and react to events.
 //!
-//! But this also means that you will need to keep track of trades and polling yourself, but it won't be much work, since there are
-//! convenience functions for almost every need.
+//! But this also means that you will need to keep track of trades and polling yourself, but it won't be much work,
+//! since there are convenience functions for almost every need.
 //!
 //! Perhaps the event based trading experience will be an extension someday, but for now this works fine.
 //!
@@ -31,38 +31,33 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use const_format::concatcp;
-use futures::{StreamExt, TryFutureExt};
-use futures::stream::FuturesOrdered;
-use serde::de::DeserializeOwned;
-use tokio::time::Duration;
-use tracing::{debug, info};
-
 pub use errors::{OfferError, TradeError, TradelinkError};
-use steam_auth::{
-    client::SteamAuthenticator, ConfirmationMethod, Confirmations, HeaderMap, Method, STEAM_COMMUNITY_HOST,
-};
+use futures::stream::FuturesOrdered;
+use futures::{StreamExt, TryFutureExt};
+use serde::de::DeserializeOwned;
+use steam_auth::client::SteamAuthenticator;
+use steam_auth::{ConfirmationMethod, Confirmations, HeaderMap, Method, STEAM_COMMUNITY_HOST};
 use steam_language_gen::generated::enums::ETradeOfferState;
-use steam_web_api::{Executor, ExecutorResponse, SteamAPI};
 use steam_web_api::response_types::{
     GetTradeHistoryResponse, GetTradeOffersResponse, TradeHistory_Trade, TradeOffer_Trade,
 };
+use steam_web_api::{Executor, ExecutorResponse, SteamAPI};
 use steamid_parser::SteamID;
-pub use types::{asset_collection::AssetCollection, trade_link::Tradelink, trade_offer::TradeOffer};
+use tokio::time::Duration;
+use tracing::{debug, info};
+pub use types::asset_collection::AssetCollection;
+pub use types::trade_link::Tradelink;
+pub use types::trade_offer::TradeOffer;
 
-use crate::{
-    errors::{ConfirmationError, tradeoffer_error_from_eresult},
-    errors::TradeError::PayloadError,
-    types::{
-        sessionid::HasSessionID,
-        trade_offer_web::{
-            TradeOfferAcceptRequest, TradeOfferCommonParameters, TradeOfferCreateRequest, TradeOfferCreateResponse,
-            TradeOfferGenericErrorResponse, TradeOfferGenericRequest, TradeOfferParams,
-        },
-        TradeKind,
-    },
-};
 use crate::api_extensions::{FilterBy, HasAssets};
-use crate::errors::error_from_strmessage;
+use crate::errors::TradeError::PayloadError;
+use crate::errors::{error_from_strmessage, tradeoffer_error_from_eresult, ConfirmationError};
+use crate::types::sessionid::HasSessionID;
+use crate::types::trade_offer_web::{
+    TradeOfferAcceptRequest, TradeOfferCommonParameters, TradeOfferCreateRequest, TradeOfferCreateResponse,
+    TradeOfferGenericErrorResponse, TradeOfferGenericRequest, TradeOfferParams,
+};
+use crate::types::TradeKind;
 
 pub mod api_extensions;
 mod errors;
@@ -414,8 +409,8 @@ impl<'a> SteamTradeManager<'a> {
         }
     }
 
-    /// Checks that the tradeoffer is valid, and process it, getting the trade token and steamid3, into a `TradeOfferCreateRequest`,
-    /// ready to send it.
+    /// Checks that the tradeoffer is valid, and process it, getting the trade token and steamid3, into a
+    /// `TradeOfferCreateRequest`, ready to send it.
     fn prepare_offer(tradeoffer: TradeOffer) -> Result<TradeOfferCreateRequest, TradeError> {
         TradeOffer::validate(&tradeoffer.my_assets, &tradeoffer.their_assets)?;
 
@@ -697,8 +692,7 @@ mod tests {
     #[cfg(feature = "time")]
     #[test]
     fn estimate_time() {
-        use crate::time::estimate_tradelock_end;
-        use crate::time::ONE_WEEK_SECONDS;
+        use crate::time::{estimate_tradelock_end, ONE_WEEK_SECONDS};
 
         let raw_response = sample_trade_history_response();
         let filtered_trade = raw_response.filter_by(|x| x.tradeid == 3622543526924228084).remove(0);

@@ -1,9 +1,8 @@
-use thiserror::Error;
-
 use steam_auth::errors::AuthError;
 use steam_auth::HttpError;
 use steam_language_gen::generated::enums::EResult;
 use steam_web_api::errors::SteamAPIError;
+use thiserror::Error;
 
 #[derive(Error, Debug)]
 #[non_exhaustive]
@@ -36,7 +35,6 @@ pub enum TradelinkError {
     Invalid,
 }
 
-
 #[derive(Error, Debug, PartialEq)]
 ///
 pub enum OfferError {
@@ -46,15 +44,19 @@ pub enum OfferError {
     #[error("`{0}`")]
     InvalidTrade(String),
 
-    #[error("This trade offer is in an invalid state, and cannot be acted upon. Perhaps you are trying to cancel a trade offer \
-    that was already canceled, or something similar.")]
+    #[error(
+        "This trade offer is in an invalid state, and cannot be acted upon. Perhaps you are trying to cancel a trade \
+         offer that was already canceled, or something similar."
+    )]
     InvalidState,
 
     #[error("This trade offer if could not be found. Are you sure this is the correct id?")]
     NoMatch,
 
-    #[error("This response code suggests that one or more of the items in this trade offer does not exist in the inventory from which \
-    it was requested.")]
+    #[error(
+        "This response code suggests that one or more of the items in this trade offer does not exist in the \
+         inventory from which it was requested."
+    )]
     Revoked,
 
     #[error("General Failure: `{0}`")]

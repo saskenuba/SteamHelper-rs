@@ -1,32 +1,29 @@
-use std::{cell::RefCell, rc::Rc};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use backoff::future::FutureOperation;
+use cookie::{Cookie, CookieJar};
 use futures::TryFutureExt;
+use reqwest::header::HeaderMap;
 use reqwest::redirect::Policy;
-use reqwest::{header::HeaderMap, Client, Method, Response, Url};
+use reqwest::{Client, Method, Response, Url};
 use scraper::Html;
 use serde::Serialize;
 use tokio::time::Duration;
 use tracing::{debug, info, warn};
 
-use cookie::{Cookie, CookieJar};
-
-use crate::errors::{LinkerError, LoginError};
+use crate::errors::{AuthError, LinkerError, LoginError};
 use crate::retry::login_retry_strategy;
 use crate::types::LoginCaptcha;
+use crate::utils::{dump_cookies_by_domain, dump_cookies_by_name, retrieve_header_location};
 use crate::web_handler::authenticator::{
     account_has_phone, add_authenticator_to_account, add_phone_to_account, check_email_confirmation, check_sms,
     finalize_authenticator, validate_phone_number, AddAuthenticatorStep, STEAM_ADD_PHONE_CATCHUP_SECS,
 };
-use crate::{
-    errors::AuthError,
-    utils::{dump_cookies_by_domain, dump_cookies_by_name, retrieve_header_location},
-    web_handler::{
-        cache_resolve, confirmation::Confirmations, confirmations_retrieve_all, confirmations_send,
-        login::login_website, parental_unlock,
-    },
-    CachedInfo, ConfirmationMethod, MobileAuthFile, User, STEAM_COMMUNITY_HOST,
-};
+use crate::web_handler::confirmation::Confirmations;
+use crate::web_handler::login::login_website;
+use crate::web_handler::{cache_resolve, confirmations_retrieve_all, confirmations_send, parental_unlock};
+use crate::{CachedInfo, ConfirmationMethod, MobileAuthFile, User, STEAM_COMMUNITY_HOST};
 
 #[derive(Debug)]
 /// Main authenticator. We use it to spawn and act as our "mobile" client.
@@ -36,7 +33,8 @@ use crate::{
 /// # Example: Fetch mobile notifications
 ///
 /// ```rust
-/// use steam_auth::{client::SteamAuthenticator, User};
+/// use steam_auth::client::SteamAuthenticator;
+/// use steam_auth::User;
 /// ```
 pub struct SteamAuthenticator {
     /// Inner client with cookie storage
@@ -120,15 +118,18 @@ impl SteamAuthenticator {
     /// Add an authenticator to the account.
     /// Note that this makes various assumptions about the account.
     ///
-    /// This function takes the `AddAuthenticatorStep` to help you automate the process of adding an authenticator to the account.
+    /// This function takes the `AddAuthenticatorStep` to help you automate the process of adding an authenticator to
+    /// the account.
     ///
-    /// You will first call this method with `AddAuthenticatorStep::InitialStep`. This requires the account to be already connected with a
-    /// verified email address. After this step is finished, you will receive an email about the phone confirmation.
+    /// You will first call this method with `AddAuthenticatorStep::InitialStep`. This requires the account to be
+    /// already connected with a verified email address. After this step is finished, you will receive an email
+    /// about the phone confirmation.
     ///
     /// Once you confirm it, you will call this method with `AddAuthenticatorStep::EmailConfirmation`.
     ///
     /// This will return a `AddAuthenticatorStep::MobileAuthenticatorFile` now, with your maFile inside the variant.
-    /// For more complete example, you can check the CLI Tool, that performs the inclusion of an authenticator interactively.
+    /// For more complete example, you can check the CLI Tool, that performs the inclusion of an authenticator
+    /// interactively.
     pub async fn add_authenticator(
         &self,
         current_step: AddAuthenticatorStep,
@@ -160,7 +161,8 @@ impl SteamAuthenticator {
     /// Finalize the authenticator process, enabling SteamGuard for the account.
     /// This method wraps up the whole process, finishing the registration of the phone number into the account.
     ///
-    /// You **should** only call this method after saving your maFile, because otherwise you WILL lose access to your account.
+    /// You **should** only call this method after saving your maFile, because otherwise you WILL lose access to your
+    /// account.
     pub async fn finalize_authenticator(&self, mafile: &MobileAuthFile, sms_code: &str) -> Result<(), AuthError> {
         // The delay is that Steam need some seconds to catch up with the new phone number associated.
         let account_has_phone_now: bool = check_sms(&self.client, sms_code)
@@ -188,9 +190,11 @@ impl SteamAuthenticator {
     async fn add_phone_number(&self, phone_number: &str) -> Result<bool, AuthError> {
         if !validate_phone_number(phone_number) {
             return Err(LinkerError::GeneralFailure(
-                "Invalid phone number. Should be in format of: +(CountryCode)(AreaCode)(PhoneNumber). E.g +5511976914922"
+                "Invalid phone number. Should be in format of: +(CountryCode)(AreaCode)(PhoneNumber). E.g \
+                 +5511976914922"
                     .to_string(),
-            ).into());
+            )
+            .into());
         }
 
         // Add the phone number to user account
@@ -377,9 +381,8 @@ impl MobileClient {
 
     /// Initiate mobile client with default headers
     fn init_mobile_client() -> Client {
-        let user_agent = "Mozilla/5.0 (Linux; U; Android 4.1.1; en-us; Google Nexus 4 - 4.1.1 - \
-                          API 16 - 768x1280 Build/JRO03S) AppleWebKit/534.30 (KHTML, like Gecko) \
-                          Version/4.0 Mobile Safari/534.30";
+        let user_agent = "Mozilla/5.0 (Linux; U; Android 4.1.1; en-us; Google Nexus 4 - 4.1.1 - API 16 - 768x1280 \
+                          Build/JRO03S) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30";
         let mut default_headers = HeaderMap::new();
         default_headers.insert(
             reqwest::header::ACCEPT,

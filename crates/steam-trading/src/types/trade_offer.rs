@@ -1,9 +1,9 @@
+use steam_auth::Url;
 use tracing::info;
 
-use steam_auth::Url;
-
-use crate::{types::asset_collection::AssetCollection, TRADE_MAX_ITEMS};
 use crate::errors::OfferError;
+use crate::types::asset_collection::AssetCollection;
+use crate::TRADE_MAX_ITEMS;
 
 #[derive(Debug, PartialEq)]
 pub struct TradeOffer {

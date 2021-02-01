@@ -13,19 +13,20 @@
     unused_qualifications
 )]
 
+use std::fmt;
+use std::fmt::{Debug, Display, Formatter};
+use std::fs::OpenOptions;
+use std::io::Read;
 use std::path::PathBuf;
-use std::{fmt, fs::OpenOptions, io::Read};
 
 use const_format::concatcp;
 /// re-export
 pub use reqwest::{header::HeaderMap, Error as HttpError, Method, Url};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-
-use std::fmt::{Debug, Display, Formatter};
 use steam_totp::Secret;
 use steamid_parser::SteamID;
 pub use utils::format_captcha_url;
+use uuid::Uuid;
 pub use web_handler::authenticator::AddAuthenticatorStep;
 pub use web_handler::confirmation::{ConfirmationMethod, Confirmations, EConfirmationType};
 
@@ -60,8 +61,7 @@ const STEAM_API_BASE: &str = "https://api.steampowered.com";
 
 const MOBILE_REFERER: &str = concatcp!(
     STEAM_COMMUNITY_BASE,
-    "/mobilelogin?oauth_client_id=DE45CD61&oauth_scope=read_profile%20write_profile%20read_client%\
-     20write_client"
+    "/mobilelogin?oauth_client_id=DE45CD61&oauth_scope=read_profile%20write_profile%20read_client%20write_client"
 );
 
 #[derive(Debug, Clone)]
@@ -188,10 +188,12 @@ impl User {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
-/// The MobileAuthFile (.maFile) is the standard file format that custom authenticators use to save auth secrets to disk.
+/// The MobileAuthFile (.maFile) is the standard file format that custom authenticators use to save auth secrets to
+/// disk.
 ///
 /// It follows strictly the JSON format.
-/// Both identity_secret and shared_secret should be base64 encoded. If you don't know if they are, they probably already are.
+/// Both identity_secret and shared_secret should be base64 encoded. If you don't know if they are, they probably
+/// already are.
 ///
 ///
 /// Example:
@@ -209,8 +211,8 @@ pub struct MobileAuthFile {
     /// The shared secret is used to generate TOTP codes.
     shared_secret: String,
     /// Device ID is used to generate the confirmation links for our trade requests.
-    /// Can be retrieved from mobile device, such as a rooted android, iOS, or generated from the account's SteamID if creating our own authenticator.
-    /// Needed for confirmations to trade to work properly.
+    /// Can be retrieved from mobile device, such as a rooted android, iOS, or generated from the account's SteamID if
+    /// creating our own authenticator. Needed for confirmations to trade to work properly.
     device_id: Option<String>,
     /// Used if shared secret is lost. Please, don't lose it.
     revocation_code: Option<String>,

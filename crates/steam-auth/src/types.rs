@@ -1,12 +1,13 @@
-use serde::{Deserialize, Serialize};
-
 use std::borrow::Cow;
+
+use serde::{Deserialize, Serialize};
 use steam_language_gen::generated::enums::EResult;
 
 #[derive(Serialize, Debug, Clone)]
 /// Used to login into Steam website if it detects something different on your account.
 /// This may be because of unsuccessful logins, numerous retries on some operations. or anything. Really.
-/// Requiring a captcha certainly can occur on an account with SteamGuard disabled, but still not sure on an account with it disabled.
+/// Requiring a captcha certainly can occur on an account with SteamGuard disabled, but still not sure on an account
+/// with it disabled.
 ///
 /// The safe way to use this if you are automating something, is to match the error and perhaps have a captcha solver.
 /// You can get the captcha GUID if it is required through the `LoginError::CaptchaRequired`.

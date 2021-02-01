@@ -7,11 +7,9 @@ use std::path::PathBuf;
 use anyhow::Result;
 use clap::{App, Arg};
 use dialoguer::{Confirm, Input};
-
 use steam_auth::client::SteamAuthenticator;
 use steam_auth::errors::{AuthError, LoginError};
-use steam_auth::{format_captcha_url, MobileAuthFile};
-use steam_auth::{AddAuthenticatorStep, User};
+use steam_auth::{format_captcha_url, AddAuthenticatorStep, MobileAuthFile, User};
 use steam_totp::{generate_auth_code_async, Secret};
 
 #[tokio::main]
@@ -33,9 +31,11 @@ async fn main() -> Result<()> {
                 .about("Authenticator related operations.")
                 .subcommand(
                     App::new("add")
-                        .long_about("Adds an authenticator to the account.\n\n\
-                        During the execution of this program, you will be asked to perform some other operations interactively, such as \
-                        confirming your email, or retrieving your SMS code from the number you have provided.")
+                        .long_about(
+                            "Adds an authenticator to the account.\n\nDuring the execution of this program, you will \
+                             be asked to perform some other operations interactively, such as confirming your email, \
+                             or retrieving your SMS code from the number you have provided.",
+                        )
                         .about("Add an authenticator to the account.")
                         .args(&[
                             Arg::new("phone_number")
@@ -45,8 +45,10 @@ async fn main() -> Result<()> {
                                 .required(true)
                                 .takes_value(true),
                             Arg::new("save_path")
-                                .about("Recommended. Path where your Mobile Auth(MA) file will be saved. If none is provided, file will \
-                            be printed on stdout.")
+                                .about(
+                                    "Recommended. Path where your Mobile Auth(MA) file will be saved. If none is \
+                                     provided, file will be printed on stdout.",
+                                )
                                 .short('p')
                                 .long("path")
                                 .required(false)
@@ -117,8 +119,10 @@ async fn main() -> Result<()> {
             loop {
                 match authenticator.add_authenticator(auth_step.clone(), phone_number).await {
                     Ok(AddAuthenticatorStep::EmailConfirmation) => {
-                        println!("Phone number was added successfully, A Steam email was sent to your registered inbox to allow a phone\n\
-                        number to be registered. Please confirm it now.\n");
+                        println!(
+                            "Phone number was added successfully, A Steam email was sent to your registered inbox to \
+                             allow a phone\nnumber to be registered. Please confirm it now.\n"
+                        );
                         Confirm::new()
                             .with_prompt("Have you confirmed your email?")
                             .wait_for_newline(true)

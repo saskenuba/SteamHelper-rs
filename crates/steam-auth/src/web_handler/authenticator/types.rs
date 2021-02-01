@@ -1,7 +1,8 @@
-use crate::utils::generate_canonical_device_id;
-use crate::MobileAuthFile;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, IntoStaticStr};
+
+use crate::utils::generate_canonical_device_id;
+use crate::MobileAuthFile;
 
 #[derive(Copy, Clone, Debug, Serialize, Display, IntoStaticStr)]
 pub enum PhoneAjaxOperation {
@@ -203,16 +204,16 @@ pub struct AddAuthenticatorResponse {
     pub mobile_auth: MobileAuthFile,
 
     pub status: i64,
-    // pub shared_secret: String,
-    // pub revocation_code: String,
-    // pub identity_secret: String,
-    // pub account_name: String,
-    // pub secret1: String,
-    // Deprecated
-    // pub serial_number: String,
-    // pub server_time: String,
-    // pub token_gid: String,
-    // pub uri: String,
+    /* pub shared_secret: String,
+     * pub revocation_code: String,
+     * pub identity_secret: String,
+     * pub account_name: String,
+     * pub secret1: String,
+     * Deprecated
+     * pub serial_number: String,
+     * pub server_time: String,
+     * pub token_gid: String,
+     * pub uri: String, */
 }
 
 #[derive(Debug, Deserialize)]
@@ -276,7 +277,8 @@ impl Default for StoreFinalizeAuthenticatorRequest {
     }
 }
 
-// {"success":true,"showResend":false,"state":"done","errorText":"","token":"0","vac_policy":0,"tos_policy":2,"showDone":true,"maxLength":"5"}
+// {"success":true,"showResend":false,"state":"done","errorText":"","token":"0","vac_policy":0,"tos_policy":2,"showDone"
+// :true,"maxLength":"5"}
 
 #[derive(Default, Debug, Clone, PartialEq, serde_derive::Serialize, serde_derive::Deserialize)]
 #[serde(rename_all = "camelCase")]

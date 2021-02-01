@@ -4,10 +4,8 @@ use std::str::FromStr;
 
 use scraper::{Html, Selector};
 
-use crate::{
-    errors::ApiKeyError,
-    web_handler::confirmation::{Confirmation, ConfirmationDetails, EConfirmationType},
-};
+use crate::errors::ApiKeyError;
+use crate::web_handler::confirmation::{Confirmation, ConfirmationDetails, EConfirmationType};
 
 /// Get all confirmations by parsing the document.
 /// Returns all confirmations found.

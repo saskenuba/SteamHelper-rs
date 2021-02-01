@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-
 use steam_language_gen::generated::enums::EResult;
 
 use crate::types::sessionid::{HasSessionID, SessionID};

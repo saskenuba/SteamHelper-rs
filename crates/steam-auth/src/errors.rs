@@ -21,8 +21,8 @@ pub enum AuthError {
 }
 
 #[derive(Error, Debug)]
-/// This kind of error should only be raised, if the user tried to use a method that requires the API KEY, but it could not
-/// be cached for any reason.
+/// This kind of error should only be raised, if the user tried to use a method that requires the API KEY, but it could
+/// not be cached for any reason.
 pub enum ApiKeyError {
     #[error("General Failure: `{0}`")]
     GeneralError(String),
@@ -58,7 +58,8 @@ pub enum LinkerError {
     #[error("{0}")]
     GeneralFailure(String),
     #[error("There is already a authenticator vinculated with this account. Remove the old to add another one.")]
-    /// There is already a finalized authenticator on this account. If you want to add on another number, first remove the old one.
+    /// There is already a finalized authenticator on this account. If you want to add on another number, first remove
+    /// the old one.
     AuthenticatorPresent,
 
     #[error("The SMS code you entered is incorrect.")]
