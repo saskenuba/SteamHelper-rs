@@ -1,6 +1,4 @@
-use std::io::Write;
-
-use bytes::{Buf, BufMut, BytesMut};
+use bytes::{Buf, BytesMut};
 use tokio_util::codec::{Decoder, Encoder};
 
 use crate::connection::EncryptionState;

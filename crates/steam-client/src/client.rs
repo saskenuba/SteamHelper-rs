@@ -3,7 +3,8 @@ use std::error::Error;
 use steamid_parser::SteamID;
 use tokio::io::{AsyncRead, AsyncWrite};
 
-use crate::{config::SteamConfiguration, connection::SteamConnection};
+use crate::config::SteamConfiguration;
+use crate::connection::SteamConnection;
 
 #[derive(Debug)]
 pub struct SteamClient<S>

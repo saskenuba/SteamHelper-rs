@@ -1,12 +1,8 @@
-use bytes::{Buf, BytesMut};
-use steam_language_gen::{
-    generated::{
-        enums::EMsg,
-        headers::{ExtendedMessageHeader, StandardMessageHeader},
-    },
-    DeserializableBytes, MessageHeader, MessageHeaderExt, MessageHeaderWrapper, SerializableBytes,
-};
-use steam_protobuf::{steam::steammessages_base::CMsgProtoBufHeader, Message};
+use steam_language_gen::generated::enums::EMsg;
+use steam_language_gen::generated::headers::{ExtendedMessageHeader, StandardMessageHeader};
+use steam_language_gen::{DeserializableBytes, HasJobId, MessageHeaderExt, MessageHeaderWrapper};
+use steam_protobuf::steam::steammessages_base::CMsgProtoBufHeader;
+use steam_protobuf::Message;
 
 use crate::messages::MessageKind;
 
@@ -23,6 +19,10 @@ pub(crate) struct PacketMessage {
 }
 
 impl MessageKind for PacketMessage {
+    fn set_payload(&mut self, payload: &[u8]) {
+        unimplemented!()
+    }
+
     /// Returns underlying message data.
     fn payload(&self) -> &[u8] {
         &self.data

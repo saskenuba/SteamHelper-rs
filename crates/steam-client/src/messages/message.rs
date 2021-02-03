@@ -13,8 +13,9 @@ use bytes::BytesMut;
 use steam_language_gen::generated::enums::EMsg;
 use steam_language_gen::generated::headers::{ExtendedMessageHeader, MessageHeaders, StandardMessageHeader};
 use steam_language_gen::generated::messages::HasEMsg;
-use steam_language_gen::{DeserializableBytes, MessageBodyExt, MessageHeaderWrapper, SerializableBytes};
-use steam_language_gen::{MessageHeader, MessageHeaderExt};
+use steam_language_gen::{
+    DeserializableBytes, HasJobId, MessageBodyExt, MessageHeaderExt, MessageHeaderWrapper, SerializableBytes,
+};
 use steam_protobuf::steam::steammessages_base::CMsgProtoBufHeader;
 use steam_protobuf::Message;
 
@@ -29,7 +30,7 @@ use crate::messages::MessageKind;
 // novo  ExtendedMessageHeader
 
 #[derive(Clone, Debug)]
-/// A message crafted for the Steam Client.
+/// A unified interface for interacting with Steam Client.
 ///
 /// This type wraps:
 /// Protobuf Header and protobuf message body;
@@ -49,7 +50,7 @@ impl<M> ClientMessage<M>
 where
     M: Message,
 {
-    pub(crate) fn new_proto(emsg: EMsg) -> Self {
+    pub fn new_proto(emsg: EMsg) -> Self {
         Self {
             emsg,
             wrapped_header: MessageHeaderWrapper::Proto(CMsgProtoBufHeader::new()),
@@ -72,7 +73,10 @@ impl<M: std::fmt::Debug + HasEMsg> std::fmt::Display for ClientMessage<M> {
     }
 }
 
-impl<M: SerializableBytes> SerializableBytes for ClientMessage<M> {
+impl<M> SerializableBytes for ClientMessage<M>
+where
+    M: SerializableBytes,
+{
     fn to_bytes(&self) -> Vec<u8> {
         let mut output_buffer = BytesMut::with_capacity(1024);
         let emsg = self.emsg as u32;
@@ -87,31 +91,18 @@ impl<M: SerializableBytes> SerializableBytes for ClientMessage<M> {
 
 const DEFAULT_MESSAGE_MAX_SIZE: usize = 1024;
 
-impl<T: MessageBodyExt + HasEMsg + SerializableBytes + DeserializableBytes> ClientMessage<T> {
+impl<T: MessageBodyExt + HasEMsg + DeserializableBytes> ClientMessage<T> {
     /// Used to decode incoming messages
     pub(crate) fn from_packet_message(msg: PacketMessage) -> Self {
         let (header_bytes, message_payload_bytes) = T::split_from_bytes(msg.payload());
-        println!("{:?}", message_payload_bytes);
         let message = T::from_bytes(header_bytes);
         let linked_emsg = T::emsg();
 
-        // since we already have the correct header from the packet message, we dont need to look up
-        // for it again..
-        let header_kind = MessageHeaders::header_from_emsg(linked_emsg).unwrap();
-        let header = msg.header();
-        match header_kind {
-            MessageHeaders::Standard => Self {
-                emsg: linked_emsg,
-                wrapped_header: header,
-                body: message,
-                payload: message_payload_bytes.to_vec(),
-            },
-            MessageHeaders::Extended => Self {
-                emsg: linked_emsg,
-                wrapped_header: header,
-                body: message,
-                payload: message_payload_bytes.to_vec(),
-            },
+        Self {
+            emsg: linked_emsg,
+            wrapped_header: msg.header(),
+            body: message,
+            payload: message_payload_bytes.to_vec(),
         }
     }
 
@@ -134,33 +125,42 @@ impl<T: MessageBodyExt + HasEMsg + SerializableBytes + DeserializableBytes> Clie
             },
         }
     }
-
-    pub(crate) fn set_target(mut self, target: u64) -> Self {
-        self.wrapped_header.set_target(target);
-        self
-    }
-    pub(crate) fn set_payload(mut self, payload: &[u8]) -> Self {
-        self.payload = payload.to_vec();
-        self
-    }
 }
 
-impl<C: HasEMsg + SerializableBytes> MessageKind for ClientMessage<C> {
+impl<C> MessageKind for ClientMessage<C> {
+    fn set_payload(&mut self, payload: &[u8]) {
+        self.payload = payload.to_vec()
+    }
+
     fn payload(&self) -> &[u8] {
         &self.payload
     }
 }
 
+impl<C: 'static> HasJobId for ClientMessage<C> {
+    fn set_target(&mut self, new_target: u64) {
+        self.wrapped_header.set_target(new_target);
+    }
+
+    fn set_source(&mut self, new_source: u64) {
+        self.wrapped_header.set_source(new_source);
+    }
+
+    fn source(&self) -> u64 {
+        self.wrapped_header.source()
+    }
+
+    fn target(&self) -> u64 {
+        self.wrapped_header.target()
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use steam_language_gen::{
-        generated::{
-            enums::{EMsg, EUniverse},
-            headers::{ExtendedMessageHeader, StandardMessageHeader},
-            messages::{MsgChannelEncryptRequest, MsgClientChatEnter},
-        },
-        DeserializableBytes, MessageHeaderExt, SerializableBytes,
-    };
+    use steam_language_gen::generated::enums::{EMsg, EUniverse};
+    use steam_language_gen::generated::headers::{ExtendedMessageHeader, StandardMessageHeader};
+    use steam_language_gen::generated::messages::{MsgChannelEncryptRequest, MsgClientChatEnter};
+    use steam_language_gen::{DeserializableBytes, MessageHeaderExt, SerializableBytes};
 
     /// ChannelEncryptRequest
     /// This has standard header

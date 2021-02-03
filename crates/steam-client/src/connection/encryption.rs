@@ -71,9 +71,9 @@ pub(crate) fn handle_encrypt_request(message: PacketMessage) -> ClientMessage<Ms
     let target = incoming_message.wrapped_header.target();
     let source = incoming_message.wrapped_header.source();
 
-    let reply_message: ClientMessage<MsgChannelEncryptResponse> = ClientMessage::new()
-        .set_target(target)
-        .set_payload(encrypted_payload.as_ref());
+    let mut reply_message: ClientMessage<MsgChannelEncryptResponse> = ClientMessage::new();
+    reply_message.set_target(target);
+    reply_message.set_payload(encrypted_payload.as_ref());
 
     println!("Incoming message: {}.", incoming_message);
     println!(
