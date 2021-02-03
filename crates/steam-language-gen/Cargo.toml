@@ -24,7 +24,6 @@ arrayref = "0.3"
 bincode = "1"
 bitflags = "1"
 derive-new = "0.5"
-downcast-rs = "1"
 enum_dispatch = "0.3.5"
 Inflector = { version = "^0.11", default-features = false, optional = true }
 nom = { version = "5.0.1", optional = true }

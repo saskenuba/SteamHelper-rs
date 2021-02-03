@@ -1,7 +1,7 @@
 use derive_new::new;
 use serde::{Deserialize, Serialize};
 
-use crate::{generated::enums::EMsg, DeserializableBytes, MessageHeader, MessageHeaderExt, SerializableBytes};
+use crate::{generated::enums::EMsg, DeserializableBytes, HasJobId, MessageHeaderExt, SerializableBytes};
 
 use steam_protobuf::steam::steammessages_base::CMsgProtoBufHeader;
 
@@ -43,17 +43,17 @@ impl MessageHeaderExt for CMsgProtoBufHeader {
     }
 }
 
-impl MessageHeader for CMsgProtoBufHeader {
+impl HasJobId for CMsgProtoBufHeader {
     fn set_target(&mut self, new_target: u64) {
         self.set_jobid_target(new_target);
     }
 
     fn set_source(&mut self, new_source: u64) {
-        unimplemented!()
+        self.set_jobid_source(new_source);
     }
 
     fn source(&self) -> u64 {
-        unimplemented!()
+        self.get_jobid_source()
     }
 
     fn target(&self) -> u64 {
@@ -78,20 +78,3 @@ pub struct ExtendedMessageHeader {
     #[new(value = "0")]
     session_id: i32,
 }
-
-struct GCProtobufMessageHeader {
-    header_length: i32,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct GCMessageHeader {
-    header_version: u16,
-    target_job_id: u64,
-    source_job_id: u64,
-}
-
-// #[derive(Debug)]
-// pub struct ProtobufMessageHeader {
-//     header_length: i32,
-//     proto_header: CMsgProtoBufHeader,
-// }

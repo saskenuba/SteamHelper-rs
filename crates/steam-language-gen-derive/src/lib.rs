@@ -79,7 +79,7 @@ fn impl_header_macro(ast: &DeriveInput) -> TokenStream {
             }
         }
 
-        impl MessageHeader for #name {
+        impl HasJobId for #name {
             fn set_target(&mut self, new_target: u64) {
                 self.target_job_id = new_target;
             }
