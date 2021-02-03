@@ -1,37 +1,36 @@
+use atomic::{Atomic, Ordering};
 use bytes::{BufMut, BytesMut};
 use steam_crypto::generate_encrypt_request_handshake;
 use steam_language_gen::generated::enums::EMsg;
 use steam_language_gen::generated::messages::{
     MsgChannelEncryptRequest, MsgChannelEncryptResponse, MsgChannelEncryptResult,
 };
-use steam_language_gen::{MessageHeader, SerializableBytes};
+use steam_language_gen::{HasJobId, SerializableBytes};
 
 use crate::connection::{BytesTx, EncryptionState};
 use crate::errors::PacketError;
 use crate::messages::message::ClientMessage;
 use crate::messages::packet::PacketMessage;
 use crate::messages::MessageKind;
-use atomic::{Atomic, Ordering};
 
 pub(crate) fn handle_encryption_negotiation(
     tx: BytesTx,
     conn_encryption_state: &mut Atomic<EncryptionState>,
     message: PacketMessage,
 ) -> anyhow::Result<()> {
-
     // asddassdj
     match message.emsg() {
         EMsg::ChannelEncryptRequest => {
-            let encrypt_response: Box<dyn SerializableBytes> = Box::new(handle_encrypt_request(message));
+            let encrypt_response = handle_encrypt_request(message).to_bytes();
 
             println!("req current state: {:?}", conn_encryption_state);
-            conn_encryption_state.swap(EncryptionState::Challenged, Ordering::AcqRel);
+            conn_encryption_state.swap(EncryptionState::Challenged, Ordering::SeqCst);
             tx.send(encrypt_response)
                 .map_err::<PacketError, _>(|_| PacketError::Malformed)?;
         }
         EMsg::ChannelEncryptResult => {
             println!("result matched current state: {:?}", conn_encryption_state);
-            conn_encryption_state.swap(EncryptionState::Encrypted, Ordering::AcqRel);
+            conn_encryption_state.swap(EncryptionState::Encrypted, Ordering::SeqCst);
             handle_encrypt_result(message).unwrap();
         }
         _ => unreachable!(),

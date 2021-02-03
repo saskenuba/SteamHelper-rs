@@ -11,6 +11,7 @@
 use std::error::Error;
 
 use async_trait::async_trait;
+use atomic::{Atomic, Ordering};
 use bytes::BytesMut;
 use futures::{SinkExt, StreamExt};
 use steam_crypto::SessionKeys;
@@ -23,11 +24,10 @@ use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio_util::codec::{FramedRead, FramedWrite};
 
 use crate::connection::encryption::handle_encryption_negotiation;
-use crate::errors::ConnectionError;
+use crate::errors::{ConnectionError, PacketError};
 use crate::messages::codec::PacketMessageCodec;
 use crate::messages::message::ClientMessage;
-use crate::{errors::PacketError, messages::packet::PacketMessage};
-use atomic::{Atomic, Ordering};
+use crate::messages::packet::PacketMessage;
 
 pub(crate) mod encryption;
 
@@ -45,6 +45,7 @@ pub(crate) struct SteamConnection<S> {
     state: Atomic<EncryptionState>,
     /// Populated after the initial handshake with Steam
     session_keys: Option<SessionKeys>,
+    // receiver: UnboundedReceiver<DynBytes>,
 }
 
 impl<S> SteamConnection<S> {
@@ -64,13 +65,12 @@ pub(crate) type PacketTx = UnboundedSender<PacketMessage>;
 pub(crate) type MessageTx<T> = UnboundedSender<ClientMessage<T>>;
 
 pub(crate) type DynBytes = Box<dyn SerializableBytes>;
-pub(crate) type BytesTx = UnboundedSender<Box<dyn SerializableBytes + 'static>>;
+pub(crate) type BytesTx = UnboundedSender<Vec<u8>>;
 
 #[cfg(not(feature = "websockets"))]
 impl SteamConnection<TcpStream> {
     async fn main_loop(mut self) -> Result<(), ConnectionError> {
-        let (sender, mut receiver): (UnboundedSender<DynBytes>, UnboundedReceiver<DynBytes>) =
-            mpsc::unbounded_channel();
+        let (sender, mut receiver): (UnboundedSender<Vec<u8>>, UnboundedReceiver<Vec<u8>>) = mpsc::unbounded_channel();
 
         let connection_state = &mut self.state;
         let (stream_rx, stream_tx) = self.stream.into_split();
@@ -79,8 +79,7 @@ impl SteamConnection<TcpStream> {
         let mut framed_write = FramedWrite::new(stream_tx, PacketMessageCodec::default());
 
         tokio::spawn(async move {
-            if let Some(mes) = receiver.recv().await {
-                let message: Vec<u8> = mes.to_bytes();
+            if let Some(message) = receiver.recv().await {
                 framed_write.send(message).await.unwrap();
             }
         });
@@ -148,7 +147,8 @@ impl Connection<TcpStream> for SteamConnection<TcpStream> {
 #[cfg(feature = "websockets")]
 mod connection_method {
     use tokio_tls::TlsStream;
-    use tokio_tungstenite::{connect_async, stream::Stream, WebSocketStream};
+    use tokio_tungstenite::stream::Stream;
+    use tokio_tungstenite::{connect_async, WebSocketStream};
 
     use super::*;
 
