@@ -1998,4 +1998,6 @@ pub enum EMsg {
     ClientRichPresenceUpload = 7501,
     ClientRichPresenceRequest = 7502,
     ClientRichPresenceInfo = 7503,
+    ClientRequestWebAPIAuthenticateUserNonce = 5585,
+    ClientRequestWebAPIAuthenticateUserNonceResponse = 5586,
 }

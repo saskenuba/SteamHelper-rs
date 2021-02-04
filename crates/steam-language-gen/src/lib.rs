@@ -4,6 +4,7 @@
 extern crate steam_language_gen_derive;
 
 use enum_dispatch::enum_dispatch;
+pub use num_traits::FromPrimitive;
 use serde::Serialize;
 
 use crate::generated::headers::{ExtendedMessageHeader, StandardMessageHeader};
@@ -25,6 +26,15 @@ pub enum MessageHeaderWrapper {
     Ext(ExtendedMessageHeader),
 }
 
+impl MessageHeaderWrapper {
+    pub fn proto_header(&self) -> Option<&CMsgProtoBufHeader> {
+        match self {
+            MessageHeaderWrapper::Proto(me) => Some(me),
+            _ => None,
+        }
+    }
+}
+
 /// Every implementation has to implement bincode::serialize and deserialize
 pub trait SerializableBytes: Send {
     fn to_bytes(&self) -> Vec<u8>;
@@ -36,6 +46,25 @@ where
 {
     fn to_bytes(&self) -> Vec<u8> {
         self.write_to_bytes().unwrap()
+    }
+}
+
+impl<T> DeserializableBytes for T
+where
+    T: Message,
+{
+    fn from_bytes(packet_data: &[u8]) -> Self {
+        T::parse_from_bytes(packet_data).unwrap()
+    }
+}
+
+impl<T> MessageBodyExt for T
+where
+    T: Message,
+{
+    fn split_from_bytes(data: &[u8]) -> (&[u8], &[u8]) {
+        let size = std::mem::size_of::<Self>();
+        (&data[..size], &data[size..])
     }
 }
 
