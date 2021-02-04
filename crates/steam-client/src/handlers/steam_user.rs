@@ -1,18 +1,15 @@
-use std::marker::PhantomData;
-
-use futures::task::AtomicWaker;
 use steam_language_gen::generated::enums::{EMsg, EOSType};
+use steam_language_gen::SerializableBytes;
 use steam_protobuf::steam::steammessages_base::CMsgIPAddress;
 use steam_protobuf::steam::steammessages_clientserver_login::{
     CMsgClientLogon, CMsgClientLogonResponse, CMsgClientRequestWebAPIAuthenticateUserNonceResponse,
 };
 
-use crate::handlers::{DispatcherMap, HandlerKind};
+use crate::handlers::async_messages::AsyncResponseInner;
+use crate::handlers::dispatcher::DispatcherMap;
+use crate::handlers::HandlerKind;
 use crate::messages::message::ClientMessage;
 use crate::messages::packet::PacketMessage;
-use crate::messages::{ProtoMsgBox, ProtoRecover};
-use steam_language_gen::SerializableBytes;
-use steam_protobuf::Message;
 
 /// Events are messages received from the network
 enum SteamUserEvents {
@@ -20,13 +17,28 @@ enum SteamUserEvents {
     AccountInfo,
 }
 
-// handles
 #[derive(Copy, Clone, Debug)]
 pub struct SteamUser;
 
 impl SteamUser {
     fn with_context<T>(cx: &DispatcherMap) -> SteamUserMessages {
         SteamUserMessages { dispatcher: cx }
+    }
+
+    fn listens_to(emsg: EMsg) {
+        match emsg {
+            EMsg::ClientLogOnResponse
+            | EMsg::ClientLoggedOff
+            | EMsg::ClientNewLoginKey
+            | EMsg::ClientSessionToken
+            | EMsg::ClientUpdateMachineAuth
+            | EMsg::ClientAccountInfo
+            | EMsg::ClientEmailAddrInfo
+            | EMsg::ClientRequestWebAPIAuthenticateUserNonce
+            | EMsg::ClientWalletInfoUpdate
+            | EMsg::ClientMarketingMessageUpdate2 => {}
+            _ => {}
+        }
     }
 }
 
@@ -37,48 +49,18 @@ struct SteamUserMessages<'a> {
 impl<'a> SteamUserMessages<'a> {
     pub async fn log_on(&self) -> CMsgClientLogonResponse {
         let message = do_logon(LogOnDetails::default()).to_bytes();
-        self.dispatcher.sender.send(message);
+        // self.dispatcher.sender.send(message);
 
-        // let response: ClientMessage<_> = AsyncResponseInner {
-        //     dispatcher: self.dispatcher,
-        //     source_job_id: 0,
-        //     waker: AtomicWaker::new(),
-        //     message: Default::default(),
-        // }
-        // .await;
+        let response: CMsgClientLogonResponse = AsyncResponseInner::new(self.dispatcher).await.unwrap();
 
-        CMsgClientLogonResponse::new()
+        response
     }
-}
 
-struct AsyncResponseInner<'a, T> {
-    dispatcher: &'a DispatcherMap,
-    source_job_id: u64,
-    waker: AtomicWaker,
-    message: PhantomData<T>,
-}
-
-// impl<'a, T> Future for AsyncResponseInner<'a, T> {
-//     type Output = ClientMessage<T>;
-//
-//     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-//         let source_job_id = self.source_job_id;
-//         self.waker.register(cx.waker());
-//
-//         match self.dispatcher.tracked_protobuf_messages.get(&source_job_id) {
-//             None => {}
-//             Some(a) => {}
-//         };
-//
-//         Poll::Ready(())
-//     }
-// }
-
-impl<'a, T> AsyncResponseInner<'a, T> {
     pub async fn request_webapi_nonce(&self) -> CMsgClientRequestWebAPIAuthenticateUserNonceResponse {
-        let wat = CMsgClientRequestWebAPIAuthenticateUserNonceResponse::new().boxed_any();
+        // let message = CMsgClientRequestWebAPIAuthenticateUserNonceResponse::new().boxed_any();
 
-        let recovered = wat.recover::<CMsgClientRequestWebAPIAuthenticateUserNonceResponse>();
+        let response: CMsgClientRequestWebAPIAuthenticateUserNonceResponse =
+            AsyncResponseInner::new(self.dispatcher).await.unwrap();
 
         CMsgClientRequestWebAPIAuthenticateUserNonceResponse::new()
     }
@@ -184,4 +166,16 @@ fn do_logon(logon_details: LogOnDetails) -> ClientMessage<CMsgClientLogon> {
     logon_message.body.set_two_factor_code(logon_details.two_auth_code);
     logon_message.body.set_login_key(logon_details.login_key);
     logon_message
+}
+
+// Create mock client to test channels
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn aaaa() {
+        let dmap = DispatcherMap::new();
+        // let a = SteamUser::with_context(&dmap).log_on().await;
+    }
 }

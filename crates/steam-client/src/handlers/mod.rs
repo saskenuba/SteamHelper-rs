@@ -25,15 +25,13 @@
 // certainly there are handlers that depend on others current state.
 // this needs to check out if it is really relevant.
 
-use std::collections::HashMap;
+use std::sync::atomic::AtomicU64;
 
-use steam_protobuf::Message;
-use tokio::sync::mpsc::UnboundedSender;
-
-use crate::connection::DynBytes;
 use crate::messages::packet::PacketMessage;
 
 // we try to keep the same nomenclature as SteamKit2
+pub mod async_messages;
+pub mod dispatcher;
 pub mod steam_friends;
 pub mod steam_user;
 
@@ -54,35 +52,5 @@ trait HandlerKind {
 // handles related to friends coming online etc
 
 struct SourceId(u64);
-
-/// Steam client is able to send messages at any time, listen to messages and react to them.
-///
-///
-/// Should provide a hot path for quick lookup if user is listening for one specific emsg.
-/// This could be done after the dispatch map is initiated.
-///
-/// Each Handler could have a mapping of [EMsg] that it listens for.
-pub struct DispatcherMap {
-    /// User is interested in listening for the followings events
-    /// and will answer with a proper callback
-    interested: HashMap<SteamEvents, String>,
-
-    // we may need a source/target hashmap to track messages
-    tracked_protobuf_messages: HashMap<u64, Box<dyn Message>>,
-
-    sender: UnboundedSender<Vec<u8>>,
-}
-
-impl DispatcherMap {
-    pub fn new() -> Self {
-        Self {
-            interested: Default::default(),
-            tracked_protobuf_messages: Default::default(),
-            sender: (),
-        }
-    }
-
-    pub fn register_interest() {}
-}
 
 trait Dispatcher {}

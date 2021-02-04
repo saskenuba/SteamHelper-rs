@@ -15,8 +15,8 @@ use atomic::{Atomic, Ordering};
 use bytes::BytesMut;
 use futures::{SinkExt, StreamExt};
 use steam_crypto::SessionKeys;
-use steam_language_gen::generated::enums::EMsg;
-use steam_language_gen::SerializableBytes;
+use steam_language_gen::generated::enums::{EMsg, EResult};
+use steam_language_gen::{FromPrimitive, SerializableBytes};
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use tokio::sync::mpsc;
@@ -28,6 +28,8 @@ use crate::errors::{ConnectionError, PacketError};
 use crate::messages::codec::PacketMessageCodec;
 use crate::messages::message::ClientMessage;
 use crate::messages::packet::PacketMessage;
+use crate::utils::EResultCast;
+use steam_protobuf::steam::steammessages_clientserver_login::CMsgClientLogonResponse;
 
 pub(crate) mod encryption;
 
@@ -65,12 +67,13 @@ pub(crate) type PacketTx = UnboundedSender<PacketMessage>;
 pub(crate) type MessageTx<T> = UnboundedSender<ClientMessage<T>>;
 
 pub(crate) type DynBytes = Box<dyn SerializableBytes>;
+pub(crate) type BytesRx = UnboundedReceiver<Vec<u8>>;
 pub(crate) type BytesTx = UnboundedSender<Vec<u8>>;
 
 #[cfg(not(feature = "websockets"))]
 impl SteamConnection<TcpStream> {
     async fn main_loop(mut self) -> Result<(), ConnectionError> {
-        let (sender, mut receiver): (UnboundedSender<Vec<u8>>, UnboundedReceiver<Vec<u8>>) = mpsc::unbounded_channel();
+        let (outgoing_messages_tx, mut incoming_messagex_rx): (BytesTx, BytesRx) = mpsc::unbounded_channel();
 
         let connection_state = &mut self.state;
         let (stream_rx, stream_tx) = self.stream.into_split();
@@ -79,7 +82,7 @@ impl SteamConnection<TcpStream> {
         let mut framed_write = FramedWrite::new(stream_tx, PacketMessageCodec::default());
 
         tokio::spawn(async move {
-            if let Some(message) = receiver.recv().await {
+            if let Some(message) = incoming_messagex_rx.recv().await {
                 framed_write.send(message).await.unwrap();
             }
         });
@@ -89,7 +92,8 @@ impl SteamConnection<TcpStream> {
 
             match packet_message.emsg() {
                 EMsg::ChannelEncryptRequest | EMsg::ChannelEncryptResponse | EMsg::ChannelEncryptResult => {
-                    handle_encryption_negotiation(sender.clone(), connection_state, packet_message).unwrap();
+                    handle_encryption_negotiation(outgoing_messages_tx.clone(), connection_state, packet_message)
+                        .unwrap();
                 }
                 _ => {
                     unimplemented!()
@@ -99,6 +103,19 @@ impl SteamConnection<TcpStream> {
 
         Ok(())
     }
+}
+
+/// Information coming from the logon result, should bubble up to the client.
+fn handle_logon_response(message: PacketMessage) {
+    let incoming_message: ClientMessage<CMsgClientLogonResponse> = ClientMessage::from_packet_message(message);
+    let result = incoming_message.body.get_eresult().as_eresult();
+
+    let proto_header = incoming_message.proto_header().unwrap();
+    let session_id = proto_header.get_client_sessionid();
+    let steamid = proto_header.get_steamid();
+
+    let cell_id = incoming_message.body.get_cell_id();
+    let heartbeat_delay = incoming_message.body.get_out_of_game_heartbeat_seconds();
 }
 
 #[cfg(not(feature = "websockets"))]
