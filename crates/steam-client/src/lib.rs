@@ -1,3 +1,5 @@
+//! Some beautiful docs here
+
 #![allow(dead_code)]
 #![warn(missing_docs, missing_doc_code_examples)]
 #![deny(
@@ -24,6 +26,7 @@ pub mod connection;
 mod content_manager;
 pub mod errors;
 pub mod handlers;
+pub mod identifiers;
 pub mod messages;
 pub(crate) mod utils;
 

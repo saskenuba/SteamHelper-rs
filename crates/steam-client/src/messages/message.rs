@@ -41,9 +41,15 @@ pub struct ClientMessage<M> {
     // FIXME: Should be HasEMsg trait
     pub emsg: EMsg,
     /// A client message header wrapped in `MessageHeaderWrapper`.
-    pub wrapped_header: MessageHeaderWrapper,
+    pub header: MessageHeaderWrapper,
     pub body: M,
     payload: Vec<u8>,
+}
+
+impl<M> ClientMessage<M> {
+    pub fn proto_header(&self) -> Option<&CMsgProtoBufHeader> {
+        self.header.proto_header()
+    }
 }
 
 impl<M> ClientMessage<M>
@@ -53,7 +59,7 @@ where
     pub fn new_proto(emsg: EMsg) -> Self {
         Self {
             emsg,
-            wrapped_header: MessageHeaderWrapper::Proto(CMsgProtoBufHeader::new()),
+            header: MessageHeaderWrapper::Proto(CMsgProtoBufHeader::new()),
             body: M::new(),
             payload: vec![],
         }
@@ -66,8 +72,8 @@ impl<M: std::fmt::Debug + HasEMsg> std::fmt::Display for ClientMessage<M> {
             f,
             "Message: {:?}, Target ID: {:?} Source ID: {:?} Payload size {} bytes.",
             self.body,
-            self.wrapped_header.target(),
-            self.wrapped_header.source(),
+            self.header.target(),
+            self.header.source(),
             self.payload.len()
         )
     }
@@ -82,7 +88,7 @@ where
         let emsg = self.emsg as u32;
 
         output_buffer.extend(&emsg.to_le_bytes());
-        output_buffer.extend(self.wrapped_header.to_bytes());
+        output_buffer.extend(self.header.to_bytes());
         output_buffer.extend(self.body.to_bytes());
         output_buffer.extend(self.payload.as_slice());
         output_buffer.freeze().to_vec()
@@ -91,21 +97,25 @@ where
 
 const DEFAULT_MESSAGE_MAX_SIZE: usize = 1024;
 
-impl<T: MessageBodyExt + HasEMsg + DeserializableBytes> ClientMessage<T> {
+impl<T: MessageBodyExt + DeserializableBytes> ClientMessage<T> {
     /// Used to decode incoming messages
     pub(crate) fn from_packet_message(msg: PacketMessage) -> Self {
-        let (header_bytes, message_payload_bytes) = T::split_from_bytes(msg.payload());
-        let message = T::from_bytes(header_bytes);
-        let linked_emsg = T::emsg();
+        let header = msg.header();
+        let emsg = msg.emsg();
+        let message = T::from_bytes(msg.payload());
+
+        let (_, message_payload_bytes) = T::split_from_bytes(msg.payload());
 
         Self {
-            emsg: linked_emsg,
-            wrapped_header: msg.header(),
+            emsg,
+            header,
             body: message,
             payload: message_payload_bytes.to_vec(),
         }
     }
+}
 
+impl<T: HasEMsg> ClientMessage<T> {
     /// Used to build replies to Steam3
     pub(crate) fn new() -> Self {
         let header_kind = MessageHeaders::header_from_emsg(T::emsg()).unwrap();
@@ -113,13 +123,13 @@ impl<T: MessageBodyExt + HasEMsg + DeserializableBytes> ClientMessage<T> {
         match header_kind {
             MessageHeaders::Standard => Self {
                 emsg: T::emsg(),
-                wrapped_header: MessageHeaderWrapper::Std(StandardMessageHeader::create()),
+                header: MessageHeaderWrapper::Std(StandardMessageHeader::create()),
                 body: T::create(),
                 payload: Vec::with_capacity(DEFAULT_MESSAGE_MAX_SIZE),
             },
             MessageHeaders::Extended => Self {
                 emsg: T::emsg(),
-                wrapped_header: MessageHeaderWrapper::Ext(ExtendedMessageHeader::create()),
+                header: MessageHeaderWrapper::Ext(ExtendedMessageHeader::create()),
                 body: T::create(),
                 payload: Vec::with_capacity(DEFAULT_MESSAGE_MAX_SIZE),
             },
@@ -139,19 +149,19 @@ impl<C> MessageKind for ClientMessage<C> {
 
 impl<C: 'static> HasJobId for ClientMessage<C> {
     fn set_target(&mut self, new_target: u64) {
-        self.wrapped_header.set_target(new_target);
+        self.header.set_target(new_target);
     }
 
     fn set_source(&mut self, new_source: u64) {
-        self.wrapped_header.set_source(new_source);
+        self.header.set_source(new_source);
     }
 
     fn source(&self) -> u64 {
-        self.wrapped_header.source()
+        self.header.source()
     }
 
     fn target(&self) -> u64 {
-        self.wrapped_header.target()
+        self.header.target()
     }
 }
 

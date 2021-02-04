@@ -12,6 +12,7 @@ websockets = ["tokio-tungstenite"]
 
 [dependencies]
 
+arc-swap = "^1.2"
 anyhow = "^1.0"
 arrayref = "^0.3"
 async-trait = "^0.1"
@@ -19,12 +20,15 @@ atomic = "^0.5"
 bincode = "^1"
 byteorder = "1"
 bytes = "^1.0"
+chrono = { version = "^0.4", default-features = false }
 derive-new = "0.5.8"
 erased-serde = "^0.3"
 futures = "^0.3"
 lazy_static = "1"
 log = "^0.4"
 num = "^0.3"
+parking_lot = "^0.11"
+pin-project = "^1.0"
 regex = "^1"
 serde = { version = "^1.0", features = ["derive"] }
 serde_json = "^1"

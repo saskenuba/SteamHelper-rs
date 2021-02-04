@@ -67,8 +67,8 @@ pub(crate) fn handle_encrypt_request(message: PacketMessage) -> ClientMessage<Ms
     let (session_keys, encrypted_payload) = generate_encrypt_request_handshake(&*random_challenge);
 
     // last message source is now our target.. dunno yet about our source, maybe last message target?
-    let target = incoming_message.wrapped_header.target();
-    let source = incoming_message.wrapped_header.source();
+    let target = incoming_message.header.target();
+    let source = incoming_message.header.source();
 
     let mut reply_message: ClientMessage<MsgChannelEncryptResponse> = ClientMessage::new();
     reply_message.set_target(target);

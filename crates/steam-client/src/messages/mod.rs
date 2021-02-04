@@ -1,5 +1,5 @@
 use std::any::Any;
-use steam_language_gen::SerializableBytes;
+
 use steam_protobuf::Message;
 
 pub mod codec;
@@ -22,13 +22,13 @@ pub(crate) trait ProtoMsgBox: Message {
 }
 
 pub(crate) trait ProtoRecover: Any {
-    fn recover<T>(self) -> &'static T;
+    fn recover<T: 'static>(self) -> Box<T>;
 }
 
-//FIXME: downcast and unwrap box?
+// FIXME: downcast and unwrap box?
 impl ProtoRecover for Box<dyn Any> {
-    fn recover<T>(self) -> &'static T {
-        self.downcast_ref::<T>()
+    fn recover<T: 'static>(self) -> Box<T> {
+        self.downcast::<T>()
             .expect("This SHOULD NOT fail. Simply because we should know the type we are handling.")
     }
 }
