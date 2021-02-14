@@ -10,7 +10,7 @@ pub async fn dump_tcp_servers() -> Result<Vec<String>> {
     let cm_list: GetCMListResponseBase = API_CLIENT
         .get()
         .ISteamDirectory()
-        .GetCMList(Some(25), None)
+        .GetCMList(25, None)
         .execute_with_response()
         .compat()
         .await?;
