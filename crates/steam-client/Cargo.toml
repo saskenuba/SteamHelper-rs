@@ -36,7 +36,7 @@ serde_repr = "^0"
 thiserror = "^1.0"
 
 # futures
-tokio = { version = "^1.1", features = ["net", "rt", "macros"] }
+tokio = { version = "^1.1", features = ["net", "rt-multi-thread", "macros"] }
 tokio-util = "^0.6"
 tokio-tungstenite = { version = "^0.13", optional = true }
 tokio-compat-02 = "0.2.0"
