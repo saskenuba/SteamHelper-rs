@@ -69,7 +69,7 @@ const MOBILE_REFERER: &str = concatcp!(
 /// Ideally all fields should be populated before authenticator operations are made.
 ///
 /// A simple implementation that has everything required to work properly:
-/// ```
+/// ```norun
 /// use steam_auth::User;
 ///
 /// User::build()

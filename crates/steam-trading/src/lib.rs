@@ -218,7 +218,7 @@ impl<'a> SteamTradeManager<'a> {
             .for_each(|x| {
                 deny_offers_fut.push(
                     self.deny_offer(x)
-                        .map_ok(|_| tokio::time::delay_for(Duration::from_millis(STANDARD_DELAY))),
+                        .map_ok(|_| tokio::time::sleep(Duration::from_millis(STANDARD_DELAY))),
                 );
             });
 
@@ -241,7 +241,7 @@ impl<'a> SteamTradeManager<'a> {
     pub async fn create_offer_and_confirm(&self, tradeoffer: TradeOffer) -> Result<i64, TradeError> {
         let tradeoffer_id = self.create_offer(tradeoffer).await?;
 
-        tokio::time::delay_for(Duration::from_millis(STANDARD_DELAY)).await;
+        tokio::time::sleep(Duration::from_millis(STANDARD_DELAY)).await;
 
         let confirmations: Option<Confirmations> = self
             .authenticator

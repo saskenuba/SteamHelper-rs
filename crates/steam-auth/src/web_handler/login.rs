@@ -99,7 +99,7 @@ pub(crate) async fn login_website<'a, LC: Into<Option<LoginCaptcha<'a>>>>(
         .await?;
 
     // wait for steam to catch up
-    time::delay_for(Duration::from_millis(STEAM_DELAY_MS)).await;
+    time::sleep(Duration::from_millis(STEAM_DELAY_MS)).await;
 
     // rsa handling
     let response = rsa_response.json::<RSAResponse>().await.unwrap();

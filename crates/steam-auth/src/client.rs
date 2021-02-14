@@ -166,7 +166,7 @@ impl SteamAuthenticator {
     pub async fn finalize_authenticator(&self, mafile: &MobileAuthFile, sms_code: &str) -> Result<(), AuthError> {
         // The delay is that Steam need some seconds to catch up with the new phone number associated.
         let account_has_phone_now: bool = check_sms(&self.client, sms_code)
-            .map_ok(|_| tokio::time::delay_for(Duration::from_secs(STEAM_ADD_PHONE_CATCHUP_SECS)))
+            .map_ok(|_| tokio::time::sleep(Duration::from_secs(STEAM_ADD_PHONE_CATCHUP_SECS)))
             .and_then(|_| account_has_phone(&self.client))
             .await?;
 
@@ -200,7 +200,7 @@ impl SteamAuthenticator {
         // Add the phone number to user account
         // The delay is that Steam need some seconds to catch up.
         let response = add_phone_to_account(&self.client, phone_number).await?;
-        tokio::time::delay_for(Duration::from_secs(STEAM_ADD_PHONE_CATCHUP_SECS)).await;
+        tokio::time::sleep(Duration::from_secs(STEAM_ADD_PHONE_CATCHUP_SECS)).await;
 
         Ok(response)
     }

@@ -156,7 +156,7 @@ pub(crate) async fn finalize_authenticator(
 
         // Steam want more codes, delay a bit and send all again.
         if response.want_more {
-            tokio::time::delay_for(Duration::from_secs(1)).await;
+            tokio::time::sleep(Duration::from_secs(1)).await;
             tries += 1;
             continue;
         }
