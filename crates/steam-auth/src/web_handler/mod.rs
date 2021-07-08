@@ -1,4 +1,4 @@
-use std::cell::{RefCell, RefMut};
+use std::cell::RefCell;
 use std::rc::Rc;
 
 use const_format::concatcp;
@@ -8,7 +8,7 @@ use reqwest::Method;
 use scraper::Html;
 use steam_language_gen::generated::enums::EResult;
 use steam_totp::Time;
-use tracing::{debug, info, trace, warn};
+use tracing::{debug, trace, warn};
 
 use crate::client::MobileClient;
 use crate::errors::{ApiKeyError, LoginError};

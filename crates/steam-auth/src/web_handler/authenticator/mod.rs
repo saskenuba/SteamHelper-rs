@@ -3,7 +3,6 @@ use std::cell::Ref;
 use const_format::concatcp;
 use futures::TryFutureExt;
 use reqwest::Method;
-use tokio::time::Duration;
 use tracing::debug;
 
 use crate::client::MobileClient;
@@ -15,6 +14,7 @@ use crate::web_handler::authenticator::types::{
     GenericSuccessResponse, HasPhoneResponse, PhoneAjaxRequest,
 };
 use crate::{CachedInfo, MobileAuthFile, STEAM_API_BASE, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST};
+use std::time::Duration;
 
 mod types;
 
