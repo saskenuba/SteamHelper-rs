@@ -5,8 +5,8 @@ use byteorder::{BigEndian, ByteOrder};
 
 use super::{
     error::{SteamApiError, TotpError},
-    Result,
     steam_api::SteamApiResponse,
+    Result,
 };
 
 /// Struct for working with TOTP time values.
@@ -79,7 +79,7 @@ impl Time {
         Time::now(Some(Time::offset().await?))
     }
 
-    pub(crate) fn as_padded_buffer<'a>(&self, interval: Option<u64>) -> Vec<u8> {
+    pub(crate) fn as_padded_buffer(&self, interval: Option<u64>) -> Vec<u8> {
         let interval = interval.unwrap_or(1);
         let mut buffer = vec![0; 8];
 
