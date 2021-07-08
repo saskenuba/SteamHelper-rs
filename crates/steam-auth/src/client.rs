@@ -50,7 +50,7 @@ impl SteamAuthenticator {
         Self {
             client: MobileClient::default(),
             user,
-            cached_data: Rc::new(RefCell::new(Default::default())),
+            cached_data: Rc::new(RefCell::new(CachedInfo::default())),
         }
     }
 
@@ -59,7 +59,7 @@ impl SteamAuthenticator {
         let api_key;
 
         {
-            api_key = self.cached_data.borrow().api_key().cloned();
+            api_key = self.cached_data.borrow().api_key().map(ToString::to_string)
         }
         api_key
     }
@@ -86,13 +86,12 @@ impl SteamAuthenticator {
         (|| async {
             login_website(&self.client, &self.user, self.cached_data.borrow_mut(), captcha.clone())
                 .await
-                .map_err(|e| match e {
-                    LoginError::CaptchaRequired { captcha_guid } => {
+                .map_err(|error| {
+                    if let LoginError::CaptchaRequired { captcha_guid } = error {
                         backoff::Error::Permanent(LoginError::CaptchaRequired { captcha_guid })
-                    }
-                    _ => {
+                    } else {
                         warn!("Transient error happened: Trying again..");
-                        backoff::Error::Transient(e)
+                        backoff::Error::Transient(error)
                     }
                 })
         })

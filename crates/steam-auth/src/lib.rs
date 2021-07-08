@@ -69,7 +69,7 @@ const MOBILE_REFERER: &str = concatcp!(
 /// Ideally all fields should be populated before authenticator operations are made.
 ///
 /// A simple implementation that has everything required to work properly:
-/// ```
+/// ```no_run
 /// use steam_auth::User;
 ///
 /// User::build()
@@ -113,16 +113,16 @@ impl CachedInfo {
         self.api_key = Some(api_key);
     }
 
-    fn api_key(&self) -> Option<&String> {
-        Some(self.api_key.as_ref()?)
+    fn api_key(&self) -> Option<&str> {
+        self.api_key.as_deref()
     }
 
     fn steam_id(&self) -> Option<u64> {
         Some(self.steamid.as_ref()?.to_steam64())
     }
 
-    fn oauth_token(&self) -> Option<&String> {
-        Some(self.oauth_token.as_ref()?)
+    fn oauth_token(&self) -> Option<&str> {
+        self.oauth_token.as_deref()
     }
 }
 
