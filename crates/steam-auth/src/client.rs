@@ -1,29 +1,30 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use backoff::future::FutureOperation;
 use cookie::{Cookie, CookieJar};
-use futures::TryFutureExt;
 use reqwest::header::HeaderMap;
 use reqwest::redirect::Policy;
 use reqwest::{Client, Method, Response, Url};
 use scraper::Html;
 use serde::Serialize;
-use tokio::time::Duration;
 use tracing::{debug, info, warn};
 
 use crate::errors::{AuthError, LinkerError, LoginError};
 use crate::retry::login_retry_strategy;
 use crate::types::LoginCaptcha;
 use crate::utils::{dump_cookies_by_domain, dump_cookies_by_name, retrieve_header_location};
-use crate::web_handler::authenticator::{
+use crate::web_handler::steam_guard_linker::{
     account_has_phone, add_authenticator_to_account, add_phone_to_account, check_email_confirmation, check_sms,
-    finalize_authenticator, validate_phone_number, AddAuthenticatorStep, STEAM_ADD_PHONE_CATCHUP_SECS,
+    finalize, validate_phone_number, AddAuthenticatorStep, STEAM_ADD_PHONE_CATCHUP_SECS,
 };
 use crate::web_handler::confirmation::Confirmations;
 use crate::web_handler::login::login_website;
 use crate::web_handler::{cache_resolve, confirmations_retrieve_all, confirmations_send, parental_unlock};
 use crate::{CachedInfo, ConfirmationMethod, MobileAuthFile, User, STEAM_COMMUNITY_HOST};
+use backoff::future::retry;
+use futures_timer::Delay;
+use std::time::Duration;
+use futures::TryFutureExt;
 
 #[derive(Debug)]
 /// Main authenticator. We use it to spawn and act as our "mobile" client.
@@ -83,7 +84,7 @@ impl SteamAuthenticator {
     /// The cookies are inside the [MobileClient] inner cookie storage.
     pub async fn login(&self, captcha: Option<LoginCaptcha<'_>>) -> Result<(), AuthError> {
         // FIXME: Add more permanent errors, such as bad credentials
-        (|| async {
+        retry(login_retry_strategy(), || async {
             login_website(&self.client, &self.user, self.cached_data.borrow_mut(), captcha.clone())
                 .await
                 .map_err(|error| {
@@ -95,7 +96,6 @@ impl SteamAuthenticator {
                     }
                 })
         })
-        .retry(login_retry_strategy())
         .await?;
 
         info!("Login to Steam successfully.");
@@ -157,7 +157,7 @@ impl SteamAuthenticator {
             .map_err(|e| e.into())
     }
 
-    /// Finalize the authenticator process, enabling SteamGuard for the account.
+    /// Finalize the authenticator process, enabling `SteamGuard` for the account.
     /// This method wraps up the whole process, finishing the registration of the phone number into the account.
     ///
     /// You **should** only call this method after saving your maFile, because otherwise you WILL lose access to your
@@ -165,7 +165,7 @@ impl SteamAuthenticator {
     pub async fn finalize_authenticator(&self, mafile: &MobileAuthFile, sms_code: &str) -> Result<(), AuthError> {
         // The delay is that Steam need some seconds to catch up with the new phone number associated.
         let account_has_phone_now: bool = check_sms(&self.client, sms_code)
-            .map_ok(|_| tokio::time::delay_for(Duration::from_secs(STEAM_ADD_PHONE_CATCHUP_SECS)))
+            .map_ok(|_| Delay::new(Duration::from_secs(STEAM_ADD_PHONE_CATCHUP_SECS)))
             .and_then(|_| account_has_phone(&self.client))
             .await?;
 
@@ -175,7 +175,7 @@ impl SteamAuthenticator {
 
         info!("Successfully confirmed SMS code.");
 
-        finalize_authenticator(&self.client, self.cached_data.borrow(), mafile, sms_code)
+        finalize(&self.client, self.cached_data.borrow(), mafile, sms_code)
             .await
             .map_err(|e| e.into())
     }
@@ -199,7 +199,7 @@ impl SteamAuthenticator {
         // Add the phone number to user account
         // The delay is that Steam need some seconds to catch up.
         let response = add_phone_to_account(&self.client, phone_number).await?;
-        tokio::time::delay_for(Duration::from_secs(STEAM_ADD_PHONE_CATCHUP_SECS)).await;
+        Delay::new(Duration::from_secs(STEAM_ADD_PHONE_CATCHUP_SECS)).await;
 
         Ok(response)
     }
