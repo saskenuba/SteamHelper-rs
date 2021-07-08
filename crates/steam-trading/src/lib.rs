@@ -43,7 +43,6 @@ use steam_web_api::response_types::{
 };
 use steam_web_api::{Executor, ExecutorResponse, SteamAPI};
 use steamid_parser::SteamID;
-use tokio::time::Duration;
 use tracing::{debug, info};
 pub use types::asset_collection::AssetCollection;
 pub use types::trade_link::Tradelink;
@@ -58,6 +57,8 @@ use crate::types::trade_offer_web::{
     TradeOfferGenericErrorResponse, TradeOfferGenericRequest, TradeOfferParams,
 };
 use crate::types::TradeKind;
+use std::time::Duration;
+use futures_timer::Delay;
 
 pub mod api_extensions;
 mod errors;
@@ -218,7 +219,7 @@ impl<'a> SteamTradeManager<'a> {
             .for_each(|x| {
                 deny_offers_fut.push(
                     self.deny_offer(x)
-                        .map_ok(|_| tokio::time::delay_for(Duration::from_millis(STANDARD_DELAY))),
+                        .map_ok(|_| Delay::new(Duration::from_millis(STANDARD_DELAY))),
                 );
             });
 
@@ -241,7 +242,7 @@ impl<'a> SteamTradeManager<'a> {
     pub async fn create_offer_and_confirm(&self, tradeoffer: TradeOffer) -> Result<i64, TradeError> {
         let tradeoffer_id = self.create_offer(tradeoffer).await?;
 
-        tokio::time::delay_for(Duration::from_millis(STANDARD_DELAY)).await;
+        Delay::new(Duration::from_millis(STANDARD_DELAY)).await;
 
         let confirmations: Option<Confirmations> = self
             .authenticator
