@@ -10,7 +10,6 @@ use reqwest::{Client, Method};
 use rsa::padding::PaddingScheme;
 use rsa::{BigUint, PublicKey, RSAPublicKey};
 use steam_totp::{Secret, Time};
-use tokio::time;
 use tracing::warn;
 
 use crate::client::MobileClient;
@@ -20,6 +19,7 @@ use crate::{
     CachedInfo, User, MOBILE_REFERER, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_DELAY_MS, STEAM_HELP_HOST,
     STEAM_STORE_HOST,
 };
+use futures_timer::Delay;
 
 const LOGIN_GETRSA_URL: &str = concatcp!(STEAM_COMMUNITY_BASE, "/login/getrsakey");
 const LOGIN_DO_URL: &str = concatcp!(STEAM_COMMUNITY_BASE, "/login/dologin");
@@ -99,7 +99,7 @@ pub(crate) async fn login_website<'a, LC: Into<Option<LoginCaptcha<'a>>>>(
         .await?;
 
     // wait for steam to catch up
-    time::delay_for(Duration::from_millis(STEAM_DELAY_MS)).await;
+    Delay::new(Duration::from_millis(STEAM_DELAY_MS)).await;
 
     // rsa handling
     let response = rsa_response.json::<RSAResponse>().await.unwrap();

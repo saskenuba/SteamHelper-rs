@@ -8,22 +8,23 @@ use tracing::debug;
 use crate::client::MobileClient;
 use crate::errors::LinkerError;
 use crate::utils::{dump_cookies_by_name, generate_canonical_device_id};
-use crate::web_handler::authenticator::types::{
+use crate::web_handler::steam_guard_linker::types::{
     AddAuthenticatorErrorResponseBase, AddAuthenticatorRequest, AddAuthenticatorResponseBase,
     FinalizeAddAuthenticatorBase, FinalizeAddAuthenticatorErrorBase, FinalizeAddAuthenticatorRequest,
     GenericSuccessResponse, HasPhoneResponse, PhoneAjaxRequest,
 };
 use crate::{CachedInfo, MobileAuthFile, STEAM_API_BASE, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST};
+use futures_timer::Delay;
 use std::time::Duration;
 
 mod types;
 
 const PHONEAJAX_URL: &str = concatcp!(STEAM_COMMUNITY_BASE, "/steamguard/phoneajax");
-pub(crate) const STEAM_ADD_PHONE_CATCHUP_SECS: u64 = 5;
+pub const STEAM_ADD_PHONE_CATCHUP_SECS: u64 = 5;
 
 type LinkerResult<T> = Result<T, LinkerError>;
 
-/// By default, your MobileAuth file will always be printed to the terminal.
+/// By default, your `MobileAuth` file will always be printed to the terminal.
 pub struct Authenticator {
     phone_number: String,
 }
@@ -39,13 +40,13 @@ pub enum AddAuthenticatorStep {
     InitialStep,
     /// Authenticator is waiting user's email confirmation to allow Steam add phone number.
     EmailConfirmation,
-    /// Authenticator succeded and retrieved `MobileAuthFile`.
+    /// Authenticator succeeded and retrieved `MobileAuthFile`.
     MobileAuth(MobileAuthFile),
 }
 
 /// Queries the `/steamguard/phoneajax` to check if the user has a phone number.
 /// Returns true if user has already a phone registered.
-pub(crate) async fn account_has_phone(client: &MobileClient) -> LinkerResult<bool> {
+pub async fn account_has_phone(client: &MobileClient) -> LinkerResult<bool> {
     let session_id = dump_cookies_by_name(&client.cookie_store.borrow(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
     let payload = PhoneAjaxRequest::has_phone(&*session_id);
 
@@ -57,7 +58,7 @@ pub(crate) async fn account_has_phone(client: &MobileClient) -> LinkerResult<boo
     Ok(response.user_has_phone)
 }
 
-pub(crate) async fn check_sms(client: &MobileClient, sms_code: &str) -> LinkerResult<bool> {
+pub async fn check_sms(client: &MobileClient, sms_code: &str) -> LinkerResult<bool> {
     let session_id = dump_cookies_by_name(&client.cookie_store.borrow(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
     let payload = PhoneAjaxRequest::check_sms(&*session_id, sms_code);
 
@@ -71,7 +72,7 @@ pub(crate) async fn check_sms(client: &MobileClient, sms_code: &str) -> LinkerRe
 
 /// Signals Steam that the user confirmed the phone add request email, and is ready for the next step.
 /// Confirming the email allows `SteamAuthenticator` to register a new phone number to account.
-pub(crate) async fn check_email_confirmation(client: &MobileClient) -> LinkerResult<bool> {
+pub async fn check_email_confirmation(client: &MobileClient) -> LinkerResult<bool> {
     let session_id = dump_cookies_by_name(&client.cookie_store.borrow(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
     let payload = PhoneAjaxRequest::check_email_confirmation(&*session_id);
 
@@ -83,7 +84,7 @@ pub(crate) async fn check_email_confirmation(client: &MobileClient) -> LinkerRes
     Ok(response.success)
 }
 
-pub(crate) async fn add_phone_to_account(client: &MobileClient, phone_number: &str) -> LinkerResult<bool> {
+pub async fn add_phone_to_account(client: &MobileClient, phone_number: &str) -> LinkerResult<bool> {
     let session_id = dump_cookies_by_name(&client.cookie_store.borrow(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
 
     let payload = PhoneAjaxRequest::add_phone(&*session_id, phone_number);
@@ -101,7 +102,7 @@ pub fn validate_phone_number(phone_number: &str) -> bool {
 }
 
 /// Last step to add a new authenticator.
-pub(crate) async fn finalize_authenticator(
+pub(crate) async fn finalize(
     client: &MobileClient,
     cached_data: Ref<'_, CachedInfo>,
     mafile: &MobileAuthFile,
@@ -156,7 +157,7 @@ pub(crate) async fn finalize_authenticator(
 
         // Steam want more codes, delay a bit and send all again.
         if response.want_more {
-            tokio::time::delay_for(Duration::from_secs(1)).await;
+            Delay::new(Duration::from_secs(1)).await;
             tries += 1;
             continue;
         }
@@ -216,4 +217,5 @@ pub(crate) async fn add_authenticator_to_account(
 /// Remove authenticator from account.
 pub(crate) async fn remove_authenticator(_client: &MobileClient, _cached_data: Ref<'_, CachedInfo>) {
     let _url = format!("{}{}", STEAM_API_BASE, "/ITwoFactorService/AddAuthenticator/v0001");
+    todo!()
 }

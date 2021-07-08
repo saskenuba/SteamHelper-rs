@@ -23,7 +23,7 @@ use crate::{
     CachedInfo, User, STEAM_API_BASE, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_STORE_BASE, STEAM_STORE_HOST,
 };
 
-pub(crate) mod authenticator;
+pub(crate) mod steam_guard_linker;
 pub mod confirmation;
 pub(crate) mod login;
 

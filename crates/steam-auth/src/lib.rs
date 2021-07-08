@@ -27,7 +27,8 @@ use steam_totp::Secret;
 use steamid_parser::SteamID;
 pub use utils::format_captcha_url;
 use uuid::Uuid;
-pub use web_handler::authenticator::AddAuthenticatorStep;
+
+pub use web_handler::steam_guard_linker::AddAuthenticatorStep;
 pub use web_handler::confirmation::{ConfirmationMethod, Confirmations, EConfirmationType};
 
 pub mod client;
