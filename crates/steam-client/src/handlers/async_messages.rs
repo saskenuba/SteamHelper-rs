@@ -45,11 +45,11 @@ impl<'a, T: 'static> Future for AsyncResponseInner<'a, T> {
 
         waker.register(cx.waker());
         {
-            dispatcher.tracked_source_jobids.lock().insert(source_job_id, waker);
+            dispatcher.tracked_jobids_wakers.lock().insert(source_job_id, waker);
         }
 
         let message = {
-            match dispatcher.tracked_proto_messages.lock().remove(&source_job_id) {
+            match dispatcher.tracked_messages.lock().remove(&source_job_id) {
                 None => return Poll::Ready(Err(MessageError::Timeout)),
                 Some(message) => message,
             }
@@ -60,6 +60,4 @@ impl<'a, T: 'static> Future for AsyncResponseInner<'a, T> {
     }
 }
 
-impl<'a, T> AsyncResponseInner<'a, T> {
-
-}
+impl<'a, T> AsyncResponseInner<'a, T> {}

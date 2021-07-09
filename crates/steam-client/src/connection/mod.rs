@@ -9,27 +9,28 @@
 //! Apparently, bytes received are in little endian
 
 use std::error::Error;
+use std::sync::atomic::AtomicI32;
 
 use async_trait::async_trait;
 use atomic::{Atomic, Ordering};
-use bytes::BytesMut;
 use futures::{SinkExt, StreamExt};
 use steam_crypto::SessionKeys;
 use steam_language_gen::generated::enums::{EMsg, EResult};
-use steam_language_gen::{FromPrimitive, SerializableBytes};
-use tokio::io::AsyncWriteExt;
+use steam_language_gen::SerializableBytes;
+use steam_protobuf::steam::steammessages_clientserver_login::CMsgClientLogonResponse;
 use tokio::net::TcpStream;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+#[cfg(feature = "websockets")]
+use tokio_tungstenite::{connect_async, WebSocketStream};
 use tokio_util::codec::{FramedRead, FramedWrite};
 
 use crate::connection::encryption::handle_encryption_negotiation;
-use crate::errors::{ConnectionError, PacketError};
+use crate::errors::ConnectionError;
 use crate::messages::codec::PacketMessageCodec;
 use crate::messages::message::ClientMessage;
 use crate::messages::packet::PacketMessage;
 use crate::utils::EResultCast;
-use steam_protobuf::steam::steammessages_clientserver_login::CMsgClientLogonResponse;
 
 pub(crate) mod encryption;
 
@@ -47,7 +48,8 @@ pub(crate) struct SteamConnection<S> {
     state: Atomic<EncryptionState>,
     /// Populated after the initial handshake with Steam
     session_keys: Option<SessionKeys>,
-    // receiver: UnboundedReceiver<DynBytes>,
+
+    heartbeat_seconds: AtomicI32,
 }
 
 impl<S> SteamConnection<S> {
@@ -57,10 +59,8 @@ impl<S> SteamConnection<S> {
 }
 
 #[async_trait]
-trait Connection<S> {
-    async fn new_connection(ip_addr: &str) -> Result<SteamConnection<S>, Box<dyn Error>>;
-    async fn read_packets(&mut self) -> Result<PacketMessage, PacketError>;
-    async fn write_packets(&mut self, data: &[u8]) -> Result<(), Box<dyn Error>>;
+pub(crate) trait CMConnectionExt<S> {
+    async fn new_connection(cm_ip_addr: String) -> Result<SteamConnection<S>, ConnectionError>;
 }
 
 pub(crate) type PacketTx = UnboundedSender<PacketMessage>;
@@ -72,10 +72,10 @@ pub(crate) type BytesTx = UnboundedSender<Vec<u8>>;
 
 #[cfg(not(feature = "websockets"))]
 impl SteamConnection<TcpStream> {
-    async fn main_loop(mut self) -> Result<(), ConnectionError> {
+    pub async fn main_loop(self) -> Result<(), ConnectionError> {
         let (outgoing_messages_tx, mut incoming_messagex_rx): (BytesTx, BytesRx) = mpsc::unbounded_channel();
 
-        let connection_state = &mut self.state;
+        let connection_state = self.state;
         let (stream_rx, stream_tx) = self.stream.into_split();
 
         let mut framed_read = FramedRead::new(stream_rx, PacketMessageCodec::default());
@@ -84,6 +84,10 @@ impl SteamConnection<TcpStream> {
         tokio::spawn(async move {
             if let Some(message) = incoming_messagex_rx.recv().await {
                 framed_write.send(message).await.unwrap();
+                // if let EncryptionState::Encrypted = state_reader.load(Ordering::SeqCst) {
+                // } else {
+                //     framed_write.send(message).await.unwrap();
+                // }
             }
         });
 
@@ -92,7 +96,7 @@ impl SteamConnection<TcpStream> {
 
             match packet_message.emsg() {
                 EMsg::ChannelEncryptRequest | EMsg::ChannelEncryptResponse | EMsg::ChannelEncryptResult => {
-                    handle_encryption_negotiation(outgoing_messages_tx.clone(), connection_state, packet_message)
+                    handle_encryption_negotiation(outgoing_messages_tx.clone(), &connection_state, packet_message)
                         .unwrap();
                 }
                 _ => {
@@ -107,7 +111,9 @@ impl SteamConnection<TcpStream> {
 
 /// Information coming from the logon result, should bubble up to the client.
 fn handle_logon_response(message: PacketMessage) {
+    // TODO this could be a proto or extended header..
     let incoming_message: ClientMessage<CMsgClientLogonResponse> = ClientMessage::from_packet_message(message);
+
     let result = incoming_message.body.get_eresult().as_eresult();
 
     let proto_header = incoming_message.proto_header().unwrap();
@@ -120,97 +126,42 @@ fn handle_logon_response(message: PacketMessage) {
 
 #[cfg(not(feature = "websockets"))]
 #[async_trait]
-impl Connection<TcpStream> for SteamConnection<TcpStream> {
+impl CMConnectionExt<TcpStream> for SteamConnection<TcpStream> {
     /// Opens a tcp stream to specified IP
-    async fn new_connection(ip_addr: &str) -> Result<SteamConnection<TcpStream>, Box<dyn Error>> {
-        trace!("Connecting to ip: {}", &ip_addr);
+    async fn new_connection(cm_ip_addr: String) -> Result<SteamConnection<TcpStream>, ConnectionError> {
+        trace!("Connecting to ip: {}", &cm_ip_addr);
 
-        let stream = TcpStream::connect(ip_addr).await?;
+        let stream = TcpStream::connect(&cm_ip_addr).await?;
 
         Ok(SteamConnection {
             stream,
-            endpoint: ip_addr.to_string(),
+            endpoint: cm_ip_addr,
             state: Atomic::new(EncryptionState::Disconnected),
             session_keys: None,
+            heartbeat_seconds: Default::default(),
         })
-    }
-
-    #[inline]
-    async fn read_packets(&mut self) -> Result<PacketMessage, PacketError> {
-        let mut framed_stream = FramedRead::new(&mut self.stream, PacketMessageCodec::default());
-        Ok(framed_stream.next().await.unwrap().unwrap())
-    }
-
-    #[inline]
-    async fn write_packets(&mut self, data: &[u8]) -> Result<(), Box<dyn Error>> {
-        let mut output_buffer = BytesMut::with_capacity(1024);
-
-        trace!("payload size: {} ", data.len());
-
-        output_buffer.extend_from_slice(&(data.len() as u32).to_le_bytes());
-        output_buffer.extend_from_slice(PACKET_MAGIC_BYTES);
-        output_buffer.extend_from_slice(data);
-        let output_buffer = output_buffer.freeze();
-
-        trace!("Writing {} bytes of data to stream..", output_buffer.len());
-        trace!("Payload bytes: {:?}", output_buffer);
-
-        let write_result = self.stream.write(&output_buffer).await?;
-        trace!("write result: {}", write_result);
-        Ok(())
     }
 }
 
 #[cfg(feature = "websockets")]
-mod connection_method {
-    use tokio_tls::TlsStream;
-    use tokio_tungstenite::stream::Stream;
-    use tokio_tungstenite::{connect_async, WebSocketStream};
+pub type WsStream = WebSocketStream<TcpStream>;
 
-    use super::*;
+#[cfg(feature = "websockets")]
+#[async_trait]
+impl CMConnectionExt<WsStream> for SteamConnection<WsStream> {
+    async fn new_connection(ws_url: &str) -> Result<SteamConnection<WsStream>, ConnectionError> {
+        let formatted_ws_url = format!("wss://{}/cmsocket/", ws_url);
+        debug!("Connecting to addr: {}", formatted_ws_url);
 
-    type Ws = WebSocketStream<Stream<TcpStream, TlsStream<TcpStream>>>;
+        let ((stream, resp), _) = connect_async(&formatted_ws_url).await?;
 
-    #[async_trait]
-    impl Connection<Ws> for SteamConnection<Ws> {
-        async fn new_connection(ws_url: &str) -> Result<SteamConnection<Ws>, Box<dyn Error>> {
-            let formatted_ws_url = format!("wss://{}/cmsocket/", ws_url);
-            debug!("Connecting to addr: {}", formatted_ws_url);
-
-            let (stream, _) = connect_async(&formatted_ws_url).await?;
-
-            Ok(SteamConnection {
-                stream,
-                endpoint: formatted_ws_url,
-                state: EncryptionState::Disconnected,
-            })
-        }
-        #[inline]
-        async fn read_packets(&mut self) -> Result<Vec<u8>, Box<dyn Error>> {
-            let mut data_len: [u8; 4] = [0; 4];
-            self.stream.get_mut().read_exact(&mut data_len).await?;
-
-            let mut packet_magic: [u8; 4] = [0; 4];
-            self.stream.get_mut().read_exact(&mut packet_magic).await?;
-
-            if packet_magic != PACKET_MAGIC_BYTES {
-                log::error!("Could not find magic packet on read.");
-            }
-
-            let mut incoming_data = BytesMut::with_capacity(1024);
-            self.stream.get_mut().read_buf(&mut incoming_data).await?;
-
-            // sanity check
-            debug!("data length: {}", u32::from_le_bytes(data_len));
-            trace!("data: {:?}", incoming_data);
-
-            Ok(incoming_data.to_vec())
-        }
-
-        #[inline]
-        async fn write_packets(&mut self, data: &[u8]) -> Result<(), Box<dyn Error>> {
-            unimplemented!()
-        }
+        Ok(SteamConnection {
+            stream,
+            endpoint: formatted_ws_url,
+            state: Atomic::new(EncryptionState::Disconnected),
+            session_keys: None,
+            heartbeat_seconds: Default::default(),
+        })
     }
 }
 
@@ -307,15 +258,12 @@ mod tests {
     // assert_eq!(message, EMsg::ChannelEncryptResult);
     // }
 
-    #[tokio::test(threaded_scheduler)]
     #[cfg(feature = "websockets")]
     async fn connect_to_ws_server() {
         init();
 
-        let get_results = CmServerSvList::fetch_servers("1").await;
-        let fetched_servers = get_results.unwrap().dump_ws_servers();
-
-        let steam_connection = SteamConnection::new_connection(&fetched_servers[0]).await;
+        let dumped_cm_servers = dump_tcp_servers().await.unwrap();
+        let steam_connection = SteamConnection::new_connection(&dumped_cm_servers[0]).await;
         assert!(steam_connection.is_ok())
     }
 }

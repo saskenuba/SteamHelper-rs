@@ -7,6 +7,9 @@ pub enum ConnectionError {
     #[error("Connection with Steam CM server was dropped.")]
     Dropped,
 
+    #[error("Failed to connect to Steam CM server.")]
+    Failed,
+
     #[error(transparent)]
     IoError(#[from] io::Error),
 }

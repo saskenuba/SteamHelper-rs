@@ -21,6 +21,7 @@ bincode = "^1"
 byteorder = "1"
 bytes = "^1.0"
 chrono = { version = "^0.4", default-features = false }
+cfg-if = "^1"
 derive-new = "0.5.8"
 erased-serde = "^0.3"
 futures = "^0.3"

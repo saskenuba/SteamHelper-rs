@@ -18,18 +18,20 @@ use crate::handlers::SteamEvents;
 #[derive(Debug, Default)]
 pub struct DispatcherMap {
     pub(crate) current_job_id: AtomicU64,
+
     /// User is interested in listening for the followings events
     /// and will answer with a proper callback
     interested: HashMap<SteamEvents, String>,
 
-    // we may need a source/target hashmap to track messages
-    pub(crate) tracked_proto_messages: Arc<Mutex<HashMap<u64, Box<dyn Any>>>>,
-    pub(crate) tracked_source_jobids: Arc<Mutex<HashMap<u64, Box<AtomicWaker>>>>,
+    /// A hashmap that contains a message
+    pub(crate) tracked_messages: Arc<Mutex<HashMap<u64, Box<dyn Any>>>>,
+    /// A hashmap that contains a waker for a future, waiting for a message.
+    pub(crate) tracked_jobids_wakers: Arc<Mutex<HashMap<u64, Box<AtomicWaker>>>>,
 }
 
 impl DispatcherMap {
     fn register_incoming_task(&self, source_job_id: u64) {
-        let waker = self.tracked_source_jobids.lock().remove(&source_job_id).unwrap();
+        let waker = self.tracked_jobids_wakers.lock().remove(&source_job_id).unwrap();
         waker.wake();
     }
 }
@@ -39,8 +41,8 @@ impl DispatcherMap {
         Self {
             current_job_id: AtomicU64::new(0),
             interested: Default::default(),
-            tracked_proto_messages: Default::default(),
-            tracked_source_jobids: Default::default(),
+            tracked_messages: Default::default(),
+            tracked_jobids_wakers: Default::default(),
         }
     }
 

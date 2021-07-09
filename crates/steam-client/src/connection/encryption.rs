@@ -15,7 +15,7 @@ use crate::messages::MessageKind;
 
 pub(crate) fn handle_encryption_negotiation(
     tx: BytesTx,
-    conn_encryption_state: &mut Atomic<EncryptionState>,
+    conn_encryption_state: &Atomic<EncryptionState>,
     message: PacketMessage,
 ) -> anyhow::Result<()> {
     // asddassdj

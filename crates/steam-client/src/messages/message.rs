@@ -42,7 +42,13 @@ pub struct ClientMessage<M> {
     pub emsg: EMsg,
     /// A client message header wrapped in `MessageHeaderWrapper`.
     pub header: MessageHeaderWrapper,
+
+    /// The body of a message.
+    /// Can be Protobuf backed message, or a simple body.
     pub body: M,
+
+    /// Apparently, Protobuf messages don't have additional payload.
+    /// This is only applicable if we are dealing with messages with Standard and Extended Headers.
     payload: Vec<u8>,
 }
 

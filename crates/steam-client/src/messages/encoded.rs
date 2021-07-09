@@ -74,6 +74,7 @@ mod tests {
 
         let packet_message = PacketMessage::from_raw_bytes(&packet);
         let message: ClientMessage<MsgClientChatEnter> = ClientMessage::from_packet_message(packet_message);
+        println!("header: {:?}", message.header);
         let chat_name = str_from_u8_nul_utf8(message.payload()).unwrap();
         assert_eq!("Saxton Hell", chat_name);
     }
