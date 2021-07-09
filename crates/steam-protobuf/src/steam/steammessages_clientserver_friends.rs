@@ -4,10 +4,7 @@
 // https://github.com/rust-lang/rust-clippy/issues/702
 #![allow(unknown_lints)]
 #![allow(clippy::all)]
-
 #![allow(unused_attributes)]
-#![rustfmt::skip]
-
 #![allow(box_pointers)]
 #![allow(dead_code)]
 #![allow(missing_docs)]
@@ -23,7 +20,7 @@
 /// of protobuf runtime.
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientFriendMsg {
     // message fields
@@ -52,7 +49,6 @@ impl CMsgClientFriendMsg {
 
     // optional fixed64 steamid = 1;
 
-
     pub fn get_steamid(&self) -> u64 {
         self.steamid.unwrap_or(0)
     }
@@ -71,7 +67,6 @@ impl CMsgClientFriendMsg {
 
     // optional int32 chat_entry_type = 2;
 
-
     pub fn get_chat_entry_type(&self) -> i32 {
         self.chat_entry_type.unwrap_or(0)
     }
@@ -89,7 +84,6 @@ impl CMsgClientFriendMsg {
     }
 
     // optional bytes message = 3;
-
 
     pub fn get_message(&self) -> &[u8] {
         match self.message.as_ref() {
@@ -126,7 +120,6 @@ impl CMsgClientFriendMsg {
 
     // optional fixed32 rtime32_server_timestamp = 4;
 
-
     pub fn get_rtime32_server_timestamp(&self) -> u32 {
         self.rtime32_server_timestamp.unwrap_or(0)
     }
@@ -144,7 +137,6 @@ impl CMsgClientFriendMsg {
     }
 
     // optional bool echo_to_sender = 5;
-
 
     pub fn get_echo_to_sender(&self) -> bool {
         self.echo_to_sender.unwrap_or(false)
@@ -178,34 +170,34 @@ impl ::protobuf::Message for CMsgClientFriendMsg {
                     }
                     let tmp = is.read_fixed64()?;
                     self.steamid = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.chat_entry_type = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     ::protobuf::rt::read_singular_bytes_into(wire_type, is, &mut self.message)?;
-                },
+                }
                 4 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed32 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed32()?;
                     self.rtime32_server_timestamp = ::std::option::Option::Some(tmp);
-                },
+                }
                 5 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.echo_to_sender = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -286,38 +278,54 @@ impl ::protobuf::Message for CMsgClientFriendMsg {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "steamid",
-                |m: &CMsgClientFriendMsg| { &m.steamid },
-                |m: &mut CMsgClientFriendMsg| { &mut m.steamid },
+                |m: &CMsgClientFriendMsg| &m.steamid,
+                |m: &mut CMsgClientFriendMsg| &mut m.steamid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "chat_entry_type",
-                |m: &CMsgClientFriendMsg| { &m.chat_entry_type },
-                |m: &mut CMsgClientFriendMsg| { &mut m.chat_entry_type },
+                |m: &CMsgClientFriendMsg| &m.chat_entry_type,
+                |m: &mut CMsgClientFriendMsg| &mut m.chat_entry_type,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeBytes>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBytes,
+            >(
                 "message",
-                |m: &CMsgClientFriendMsg| { &m.message },
-                |m: &mut CMsgClientFriendMsg| { &mut m.message },
+                |m: &CMsgClientFriendMsg| &m.message,
+                |m: &mut CMsgClientFriendMsg| &mut m.message,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed32,
+            >(
                 "rtime32_server_timestamp",
-                |m: &CMsgClientFriendMsg| { &m.rtime32_server_timestamp },
-                |m: &mut CMsgClientFriendMsg| { &mut m.rtime32_server_timestamp },
+                |m: &CMsgClientFriendMsg| &m.rtime32_server_timestamp,
+                |m: &mut CMsgClientFriendMsg| &mut m.rtime32_server_timestamp,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "echo_to_sender",
-                |m: &CMsgClientFriendMsg| { &m.echo_to_sender },
-                |m: &mut CMsgClientFriendMsg| { &mut m.echo_to_sender },
+                |m: &CMsgClientFriendMsg| &m.echo_to_sender,
+                |m: &mut CMsgClientFriendMsg| &mut m.echo_to_sender,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientFriendMsg>(
                 "CMsgClientFriendMsg",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -351,7 +359,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientFriendMsg {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientFriendMsgIncoming {
     // message fields
@@ -380,7 +388,6 @@ impl CMsgClientFriendMsgIncoming {
 
     // optional fixed64 steamid_from = 1;
 
-
     pub fn get_steamid_from(&self) -> u64 {
         self.steamid_from.unwrap_or(0)
     }
@@ -398,7 +405,6 @@ impl CMsgClientFriendMsgIncoming {
     }
 
     // optional int32 chat_entry_type = 2;
-
 
     pub fn get_chat_entry_type(&self) -> i32 {
         self.chat_entry_type.unwrap_or(0)
@@ -418,7 +424,6 @@ impl CMsgClientFriendMsgIncoming {
 
     // optional bool from_limited_account = 3;
 
-
     pub fn get_from_limited_account(&self) -> bool {
         self.from_limited_account.unwrap_or(false)
     }
@@ -436,7 +441,6 @@ impl CMsgClientFriendMsgIncoming {
     }
 
     // optional bytes message = 4;
-
 
     pub fn get_message(&self) -> &[u8] {
         match self.message.as_ref() {
@@ -473,7 +477,6 @@ impl CMsgClientFriendMsgIncoming {
 
     // optional fixed32 rtime32_server_timestamp = 5;
 
-
     pub fn get_rtime32_server_timestamp(&self) -> u32 {
         self.rtime32_server_timestamp.unwrap_or(0)
     }
@@ -506,34 +509,34 @@ impl ::protobuf::Message for CMsgClientFriendMsgIncoming {
                     }
                     let tmp = is.read_fixed64()?;
                     self.steamid_from = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.chat_entry_type = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.from_limited_account = ::std::option::Option::Some(tmp);
-                },
+                }
                 4 => {
                     ::protobuf::rt::read_singular_bytes_into(wire_type, is, &mut self.message)?;
-                },
+                }
                 5 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed32 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed32()?;
                     self.rtime32_server_timestamp = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -614,38 +617,54 @@ impl ::protobuf::Message for CMsgClientFriendMsgIncoming {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "steamid_from",
-                |m: &CMsgClientFriendMsgIncoming| { &m.steamid_from },
-                |m: &mut CMsgClientFriendMsgIncoming| { &mut m.steamid_from },
+                |m: &CMsgClientFriendMsgIncoming| &m.steamid_from,
+                |m: &mut CMsgClientFriendMsgIncoming| &mut m.steamid_from,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "chat_entry_type",
-                |m: &CMsgClientFriendMsgIncoming| { &m.chat_entry_type },
-                |m: &mut CMsgClientFriendMsgIncoming| { &mut m.chat_entry_type },
+                |m: &CMsgClientFriendMsgIncoming| &m.chat_entry_type,
+                |m: &mut CMsgClientFriendMsgIncoming| &mut m.chat_entry_type,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "from_limited_account",
-                |m: &CMsgClientFriendMsgIncoming| { &m.from_limited_account },
-                |m: &mut CMsgClientFriendMsgIncoming| { &mut m.from_limited_account },
+                |m: &CMsgClientFriendMsgIncoming| &m.from_limited_account,
+                |m: &mut CMsgClientFriendMsgIncoming| &mut m.from_limited_account,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeBytes>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBytes,
+            >(
                 "message",
-                |m: &CMsgClientFriendMsgIncoming| { &m.message },
-                |m: &mut CMsgClientFriendMsgIncoming| { &mut m.message },
+                |m: &CMsgClientFriendMsgIncoming| &m.message,
+                |m: &mut CMsgClientFriendMsgIncoming| &mut m.message,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed32,
+            >(
                 "rtime32_server_timestamp",
-                |m: &CMsgClientFriendMsgIncoming| { &m.rtime32_server_timestamp },
-                |m: &mut CMsgClientFriendMsgIncoming| { &mut m.rtime32_server_timestamp },
+                |m: &CMsgClientFriendMsgIncoming| &m.rtime32_server_timestamp,
+                |m: &mut CMsgClientFriendMsgIncoming| &mut m.rtime32_server_timestamp,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientFriendMsgIncoming>(
                 "CMsgClientFriendMsgIncoming",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -679,7 +698,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientFriendMsgIncoming {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientAddFriend {
     // message fields
@@ -705,7 +724,6 @@ impl CMsgClientAddFriend {
 
     // optional fixed64 steamid_to_add = 1;
 
-
     pub fn get_steamid_to_add(&self) -> u64 {
         self.steamid_to_add.unwrap_or(0)
     }
@@ -723,7 +741,6 @@ impl CMsgClientAddFriend {
     }
 
     // optional string accountname_or_email_to_add = 2;
-
 
     pub fn get_accountname_or_email_to_add(&self) -> &str {
         match self.accountname_or_email_to_add.as_ref() {
@@ -755,7 +772,9 @@ impl CMsgClientAddFriend {
 
     // Take field
     pub fn take_accountname_or_email_to_add(&mut self) -> ::std::string::String {
-        self.accountname_or_email_to_add.take().unwrap_or_else(|| ::std::string::String::new())
+        self.accountname_or_email_to_add
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 }
 
@@ -774,13 +793,13 @@ impl ::protobuf::Message for CMsgClientAddFriend {
                     }
                     let tmp = is.read_fixed64()?;
                     self.steamid_to_add = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.accountname_or_email_to_add)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -843,23 +862,30 @@ impl ::protobuf::Message for CMsgClientAddFriend {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "steamid_to_add",
-                |m: &CMsgClientAddFriend| { &m.steamid_to_add },
-                |m: &mut CMsgClientAddFriend| { &mut m.steamid_to_add },
+                |m: &CMsgClientAddFriend| &m.steamid_to_add,
+                |m: &mut CMsgClientAddFriend| &mut m.steamid_to_add,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "accountname_or_email_to_add",
-                |m: &CMsgClientAddFriend| { &m.accountname_or_email_to_add },
-                |m: &mut CMsgClientAddFriend| { &mut m.accountname_or_email_to_add },
+                |m: &CMsgClientAddFriend| &m.accountname_or_email_to_add,
+                |m: &mut CMsgClientAddFriend| &mut m.accountname_or_email_to_add,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientAddFriend>(
                 "CMsgClientAddFriend",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -890,7 +916,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientAddFriend {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientAddFriendResponse {
     // message fields
@@ -917,7 +943,6 @@ impl CMsgClientAddFriendResponse {
 
     // optional int32 eresult = 1;
 
-
     pub fn get_eresult(&self) -> i32 {
         self.eresult.unwrap_or(2i32)
     }
@@ -936,7 +961,6 @@ impl CMsgClientAddFriendResponse {
 
     // optional fixed64 steam_id_added = 2;
 
-
     pub fn get_steam_id_added(&self) -> u64 {
         self.steam_id_added.unwrap_or(0)
     }
@@ -954,7 +978,6 @@ impl CMsgClientAddFriendResponse {
     }
 
     // optional string persona_name_added = 3;
-
 
     pub fn get_persona_name_added(&self) -> &str {
         match self.persona_name_added.as_ref() {
@@ -986,7 +1009,9 @@ impl CMsgClientAddFriendResponse {
 
     // Take field
     pub fn take_persona_name_added(&mut self) -> ::std::string::String {
-        self.persona_name_added.take().unwrap_or_else(|| ::std::string::String::new())
+        self.persona_name_added
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 }
 
@@ -1005,20 +1030,20 @@ impl ::protobuf::Message for CMsgClientAddFriendResponse {
                     }
                     let tmp = is.read_int32()?;
                     self.eresult = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.steam_id_added = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.persona_name_added)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -1087,28 +1112,38 @@ impl ::protobuf::Message for CMsgClientAddFriendResponse {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "eresult",
-                |m: &CMsgClientAddFriendResponse| { &m.eresult },
-                |m: &mut CMsgClientAddFriendResponse| { &mut m.eresult },
+                |m: &CMsgClientAddFriendResponse| &m.eresult,
+                |m: &mut CMsgClientAddFriendResponse| &mut m.eresult,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "steam_id_added",
-                |m: &CMsgClientAddFriendResponse| { &m.steam_id_added },
-                |m: &mut CMsgClientAddFriendResponse| { &mut m.steam_id_added },
+                |m: &CMsgClientAddFriendResponse| &m.steam_id_added,
+                |m: &mut CMsgClientAddFriendResponse| &mut m.steam_id_added,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "persona_name_added",
-                |m: &CMsgClientAddFriendResponse| { &m.persona_name_added },
-                |m: &mut CMsgClientAddFriendResponse| { &mut m.persona_name_added },
+                |m: &CMsgClientAddFriendResponse| &m.persona_name_added,
+                |m: &mut CMsgClientAddFriendResponse| &mut m.persona_name_added,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientAddFriendResponse>(
                 "CMsgClientAddFriendResponse",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -1140,7 +1175,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientAddFriendResponse {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientRemoveFriend {
     // message fields
@@ -1164,7 +1199,6 @@ impl CMsgClientRemoveFriend {
     }
 
     // optional fixed64 friendid = 1;
-
 
     pub fn get_friendid(&self) -> u64 {
         self.friendid.unwrap_or(0)
@@ -1198,10 +1232,10 @@ impl ::protobuf::Message for CMsgClientRemoveFriend {
                     }
                     let tmp = is.read_fixed64()?;
                     self.friendid = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -1258,18 +1292,22 @@ impl ::protobuf::Message for CMsgClientRemoveFriend {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "friendid",
-                |m: &CMsgClientRemoveFriend| { &m.friendid },
-                |m: &mut CMsgClientRemoveFriend| { &mut m.friendid },
+                |m: &CMsgClientRemoveFriend| &m.friendid,
+                |m: &mut CMsgClientRemoveFriend| &mut m.friendid,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientRemoveFriend>(
                 "CMsgClientRemoveFriend",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -1299,7 +1337,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientRemoveFriend {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientHideFriend {
     // message fields
@@ -1325,7 +1363,6 @@ impl CMsgClientHideFriend {
 
     // optional fixed64 friendid = 1;
 
-
     pub fn get_friendid(&self) -> u64 {
         self.friendid.unwrap_or(0)
     }
@@ -1343,7 +1380,6 @@ impl CMsgClientHideFriend {
     }
 
     // optional bool hide = 2;
-
 
     pub fn get_hide(&self) -> bool {
         self.hide.unwrap_or(false)
@@ -1377,17 +1413,17 @@ impl ::protobuf::Message for CMsgClientHideFriend {
                     }
                     let tmp = is.read_fixed64()?;
                     self.friendid = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.hide = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -1450,23 +1486,30 @@ impl ::protobuf::Message for CMsgClientHideFriend {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "friendid",
-                |m: &CMsgClientHideFriend| { &m.friendid },
-                |m: &mut CMsgClientHideFriend| { &mut m.friendid },
+                |m: &CMsgClientHideFriend| &m.friendid,
+                |m: &mut CMsgClientHideFriend| &mut m.friendid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "hide",
-                |m: &CMsgClientHideFriend| { &m.hide },
-                |m: &mut CMsgClientHideFriend| { &mut m.hide },
+                |m: &CMsgClientHideFriend| &m.hide,
+                |m: &mut CMsgClientHideFriend| &mut m.hide,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientHideFriend>(
                 "CMsgClientHideFriend",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -1497,7 +1540,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientHideFriend {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientFriendsList {
     // message fields
@@ -1526,7 +1569,6 @@ impl CMsgClientFriendsList {
 
     // optional bool bincremental = 1;
 
-
     pub fn get_bincremental(&self) -> bool {
         self.bincremental.unwrap_or(false)
     }
@@ -1544,7 +1586,6 @@ impl CMsgClientFriendsList {
     }
 
     // repeated .CMsgClientFriendsList.Friend friends = 2;
-
 
     pub fn get_friends(&self) -> &[CMsgClientFriendsList_Friend] {
         &self.friends
@@ -1570,7 +1611,6 @@ impl CMsgClientFriendsList {
 
     // optional uint32 max_friend_count = 3;
 
-
     pub fn get_max_friend_count(&self) -> u32 {
         self.max_friend_count.unwrap_or(0)
     }
@@ -1589,7 +1629,6 @@ impl CMsgClientFriendsList {
 
     // optional uint32 active_friend_count = 4;
 
-
     pub fn get_active_friend_count(&self) -> u32 {
         self.active_friend_count.unwrap_or(0)
     }
@@ -1607,7 +1646,6 @@ impl CMsgClientFriendsList {
     }
 
     // optional bool friends_limit_hit = 5;
-
 
     pub fn get_friends_limit_hit(&self) -> bool {
         self.friends_limit_hit.unwrap_or(false)
@@ -1632,7 +1670,7 @@ impl ::protobuf::Message for CMsgClientFriendsList {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         true
     }
 
@@ -1646,34 +1684,34 @@ impl ::protobuf::Message for CMsgClientFriendsList {
                     }
                     let tmp = is.read_bool()?;
                     self.bincremental = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     ::protobuf::rt::read_repeated_message_into(wire_type, is, &mut self.friends)?;
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.max_friend_count = ::std::option::Option::Some(tmp);
-                },
+                }
                 4 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.active_friend_count = ::std::option::Option::Some(tmp);
-                },
+                }
                 5 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.friends_limit_hit = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -1689,7 +1727,7 @@ impl ::protobuf::Message for CMsgClientFriendsList {
         for value in &self.friends {
             let len = value.compute_size();
             my_size += 1 + ::protobuf::rt::compute_raw_varint32_size(len) + len;
-        };
+        }
         if let Some(v) = self.max_friend_count {
             my_size += ::protobuf::rt::value_size(3, v, ::protobuf::wire_format::WireTypeVarint);
         }
@@ -1712,7 +1750,7 @@ impl ::protobuf::Message for CMsgClientFriendsList {
             os.write_tag(2, ::protobuf::wire_format::WireTypeLengthDelimited)?;
             os.write_raw_varint32(v.get_cached_size())?;
             v.write_to_with_cached_sizes(os)?;
-        };
+        }
         if let Some(v) = self.max_friend_count {
             os.write_uint32(3, v)?;
         }
@@ -1757,38 +1795,54 @@ impl ::protobuf::Message for CMsgClientFriendsList {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "bincremental",
-                |m: &CMsgClientFriendsList| { &m.bincremental },
-                |m: &mut CMsgClientFriendsList| { &mut m.bincremental },
+                |m: &CMsgClientFriendsList| &m.bincremental,
+                |m: &mut CMsgClientFriendsList| &mut m.bincremental,
             ));
-            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<CMsgClientFriendsList_Friend>>(
+            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeMessage<CMsgClientFriendsList_Friend>,
+            >(
                 "friends",
-                |m: &CMsgClientFriendsList| { &m.friends },
-                |m: &mut CMsgClientFriendsList| { &mut m.friends },
+                |m: &CMsgClientFriendsList| &m.friends,
+                |m: &mut CMsgClientFriendsList| &mut m.friends,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "max_friend_count",
-                |m: &CMsgClientFriendsList| { &m.max_friend_count },
-                |m: &mut CMsgClientFriendsList| { &mut m.max_friend_count },
+                |m: &CMsgClientFriendsList| &m.max_friend_count,
+                |m: &mut CMsgClientFriendsList| &mut m.max_friend_count,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "active_friend_count",
-                |m: &CMsgClientFriendsList| { &m.active_friend_count },
-                |m: &mut CMsgClientFriendsList| { &mut m.active_friend_count },
+                |m: &CMsgClientFriendsList| &m.active_friend_count,
+                |m: &mut CMsgClientFriendsList| &mut m.active_friend_count,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "friends_limit_hit",
-                |m: &CMsgClientFriendsList| { &m.friends_limit_hit },
-                |m: &mut CMsgClientFriendsList| { &mut m.friends_limit_hit },
+                |m: &CMsgClientFriendsList| &m.friends_limit_hit,
+                |m: &mut CMsgClientFriendsList| &mut m.friends_limit_hit,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientFriendsList>(
                 "CMsgClientFriendsList",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -1822,7 +1876,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientFriendsList {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientFriendsList_Friend {
     // message fields
@@ -1848,7 +1902,6 @@ impl CMsgClientFriendsList_Friend {
 
     // optional fixed64 ulfriendid = 1;
 
-
     pub fn get_ulfriendid(&self) -> u64 {
         self.ulfriendid.unwrap_or(0)
     }
@@ -1866,7 +1919,6 @@ impl CMsgClientFriendsList_Friend {
     }
 
     // optional uint32 efriendrelationship = 2;
-
 
     pub fn get_efriendrelationship(&self) -> u32 {
         self.efriendrelationship.unwrap_or(0)
@@ -1900,17 +1952,17 @@ impl ::protobuf::Message for CMsgClientFriendsList_Friend {
                     }
                     let tmp = is.read_fixed64()?;
                     self.ulfriendid = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.efriendrelationship = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -1973,23 +2025,30 @@ impl ::protobuf::Message for CMsgClientFriendsList_Friend {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "ulfriendid",
-                |m: &CMsgClientFriendsList_Friend| { &m.ulfriendid },
-                |m: &mut CMsgClientFriendsList_Friend| { &mut m.ulfriendid },
+                |m: &CMsgClientFriendsList_Friend| &m.ulfriendid,
+                |m: &mut CMsgClientFriendsList_Friend| &mut m.ulfriendid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "efriendrelationship",
-                |m: &CMsgClientFriendsList_Friend| { &m.efriendrelationship },
-                |m: &mut CMsgClientFriendsList_Friend| { &mut m.efriendrelationship },
+                |m: &CMsgClientFriendsList_Friend| &m.efriendrelationship,
+                |m: &mut CMsgClientFriendsList_Friend| &mut m.efriendrelationship,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientFriendsList_Friend>(
                 "CMsgClientFriendsList.Friend",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -2020,7 +2079,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientFriendsList_Friend {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientFriendsGroupsList {
     // message fields
@@ -2048,7 +2107,6 @@ impl CMsgClientFriendsGroupsList {
 
     // optional bool bremoval = 1;
 
-
     pub fn get_bremoval(&self) -> bool {
         self.bremoval.unwrap_or(false)
     }
@@ -2067,7 +2125,6 @@ impl CMsgClientFriendsGroupsList {
 
     // optional bool bincremental = 2;
 
-
     pub fn get_bincremental(&self) -> bool {
         self.bincremental.unwrap_or(false)
     }
@@ -2085,7 +2142,6 @@ impl CMsgClientFriendsGroupsList {
     }
 
     // repeated .CMsgClientFriendsGroupsList.FriendGroup friendGroups = 3;
-
 
     pub fn get_friendGroups(&self) -> &[CMsgClientFriendsGroupsList_FriendGroup] {
         &self.friendGroups
@@ -2111,7 +2167,6 @@ impl CMsgClientFriendsGroupsList {
 
     // repeated .CMsgClientFriendsGroupsList.FriendGroupsMembership memberships = 4;
 
-
     pub fn get_memberships(&self) -> &[CMsgClientFriendsGroupsList_FriendGroupsMembership] {
         &self.memberships
     }
@@ -2120,17 +2175,24 @@ impl CMsgClientFriendsGroupsList {
     }
 
     // Param is passed by value, moved
-    pub fn set_memberships(&mut self, v: ::protobuf::RepeatedField<CMsgClientFriendsGroupsList_FriendGroupsMembership>) {
+    pub fn set_memberships(
+        &mut self,
+        v: ::protobuf::RepeatedField<CMsgClientFriendsGroupsList_FriendGroupsMembership>,
+    ) {
         self.memberships = v;
     }
 
     // Mutable pointer to the field.
-    pub fn mut_memberships(&mut self) -> &mut ::protobuf::RepeatedField<CMsgClientFriendsGroupsList_FriendGroupsMembership> {
+    pub fn mut_memberships(
+        &mut self,
+    ) -> &mut ::protobuf::RepeatedField<CMsgClientFriendsGroupsList_FriendGroupsMembership> {
         &mut self.memberships
     }
 
     // Take field
-    pub fn take_memberships(&mut self) -> ::protobuf::RepeatedField<CMsgClientFriendsGroupsList_FriendGroupsMembership> {
+    pub fn take_memberships(
+        &mut self,
+    ) -> ::protobuf::RepeatedField<CMsgClientFriendsGroupsList_FriendGroupsMembership> {
         ::std::mem::replace(&mut self.memberships, ::protobuf::RepeatedField::new())
     }
 }
@@ -2141,12 +2203,12 @@ impl ::protobuf::Message for CMsgClientFriendsGroupsList {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         for v in &self.memberships {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         true
     }
 
@@ -2160,23 +2222,23 @@ impl ::protobuf::Message for CMsgClientFriendsGroupsList {
                     }
                     let tmp = is.read_bool()?;
                     self.bremoval = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.bincremental = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     ::protobuf::rt::read_repeated_message_into(wire_type, is, &mut self.friendGroups)?;
-                },
+                }
                 4 => {
                     ::protobuf::rt::read_repeated_message_into(wire_type, is, &mut self.memberships)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -2195,11 +2257,11 @@ impl ::protobuf::Message for CMsgClientFriendsGroupsList {
         for value in &self.friendGroups {
             let len = value.compute_size();
             my_size += 1 + ::protobuf::rt::compute_raw_varint32_size(len) + len;
-        };
+        }
         for value in &self.memberships {
             let len = value.compute_size();
             my_size += 1 + ::protobuf::rt::compute_raw_varint32_size(len) + len;
-        };
+        }
         my_size += ::protobuf::rt::unknown_fields_size(self.get_unknown_fields());
         self.cached_size.set(my_size);
         my_size
@@ -2216,12 +2278,12 @@ impl ::protobuf::Message for CMsgClientFriendsGroupsList {
             os.write_tag(3, ::protobuf::wire_format::WireTypeLengthDelimited)?;
             os.write_raw_varint32(v.get_cached_size())?;
             v.write_to_with_cached_sizes(os)?;
-        };
+        }
         for v in &self.memberships {
             os.write_tag(4, ::protobuf::wire_format::WireTypeLengthDelimited)?;
             os.write_raw_varint32(v.get_cached_size())?;
             v.write_to_with_cached_sizes(os)?;
-        };
+        }
         os.write_unknown_fields(self.get_unknown_fields())?;
         ::std::result::Result::Ok(())
     }
@@ -2257,33 +2319,46 @@ impl ::protobuf::Message for CMsgClientFriendsGroupsList {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "bremoval",
-                |m: &CMsgClientFriendsGroupsList| { &m.bremoval },
-                |m: &mut CMsgClientFriendsGroupsList| { &mut m.bremoval },
+                |m: &CMsgClientFriendsGroupsList| &m.bremoval,
+                |m: &mut CMsgClientFriendsGroupsList| &mut m.bremoval,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "bincremental",
-                |m: &CMsgClientFriendsGroupsList| { &m.bincremental },
-                |m: &mut CMsgClientFriendsGroupsList| { &mut m.bincremental },
+                |m: &CMsgClientFriendsGroupsList| &m.bincremental,
+                |m: &mut CMsgClientFriendsGroupsList| &mut m.bincremental,
             ));
-            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<CMsgClientFriendsGroupsList_FriendGroup>>(
+            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeMessage<CMsgClientFriendsGroupsList_FriendGroup>,
+            >(
                 "friendGroups",
-                |m: &CMsgClientFriendsGroupsList| { &m.friendGroups },
-                |m: &mut CMsgClientFriendsGroupsList| { &mut m.friendGroups },
+                |m: &CMsgClientFriendsGroupsList| &m.friendGroups,
+                |m: &mut CMsgClientFriendsGroupsList| &mut m.friendGroups,
             ));
-            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<CMsgClientFriendsGroupsList_FriendGroupsMembership>>(
+            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeMessage<CMsgClientFriendsGroupsList_FriendGroupsMembership>,
+            >(
                 "memberships",
-                |m: &CMsgClientFriendsGroupsList| { &m.memberships },
-                |m: &mut CMsgClientFriendsGroupsList| { &mut m.memberships },
+                |m: &CMsgClientFriendsGroupsList| &m.memberships,
+                |m: &mut CMsgClientFriendsGroupsList| &mut m.memberships,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientFriendsGroupsList>(
                 "CMsgClientFriendsGroupsList",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -2316,7 +2391,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientFriendsGroupsList {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientFriendsGroupsList_FriendGroup {
     // message fields
@@ -2342,7 +2417,6 @@ impl CMsgClientFriendsGroupsList_FriendGroup {
 
     // optional int32 nGroupID = 1;
 
-
     pub fn get_nGroupID(&self) -> i32 {
         self.nGroupID.unwrap_or(0)
     }
@@ -2360,7 +2434,6 @@ impl CMsgClientFriendsGroupsList_FriendGroup {
     }
 
     // optional string strGroupName = 2;
-
 
     pub fn get_strGroupName(&self) -> &str {
         match self.strGroupName.as_ref() {
@@ -2411,13 +2484,13 @@ impl ::protobuf::Message for CMsgClientFriendsGroupsList_FriendGroup {
                     }
                     let tmp = is.read_int32()?;
                     self.nGroupID = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.strGroupName)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -2480,23 +2553,30 @@ impl ::protobuf::Message for CMsgClientFriendsGroupsList_FriendGroup {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "nGroupID",
-                |m: &CMsgClientFriendsGroupsList_FriendGroup| { &m.nGroupID },
-                |m: &mut CMsgClientFriendsGroupsList_FriendGroup| { &mut m.nGroupID },
+                |m: &CMsgClientFriendsGroupsList_FriendGroup| &m.nGroupID,
+                |m: &mut CMsgClientFriendsGroupsList_FriendGroup| &mut m.nGroupID,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "strGroupName",
-                |m: &CMsgClientFriendsGroupsList_FriendGroup| { &m.strGroupName },
-                |m: &mut CMsgClientFriendsGroupsList_FriendGroup| { &mut m.strGroupName },
+                |m: &CMsgClientFriendsGroupsList_FriendGroup| &m.strGroupName,
+                |m: &mut CMsgClientFriendsGroupsList_FriendGroup| &mut m.strGroupName,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientFriendsGroupsList_FriendGroup>(
                 "CMsgClientFriendsGroupsList.FriendGroup",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -2527,7 +2607,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientFriendsGroupsList_FriendGr
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientFriendsGroupsList_FriendGroupsMembership {
     // message fields
@@ -2553,7 +2633,6 @@ impl CMsgClientFriendsGroupsList_FriendGroupsMembership {
 
     // optional fixed64 ulSteamID = 1;
 
-
     pub fn get_ulSteamID(&self) -> u64 {
         self.ulSteamID.unwrap_or(0)
     }
@@ -2571,7 +2650,6 @@ impl CMsgClientFriendsGroupsList_FriendGroupsMembership {
     }
 
     // optional int32 nGroupID = 2;
-
 
     pub fn get_nGroupID(&self) -> i32 {
         self.nGroupID.unwrap_or(0)
@@ -2605,17 +2683,17 @@ impl ::protobuf::Message for CMsgClientFriendsGroupsList_FriendGroupsMembership 
                     }
                     let tmp = is.read_fixed64()?;
                     self.ulSteamID = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.nGroupID = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -2678,29 +2756,37 @@ impl ::protobuf::Message for CMsgClientFriendsGroupsList_FriendGroupsMembership 
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "ulSteamID",
-                |m: &CMsgClientFriendsGroupsList_FriendGroupsMembership| { &m.ulSteamID },
-                |m: &mut CMsgClientFriendsGroupsList_FriendGroupsMembership| { &mut m.ulSteamID },
+                |m: &CMsgClientFriendsGroupsList_FriendGroupsMembership| &m.ulSteamID,
+                |m: &mut CMsgClientFriendsGroupsList_FriendGroupsMembership| &mut m.ulSteamID,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "nGroupID",
-                |m: &CMsgClientFriendsGroupsList_FriendGroupsMembership| { &m.nGroupID },
-                |m: &mut CMsgClientFriendsGroupsList_FriendGroupsMembership| { &mut m.nGroupID },
+                |m: &CMsgClientFriendsGroupsList_FriendGroupsMembership| &m.nGroupID,
+                |m: &mut CMsgClientFriendsGroupsList_FriendGroupsMembership| &mut m.nGroupID,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientFriendsGroupsList_FriendGroupsMembership>(
                 "CMsgClientFriendsGroupsList.FriendGroupsMembership",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
 
     fn default_instance() -> &'static CMsgClientFriendsGroupsList_FriendGroupsMembership {
-        static instance: ::protobuf::rt::LazyV2<CMsgClientFriendsGroupsList_FriendGroupsMembership> = ::protobuf::rt::LazyV2::INIT;
+        static instance: ::protobuf::rt::LazyV2<CMsgClientFriendsGroupsList_FriendGroupsMembership> =
+            ::protobuf::rt::LazyV2::INIT;
         instance.get(CMsgClientFriendsGroupsList_FriendGroupsMembership::new)
     }
 }
@@ -2725,7 +2811,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientFriendsGroupsList_FriendGr
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientPlayerNicknameList {
     // message fields
@@ -2752,7 +2838,6 @@ impl CMsgClientPlayerNicknameList {
 
     // optional bool removal = 1;
 
-
     pub fn get_removal(&self) -> bool {
         self.removal.unwrap_or(false)
     }
@@ -2771,7 +2856,6 @@ impl CMsgClientPlayerNicknameList {
 
     // optional bool incremental = 2;
 
-
     pub fn get_incremental(&self) -> bool {
         self.incremental.unwrap_or(false)
     }
@@ -2789,7 +2873,6 @@ impl CMsgClientPlayerNicknameList {
     }
 
     // repeated .CMsgClientPlayerNicknameList.PlayerNickname nicknames = 3;
-
 
     pub fn get_nicknames(&self) -> &[CMsgClientPlayerNicknameList_PlayerNickname] {
         &self.nicknames
@@ -2820,7 +2903,7 @@ impl ::protobuf::Message for CMsgClientPlayerNicknameList {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         true
     }
 
@@ -2834,20 +2917,20 @@ impl ::protobuf::Message for CMsgClientPlayerNicknameList {
                     }
                     let tmp = is.read_bool()?;
                     self.removal = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.incremental = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     ::protobuf::rt::read_repeated_message_into(wire_type, is, &mut self.nicknames)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -2866,7 +2949,7 @@ impl ::protobuf::Message for CMsgClientPlayerNicknameList {
         for value in &self.nicknames {
             let len = value.compute_size();
             my_size += 1 + ::protobuf::rt::compute_raw_varint32_size(len) + len;
-        };
+        }
         my_size += ::protobuf::rt::unknown_fields_size(self.get_unknown_fields());
         self.cached_size.set(my_size);
         my_size
@@ -2883,7 +2966,7 @@ impl ::protobuf::Message for CMsgClientPlayerNicknameList {
             os.write_tag(3, ::protobuf::wire_format::WireTypeLengthDelimited)?;
             os.write_raw_varint32(v.get_cached_size())?;
             v.write_to_with_cached_sizes(os)?;
-        };
+        }
         os.write_unknown_fields(self.get_unknown_fields())?;
         ::std::result::Result::Ok(())
     }
@@ -2919,28 +3002,38 @@ impl ::protobuf::Message for CMsgClientPlayerNicknameList {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "removal",
-                |m: &CMsgClientPlayerNicknameList| { &m.removal },
-                |m: &mut CMsgClientPlayerNicknameList| { &mut m.removal },
+                |m: &CMsgClientPlayerNicknameList| &m.removal,
+                |m: &mut CMsgClientPlayerNicknameList| &mut m.removal,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "incremental",
-                |m: &CMsgClientPlayerNicknameList| { &m.incremental },
-                |m: &mut CMsgClientPlayerNicknameList| { &mut m.incremental },
+                |m: &CMsgClientPlayerNicknameList| &m.incremental,
+                |m: &mut CMsgClientPlayerNicknameList| &mut m.incremental,
             ));
-            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<CMsgClientPlayerNicknameList_PlayerNickname>>(
+            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeMessage<CMsgClientPlayerNicknameList_PlayerNickname>,
+            >(
                 "nicknames",
-                |m: &CMsgClientPlayerNicknameList| { &m.nicknames },
-                |m: &mut CMsgClientPlayerNicknameList| { &mut m.nicknames },
+                |m: &CMsgClientPlayerNicknameList| &m.nicknames,
+                |m: &mut CMsgClientPlayerNicknameList| &mut m.nicknames,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientPlayerNicknameList>(
                 "CMsgClientPlayerNicknameList",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -2972,7 +3065,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientPlayerNicknameList {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientPlayerNicknameList_PlayerNickname {
     // message fields
@@ -2998,7 +3091,6 @@ impl CMsgClientPlayerNicknameList_PlayerNickname {
 
     // optional fixed64 steamid = 1;
 
-
     pub fn get_steamid(&self) -> u64 {
         self.steamid.unwrap_or(0)
     }
@@ -3016,7 +3108,6 @@ impl CMsgClientPlayerNicknameList_PlayerNickname {
     }
 
     // optional string nickname = 3;
-
 
     pub fn get_nickname(&self) -> &str {
         match self.nickname.as_ref() {
@@ -3067,13 +3158,13 @@ impl ::protobuf::Message for CMsgClientPlayerNicknameList_PlayerNickname {
                     }
                     let tmp = is.read_fixed64()?;
                     self.steamid = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.nickname)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -3136,29 +3227,37 @@ impl ::protobuf::Message for CMsgClientPlayerNicknameList_PlayerNickname {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "steamid",
-                |m: &CMsgClientPlayerNicknameList_PlayerNickname| { &m.steamid },
-                |m: &mut CMsgClientPlayerNicknameList_PlayerNickname| { &mut m.steamid },
+                |m: &CMsgClientPlayerNicknameList_PlayerNickname| &m.steamid,
+                |m: &mut CMsgClientPlayerNicknameList_PlayerNickname| &mut m.steamid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "nickname",
-                |m: &CMsgClientPlayerNicknameList_PlayerNickname| { &m.nickname },
-                |m: &mut CMsgClientPlayerNicknameList_PlayerNickname| { &mut m.nickname },
+                |m: &CMsgClientPlayerNicknameList_PlayerNickname| &m.nickname,
+                |m: &mut CMsgClientPlayerNicknameList_PlayerNickname| &mut m.nickname,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientPlayerNicknameList_PlayerNickname>(
                 "CMsgClientPlayerNicknameList.PlayerNickname",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
 
     fn default_instance() -> &'static CMsgClientPlayerNicknameList_PlayerNickname {
-        static instance: ::protobuf::rt::LazyV2<CMsgClientPlayerNicknameList_PlayerNickname> = ::protobuf::rt::LazyV2::INIT;
+        static instance: ::protobuf::rt::LazyV2<CMsgClientPlayerNicknameList_PlayerNickname> =
+            ::protobuf::rt::LazyV2::INIT;
         instance.get(CMsgClientPlayerNicknameList_PlayerNickname::new)
     }
 }
@@ -3183,7 +3282,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientPlayerNicknameList_PlayerN
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientSetPlayerNickname {
     // message fields
@@ -3209,7 +3308,6 @@ impl CMsgClientSetPlayerNickname {
 
     // optional fixed64 steamid = 1;
 
-
     pub fn get_steamid(&self) -> u64 {
         self.steamid.unwrap_or(0)
     }
@@ -3227,7 +3325,6 @@ impl CMsgClientSetPlayerNickname {
     }
 
     // optional string nickname = 2;
-
 
     pub fn get_nickname(&self) -> &str {
         match self.nickname.as_ref() {
@@ -3278,13 +3375,13 @@ impl ::protobuf::Message for CMsgClientSetPlayerNickname {
                     }
                     let tmp = is.read_fixed64()?;
                     self.steamid = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.nickname)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -3347,23 +3444,30 @@ impl ::protobuf::Message for CMsgClientSetPlayerNickname {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "steamid",
-                |m: &CMsgClientSetPlayerNickname| { &m.steamid },
-                |m: &mut CMsgClientSetPlayerNickname| { &mut m.steamid },
+                |m: &CMsgClientSetPlayerNickname| &m.steamid,
+                |m: &mut CMsgClientSetPlayerNickname| &mut m.steamid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "nickname",
-                |m: &CMsgClientSetPlayerNickname| { &m.nickname },
-                |m: &mut CMsgClientSetPlayerNickname| { &mut m.nickname },
+                |m: &CMsgClientSetPlayerNickname| &m.nickname,
+                |m: &mut CMsgClientSetPlayerNickname| &mut m.nickname,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientSetPlayerNickname>(
                 "CMsgClientSetPlayerNickname",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -3394,7 +3498,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientSetPlayerNickname {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientSetPlayerNicknameResponse {
     // message fields
@@ -3418,7 +3522,6 @@ impl CMsgClientSetPlayerNicknameResponse {
     }
 
     // optional uint32 eresult = 1;
-
 
     pub fn get_eresult(&self) -> u32 {
         self.eresult.unwrap_or(0)
@@ -3452,10 +3555,10 @@ impl ::protobuf::Message for CMsgClientSetPlayerNicknameResponse {
                     }
                     let tmp = is.read_uint32()?;
                     self.eresult = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -3512,18 +3615,22 @@ impl ::protobuf::Message for CMsgClientSetPlayerNicknameResponse {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "eresult",
-                |m: &CMsgClientSetPlayerNicknameResponse| { &m.eresult },
-                |m: &mut CMsgClientSetPlayerNicknameResponse| { &mut m.eresult },
+                |m: &CMsgClientSetPlayerNicknameResponse| &m.eresult,
+                |m: &mut CMsgClientSetPlayerNicknameResponse| &mut m.eresult,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientSetPlayerNicknameResponse>(
                 "CMsgClientSetPlayerNicknameResponse",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -3553,7 +3660,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientSetPlayerNicknameResponse 
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientRequestFriendData {
     // message fields
@@ -3579,7 +3686,6 @@ impl CMsgClientRequestFriendData {
 
     // optional uint32 persona_state_requested = 1;
 
-
     pub fn get_persona_state_requested(&self) -> u32 {
         self.persona_state_requested.unwrap_or(0)
     }
@@ -3597,7 +3703,6 @@ impl CMsgClientRequestFriendData {
     }
 
     // repeated fixed64 friends = 2;
-
 
     pub fn get_friends(&self) -> &[u64] {
         &self.friends
@@ -3637,13 +3742,13 @@ impl ::protobuf::Message for CMsgClientRequestFriendData {
                     }
                     let tmp = is.read_uint32()?;
                     self.persona_state_requested = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     ::protobuf::rt::read_repeated_fixed64_into(wire_type, is, &mut self.friends)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -3668,7 +3773,7 @@ impl ::protobuf::Message for CMsgClientRequestFriendData {
         }
         for v in &self.friends {
             os.write_fixed64(2, *v)?;
-        };
+        }
         os.write_unknown_fields(self.get_unknown_fields())?;
         ::std::result::Result::Ok(())
     }
@@ -3704,23 +3809,30 @@ impl ::protobuf::Message for CMsgClientRequestFriendData {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "persona_state_requested",
-                |m: &CMsgClientRequestFriendData| { &m.persona_state_requested },
-                |m: &mut CMsgClientRequestFriendData| { &mut m.persona_state_requested },
+                |m: &CMsgClientRequestFriendData| &m.persona_state_requested,
+                |m: &mut CMsgClientRequestFriendData| &mut m.persona_state_requested,
             ));
-            fields.push(::protobuf::reflect::accessor::make_vec_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_vec_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "friends",
-                |m: &CMsgClientRequestFriendData| { &m.friends },
-                |m: &mut CMsgClientRequestFriendData| { &mut m.friends },
+                |m: &CMsgClientRequestFriendData| &m.friends,
+                |m: &mut CMsgClientRequestFriendData| &mut m.friends,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientRequestFriendData>(
                 "CMsgClientRequestFriendData",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -3751,7 +3863,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientRequestFriendData {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientChangeStatus {
     // message fields
@@ -3783,7 +3895,6 @@ impl CMsgClientChangeStatus {
 
     // optional uint32 persona_state = 1;
 
-
     pub fn get_persona_state(&self) -> u32 {
         self.persona_state.unwrap_or(0)
     }
@@ -3801,7 +3912,6 @@ impl CMsgClientChangeStatus {
     }
 
     // optional string player_name = 2;
-
 
     pub fn get_player_name(&self) -> &str {
         match self.player_name.as_ref() {
@@ -3838,7 +3948,6 @@ impl CMsgClientChangeStatus {
 
     // optional bool is_auto_generated_name = 3;
 
-
     pub fn get_is_auto_generated_name(&self) -> bool {
         self.is_auto_generated_name.unwrap_or(false)
     }
@@ -3856,7 +3965,6 @@ impl CMsgClientChangeStatus {
     }
 
     // optional bool high_priority = 4;
-
 
     pub fn get_high_priority(&self) -> bool {
         self.high_priority.unwrap_or(false)
@@ -3876,7 +3984,6 @@ impl CMsgClientChangeStatus {
 
     // optional bool persona_set_by_user = 5;
 
-
     pub fn get_persona_set_by_user(&self) -> bool {
         self.persona_set_by_user.unwrap_or(false)
     }
@@ -3894,7 +4001,6 @@ impl CMsgClientChangeStatus {
     }
 
     // optional uint32 persona_state_flags = 6;
-
 
     pub fn get_persona_state_flags(&self) -> u32 {
         self.persona_state_flags.unwrap_or(0u32)
@@ -3914,7 +4020,6 @@ impl CMsgClientChangeStatus {
 
     // optional bool need_persona_response = 7;
 
-
     pub fn get_need_persona_response(&self) -> bool {
         self.need_persona_response.unwrap_or(false)
     }
@@ -3932,7 +4037,6 @@ impl CMsgClientChangeStatus {
     }
 
     // optional bool is_client_idle = 8;
-
 
     pub fn get_is_client_idle(&self) -> bool {
         self.is_client_idle.unwrap_or(false)
@@ -3966,55 +4070,55 @@ impl ::protobuf::Message for CMsgClientChangeStatus {
                     }
                     let tmp = is.read_uint32()?;
                     self.persona_state = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.player_name)?;
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.is_auto_generated_name = ::std::option::Option::Some(tmp);
-                },
+                }
                 4 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.high_priority = ::std::option::Option::Some(tmp);
-                },
+                }
                 5 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.persona_set_by_user = ::std::option::Option::Some(tmp);
-                },
+                }
                 6 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.persona_state_flags = ::std::option::Option::Some(tmp);
-                },
+                }
                 7 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.need_persona_response = ::std::option::Option::Some(tmp);
-                },
+                }
                 8 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.is_client_idle = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -4113,53 +4217,78 @@ impl ::protobuf::Message for CMsgClientChangeStatus {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "persona_state",
-                |m: &CMsgClientChangeStatus| { &m.persona_state },
-                |m: &mut CMsgClientChangeStatus| { &mut m.persona_state },
+                |m: &CMsgClientChangeStatus| &m.persona_state,
+                |m: &mut CMsgClientChangeStatus| &mut m.persona_state,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "player_name",
-                |m: &CMsgClientChangeStatus| { &m.player_name },
-                |m: &mut CMsgClientChangeStatus| { &mut m.player_name },
+                |m: &CMsgClientChangeStatus| &m.player_name,
+                |m: &mut CMsgClientChangeStatus| &mut m.player_name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "is_auto_generated_name",
-                |m: &CMsgClientChangeStatus| { &m.is_auto_generated_name },
-                |m: &mut CMsgClientChangeStatus| { &mut m.is_auto_generated_name },
+                |m: &CMsgClientChangeStatus| &m.is_auto_generated_name,
+                |m: &mut CMsgClientChangeStatus| &mut m.is_auto_generated_name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "high_priority",
-                |m: &CMsgClientChangeStatus| { &m.high_priority },
-                |m: &mut CMsgClientChangeStatus| { &mut m.high_priority },
+                |m: &CMsgClientChangeStatus| &m.high_priority,
+                |m: &mut CMsgClientChangeStatus| &mut m.high_priority,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "persona_set_by_user",
-                |m: &CMsgClientChangeStatus| { &m.persona_set_by_user },
-                |m: &mut CMsgClientChangeStatus| { &mut m.persona_set_by_user },
+                |m: &CMsgClientChangeStatus| &m.persona_set_by_user,
+                |m: &mut CMsgClientChangeStatus| &mut m.persona_set_by_user,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "persona_state_flags",
-                |m: &CMsgClientChangeStatus| { &m.persona_state_flags },
-                |m: &mut CMsgClientChangeStatus| { &mut m.persona_state_flags },
+                |m: &CMsgClientChangeStatus| &m.persona_state_flags,
+                |m: &mut CMsgClientChangeStatus| &mut m.persona_state_flags,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "need_persona_response",
-                |m: &CMsgClientChangeStatus| { &m.need_persona_response },
-                |m: &mut CMsgClientChangeStatus| { &mut m.need_persona_response },
+                |m: &CMsgClientChangeStatus| &m.need_persona_response,
+                |m: &mut CMsgClientChangeStatus| &mut m.need_persona_response,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "is_client_idle",
-                |m: &CMsgClientChangeStatus| { &m.is_client_idle },
-                |m: &mut CMsgClientChangeStatus| { &mut m.is_client_idle },
+                |m: &CMsgClientChangeStatus| &m.is_client_idle,
+                |m: &mut CMsgClientChangeStatus| &mut m.is_client_idle,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientChangeStatus>(
                 "CMsgClientChangeStatus",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -4196,7 +4325,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientChangeStatus {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgPersonaChangeResponse {
     // message fields
@@ -4222,7 +4351,6 @@ impl CMsgPersonaChangeResponse {
 
     // optional uint32 result = 1;
 
-
     pub fn get_result(&self) -> u32 {
         self.result.unwrap_or(0)
     }
@@ -4240,7 +4368,6 @@ impl CMsgPersonaChangeResponse {
     }
 
     // optional string player_name = 2;
-
 
     pub fn get_player_name(&self) -> &str {
         match self.player_name.as_ref() {
@@ -4291,13 +4418,13 @@ impl ::protobuf::Message for CMsgPersonaChangeResponse {
                     }
                     let tmp = is.read_uint32()?;
                     self.result = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.player_name)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -4360,23 +4487,30 @@ impl ::protobuf::Message for CMsgPersonaChangeResponse {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "result",
-                |m: &CMsgPersonaChangeResponse| { &m.result },
-                |m: &mut CMsgPersonaChangeResponse| { &mut m.result },
+                |m: &CMsgPersonaChangeResponse| &m.result,
+                |m: &mut CMsgPersonaChangeResponse| &mut m.result,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "player_name",
-                |m: &CMsgPersonaChangeResponse| { &m.player_name },
-                |m: &mut CMsgPersonaChangeResponse| { &mut m.player_name },
+                |m: &CMsgPersonaChangeResponse| &m.player_name,
+                |m: &mut CMsgPersonaChangeResponse| &mut m.player_name,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgPersonaChangeResponse>(
                 "CMsgPersonaChangeResponse",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -4407,7 +4541,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgPersonaChangeResponse {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientPersonaState {
     // message fields
@@ -4433,7 +4567,6 @@ impl CMsgClientPersonaState {
 
     // optional uint32 status_flags = 1;
 
-
     pub fn get_status_flags(&self) -> u32 {
         self.status_flags.unwrap_or(0)
     }
@@ -4451,7 +4584,6 @@ impl CMsgClientPersonaState {
     }
 
     // repeated .CMsgClientPersonaState.Friend friends = 2;
-
 
     pub fn get_friends(&self) -> &[CMsgClientPersonaState_Friend] {
         &self.friends
@@ -4482,7 +4614,7 @@ impl ::protobuf::Message for CMsgClientPersonaState {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         true
     }
 
@@ -4496,13 +4628,13 @@ impl ::protobuf::Message for CMsgClientPersonaState {
                     }
                     let tmp = is.read_uint32()?;
                     self.status_flags = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     ::protobuf::rt::read_repeated_message_into(wire_type, is, &mut self.friends)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -4518,7 +4650,7 @@ impl ::protobuf::Message for CMsgClientPersonaState {
         for value in &self.friends {
             let len = value.compute_size();
             my_size += 1 + ::protobuf::rt::compute_raw_varint32_size(len) + len;
-        };
+        }
         my_size += ::protobuf::rt::unknown_fields_size(self.get_unknown_fields());
         self.cached_size.set(my_size);
         my_size
@@ -4532,7 +4664,7 @@ impl ::protobuf::Message for CMsgClientPersonaState {
             os.write_tag(2, ::protobuf::wire_format::WireTypeLengthDelimited)?;
             os.write_raw_varint32(v.get_cached_size())?;
             v.write_to_with_cached_sizes(os)?;
-        };
+        }
         os.write_unknown_fields(self.get_unknown_fields())?;
         ::std::result::Result::Ok(())
     }
@@ -4568,23 +4700,30 @@ impl ::protobuf::Message for CMsgClientPersonaState {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "status_flags",
-                |m: &CMsgClientPersonaState| { &m.status_flags },
-                |m: &mut CMsgClientPersonaState| { &mut m.status_flags },
+                |m: &CMsgClientPersonaState| &m.status_flags,
+                |m: &mut CMsgClientPersonaState| &mut m.status_flags,
             ));
-            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<CMsgClientPersonaState_Friend>>(
+            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeMessage<CMsgClientPersonaState_Friend>,
+            >(
                 "friends",
-                |m: &CMsgClientPersonaState| { &m.friends },
-                |m: &mut CMsgClientPersonaState| { &mut m.friends },
+                |m: &CMsgClientPersonaState| &m.friends,
+                |m: &mut CMsgClientPersonaState| &mut m.friends,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientPersonaState>(
                 "CMsgClientPersonaState",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -4615,7 +4754,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientPersonaState {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientPersonaState_Friend {
     // message fields
@@ -4667,7 +4806,6 @@ impl CMsgClientPersonaState_Friend {
 
     // optional fixed64 friendid = 1;
 
-
     pub fn get_friendid(&self) -> u64 {
         self.friendid.unwrap_or(0)
     }
@@ -4685,7 +4823,6 @@ impl CMsgClientPersonaState_Friend {
     }
 
     // optional uint32 persona_state = 2;
-
 
     pub fn get_persona_state(&self) -> u32 {
         self.persona_state.unwrap_or(0)
@@ -4705,7 +4842,6 @@ impl CMsgClientPersonaState_Friend {
 
     // optional uint32 game_played_app_id = 3;
 
-
     pub fn get_game_played_app_id(&self) -> u32 {
         self.game_played_app_id.unwrap_or(0)
     }
@@ -4723,7 +4859,6 @@ impl CMsgClientPersonaState_Friend {
     }
 
     // optional uint32 game_server_ip = 4;
-
 
     pub fn get_game_server_ip(&self) -> u32 {
         self.game_server_ip.unwrap_or(0)
@@ -4743,7 +4878,6 @@ impl CMsgClientPersonaState_Friend {
 
     // optional uint32 game_server_port = 5;
 
-
     pub fn get_game_server_port(&self) -> u32 {
         self.game_server_port.unwrap_or(0)
     }
@@ -4761,7 +4895,6 @@ impl CMsgClientPersonaState_Friend {
     }
 
     // optional uint32 persona_state_flags = 6;
-
 
     pub fn get_persona_state_flags(&self) -> u32 {
         self.persona_state_flags.unwrap_or(0)
@@ -4781,7 +4914,6 @@ impl CMsgClientPersonaState_Friend {
 
     // optional uint32 online_session_instances = 7;
 
-
     pub fn get_online_session_instances(&self) -> u32 {
         self.online_session_instances.unwrap_or(0)
     }
@@ -4800,7 +4932,6 @@ impl CMsgClientPersonaState_Friend {
 
     // optional bool persona_set_by_user = 10;
 
-
     pub fn get_persona_set_by_user(&self) -> bool {
         self.persona_set_by_user.unwrap_or(false)
     }
@@ -4818,7 +4949,6 @@ impl CMsgClientPersonaState_Friend {
     }
 
     // optional string player_name = 15;
-
 
     pub fn get_player_name(&self) -> &str {
         match self.player_name.as_ref() {
@@ -4855,7 +4985,6 @@ impl CMsgClientPersonaState_Friend {
 
     // optional uint32 query_port = 20;
 
-
     pub fn get_query_port(&self) -> u32 {
         self.query_port.unwrap_or(0)
     }
@@ -4874,7 +5003,6 @@ impl CMsgClientPersonaState_Friend {
 
     // optional fixed64 steamid_source = 25;
 
-
     pub fn get_steamid_source(&self) -> u64 {
         self.steamid_source.unwrap_or(0)
     }
@@ -4892,7 +5020,6 @@ impl CMsgClientPersonaState_Friend {
     }
 
     // optional bytes avatar_hash = 31;
-
 
     pub fn get_avatar_hash(&self) -> &[u8] {
         match self.avatar_hash.as_ref() {
@@ -4929,7 +5056,6 @@ impl CMsgClientPersonaState_Friend {
 
     // optional uint32 last_logoff = 45;
 
-
     pub fn get_last_logoff(&self) -> u32 {
         self.last_logoff.unwrap_or(0)
     }
@@ -4947,7 +5073,6 @@ impl CMsgClientPersonaState_Friend {
     }
 
     // optional uint32 last_logon = 46;
-
 
     pub fn get_last_logon(&self) -> u32 {
         self.last_logon.unwrap_or(0)
@@ -4967,7 +5092,6 @@ impl CMsgClientPersonaState_Friend {
 
     // optional uint32 last_seen_online = 47;
 
-
     pub fn get_last_seen_online(&self) -> u32 {
         self.last_seen_online.unwrap_or(0)
     }
@@ -4986,7 +5110,6 @@ impl CMsgClientPersonaState_Friend {
 
     // optional uint32 clan_rank = 50;
 
-
     pub fn get_clan_rank(&self) -> u32 {
         self.clan_rank.unwrap_or(0)
     }
@@ -5004,7 +5127,6 @@ impl CMsgClientPersonaState_Friend {
     }
 
     // optional string game_name = 55;
-
 
     pub fn get_game_name(&self) -> &str {
         match self.game_name.as_ref() {
@@ -5041,7 +5163,6 @@ impl CMsgClientPersonaState_Friend {
 
     // optional fixed64 gameid = 56;
 
-
     pub fn get_gameid(&self) -> u64 {
         self.gameid.unwrap_or(0)
     }
@@ -5059,7 +5180,6 @@ impl CMsgClientPersonaState_Friend {
     }
 
     // optional bytes game_data_blob = 60;
-
 
     pub fn get_game_data_blob(&self) -> &[u8] {
         match self.game_data_blob.as_ref() {
@@ -5096,9 +5216,10 @@ impl CMsgClientPersonaState_Friend {
 
     // optional .CMsgClientPersonaState.Friend.ClanData clan_data = 64;
 
-
     pub fn get_clan_data(&self) -> &CMsgClientPersonaState_Friend_ClanData {
-        self.clan_data.as_ref().unwrap_or_else(|| <CMsgClientPersonaState_Friend_ClanData as ::protobuf::Message>::default_instance())
+        self.clan_data
+            .as_ref()
+            .unwrap_or_else(|| <CMsgClientPersonaState_Friend_ClanData as ::protobuf::Message>::default_instance())
     }
     pub fn clear_clan_data(&mut self) {
         self.clan_data.clear();
@@ -5124,11 +5245,12 @@ impl CMsgClientPersonaState_Friend {
 
     // Take field
     pub fn take_clan_data(&mut self) -> CMsgClientPersonaState_Friend_ClanData {
-        self.clan_data.take().unwrap_or_else(|| CMsgClientPersonaState_Friend_ClanData::new())
+        self.clan_data
+            .take()
+            .unwrap_or_else(|| CMsgClientPersonaState_Friend_ClanData::new())
     }
 
     // optional string clan_tag = 65;
-
 
     pub fn get_clan_tag(&self) -> &str {
         match self.clan_tag.as_ref() {
@@ -5165,7 +5287,6 @@ impl CMsgClientPersonaState_Friend {
 
     // repeated .CMsgClientPersonaState.Friend.KV rich_presence = 71;
 
-
     pub fn get_rich_presence(&self) -> &[CMsgClientPersonaState_Friend_KV] {
         &self.rich_presence
     }
@@ -5190,7 +5311,6 @@ impl CMsgClientPersonaState_Friend {
 
     // optional fixed64 broadcast_id = 72;
 
-
     pub fn get_broadcast_id(&self) -> u64 {
         self.broadcast_id.unwrap_or(0)
     }
@@ -5208,7 +5328,6 @@ impl CMsgClientPersonaState_Friend {
     }
 
     // optional fixed64 game_lobby_id = 73;
-
 
     pub fn get_game_lobby_id(&self) -> u64 {
         self.game_lobby_id.unwrap_or(0)
@@ -5228,7 +5347,6 @@ impl CMsgClientPersonaState_Friend {
 
     // optional uint32 watching_broadcast_accountid = 74;
 
-
     pub fn get_watching_broadcast_accountid(&self) -> u32 {
         self.watching_broadcast_accountid.unwrap_or(0)
     }
@@ -5246,7 +5364,6 @@ impl CMsgClientPersonaState_Friend {
     }
 
     // optional uint32 watching_broadcast_appid = 75;
-
 
     pub fn get_watching_broadcast_appid(&self) -> u32 {
         self.watching_broadcast_appid.unwrap_or(0)
@@ -5266,7 +5383,6 @@ impl CMsgClientPersonaState_Friend {
 
     // optional uint32 watching_broadcast_viewers = 76;
 
-
     pub fn get_watching_broadcast_viewers(&self) -> u32 {
         self.watching_broadcast_viewers.unwrap_or(0)
     }
@@ -5284,7 +5400,6 @@ impl CMsgClientPersonaState_Friend {
     }
 
     // optional string watching_broadcast_title = 77;
-
 
     pub fn get_watching_broadcast_title(&self) -> &str {
         match self.watching_broadcast_title.as_ref() {
@@ -5316,7 +5431,9 @@ impl CMsgClientPersonaState_Friend {
 
     // Take field
     pub fn take_watching_broadcast_title(&mut self) -> ::std::string::String {
-        self.watching_broadcast_title.take().unwrap_or_else(|| ::std::string::String::new())
+        self.watching_broadcast_title
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 }
 
@@ -5326,12 +5443,12 @@ impl ::protobuf::Message for CMsgClientPersonaState_Friend {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         for v in &self.rich_presence {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         true
     }
 
@@ -5345,167 +5462,167 @@ impl ::protobuf::Message for CMsgClientPersonaState_Friend {
                     }
                     let tmp = is.read_fixed64()?;
                     self.friendid = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.persona_state = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.game_played_app_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 4 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.game_server_ip = ::std::option::Option::Some(tmp);
-                },
+                }
                 5 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.game_server_port = ::std::option::Option::Some(tmp);
-                },
+                }
                 6 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.persona_state_flags = ::std::option::Option::Some(tmp);
-                },
+                }
                 7 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.online_session_instances = ::std::option::Option::Some(tmp);
-                },
+                }
                 10 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.persona_set_by_user = ::std::option::Option::Some(tmp);
-                },
+                }
                 15 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.player_name)?;
-                },
+                }
                 20 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.query_port = ::std::option::Option::Some(tmp);
-                },
+                }
                 25 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.steamid_source = ::std::option::Option::Some(tmp);
-                },
+                }
                 31 => {
                     ::protobuf::rt::read_singular_bytes_into(wire_type, is, &mut self.avatar_hash)?;
-                },
+                }
                 45 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.last_logoff = ::std::option::Option::Some(tmp);
-                },
+                }
                 46 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.last_logon = ::std::option::Option::Some(tmp);
-                },
+                }
                 47 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.last_seen_online = ::std::option::Option::Some(tmp);
-                },
+                }
                 50 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.clan_rank = ::std::option::Option::Some(tmp);
-                },
+                }
                 55 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.game_name)?;
-                },
+                }
                 56 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.gameid = ::std::option::Option::Some(tmp);
-                },
+                }
                 60 => {
                     ::protobuf::rt::read_singular_bytes_into(wire_type, is, &mut self.game_data_blob)?;
-                },
+                }
                 64 => {
                     ::protobuf::rt::read_singular_message_into(wire_type, is, &mut self.clan_data)?;
-                },
+                }
                 65 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.clan_tag)?;
-                },
+                }
                 71 => {
                     ::protobuf::rt::read_repeated_message_into(wire_type, is, &mut self.rich_presence)?;
-                },
+                }
                 72 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.broadcast_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 73 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.game_lobby_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 74 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.watching_broadcast_accountid = ::std::option::Option::Some(tmp);
-                },
+                }
                 75 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.watching_broadcast_appid = ::std::option::Option::Some(tmp);
-                },
+                }
                 76 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.watching_broadcast_viewers = ::std::option::Option::Some(tmp);
-                },
+                }
                 77 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.watching_broadcast_title)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -5582,7 +5699,7 @@ impl ::protobuf::Message for CMsgClientPersonaState_Friend {
         for value in &self.rich_presence {
             let len = value.compute_size();
             my_size += 2 + ::protobuf::rt::compute_raw_varint32_size(len) + len;
-        };
+        }
         if let Some(v) = self.broadcast_id {
             my_size += 10;
         }
@@ -5676,7 +5793,7 @@ impl ::protobuf::Message for CMsgClientPersonaState_Friend {
             os.write_tag(71, ::protobuf::wire_format::WireTypeLengthDelimited)?;
             os.write_raw_varint32(v.get_cached_size())?;
             v.write_to_with_cached_sizes(os)?;
-        };
+        }
         if let Some(v) = self.broadcast_id {
             os.write_fixed64(72, v)?;
         }
@@ -5730,153 +5847,238 @@ impl ::protobuf::Message for CMsgClientPersonaState_Friend {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "friendid",
-                |m: &CMsgClientPersonaState_Friend| { &m.friendid },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.friendid },
+                |m: &CMsgClientPersonaState_Friend| &m.friendid,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.friendid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "persona_state",
-                |m: &CMsgClientPersonaState_Friend| { &m.persona_state },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.persona_state },
+                |m: &CMsgClientPersonaState_Friend| &m.persona_state,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.persona_state,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "game_played_app_id",
-                |m: &CMsgClientPersonaState_Friend| { &m.game_played_app_id },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.game_played_app_id },
+                |m: &CMsgClientPersonaState_Friend| &m.game_played_app_id,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.game_played_app_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "game_server_ip",
-                |m: &CMsgClientPersonaState_Friend| { &m.game_server_ip },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.game_server_ip },
+                |m: &CMsgClientPersonaState_Friend| &m.game_server_ip,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.game_server_ip,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "game_server_port",
-                |m: &CMsgClientPersonaState_Friend| { &m.game_server_port },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.game_server_port },
+                |m: &CMsgClientPersonaState_Friend| &m.game_server_port,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.game_server_port,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "persona_state_flags",
-                |m: &CMsgClientPersonaState_Friend| { &m.persona_state_flags },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.persona_state_flags },
+                |m: &CMsgClientPersonaState_Friend| &m.persona_state_flags,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.persona_state_flags,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "online_session_instances",
-                |m: &CMsgClientPersonaState_Friend| { &m.online_session_instances },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.online_session_instances },
+                |m: &CMsgClientPersonaState_Friend| &m.online_session_instances,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.online_session_instances,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "persona_set_by_user",
-                |m: &CMsgClientPersonaState_Friend| { &m.persona_set_by_user },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.persona_set_by_user },
+                |m: &CMsgClientPersonaState_Friend| &m.persona_set_by_user,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.persona_set_by_user,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "player_name",
-                |m: &CMsgClientPersonaState_Friend| { &m.player_name },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.player_name },
+                |m: &CMsgClientPersonaState_Friend| &m.player_name,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.player_name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "query_port",
-                |m: &CMsgClientPersonaState_Friend| { &m.query_port },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.query_port },
+                |m: &CMsgClientPersonaState_Friend| &m.query_port,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.query_port,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "steamid_source",
-                |m: &CMsgClientPersonaState_Friend| { &m.steamid_source },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.steamid_source },
+                |m: &CMsgClientPersonaState_Friend| &m.steamid_source,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.steamid_source,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeBytes>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBytes,
+            >(
                 "avatar_hash",
-                |m: &CMsgClientPersonaState_Friend| { &m.avatar_hash },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.avatar_hash },
+                |m: &CMsgClientPersonaState_Friend| &m.avatar_hash,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.avatar_hash,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "last_logoff",
-                |m: &CMsgClientPersonaState_Friend| { &m.last_logoff },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.last_logoff },
+                |m: &CMsgClientPersonaState_Friend| &m.last_logoff,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.last_logoff,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "last_logon",
-                |m: &CMsgClientPersonaState_Friend| { &m.last_logon },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.last_logon },
+                |m: &CMsgClientPersonaState_Friend| &m.last_logon,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.last_logon,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "last_seen_online",
-                |m: &CMsgClientPersonaState_Friend| { &m.last_seen_online },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.last_seen_online },
+                |m: &CMsgClientPersonaState_Friend| &m.last_seen_online,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.last_seen_online,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "clan_rank",
-                |m: &CMsgClientPersonaState_Friend| { &m.clan_rank },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.clan_rank },
+                |m: &CMsgClientPersonaState_Friend| &m.clan_rank,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.clan_rank,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "game_name",
-                |m: &CMsgClientPersonaState_Friend| { &m.game_name },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.game_name },
+                |m: &CMsgClientPersonaState_Friend| &m.game_name,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.game_name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "gameid",
-                |m: &CMsgClientPersonaState_Friend| { &m.gameid },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.gameid },
+                |m: &CMsgClientPersonaState_Friend| &m.gameid,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.gameid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeBytes>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBytes,
+            >(
                 "game_data_blob",
-                |m: &CMsgClientPersonaState_Friend| { &m.game_data_blob },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.game_data_blob },
+                |m: &CMsgClientPersonaState_Friend| &m.game_data_blob,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.game_data_blob,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<CMsgClientPersonaState_Friend_ClanData>>(
+            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeMessage<CMsgClientPersonaState_Friend_ClanData>,
+            >(
                 "clan_data",
-                |m: &CMsgClientPersonaState_Friend| { &m.clan_data },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.clan_data },
+                |m: &CMsgClientPersonaState_Friend| &m.clan_data,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.clan_data,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "clan_tag",
-                |m: &CMsgClientPersonaState_Friend| { &m.clan_tag },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.clan_tag },
+                |m: &CMsgClientPersonaState_Friend| &m.clan_tag,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.clan_tag,
             ));
-            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<CMsgClientPersonaState_Friend_KV>>(
+            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeMessage<CMsgClientPersonaState_Friend_KV>,
+            >(
                 "rich_presence",
-                |m: &CMsgClientPersonaState_Friend| { &m.rich_presence },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.rich_presence },
+                |m: &CMsgClientPersonaState_Friend| &m.rich_presence,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.rich_presence,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "broadcast_id",
-                |m: &CMsgClientPersonaState_Friend| { &m.broadcast_id },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.broadcast_id },
+                |m: &CMsgClientPersonaState_Friend| &m.broadcast_id,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.broadcast_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "game_lobby_id",
-                |m: &CMsgClientPersonaState_Friend| { &m.game_lobby_id },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.game_lobby_id },
+                |m: &CMsgClientPersonaState_Friend| &m.game_lobby_id,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.game_lobby_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "watching_broadcast_accountid",
-                |m: &CMsgClientPersonaState_Friend| { &m.watching_broadcast_accountid },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.watching_broadcast_accountid },
+                |m: &CMsgClientPersonaState_Friend| &m.watching_broadcast_accountid,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.watching_broadcast_accountid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "watching_broadcast_appid",
-                |m: &CMsgClientPersonaState_Friend| { &m.watching_broadcast_appid },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.watching_broadcast_appid },
+                |m: &CMsgClientPersonaState_Friend| &m.watching_broadcast_appid,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.watching_broadcast_appid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "watching_broadcast_viewers",
-                |m: &CMsgClientPersonaState_Friend| { &m.watching_broadcast_viewers },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.watching_broadcast_viewers },
+                |m: &CMsgClientPersonaState_Friend| &m.watching_broadcast_viewers,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.watching_broadcast_viewers,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "watching_broadcast_title",
-                |m: &CMsgClientPersonaState_Friend| { &m.watching_broadcast_title },
-                |m: &mut CMsgClientPersonaState_Friend| { &mut m.watching_broadcast_title },
+                |m: &CMsgClientPersonaState_Friend| &m.watching_broadcast_title,
+                |m: &mut CMsgClientPersonaState_Friend| &mut m.watching_broadcast_title,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientPersonaState_Friend>(
                 "CMsgClientPersonaState.Friend",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -5933,7 +6135,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientPersonaState_Friend {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientPersonaState_Friend_ClanData {
     // message fields
@@ -5959,7 +6161,6 @@ impl CMsgClientPersonaState_Friend_ClanData {
 
     // optional uint32 ogg_app_id = 1;
 
-
     pub fn get_ogg_app_id(&self) -> u32 {
         self.ogg_app_id.unwrap_or(0)
     }
@@ -5977,7 +6178,6 @@ impl CMsgClientPersonaState_Friend_ClanData {
     }
 
     // optional uint64 chat_group_id = 2;
-
 
     pub fn get_chat_group_id(&self) -> u64 {
         self.chat_group_id.unwrap_or(0)
@@ -6011,17 +6211,17 @@ impl ::protobuf::Message for CMsgClientPersonaState_Friend_ClanData {
                     }
                     let tmp = is.read_uint32()?;
                     self.ogg_app_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint64()?;
                     self.chat_group_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -6084,23 +6284,30 @@ impl ::protobuf::Message for CMsgClientPersonaState_Friend_ClanData {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "ogg_app_id",
-                |m: &CMsgClientPersonaState_Friend_ClanData| { &m.ogg_app_id },
-                |m: &mut CMsgClientPersonaState_Friend_ClanData| { &mut m.ogg_app_id },
+                |m: &CMsgClientPersonaState_Friend_ClanData| &m.ogg_app_id,
+                |m: &mut CMsgClientPersonaState_Friend_ClanData| &mut m.ogg_app_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint64,
+            >(
                 "chat_group_id",
-                |m: &CMsgClientPersonaState_Friend_ClanData| { &m.chat_group_id },
-                |m: &mut CMsgClientPersonaState_Friend_ClanData| { &mut m.chat_group_id },
+                |m: &CMsgClientPersonaState_Friend_ClanData| &m.chat_group_id,
+                |m: &mut CMsgClientPersonaState_Friend_ClanData| &mut m.chat_group_id,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientPersonaState_Friend_ClanData>(
                 "CMsgClientPersonaState.Friend.ClanData",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -6131,7 +6338,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientPersonaState_Friend_ClanDa
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientPersonaState_Friend_KV {
     // message fields
@@ -6156,7 +6363,6 @@ impl CMsgClientPersonaState_Friend_KV {
     }
 
     // optional string key = 1;
-
 
     pub fn get_key(&self) -> &str {
         match self.key.as_ref() {
@@ -6192,7 +6398,6 @@ impl CMsgClientPersonaState_Friend_KV {
     }
 
     // optional string value = 2;
-
 
     pub fn get_value(&self) -> &str {
         match self.value.as_ref() {
@@ -6239,13 +6444,13 @@ impl ::protobuf::Message for CMsgClientPersonaState_Friend_KV {
             match field_number {
                 1 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.key)?;
-                },
+                }
                 2 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.value)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -6308,23 +6513,30 @@ impl ::protobuf::Message for CMsgClientPersonaState_Friend_KV {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "key",
-                |m: &CMsgClientPersonaState_Friend_KV| { &m.key },
-                |m: &mut CMsgClientPersonaState_Friend_KV| { &mut m.key },
+                |m: &CMsgClientPersonaState_Friend_KV| &m.key,
+                |m: &mut CMsgClientPersonaState_Friend_KV| &mut m.key,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "value",
-                |m: &CMsgClientPersonaState_Friend_KV| { &m.value },
-                |m: &mut CMsgClientPersonaState_Friend_KV| { &mut m.value },
+                |m: &CMsgClientPersonaState_Friend_KV| &m.value,
+                |m: &mut CMsgClientPersonaState_Friend_KV| &mut m.value,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientPersonaState_Friend_KV>(
                 "CMsgClientPersonaState.Friend.KV",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -6355,7 +6567,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientPersonaState_Friend_KV {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientFriendProfileInfo {
     // message fields
@@ -6379,7 +6591,6 @@ impl CMsgClientFriendProfileInfo {
     }
 
     // optional fixed64 steamid_friend = 1;
-
 
     pub fn get_steamid_friend(&self) -> u64 {
         self.steamid_friend.unwrap_or(0)
@@ -6413,10 +6624,10 @@ impl ::protobuf::Message for CMsgClientFriendProfileInfo {
                     }
                     let tmp = is.read_fixed64()?;
                     self.steamid_friend = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -6473,18 +6684,22 @@ impl ::protobuf::Message for CMsgClientFriendProfileInfo {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "steamid_friend",
-                |m: &CMsgClientFriendProfileInfo| { &m.steamid_friend },
-                |m: &mut CMsgClientFriendProfileInfo| { &mut m.steamid_friend },
+                |m: &CMsgClientFriendProfileInfo| &m.steamid_friend,
+                |m: &mut CMsgClientFriendProfileInfo| &mut m.steamid_friend,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientFriendProfileInfo>(
                 "CMsgClientFriendProfileInfo",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -6514,7 +6729,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientFriendProfileInfo {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientFriendProfileInfoResponse {
     // message fields
@@ -6547,7 +6762,6 @@ impl CMsgClientFriendProfileInfoResponse {
 
     // optional int32 eresult = 1;
 
-
     pub fn get_eresult(&self) -> i32 {
         self.eresult.unwrap_or(2i32)
     }
@@ -6565,7 +6779,6 @@ impl CMsgClientFriendProfileInfoResponse {
     }
 
     // optional fixed64 steamid_friend = 2;
-
 
     pub fn get_steamid_friend(&self) -> u64 {
         self.steamid_friend.unwrap_or(0)
@@ -6585,7 +6798,6 @@ impl CMsgClientFriendProfileInfoResponse {
 
     // optional uint32 time_created = 3;
 
-
     pub fn get_time_created(&self) -> u32 {
         self.time_created.unwrap_or(0)
     }
@@ -6603,7 +6815,6 @@ impl CMsgClientFriendProfileInfoResponse {
     }
 
     // optional string real_name = 4;
-
 
     pub fn get_real_name(&self) -> &str {
         match self.real_name.as_ref() {
@@ -6640,7 +6851,6 @@ impl CMsgClientFriendProfileInfoResponse {
 
     // optional string city_name = 5;
 
-
     pub fn get_city_name(&self) -> &str {
         match self.city_name.as_ref() {
             Some(v) => &v,
@@ -6675,7 +6885,6 @@ impl CMsgClientFriendProfileInfoResponse {
     }
 
     // optional string state_name = 6;
-
 
     pub fn get_state_name(&self) -> &str {
         match self.state_name.as_ref() {
@@ -6712,7 +6921,6 @@ impl CMsgClientFriendProfileInfoResponse {
 
     // optional string country_name = 7;
 
-
     pub fn get_country_name(&self) -> &str {
         match self.country_name.as_ref() {
             Some(v) => &v,
@@ -6748,7 +6956,6 @@ impl CMsgClientFriendProfileInfoResponse {
 
     // optional string headline = 8;
 
-
     pub fn get_headline(&self) -> &str {
         match self.headline.as_ref() {
             Some(v) => &v,
@@ -6783,7 +6990,6 @@ impl CMsgClientFriendProfileInfoResponse {
     }
 
     // optional string summary = 9;
-
 
     pub fn get_summary(&self) -> &str {
         match self.summary.as_ref() {
@@ -6834,42 +7040,42 @@ impl ::protobuf::Message for CMsgClientFriendProfileInfoResponse {
                     }
                     let tmp = is.read_int32()?;
                     self.eresult = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.steamid_friend = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.time_created = ::std::option::Option::Some(tmp);
-                },
+                }
                 4 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.real_name)?;
-                },
+                }
                 5 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.city_name)?;
-                },
+                }
                 6 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.state_name)?;
-                },
+                }
                 7 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.country_name)?;
-                },
+                }
                 8 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.headline)?;
-                },
+                }
                 9 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.summary)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -6974,58 +7180,86 @@ impl ::protobuf::Message for CMsgClientFriendProfileInfoResponse {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "eresult",
-                |m: &CMsgClientFriendProfileInfoResponse| { &m.eresult },
-                |m: &mut CMsgClientFriendProfileInfoResponse| { &mut m.eresult },
+                |m: &CMsgClientFriendProfileInfoResponse| &m.eresult,
+                |m: &mut CMsgClientFriendProfileInfoResponse| &mut m.eresult,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "steamid_friend",
-                |m: &CMsgClientFriendProfileInfoResponse| { &m.steamid_friend },
-                |m: &mut CMsgClientFriendProfileInfoResponse| { &mut m.steamid_friend },
+                |m: &CMsgClientFriendProfileInfoResponse| &m.steamid_friend,
+                |m: &mut CMsgClientFriendProfileInfoResponse| &mut m.steamid_friend,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "time_created",
-                |m: &CMsgClientFriendProfileInfoResponse| { &m.time_created },
-                |m: &mut CMsgClientFriendProfileInfoResponse| { &mut m.time_created },
+                |m: &CMsgClientFriendProfileInfoResponse| &m.time_created,
+                |m: &mut CMsgClientFriendProfileInfoResponse| &mut m.time_created,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "real_name",
-                |m: &CMsgClientFriendProfileInfoResponse| { &m.real_name },
-                |m: &mut CMsgClientFriendProfileInfoResponse| { &mut m.real_name },
+                |m: &CMsgClientFriendProfileInfoResponse| &m.real_name,
+                |m: &mut CMsgClientFriendProfileInfoResponse| &mut m.real_name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "city_name",
-                |m: &CMsgClientFriendProfileInfoResponse| { &m.city_name },
-                |m: &mut CMsgClientFriendProfileInfoResponse| { &mut m.city_name },
+                |m: &CMsgClientFriendProfileInfoResponse| &m.city_name,
+                |m: &mut CMsgClientFriendProfileInfoResponse| &mut m.city_name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "state_name",
-                |m: &CMsgClientFriendProfileInfoResponse| { &m.state_name },
-                |m: &mut CMsgClientFriendProfileInfoResponse| { &mut m.state_name },
+                |m: &CMsgClientFriendProfileInfoResponse| &m.state_name,
+                |m: &mut CMsgClientFriendProfileInfoResponse| &mut m.state_name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "country_name",
-                |m: &CMsgClientFriendProfileInfoResponse| { &m.country_name },
-                |m: &mut CMsgClientFriendProfileInfoResponse| { &mut m.country_name },
+                |m: &CMsgClientFriendProfileInfoResponse| &m.country_name,
+                |m: &mut CMsgClientFriendProfileInfoResponse| &mut m.country_name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "headline",
-                |m: &CMsgClientFriendProfileInfoResponse| { &m.headline },
-                |m: &mut CMsgClientFriendProfileInfoResponse| { &mut m.headline },
+                |m: &CMsgClientFriendProfileInfoResponse| &m.headline,
+                |m: &mut CMsgClientFriendProfileInfoResponse| &mut m.headline,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "summary",
-                |m: &CMsgClientFriendProfileInfoResponse| { &m.summary },
-                |m: &mut CMsgClientFriendProfileInfoResponse| { &mut m.summary },
+                |m: &CMsgClientFriendProfileInfoResponse| &m.summary,
+                |m: &mut CMsgClientFriendProfileInfoResponse| &mut m.summary,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientFriendProfileInfoResponse>(
                 "CMsgClientFriendProfileInfoResponse",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -7063,7 +7297,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientFriendProfileInfoResponse 
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientCreateFriendsGroup {
     // message fields
@@ -7090,7 +7324,6 @@ impl CMsgClientCreateFriendsGroup {
 
     // optional fixed64 steamid = 1;
 
-
     pub fn get_steamid(&self) -> u64 {
         self.steamid.unwrap_or(0)
     }
@@ -7108,7 +7341,6 @@ impl CMsgClientCreateFriendsGroup {
     }
 
     // optional string groupname = 2;
-
 
     pub fn get_groupname(&self) -> &str {
         match self.groupname.as_ref() {
@@ -7144,7 +7376,6 @@ impl CMsgClientCreateFriendsGroup {
     }
 
     // repeated fixed64 steamid_friends = 3;
-
 
     pub fn get_steamid_friends(&self) -> &[u64] {
         &self.steamid_friends
@@ -7184,16 +7415,16 @@ impl ::protobuf::Message for CMsgClientCreateFriendsGroup {
                     }
                     let tmp = is.read_fixed64()?;
                     self.steamid = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.groupname)?;
-                },
+                }
                 3 => {
                     ::protobuf::rt::read_repeated_fixed64_into(wire_type, is, &mut self.steamid_friends)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -7224,7 +7455,7 @@ impl ::protobuf::Message for CMsgClientCreateFriendsGroup {
         }
         for v in &self.steamid_friends {
             os.write_fixed64(3, *v)?;
-        };
+        }
         os.write_unknown_fields(self.get_unknown_fields())?;
         ::std::result::Result::Ok(())
     }
@@ -7260,28 +7491,38 @@ impl ::protobuf::Message for CMsgClientCreateFriendsGroup {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "steamid",
-                |m: &CMsgClientCreateFriendsGroup| { &m.steamid },
-                |m: &mut CMsgClientCreateFriendsGroup| { &mut m.steamid },
+                |m: &CMsgClientCreateFriendsGroup| &m.steamid,
+                |m: &mut CMsgClientCreateFriendsGroup| &mut m.steamid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "groupname",
-                |m: &CMsgClientCreateFriendsGroup| { &m.groupname },
-                |m: &mut CMsgClientCreateFriendsGroup| { &mut m.groupname },
+                |m: &CMsgClientCreateFriendsGroup| &m.groupname,
+                |m: &mut CMsgClientCreateFriendsGroup| &mut m.groupname,
             ));
-            fields.push(::protobuf::reflect::accessor::make_vec_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_vec_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "steamid_friends",
-                |m: &CMsgClientCreateFriendsGroup| { &m.steamid_friends },
-                |m: &mut CMsgClientCreateFriendsGroup| { &mut m.steamid_friends },
+                |m: &CMsgClientCreateFriendsGroup| &m.steamid_friends,
+                |m: &mut CMsgClientCreateFriendsGroup| &mut m.steamid_friends,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientCreateFriendsGroup>(
                 "CMsgClientCreateFriendsGroup",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -7313,7 +7554,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientCreateFriendsGroup {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientCreateFriendsGroupResponse {
     // message fields
@@ -7339,7 +7580,6 @@ impl CMsgClientCreateFriendsGroupResponse {
 
     // optional uint32 eresult = 1;
 
-
     pub fn get_eresult(&self) -> u32 {
         self.eresult.unwrap_or(0)
     }
@@ -7357,7 +7597,6 @@ impl CMsgClientCreateFriendsGroupResponse {
     }
 
     // optional int32 groupid = 2;
-
 
     pub fn get_groupid(&self) -> i32 {
         self.groupid.unwrap_or(0)
@@ -7391,17 +7630,17 @@ impl ::protobuf::Message for CMsgClientCreateFriendsGroupResponse {
                     }
                     let tmp = is.read_uint32()?;
                     self.eresult = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.groupid = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -7464,23 +7703,30 @@ impl ::protobuf::Message for CMsgClientCreateFriendsGroupResponse {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "eresult",
-                |m: &CMsgClientCreateFriendsGroupResponse| { &m.eresult },
-                |m: &mut CMsgClientCreateFriendsGroupResponse| { &mut m.eresult },
+                |m: &CMsgClientCreateFriendsGroupResponse| &m.eresult,
+                |m: &mut CMsgClientCreateFriendsGroupResponse| &mut m.eresult,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "groupid",
-                |m: &CMsgClientCreateFriendsGroupResponse| { &m.groupid },
-                |m: &mut CMsgClientCreateFriendsGroupResponse| { &mut m.groupid },
+                |m: &CMsgClientCreateFriendsGroupResponse| &m.groupid,
+                |m: &mut CMsgClientCreateFriendsGroupResponse| &mut m.groupid,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientCreateFriendsGroupResponse>(
                 "CMsgClientCreateFriendsGroupResponse",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -7511,7 +7757,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientCreateFriendsGroupResponse
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientDeleteFriendsGroup {
     // message fields
@@ -7537,7 +7783,6 @@ impl CMsgClientDeleteFriendsGroup {
 
     // optional fixed64 steamid = 1;
 
-
     pub fn get_steamid(&self) -> u64 {
         self.steamid.unwrap_or(0)
     }
@@ -7555,7 +7800,6 @@ impl CMsgClientDeleteFriendsGroup {
     }
 
     // optional int32 groupid = 2;
-
 
     pub fn get_groupid(&self) -> i32 {
         self.groupid.unwrap_or(0)
@@ -7589,17 +7833,17 @@ impl ::protobuf::Message for CMsgClientDeleteFriendsGroup {
                     }
                     let tmp = is.read_fixed64()?;
                     self.steamid = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.groupid = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -7662,23 +7906,30 @@ impl ::protobuf::Message for CMsgClientDeleteFriendsGroup {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "steamid",
-                |m: &CMsgClientDeleteFriendsGroup| { &m.steamid },
-                |m: &mut CMsgClientDeleteFriendsGroup| { &mut m.steamid },
+                |m: &CMsgClientDeleteFriendsGroup| &m.steamid,
+                |m: &mut CMsgClientDeleteFriendsGroup| &mut m.steamid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "groupid",
-                |m: &CMsgClientDeleteFriendsGroup| { &m.groupid },
-                |m: &mut CMsgClientDeleteFriendsGroup| { &mut m.groupid },
+                |m: &CMsgClientDeleteFriendsGroup| &m.groupid,
+                |m: &mut CMsgClientDeleteFriendsGroup| &mut m.groupid,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientDeleteFriendsGroup>(
                 "CMsgClientDeleteFriendsGroup",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -7709,7 +7960,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientDeleteFriendsGroup {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientDeleteFriendsGroupResponse {
     // message fields
@@ -7733,7 +7984,6 @@ impl CMsgClientDeleteFriendsGroupResponse {
     }
 
     // optional uint32 eresult = 1;
-
 
     pub fn get_eresult(&self) -> u32 {
         self.eresult.unwrap_or(0)
@@ -7767,10 +8017,10 @@ impl ::protobuf::Message for CMsgClientDeleteFriendsGroupResponse {
                     }
                     let tmp = is.read_uint32()?;
                     self.eresult = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -7827,18 +8077,22 @@ impl ::protobuf::Message for CMsgClientDeleteFriendsGroupResponse {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "eresult",
-                |m: &CMsgClientDeleteFriendsGroupResponse| { &m.eresult },
-                |m: &mut CMsgClientDeleteFriendsGroupResponse| { &mut m.eresult },
+                |m: &CMsgClientDeleteFriendsGroupResponse| &m.eresult,
+                |m: &mut CMsgClientDeleteFriendsGroupResponse| &mut m.eresult,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientDeleteFriendsGroupResponse>(
                 "CMsgClientDeleteFriendsGroupResponse",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -7868,7 +8122,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientDeleteFriendsGroupResponse
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientManageFriendsGroup {
     // message fields
@@ -7896,7 +8150,6 @@ impl CMsgClientManageFriendsGroup {
 
     // optional int32 groupid = 1;
 
-
     pub fn get_groupid(&self) -> i32 {
         self.groupid.unwrap_or(0)
     }
@@ -7914,7 +8167,6 @@ impl CMsgClientManageFriendsGroup {
     }
 
     // optional string groupname = 2;
-
 
     pub fn get_groupname(&self) -> &str {
         match self.groupname.as_ref() {
@@ -7951,7 +8203,6 @@ impl CMsgClientManageFriendsGroup {
 
     // repeated fixed64 steamid_friends_added = 3;
 
-
     pub fn get_steamid_friends_added(&self) -> &[u64] {
         &self.steamid_friends_added
     }
@@ -7975,7 +8226,6 @@ impl CMsgClientManageFriendsGroup {
     }
 
     // repeated fixed64 steamid_friends_removed = 4;
-
 
     pub fn get_steamid_friends_removed(&self) -> &[u64] {
         &self.steamid_friends_removed
@@ -8015,19 +8265,19 @@ impl ::protobuf::Message for CMsgClientManageFriendsGroup {
                     }
                     let tmp = is.read_int32()?;
                     self.groupid = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.groupname)?;
-                },
+                }
                 3 => {
                     ::protobuf::rt::read_repeated_fixed64_into(wire_type, is, &mut self.steamid_friends_added)?;
-                },
+                }
                 4 => {
                     ::protobuf::rt::read_repeated_fixed64_into(wire_type, is, &mut self.steamid_friends_removed)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -8059,10 +8309,10 @@ impl ::protobuf::Message for CMsgClientManageFriendsGroup {
         }
         for v in &self.steamid_friends_added {
             os.write_fixed64(3, *v)?;
-        };
+        }
         for v in &self.steamid_friends_removed {
             os.write_fixed64(4, *v)?;
-        };
+        }
         os.write_unknown_fields(self.get_unknown_fields())?;
         ::std::result::Result::Ok(())
     }
@@ -8098,33 +8348,46 @@ impl ::protobuf::Message for CMsgClientManageFriendsGroup {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "groupid",
-                |m: &CMsgClientManageFriendsGroup| { &m.groupid },
-                |m: &mut CMsgClientManageFriendsGroup| { &mut m.groupid },
+                |m: &CMsgClientManageFriendsGroup| &m.groupid,
+                |m: &mut CMsgClientManageFriendsGroup| &mut m.groupid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "groupname",
-                |m: &CMsgClientManageFriendsGroup| { &m.groupname },
-                |m: &mut CMsgClientManageFriendsGroup| { &mut m.groupname },
+                |m: &CMsgClientManageFriendsGroup| &m.groupname,
+                |m: &mut CMsgClientManageFriendsGroup| &mut m.groupname,
             ));
-            fields.push(::protobuf::reflect::accessor::make_vec_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_vec_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "steamid_friends_added",
-                |m: &CMsgClientManageFriendsGroup| { &m.steamid_friends_added },
-                |m: &mut CMsgClientManageFriendsGroup| { &mut m.steamid_friends_added },
+                |m: &CMsgClientManageFriendsGroup| &m.steamid_friends_added,
+                |m: &mut CMsgClientManageFriendsGroup| &mut m.steamid_friends_added,
             ));
-            fields.push(::protobuf::reflect::accessor::make_vec_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_vec_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "steamid_friends_removed",
-                |m: &CMsgClientManageFriendsGroup| { &m.steamid_friends_removed },
-                |m: &mut CMsgClientManageFriendsGroup| { &mut m.steamid_friends_removed },
+                |m: &CMsgClientManageFriendsGroup| &m.steamid_friends_removed,
+                |m: &mut CMsgClientManageFriendsGroup| &mut m.steamid_friends_removed,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientManageFriendsGroup>(
                 "CMsgClientManageFriendsGroup",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -8157,7 +8420,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientManageFriendsGroup {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientManageFriendsGroupResponse {
     // message fields
@@ -8181,7 +8444,6 @@ impl CMsgClientManageFriendsGroupResponse {
     }
 
     // optional uint32 eresult = 1;
-
 
     pub fn get_eresult(&self) -> u32 {
         self.eresult.unwrap_or(0)
@@ -8215,10 +8477,10 @@ impl ::protobuf::Message for CMsgClientManageFriendsGroupResponse {
                     }
                     let tmp = is.read_uint32()?;
                     self.eresult = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -8275,18 +8537,22 @@ impl ::protobuf::Message for CMsgClientManageFriendsGroupResponse {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "eresult",
-                |m: &CMsgClientManageFriendsGroupResponse| { &m.eresult },
-                |m: &mut CMsgClientManageFriendsGroupResponse| { &mut m.eresult },
+                |m: &CMsgClientManageFriendsGroupResponse| &m.eresult,
+                |m: &mut CMsgClientManageFriendsGroupResponse| &mut m.eresult,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientManageFriendsGroupResponse>(
                 "CMsgClientManageFriendsGroupResponse",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -8316,7 +8582,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientManageFriendsGroupResponse
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientAddFriendToGroup {
     // message fields
@@ -8342,7 +8608,6 @@ impl CMsgClientAddFriendToGroup {
 
     // optional int32 groupid = 1;
 
-
     pub fn get_groupid(&self) -> i32 {
         self.groupid.unwrap_or(0)
     }
@@ -8360,7 +8625,6 @@ impl CMsgClientAddFriendToGroup {
     }
 
     // optional fixed64 steamiduser = 2;
-
 
     pub fn get_steamiduser(&self) -> u64 {
         self.steamiduser.unwrap_or(0)
@@ -8394,17 +8658,17 @@ impl ::protobuf::Message for CMsgClientAddFriendToGroup {
                     }
                     let tmp = is.read_int32()?;
                     self.groupid = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.steamiduser = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -8467,23 +8731,30 @@ impl ::protobuf::Message for CMsgClientAddFriendToGroup {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "groupid",
-                |m: &CMsgClientAddFriendToGroup| { &m.groupid },
-                |m: &mut CMsgClientAddFriendToGroup| { &mut m.groupid },
+                |m: &CMsgClientAddFriendToGroup| &m.groupid,
+                |m: &mut CMsgClientAddFriendToGroup| &mut m.groupid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "steamiduser",
-                |m: &CMsgClientAddFriendToGroup| { &m.steamiduser },
-                |m: &mut CMsgClientAddFriendToGroup| { &mut m.steamiduser },
+                |m: &CMsgClientAddFriendToGroup| &m.steamiduser,
+                |m: &mut CMsgClientAddFriendToGroup| &mut m.steamiduser,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientAddFriendToGroup>(
                 "CMsgClientAddFriendToGroup",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -8514,7 +8785,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientAddFriendToGroup {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientAddFriendToGroupResponse {
     // message fields
@@ -8538,7 +8809,6 @@ impl CMsgClientAddFriendToGroupResponse {
     }
 
     // optional uint32 eresult = 1;
-
 
     pub fn get_eresult(&self) -> u32 {
         self.eresult.unwrap_or(0)
@@ -8572,10 +8842,10 @@ impl ::protobuf::Message for CMsgClientAddFriendToGroupResponse {
                     }
                     let tmp = is.read_uint32()?;
                     self.eresult = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -8632,18 +8902,22 @@ impl ::protobuf::Message for CMsgClientAddFriendToGroupResponse {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "eresult",
-                |m: &CMsgClientAddFriendToGroupResponse| { &m.eresult },
-                |m: &mut CMsgClientAddFriendToGroupResponse| { &mut m.eresult },
+                |m: &CMsgClientAddFriendToGroupResponse| &m.eresult,
+                |m: &mut CMsgClientAddFriendToGroupResponse| &mut m.eresult,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientAddFriendToGroupResponse>(
                 "CMsgClientAddFriendToGroupResponse",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -8673,7 +8947,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientAddFriendToGroupResponse {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientRemoveFriendFromGroup {
     // message fields
@@ -8699,7 +8973,6 @@ impl CMsgClientRemoveFriendFromGroup {
 
     // optional int32 groupid = 1;
 
-
     pub fn get_groupid(&self) -> i32 {
         self.groupid.unwrap_or(0)
     }
@@ -8717,7 +8990,6 @@ impl CMsgClientRemoveFriendFromGroup {
     }
 
     // optional fixed64 steamiduser = 2;
-
 
     pub fn get_steamiduser(&self) -> u64 {
         self.steamiduser.unwrap_or(0)
@@ -8751,17 +9023,17 @@ impl ::protobuf::Message for CMsgClientRemoveFriendFromGroup {
                     }
                     let tmp = is.read_int32()?;
                     self.groupid = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.steamiduser = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -8824,23 +9096,30 @@ impl ::protobuf::Message for CMsgClientRemoveFriendFromGroup {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "groupid",
-                |m: &CMsgClientRemoveFriendFromGroup| { &m.groupid },
-                |m: &mut CMsgClientRemoveFriendFromGroup| { &mut m.groupid },
+                |m: &CMsgClientRemoveFriendFromGroup| &m.groupid,
+                |m: &mut CMsgClientRemoveFriendFromGroup| &mut m.groupid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "steamiduser",
-                |m: &CMsgClientRemoveFriendFromGroup| { &m.steamiduser },
-                |m: &mut CMsgClientRemoveFriendFromGroup| { &mut m.steamiduser },
+                |m: &CMsgClientRemoveFriendFromGroup| &m.steamiduser,
+                |m: &mut CMsgClientRemoveFriendFromGroup| &mut m.steamiduser,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientRemoveFriendFromGroup>(
                 "CMsgClientRemoveFriendFromGroup",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -8871,7 +9150,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientRemoveFriendFromGroup {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientRemoveFriendFromGroupResponse {
     // message fields
@@ -8895,7 +9174,6 @@ impl CMsgClientRemoveFriendFromGroupResponse {
     }
 
     // optional uint32 eresult = 1;
-
 
     pub fn get_eresult(&self) -> u32 {
         self.eresult.unwrap_or(0)
@@ -8929,10 +9207,10 @@ impl ::protobuf::Message for CMsgClientRemoveFriendFromGroupResponse {
                     }
                     let tmp = is.read_uint32()?;
                     self.eresult = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -8989,18 +9267,22 @@ impl ::protobuf::Message for CMsgClientRemoveFriendFromGroupResponse {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "eresult",
-                |m: &CMsgClientRemoveFriendFromGroupResponse| { &m.eresult },
-                |m: &mut CMsgClientRemoveFriendFromGroupResponse| { &mut m.eresult },
+                |m: &CMsgClientRemoveFriendFromGroupResponse| &m.eresult,
+                |m: &mut CMsgClientRemoveFriendFromGroupResponse| &mut m.eresult,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientRemoveFriendFromGroupResponse>(
                 "CMsgClientRemoveFriendFromGroupResponse",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -9030,7 +9312,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientRemoveFriendFromGroupRespo
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientGetEmoticonList {
     // special fields
@@ -9063,7 +9345,7 @@ impl ::protobuf::Message for CMsgClientGetEmoticonList {
             match field_number {
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -9114,13 +9396,14 @@ impl ::protobuf::Message for CMsgClientGetEmoticonList {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let fields = ::std::vec::Vec::new();
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientGetEmoticonList>(
                 "CMsgClientGetEmoticonList",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -9149,7 +9432,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientGetEmoticonList {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientEmoticonList {
     // message fields
@@ -9176,7 +9459,6 @@ impl CMsgClientEmoticonList {
 
     // repeated .CMsgClientEmoticonList.Emoticon emoticons = 1;
 
-
     pub fn get_emoticons(&self) -> &[CMsgClientEmoticonList_Emoticon] {
         &self.emoticons
     }
@@ -9201,7 +9483,6 @@ impl CMsgClientEmoticonList {
 
     // repeated .CMsgClientEmoticonList.Sticker stickers = 2;
 
-
     pub fn get_stickers(&self) -> &[CMsgClientEmoticonList_Sticker] {
         &self.stickers
     }
@@ -9225,7 +9506,6 @@ impl CMsgClientEmoticonList {
     }
 
     // repeated .CMsgClientEmoticonList.Effect effects = 3;
-
 
     pub fn get_effects(&self) -> &[CMsgClientEmoticonList_Effect] {
         &self.effects
@@ -9256,17 +9536,17 @@ impl ::protobuf::Message for CMsgClientEmoticonList {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         for v in &self.stickers {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         for v in &self.effects {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         true
     }
 
@@ -9276,16 +9556,16 @@ impl ::protobuf::Message for CMsgClientEmoticonList {
             match field_number {
                 1 => {
                     ::protobuf::rt::read_repeated_message_into(wire_type, is, &mut self.emoticons)?;
-                },
+                }
                 2 => {
                     ::protobuf::rt::read_repeated_message_into(wire_type, is, &mut self.stickers)?;
-                },
+                }
                 3 => {
                     ::protobuf::rt::read_repeated_message_into(wire_type, is, &mut self.effects)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -9298,15 +9578,15 @@ impl ::protobuf::Message for CMsgClientEmoticonList {
         for value in &self.emoticons {
             let len = value.compute_size();
             my_size += 1 + ::protobuf::rt::compute_raw_varint32_size(len) + len;
-        };
+        }
         for value in &self.stickers {
             let len = value.compute_size();
             my_size += 1 + ::protobuf::rt::compute_raw_varint32_size(len) + len;
-        };
+        }
         for value in &self.effects {
             let len = value.compute_size();
             my_size += 1 + ::protobuf::rt::compute_raw_varint32_size(len) + len;
-        };
+        }
         my_size += ::protobuf::rt::unknown_fields_size(self.get_unknown_fields());
         self.cached_size.set(my_size);
         my_size
@@ -9317,17 +9597,17 @@ impl ::protobuf::Message for CMsgClientEmoticonList {
             os.write_tag(1, ::protobuf::wire_format::WireTypeLengthDelimited)?;
             os.write_raw_varint32(v.get_cached_size())?;
             v.write_to_with_cached_sizes(os)?;
-        };
+        }
         for v in &self.stickers {
             os.write_tag(2, ::protobuf::wire_format::WireTypeLengthDelimited)?;
             os.write_raw_varint32(v.get_cached_size())?;
             v.write_to_with_cached_sizes(os)?;
-        };
+        }
         for v in &self.effects {
             os.write_tag(3, ::protobuf::wire_format::WireTypeLengthDelimited)?;
             os.write_raw_varint32(v.get_cached_size())?;
             v.write_to_with_cached_sizes(os)?;
-        };
+        }
         os.write_unknown_fields(self.get_unknown_fields())?;
         ::std::result::Result::Ok(())
     }
@@ -9363,28 +9643,38 @@ impl ::protobuf::Message for CMsgClientEmoticonList {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<CMsgClientEmoticonList_Emoticon>>(
+            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeMessage<CMsgClientEmoticonList_Emoticon>,
+            >(
                 "emoticons",
-                |m: &CMsgClientEmoticonList| { &m.emoticons },
-                |m: &mut CMsgClientEmoticonList| { &mut m.emoticons },
+                |m: &CMsgClientEmoticonList| &m.emoticons,
+                |m: &mut CMsgClientEmoticonList| &mut m.emoticons,
             ));
-            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<CMsgClientEmoticonList_Sticker>>(
+            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeMessage<CMsgClientEmoticonList_Sticker>,
+            >(
                 "stickers",
-                |m: &CMsgClientEmoticonList| { &m.stickers },
-                |m: &mut CMsgClientEmoticonList| { &mut m.stickers },
+                |m: &CMsgClientEmoticonList| &m.stickers,
+                |m: &mut CMsgClientEmoticonList| &mut m.stickers,
             ));
-            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<CMsgClientEmoticonList_Effect>>(
+            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeMessage<CMsgClientEmoticonList_Effect>,
+            >(
                 "effects",
-                |m: &CMsgClientEmoticonList| { &m.effects },
-                |m: &mut CMsgClientEmoticonList| { &mut m.effects },
+                |m: &CMsgClientEmoticonList| &m.effects,
+                |m: &mut CMsgClientEmoticonList| &mut m.effects,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientEmoticonList>(
                 "CMsgClientEmoticonList",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -9416,7 +9706,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientEmoticonList {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientEmoticonList_Emoticon {
     // message fields
@@ -9445,7 +9735,6 @@ impl CMsgClientEmoticonList_Emoticon {
     }
 
     // optional string name = 1;
-
 
     pub fn get_name(&self) -> &str {
         match self.name.as_ref() {
@@ -9482,7 +9771,6 @@ impl CMsgClientEmoticonList_Emoticon {
 
     // optional int32 count = 2;
 
-
     pub fn get_count(&self) -> i32 {
         self.count.unwrap_or(0)
     }
@@ -9500,7 +9788,6 @@ impl CMsgClientEmoticonList_Emoticon {
     }
 
     // optional uint32 time_last_used = 3;
-
 
     pub fn get_time_last_used(&self) -> u32 {
         self.time_last_used.unwrap_or(0)
@@ -9520,7 +9807,6 @@ impl CMsgClientEmoticonList_Emoticon {
 
     // optional uint32 use_count = 4;
 
-
     pub fn get_use_count(&self) -> u32 {
         self.use_count.unwrap_or(0)
     }
@@ -9539,7 +9825,6 @@ impl CMsgClientEmoticonList_Emoticon {
 
     // optional uint32 time_received = 5;
 
-
     pub fn get_time_received(&self) -> u32 {
         self.time_received.unwrap_or(0)
     }
@@ -9557,7 +9842,6 @@ impl CMsgClientEmoticonList_Emoticon {
     }
 
     // optional uint32 appid = 6;
-
 
     pub fn get_appid(&self) -> u32 {
         self.appid.unwrap_or(0)
@@ -9587,45 +9871,45 @@ impl ::protobuf::Message for CMsgClientEmoticonList_Emoticon {
             match field_number {
                 1 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.name)?;
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.count = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.time_last_used = ::std::option::Option::Some(tmp);
-                },
+                }
                 4 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.use_count = ::std::option::Option::Some(tmp);
-                },
+                }
                 5 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.time_received = ::std::option::Option::Some(tmp);
-                },
+                }
                 6 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.appid = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -9712,43 +9996,62 @@ impl ::protobuf::Message for CMsgClientEmoticonList_Emoticon {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "name",
-                |m: &CMsgClientEmoticonList_Emoticon| { &m.name },
-                |m: &mut CMsgClientEmoticonList_Emoticon| { &mut m.name },
+                |m: &CMsgClientEmoticonList_Emoticon| &m.name,
+                |m: &mut CMsgClientEmoticonList_Emoticon| &mut m.name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "count",
-                |m: &CMsgClientEmoticonList_Emoticon| { &m.count },
-                |m: &mut CMsgClientEmoticonList_Emoticon| { &mut m.count },
+                |m: &CMsgClientEmoticonList_Emoticon| &m.count,
+                |m: &mut CMsgClientEmoticonList_Emoticon| &mut m.count,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "time_last_used",
-                |m: &CMsgClientEmoticonList_Emoticon| { &m.time_last_used },
-                |m: &mut CMsgClientEmoticonList_Emoticon| { &mut m.time_last_used },
+                |m: &CMsgClientEmoticonList_Emoticon| &m.time_last_used,
+                |m: &mut CMsgClientEmoticonList_Emoticon| &mut m.time_last_used,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "use_count",
-                |m: &CMsgClientEmoticonList_Emoticon| { &m.use_count },
-                |m: &mut CMsgClientEmoticonList_Emoticon| { &mut m.use_count },
+                |m: &CMsgClientEmoticonList_Emoticon| &m.use_count,
+                |m: &mut CMsgClientEmoticonList_Emoticon| &mut m.use_count,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "time_received",
-                |m: &CMsgClientEmoticonList_Emoticon| { &m.time_received },
-                |m: &mut CMsgClientEmoticonList_Emoticon| { &mut m.time_received },
+                |m: &CMsgClientEmoticonList_Emoticon| &m.time_received,
+                |m: &mut CMsgClientEmoticonList_Emoticon| &mut m.time_received,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "appid",
-                |m: &CMsgClientEmoticonList_Emoticon| { &m.appid },
-                |m: &mut CMsgClientEmoticonList_Emoticon| { &mut m.appid },
+                |m: &CMsgClientEmoticonList_Emoticon| &m.appid,
+                |m: &mut CMsgClientEmoticonList_Emoticon| &mut m.appid,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientEmoticonList_Emoticon>(
                 "CMsgClientEmoticonList.Emoticon",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -9783,7 +10086,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientEmoticonList_Emoticon {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientEmoticonList_Sticker {
     // message fields
@@ -9812,7 +10115,6 @@ impl CMsgClientEmoticonList_Sticker {
     }
 
     // optional string name = 1;
-
 
     pub fn get_name(&self) -> &str {
         match self.name.as_ref() {
@@ -9849,7 +10151,6 @@ impl CMsgClientEmoticonList_Sticker {
 
     // optional int32 count = 2;
 
-
     pub fn get_count(&self) -> i32 {
         self.count.unwrap_or(0)
     }
@@ -9867,7 +10168,6 @@ impl CMsgClientEmoticonList_Sticker {
     }
 
     // optional uint32 time_received = 3;
-
 
     pub fn get_time_received(&self) -> u32 {
         self.time_received.unwrap_or(0)
@@ -9887,7 +10187,6 @@ impl CMsgClientEmoticonList_Sticker {
 
     // optional uint32 appid = 4;
 
-
     pub fn get_appid(&self) -> u32 {
         self.appid.unwrap_or(0)
     }
@@ -9906,7 +10205,6 @@ impl CMsgClientEmoticonList_Sticker {
 
     // optional uint32 time_last_used = 5;
 
-
     pub fn get_time_last_used(&self) -> u32 {
         self.time_last_used.unwrap_or(0)
     }
@@ -9924,7 +10222,6 @@ impl CMsgClientEmoticonList_Sticker {
     }
 
     // optional uint32 use_count = 6;
-
 
     pub fn get_use_count(&self) -> u32 {
         self.use_count.unwrap_or(0)
@@ -9954,45 +10251,45 @@ impl ::protobuf::Message for CMsgClientEmoticonList_Sticker {
             match field_number {
                 1 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.name)?;
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.count = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.time_received = ::std::option::Option::Some(tmp);
-                },
+                }
                 4 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.appid = ::std::option::Option::Some(tmp);
-                },
+                }
                 5 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.time_last_used = ::std::option::Option::Some(tmp);
-                },
+                }
                 6 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.use_count = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -10079,43 +10376,62 @@ impl ::protobuf::Message for CMsgClientEmoticonList_Sticker {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "name",
-                |m: &CMsgClientEmoticonList_Sticker| { &m.name },
-                |m: &mut CMsgClientEmoticonList_Sticker| { &mut m.name },
+                |m: &CMsgClientEmoticonList_Sticker| &m.name,
+                |m: &mut CMsgClientEmoticonList_Sticker| &mut m.name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "count",
-                |m: &CMsgClientEmoticonList_Sticker| { &m.count },
-                |m: &mut CMsgClientEmoticonList_Sticker| { &mut m.count },
+                |m: &CMsgClientEmoticonList_Sticker| &m.count,
+                |m: &mut CMsgClientEmoticonList_Sticker| &mut m.count,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "time_received",
-                |m: &CMsgClientEmoticonList_Sticker| { &m.time_received },
-                |m: &mut CMsgClientEmoticonList_Sticker| { &mut m.time_received },
+                |m: &CMsgClientEmoticonList_Sticker| &m.time_received,
+                |m: &mut CMsgClientEmoticonList_Sticker| &mut m.time_received,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "appid",
-                |m: &CMsgClientEmoticonList_Sticker| { &m.appid },
-                |m: &mut CMsgClientEmoticonList_Sticker| { &mut m.appid },
+                |m: &CMsgClientEmoticonList_Sticker| &m.appid,
+                |m: &mut CMsgClientEmoticonList_Sticker| &mut m.appid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "time_last_used",
-                |m: &CMsgClientEmoticonList_Sticker| { &m.time_last_used },
-                |m: &mut CMsgClientEmoticonList_Sticker| { &mut m.time_last_used },
+                |m: &CMsgClientEmoticonList_Sticker| &m.time_last_used,
+                |m: &mut CMsgClientEmoticonList_Sticker| &mut m.time_last_used,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "use_count",
-                |m: &CMsgClientEmoticonList_Sticker| { &m.use_count },
-                |m: &mut CMsgClientEmoticonList_Sticker| { &mut m.use_count },
+                |m: &CMsgClientEmoticonList_Sticker| &m.use_count,
+                |m: &mut CMsgClientEmoticonList_Sticker| &mut m.use_count,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientEmoticonList_Sticker>(
                 "CMsgClientEmoticonList.Sticker",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -10150,7 +10466,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientEmoticonList_Sticker {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientEmoticonList_Effect {
     // message fields
@@ -10178,7 +10494,6 @@ impl CMsgClientEmoticonList_Effect {
     }
 
     // optional string name = 1;
-
 
     pub fn get_name(&self) -> &str {
         match self.name.as_ref() {
@@ -10215,7 +10530,6 @@ impl CMsgClientEmoticonList_Effect {
 
     // optional int32 count = 2;
 
-
     pub fn get_count(&self) -> i32 {
         self.count.unwrap_or(0)
     }
@@ -10233,7 +10547,6 @@ impl CMsgClientEmoticonList_Effect {
     }
 
     // optional uint32 time_received = 3;
-
 
     pub fn get_time_received(&self) -> u32 {
         self.time_received.unwrap_or(0)
@@ -10253,7 +10566,6 @@ impl CMsgClientEmoticonList_Effect {
 
     // optional bool infinite_use = 4;
 
-
     pub fn get_infinite_use(&self) -> bool {
         self.infinite_use.unwrap_or(false)
     }
@@ -10271,7 +10583,6 @@ impl CMsgClientEmoticonList_Effect {
     }
 
     // optional uint32 appid = 5;
-
 
     pub fn get_appid(&self) -> u32 {
         self.appid.unwrap_or(0)
@@ -10301,38 +10612,38 @@ impl ::protobuf::Message for CMsgClientEmoticonList_Effect {
             match field_number {
                 1 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.name)?;
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.count = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.time_received = ::std::option::Option::Some(tmp);
-                },
+                }
                 4 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.infinite_use = ::std::option::Option::Some(tmp);
-                },
+                }
                 5 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.appid = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -10413,38 +10724,54 @@ impl ::protobuf::Message for CMsgClientEmoticonList_Effect {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "name",
-                |m: &CMsgClientEmoticonList_Effect| { &m.name },
-                |m: &mut CMsgClientEmoticonList_Effect| { &mut m.name },
+                |m: &CMsgClientEmoticonList_Effect| &m.name,
+                |m: &mut CMsgClientEmoticonList_Effect| &mut m.name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "count",
-                |m: &CMsgClientEmoticonList_Effect| { &m.count },
-                |m: &mut CMsgClientEmoticonList_Effect| { &mut m.count },
+                |m: &CMsgClientEmoticonList_Effect| &m.count,
+                |m: &mut CMsgClientEmoticonList_Effect| &mut m.count,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "time_received",
-                |m: &CMsgClientEmoticonList_Effect| { &m.time_received },
-                |m: &mut CMsgClientEmoticonList_Effect| { &mut m.time_received },
+                |m: &CMsgClientEmoticonList_Effect| &m.time_received,
+                |m: &mut CMsgClientEmoticonList_Effect| &mut m.time_received,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "infinite_use",
-                |m: &CMsgClientEmoticonList_Effect| { &m.infinite_use },
-                |m: &mut CMsgClientEmoticonList_Effect| { &mut m.infinite_use },
+                |m: &CMsgClientEmoticonList_Effect| &m.infinite_use,
+                |m: &mut CMsgClientEmoticonList_Effect| &mut m.infinite_use,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "appid",
-                |m: &CMsgClientEmoticonList_Effect| { &m.appid },
-                |m: &mut CMsgClientEmoticonList_Effect| { &mut m.appid },
+                |m: &CMsgClientEmoticonList_Effect| &m.appid,
+                |m: &mut CMsgClientEmoticonList_Effect| &mut m.appid,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientEmoticonList_Effect>(
                 "CMsgClientEmoticonList.Effect",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -10620,14 +10947,13 @@ static file_descriptor_proto_data: &'static [u8] = b"\
     dB\x05H\x01\x80\x01\0\
 ";
 
-static file_descriptor_proto_lazy: ::protobuf::rt::LazyV2<::protobuf::descriptor::FileDescriptorProto> = ::protobuf::rt::LazyV2::INIT;
+static file_descriptor_proto_lazy: ::protobuf::rt::LazyV2<::protobuf::descriptor::FileDescriptorProto> =
+    ::protobuf::rt::LazyV2::INIT;
 
 fn parse_descriptor_proto() -> ::protobuf::descriptor::FileDescriptorProto {
     ::protobuf::Message::parse_from_bytes(file_descriptor_proto_data).unwrap()
 }
 
 pub fn file_descriptor_proto() -> &'static ::protobuf::descriptor::FileDescriptorProto {
-    file_descriptor_proto_lazy.get(|| {
-        parse_descriptor_proto()
-    })
+    file_descriptor_proto_lazy.get(|| parse_descriptor_proto())
 }
