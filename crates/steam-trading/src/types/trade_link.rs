@@ -39,13 +39,13 @@ impl Tradelink {
         }
 
         let captures = captures.unwrap();
-        let steamid = SteamID::from_steam64(steamid);
+        let steam64 = SteamID::from_steam64(steamid);
 
         let partner_id = captures
             .name("partner")
             .map(|partner_id_raw| u32::from_str(partner_id_raw.as_str()).unwrap())
             .map(|partner_id| SteamID::from_steam3(partner_id, None, None))
-            .map(|steamid_from_tradelink| steamid_from_tradelink == steamid)
+            .map(|tradelink_steam3| tradelink_steam3 == steam64)
             .unwrap();
 
         if partner_id {
@@ -93,8 +93,8 @@ mod tests {
         "http://google.com"
     }
 
-    fn get_invalid_tradelink_no_token() -> &'static str {
-        "https://steamcommunity.com/tradeoffer/new/?partner=24569668&token=11223aa"
+    fn get_invalid_token_tradelink() -> &'static str {
+        "https://steamcommunity.com/tradeoffer/new/?partner=24569668&token=vuaidfos"
     }
 
     fn get_valid_tradelink() -> &'static str {
@@ -105,10 +105,20 @@ mod tests {
         76561197984835396
     }
 
+    fn invalid_steamid() -> u64 {
+        76561197984835395
+    }
+
     #[test]
     fn validated_with_steamid() {
         let result = Tradelink::validate_with_steam64(get_valid_tradelink(), valid_steamid());
         assert_eq!(result, Ok(true))
+    }
+
+    #[test]
+    fn validated_with_invalid_steamid() {
+        let result = Tradelink::validate_with_steam64(get_valid_tradelink(), invalid_steamid());
+        assert_eq!(result, Ok(false))
     }
 
     #[test]
@@ -119,8 +129,8 @@ mod tests {
 
     #[test]
     fn invalid_tradelink_missing_token() {
-        let result = Tradelink::validate(get_invalid_tradelink_no_token());
-        assert_eq!(result, Err(TradelinkError::Invalid))
+        let result = Tradelink::validate(get_invalid_token_tradelink());
+        assert_eq!(result, Ok(()))
     }
 
     #[test]

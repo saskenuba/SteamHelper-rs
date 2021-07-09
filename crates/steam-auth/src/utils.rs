@@ -1,7 +1,7 @@
-use cookie::CookieJar;
+use cookie::{Cookie, CookieJar};
 use reqwest::{Response, StatusCode};
 
-const CAPTCHA_URL: &'static str = "https://steamcommunity.com/login/rendercaptcha/?gid=";
+const CAPTCHA_URL: &str = "https://steamcommunity.com/login/rendercaptcha/?gid=";
 
 /// Formats the captcha GID into the complete URL.
 /// E.g: https://steamcommunity.com/login/rendercaptcha/?gid=3851100575032057891
@@ -41,7 +41,7 @@ pub fn dump_cookies_by_domain(jar: &CookieJar, domain: &str) -> Option<String> {
         .map(|c| format!("{}={}; ", c.name(), c.value()))
         .collect::<String>()
         .strip_suffix("; ")
-        .map(|cookie_string| cookie_string.to_string())
+        .map(ToString::to_string)
 }
 
 /// Retrieve cookie from jar,  filtered by domain and name, and them dumps into String.
@@ -52,7 +52,7 @@ pub fn dump_cookies_by_name(jar: &CookieJar, domain: &str, name: &str) -> Option
         jar.iter()
             .filter(|c| c.domain() == Some(domain))
             .filter(|c| c.name() == name)
-            .map(|c| c.value())
+            .map(Cookie::value)
             .collect::<String>(),
     )
 }

@@ -4,10 +4,7 @@
 // https://github.com/rust-lang/rust-clippy/issues/702
 #![allow(unknown_lints)]
 #![allow(clippy::all)]
-
 #![allow(unused_attributes)]
-#![rustfmt::skip]
-
 #![allow(box_pointers)]
 #![allow(dead_code)]
 #![allow(missing_docs)]
@@ -23,7 +20,7 @@
 /// of protobuf runtime.
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientHeartBeat {
     // special fields
@@ -56,7 +53,7 @@ impl ::protobuf::Message for CMsgClientHeartBeat {
             match field_number {
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -107,13 +104,14 @@ impl ::protobuf::Message for CMsgClientHeartBeat {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let fields = ::std::vec::Vec::new();
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientHeartBeat>(
                 "CMsgClientHeartBeat",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -142,7 +140,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientHeartBeat {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientServerTimestampRequest {
     // message fields
@@ -166,7 +164,6 @@ impl CMsgClientServerTimestampRequest {
     }
 
     // optional uint64 client_request_timestamp = 1;
-
 
     pub fn get_client_request_timestamp(&self) -> u64 {
         self.client_request_timestamp.unwrap_or(0)
@@ -200,10 +197,10 @@ impl ::protobuf::Message for CMsgClientServerTimestampRequest {
                     }
                     let tmp = is.read_uint64()?;
                     self.client_request_timestamp = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -260,18 +257,22 @@ impl ::protobuf::Message for CMsgClientServerTimestampRequest {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint64,
+            >(
                 "client_request_timestamp",
-                |m: &CMsgClientServerTimestampRequest| { &m.client_request_timestamp },
-                |m: &mut CMsgClientServerTimestampRequest| { &mut m.client_request_timestamp },
+                |m: &CMsgClientServerTimestampRequest| &m.client_request_timestamp,
+                |m: &mut CMsgClientServerTimestampRequest| &mut m.client_request_timestamp,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientServerTimestampRequest>(
                 "CMsgClientServerTimestampRequest",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -301,7 +302,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientServerTimestampRequest {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientServerTimestampResponse {
     // message fields
@@ -327,7 +328,6 @@ impl CMsgClientServerTimestampResponse {
 
     // optional uint64 client_request_timestamp = 1;
 
-
     pub fn get_client_request_timestamp(&self) -> u64 {
         self.client_request_timestamp.unwrap_or(0)
     }
@@ -345,7 +345,6 @@ impl CMsgClientServerTimestampResponse {
     }
 
     // optional uint64 server_timestamp_ms = 2;
-
 
     pub fn get_server_timestamp_ms(&self) -> u64 {
         self.server_timestamp_ms.unwrap_or(0)
@@ -379,17 +378,17 @@ impl ::protobuf::Message for CMsgClientServerTimestampResponse {
                     }
                     let tmp = is.read_uint64()?;
                     self.client_request_timestamp = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint64()?;
                     self.server_timestamp_ms = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -452,23 +451,30 @@ impl ::protobuf::Message for CMsgClientServerTimestampResponse {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint64,
+            >(
                 "client_request_timestamp",
-                |m: &CMsgClientServerTimestampResponse| { &m.client_request_timestamp },
-                |m: &mut CMsgClientServerTimestampResponse| { &mut m.client_request_timestamp },
+                |m: &CMsgClientServerTimestampResponse| &m.client_request_timestamp,
+                |m: &mut CMsgClientServerTimestampResponse| &mut m.client_request_timestamp,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint64,
+            >(
                 "server_timestamp_ms",
-                |m: &CMsgClientServerTimestampResponse| { &m.server_timestamp_ms },
-                |m: &mut CMsgClientServerTimestampResponse| { &mut m.server_timestamp_ms },
+                |m: &CMsgClientServerTimestampResponse| &m.server_timestamp_ms,
+                |m: &mut CMsgClientServerTimestampResponse| &mut m.server_timestamp_ms,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientServerTimestampResponse>(
                 "CMsgClientServerTimestampResponse",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -499,7 +505,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientServerTimestampResponse {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientSecret {
     // message fields
@@ -528,7 +534,6 @@ impl CMsgClientSecret {
 
     // optional uint32 version = 1;
 
-
     pub fn get_version(&self) -> u32 {
         self.version.unwrap_or(0)
     }
@@ -546,7 +551,6 @@ impl CMsgClientSecret {
     }
 
     // optional uint32 appid = 2;
-
 
     pub fn get_appid(&self) -> u32 {
         self.appid.unwrap_or(0)
@@ -566,7 +570,6 @@ impl CMsgClientSecret {
 
     // optional uint32 deviceid = 3;
 
-
     pub fn get_deviceid(&self) -> u32 {
         self.deviceid.unwrap_or(0)
     }
@@ -585,7 +588,6 @@ impl CMsgClientSecret {
 
     // optional fixed64 nonce = 4;
 
-
     pub fn get_nonce(&self) -> u64 {
         self.nonce.unwrap_or(0)
     }
@@ -603,7 +605,6 @@ impl CMsgClientSecret {
     }
 
     // optional bytes hmac = 5;
-
 
     pub fn get_hmac(&self) -> &[u8] {
         match self.hmac.as_ref() {
@@ -654,34 +655,34 @@ impl ::protobuf::Message for CMsgClientSecret {
                     }
                     let tmp = is.read_uint32()?;
                     self.version = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.appid = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.deviceid = ::std::option::Option::Some(tmp);
-                },
+                }
                 4 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.nonce = ::std::option::Option::Some(tmp);
-                },
+                }
                 5 => {
                     ::protobuf::rt::read_singular_bytes_into(wire_type, is, &mut self.hmac)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -762,38 +763,54 @@ impl ::protobuf::Message for CMsgClientSecret {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "version",
-                |m: &CMsgClientSecret| { &m.version },
-                |m: &mut CMsgClientSecret| { &mut m.version },
+                |m: &CMsgClientSecret| &m.version,
+                |m: &mut CMsgClientSecret| &mut m.version,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "appid",
-                |m: &CMsgClientSecret| { &m.appid },
-                |m: &mut CMsgClientSecret| { &mut m.appid },
+                |m: &CMsgClientSecret| &m.appid,
+                |m: &mut CMsgClientSecret| &mut m.appid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "deviceid",
-                |m: &CMsgClientSecret| { &m.deviceid },
-                |m: &mut CMsgClientSecret| { &mut m.deviceid },
+                |m: &CMsgClientSecret| &m.deviceid,
+                |m: &mut CMsgClientSecret| &mut m.deviceid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "nonce",
-                |m: &CMsgClientSecret| { &m.nonce },
-                |m: &mut CMsgClientSecret| { &mut m.nonce },
+                |m: &CMsgClientSecret| &m.nonce,
+                |m: &mut CMsgClientSecret| &mut m.nonce,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeBytes>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBytes,
+            >(
                 "hmac",
-                |m: &CMsgClientSecret| { &m.hmac },
-                |m: &mut CMsgClientSecret| { &mut m.hmac },
+                |m: &CMsgClientSecret| &m.hmac,
+                |m: &mut CMsgClientSecret| &mut m.hmac,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientSecret>(
                 "CMsgClientSecret",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -827,7 +844,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientSecret {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientLogon {
     // message fields
@@ -904,7 +921,6 @@ impl CMsgClientLogon {
 
     // optional uint32 protocol_version = 1;
 
-
     pub fn get_protocol_version(&self) -> u32 {
         self.protocol_version.unwrap_or(0)
     }
@@ -922,7 +938,6 @@ impl CMsgClientLogon {
     }
 
     // optional uint32 deprecated_obfustucated_private_ip = 2;
-
 
     pub fn get_deprecated_obfustucated_private_ip(&self) -> u32 {
         self.deprecated_obfustucated_private_ip.unwrap_or(0)
@@ -942,7 +957,6 @@ impl CMsgClientLogon {
 
     // optional uint32 cell_id = 3;
 
-
     pub fn get_cell_id(&self) -> u32 {
         self.cell_id.unwrap_or(0)
     }
@@ -960,7 +974,6 @@ impl CMsgClientLogon {
     }
 
     // optional uint32 last_session_id = 4;
-
 
     pub fn get_last_session_id(&self) -> u32 {
         self.last_session_id.unwrap_or(0)
@@ -980,7 +993,6 @@ impl CMsgClientLogon {
 
     // optional uint32 client_package_version = 5;
 
-
     pub fn get_client_package_version(&self) -> u32 {
         self.client_package_version.unwrap_or(0)
     }
@@ -998,7 +1010,6 @@ impl CMsgClientLogon {
     }
 
     // optional string client_language = 6;
-
 
     pub fn get_client_language(&self) -> &str {
         match self.client_language.as_ref() {
@@ -1030,11 +1041,12 @@ impl CMsgClientLogon {
 
     // Take field
     pub fn take_client_language(&mut self) -> ::std::string::String {
-        self.client_language.take().unwrap_or_else(|| ::std::string::String::new())
+        self.client_language
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional uint32 client_os_type = 7;
-
 
     pub fn get_client_os_type(&self) -> u32 {
         self.client_os_type.unwrap_or(0)
@@ -1054,7 +1066,6 @@ impl CMsgClientLogon {
 
     // optional bool should_remember_password = 8;
 
-
     pub fn get_should_remember_password(&self) -> bool {
         self.should_remember_password.unwrap_or(false)
     }
@@ -1072,7 +1083,6 @@ impl CMsgClientLogon {
     }
 
     // optional string wine_version = 9;
-
 
     pub fn get_wine_version(&self) -> &str {
         match self.wine_version.as_ref() {
@@ -1109,7 +1119,6 @@ impl CMsgClientLogon {
 
     // optional uint32 deprecated_10 = 10;
 
-
     pub fn get_deprecated_10(&self) -> u32 {
         self.deprecated_10.unwrap_or(0)
     }
@@ -1128,9 +1137,10 @@ impl CMsgClientLogon {
 
     // optional .CMsgIPAddress obfuscated_private_ip = 11;
 
-
     pub fn get_obfuscated_private_ip(&self) -> &super::steammessages_base::CMsgIPAddress {
-        self.obfuscated_private_ip.as_ref().unwrap_or_else(|| <super::steammessages_base::CMsgIPAddress as ::protobuf::Message>::default_instance())
+        self.obfuscated_private_ip
+            .as_ref()
+            .unwrap_or_else(|| <super::steammessages_base::CMsgIPAddress as ::protobuf::Message>::default_instance())
     }
     pub fn clear_obfuscated_private_ip(&mut self) {
         self.obfuscated_private_ip.clear();
@@ -1156,11 +1166,12 @@ impl CMsgClientLogon {
 
     // Take field
     pub fn take_obfuscated_private_ip(&mut self) -> super::steammessages_base::CMsgIPAddress {
-        self.obfuscated_private_ip.take().unwrap_or_else(|| super::steammessages_base::CMsgIPAddress::new())
+        self.obfuscated_private_ip
+            .take()
+            .unwrap_or_else(|| super::steammessages_base::CMsgIPAddress::new())
     }
 
     // optional uint32 deprecated_public_ip = 20;
-
 
     pub fn get_deprecated_public_ip(&self) -> u32 {
         self.deprecated_public_ip.unwrap_or(0)
@@ -1180,7 +1191,6 @@ impl CMsgClientLogon {
 
     // optional uint32 qos_level = 21;
 
-
     pub fn get_qos_level(&self) -> u32 {
         self.qos_level.unwrap_or(0)
     }
@@ -1198,7 +1208,6 @@ impl CMsgClientLogon {
     }
 
     // optional fixed64 client_supplied_steam_id = 22;
-
 
     pub fn get_client_supplied_steam_id(&self) -> u64 {
         self.client_supplied_steam_id.unwrap_or(0)
@@ -1218,9 +1227,10 @@ impl CMsgClientLogon {
 
     // optional .CMsgIPAddress public_ip = 23;
 
-
     pub fn get_public_ip(&self) -> &super::steammessages_base::CMsgIPAddress {
-        self.public_ip.as_ref().unwrap_or_else(|| <super::steammessages_base::CMsgIPAddress as ::protobuf::Message>::default_instance())
+        self.public_ip
+            .as_ref()
+            .unwrap_or_else(|| <super::steammessages_base::CMsgIPAddress as ::protobuf::Message>::default_instance())
     }
     pub fn clear_public_ip(&mut self) {
         self.public_ip.clear();
@@ -1246,11 +1256,12 @@ impl CMsgClientLogon {
 
     // Take field
     pub fn take_public_ip(&mut self) -> super::steammessages_base::CMsgIPAddress {
-        self.public_ip.take().unwrap_or_else(|| super::steammessages_base::CMsgIPAddress::new())
+        self.public_ip
+            .take()
+            .unwrap_or_else(|| super::steammessages_base::CMsgIPAddress::new())
     }
 
     // optional bytes machine_id = 30;
-
 
     pub fn get_machine_id(&self) -> &[u8] {
         match self.machine_id.as_ref() {
@@ -1287,7 +1298,6 @@ impl CMsgClientLogon {
 
     // optional uint32 launcher_type = 31;
 
-
     pub fn get_launcher_type(&self) -> u32 {
         self.launcher_type.unwrap_or(0u32)
     }
@@ -1305,7 +1315,6 @@ impl CMsgClientLogon {
     }
 
     // optional uint32 ui_mode = 32;
-
 
     pub fn get_ui_mode(&self) -> u32 {
         self.ui_mode.unwrap_or(0u32)
@@ -1325,7 +1334,6 @@ impl CMsgClientLogon {
 
     // optional uint32 chat_mode = 33;
 
-
     pub fn get_chat_mode(&self) -> u32 {
         self.chat_mode.unwrap_or(0u32)
     }
@@ -1343,7 +1351,6 @@ impl CMsgClientLogon {
     }
 
     // optional bytes steam2_auth_ticket = 41;
-
 
     pub fn get_steam2_auth_ticket(&self) -> &[u8] {
         match self.steam2_auth_ticket.as_ref() {
@@ -1380,7 +1387,6 @@ impl CMsgClientLogon {
 
     // optional string email_address = 42;
 
-
     pub fn get_email_address(&self) -> &str {
         match self.email_address.as_ref() {
             Some(v) => &v,
@@ -1411,11 +1417,12 @@ impl CMsgClientLogon {
 
     // Take field
     pub fn take_email_address(&mut self) -> ::std::string::String {
-        self.email_address.take().unwrap_or_else(|| ::std::string::String::new())
+        self.email_address
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional fixed32 rtime32_account_creation = 43;
-
 
     pub fn get_rtime32_account_creation(&self) -> u32 {
         self.rtime32_account_creation.unwrap_or(0)
@@ -1434,7 +1441,6 @@ impl CMsgClientLogon {
     }
 
     // optional string account_name = 50;
-
 
     pub fn get_account_name(&self) -> &str {
         match self.account_name.as_ref() {
@@ -1471,7 +1477,6 @@ impl CMsgClientLogon {
 
     // optional string password = 51;
 
-
     pub fn get_password(&self) -> &str {
         match self.password.as_ref() {
             Some(v) => &v,
@@ -1507,7 +1512,6 @@ impl CMsgClientLogon {
 
     // optional string game_server_token = 52;
 
-
     pub fn get_game_server_token(&self) -> &str {
         match self.game_server_token.as_ref() {
             Some(v) => &v,
@@ -1538,11 +1542,12 @@ impl CMsgClientLogon {
 
     // Take field
     pub fn take_game_server_token(&mut self) -> ::std::string::String {
-        self.game_server_token.take().unwrap_or_else(|| ::std::string::String::new())
+        self.game_server_token
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional string login_key = 60;
-
 
     pub fn get_login_key(&self) -> &str {
         match self.login_key.as_ref() {
@@ -1579,7 +1584,6 @@ impl CMsgClientLogon {
 
     // optional bool was_converted_deprecated_msg = 70;
 
-
     pub fn get_was_converted_deprecated_msg(&self) -> bool {
         self.was_converted_deprecated_msg.unwrap_or(false)
     }
@@ -1597,7 +1601,6 @@ impl CMsgClientLogon {
     }
 
     // optional string anon_user_target_account_name = 80;
-
 
     pub fn get_anon_user_target_account_name(&self) -> &str {
         match self.anon_user_target_account_name.as_ref() {
@@ -1629,11 +1632,12 @@ impl CMsgClientLogon {
 
     // Take field
     pub fn take_anon_user_target_account_name(&mut self) -> ::std::string::String {
-        self.anon_user_target_account_name.take().unwrap_or_else(|| ::std::string::String::new())
+        self.anon_user_target_account_name
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional fixed64 resolved_user_steam_id = 81;
-
 
     pub fn get_resolved_user_steam_id(&self) -> u64 {
         self.resolved_user_steam_id.unwrap_or(0)
@@ -1653,7 +1657,6 @@ impl CMsgClientLogon {
 
     // optional int32 eresult_sentryfile = 82;
 
-
     pub fn get_eresult_sentryfile(&self) -> i32 {
         self.eresult_sentryfile.unwrap_or(0)
     }
@@ -1671,7 +1674,6 @@ impl CMsgClientLogon {
     }
 
     // optional bytes sha_sentryfile = 83;
-
 
     pub fn get_sha_sentryfile(&self) -> &[u8] {
         match self.sha_sentryfile.as_ref() {
@@ -1708,7 +1710,6 @@ impl CMsgClientLogon {
 
     // optional string auth_code = 84;
 
-
     pub fn get_auth_code(&self) -> &str {
         match self.auth_code.as_ref() {
             Some(v) => &v,
@@ -1744,7 +1745,6 @@ impl CMsgClientLogon {
 
     // optional int32 otp_type = 85;
 
-
     pub fn get_otp_type(&self) -> i32 {
         self.otp_type.unwrap_or(0)
     }
@@ -1763,7 +1763,6 @@ impl CMsgClientLogon {
 
     // optional uint32 otp_value = 86;
 
-
     pub fn get_otp_value(&self) -> u32 {
         self.otp_value.unwrap_or(0)
     }
@@ -1781,7 +1780,6 @@ impl CMsgClientLogon {
     }
 
     // optional string otp_identifier = 87;
-
 
     pub fn get_otp_identifier(&self) -> &str {
         match self.otp_identifier.as_ref() {
@@ -1813,11 +1811,12 @@ impl CMsgClientLogon {
 
     // Take field
     pub fn take_otp_identifier(&mut self) -> ::std::string::String {
-        self.otp_identifier.take().unwrap_or_else(|| ::std::string::String::new())
+        self.otp_identifier
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional bool steam2_ticket_request = 88;
-
 
     pub fn get_steam2_ticket_request(&self) -> bool {
         self.steam2_ticket_request.unwrap_or(false)
@@ -1836,7 +1835,6 @@ impl CMsgClientLogon {
     }
 
     // optional bytes sony_psn_ticket = 90;
-
 
     pub fn get_sony_psn_ticket(&self) -> &[u8] {
         match self.sony_psn_ticket.as_ref() {
@@ -1873,7 +1871,6 @@ impl CMsgClientLogon {
 
     // optional string sony_psn_service_id = 91;
 
-
     pub fn get_sony_psn_service_id(&self) -> &str {
         match self.sony_psn_service_id.as_ref() {
             Some(v) => &v,
@@ -1904,11 +1901,12 @@ impl CMsgClientLogon {
 
     // Take field
     pub fn take_sony_psn_service_id(&mut self) -> ::std::string::String {
-        self.sony_psn_service_id.take().unwrap_or_else(|| ::std::string::String::new())
+        self.sony_psn_service_id
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional bool create_new_psn_linked_account_if_needed = 92;
-
 
     pub fn get_create_new_psn_linked_account_if_needed(&self) -> bool {
         self.create_new_psn_linked_account_if_needed.unwrap_or(false)
@@ -1927,7 +1925,6 @@ impl CMsgClientLogon {
     }
 
     // optional string sony_psn_name = 93;
-
 
     pub fn get_sony_psn_name(&self) -> &str {
         match self.sony_psn_name.as_ref() {
@@ -1959,11 +1956,12 @@ impl CMsgClientLogon {
 
     // Take field
     pub fn take_sony_psn_name(&mut self) -> ::std::string::String {
-        self.sony_psn_name.take().unwrap_or_else(|| ::std::string::String::new())
+        self.sony_psn_name
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional int32 game_server_app_id = 94;
-
 
     pub fn get_game_server_app_id(&self) -> i32 {
         self.game_server_app_id.unwrap_or(0)
@@ -1983,7 +1981,6 @@ impl CMsgClientLogon {
 
     // optional bool steamguard_dont_remember_computer = 95;
 
-
     pub fn get_steamguard_dont_remember_computer(&self) -> bool {
         self.steamguard_dont_remember_computer.unwrap_or(false)
     }
@@ -2001,7 +1998,6 @@ impl CMsgClientLogon {
     }
 
     // optional string machine_name = 96;
-
 
     pub fn get_machine_name(&self) -> &str {
         match self.machine_name.as_ref() {
@@ -2038,7 +2034,6 @@ impl CMsgClientLogon {
 
     // optional string machine_name_userchosen = 97;
 
-
     pub fn get_machine_name_userchosen(&self) -> &str {
         match self.machine_name_userchosen.as_ref() {
             Some(v) => &v,
@@ -2069,11 +2064,12 @@ impl CMsgClientLogon {
 
     // Take field
     pub fn take_machine_name_userchosen(&mut self) -> ::std::string::String {
-        self.machine_name_userchosen.take().unwrap_or_else(|| ::std::string::String::new())
+        self.machine_name_userchosen
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional string country_override = 98;
-
 
     pub fn get_country_override(&self) -> &str {
         match self.country_override.as_ref() {
@@ -2105,11 +2101,12 @@ impl CMsgClientLogon {
 
     // Take field
     pub fn take_country_override(&mut self) -> ::std::string::String {
-        self.country_override.take().unwrap_or_else(|| ::std::string::String::new())
+        self.country_override
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional bool is_steam_box = 99;
-
 
     pub fn get_is_steam_box(&self) -> bool {
         self.is_steam_box.unwrap_or(false)
@@ -2129,7 +2126,6 @@ impl CMsgClientLogon {
 
     // optional uint64 client_instance_id = 100;
 
-
     pub fn get_client_instance_id(&self) -> u64 {
         self.client_instance_id.unwrap_or(0)
     }
@@ -2147,7 +2143,6 @@ impl CMsgClientLogon {
     }
 
     // optional string two_factor_code = 101;
-
 
     pub fn get_two_factor_code(&self) -> &str {
         match self.two_factor_code.as_ref() {
@@ -2179,11 +2174,12 @@ impl CMsgClientLogon {
 
     // Take field
     pub fn take_two_factor_code(&mut self) -> ::std::string::String {
-        self.two_factor_code.take().unwrap_or_else(|| ::std::string::String::new())
+        self.two_factor_code
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional bool supports_rate_limit_response = 102;
-
 
     pub fn get_supports_rate_limit_response(&self) -> bool {
         self.supports_rate_limit_response.unwrap_or(false)
@@ -2202,7 +2198,6 @@ impl CMsgClientLogon {
     }
 
     // optional string web_logon_nonce = 103;
-
 
     pub fn get_web_logon_nonce(&self) -> &str {
         match self.web_logon_nonce.as_ref() {
@@ -2234,11 +2229,12 @@ impl CMsgClientLogon {
 
     // Take field
     pub fn take_web_logon_nonce(&mut self) -> ::std::string::String {
-        self.web_logon_nonce.take().unwrap_or_else(|| ::std::string::String::new())
+        self.web_logon_nonce
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional int32 priority_reason = 104;
-
 
     pub fn get_priority_reason(&self) -> i32 {
         self.priority_reason.unwrap_or(0)
@@ -2258,9 +2254,10 @@ impl CMsgClientLogon {
 
     // optional .CMsgClientSecret embedded_client_secret = 105;
 
-
     pub fn get_embedded_client_secret(&self) -> &CMsgClientSecret {
-        self.embedded_client_secret.as_ref().unwrap_or_else(|| <CMsgClientSecret as ::protobuf::Message>::default_instance())
+        self.embedded_client_secret
+            .as_ref()
+            .unwrap_or_else(|| <CMsgClientSecret as ::protobuf::Message>::default_instance())
     }
     pub fn clear_embedded_client_secret(&mut self) {
         self.embedded_client_secret.clear();
@@ -2286,11 +2283,12 @@ impl CMsgClientLogon {
 
     // Take field
     pub fn take_embedded_client_secret(&mut self) -> CMsgClientSecret {
-        self.embedded_client_secret.take().unwrap_or_else(|| CMsgClientSecret::new())
+        self.embedded_client_secret
+            .take()
+            .unwrap_or_else(|| CMsgClientSecret::new())
     }
 
     // optional bool disable_partner_autogrants = 106;
-
 
     pub fn get_disable_partner_autogrants(&self) -> bool {
         self.disable_partner_autogrants.unwrap_or(false)
@@ -2315,17 +2313,17 @@ impl ::protobuf::Message for CMsgClientLogon {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         for v in &self.public_ip {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         for v in &self.embedded_client_secret {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         true
     }
 
@@ -2339,278 +2337,278 @@ impl ::protobuf::Message for CMsgClientLogon {
                     }
                     let tmp = is.read_uint32()?;
                     self.protocol_version = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.deprecated_obfustucated_private_ip = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.cell_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 4 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.last_session_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 5 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.client_package_version = ::std::option::Option::Some(tmp);
-                },
+                }
                 6 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.client_language)?;
-                },
+                }
                 7 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.client_os_type = ::std::option::Option::Some(tmp);
-                },
+                }
                 8 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.should_remember_password = ::std::option::Option::Some(tmp);
-                },
+                }
                 9 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.wine_version)?;
-                },
+                }
                 10 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.deprecated_10 = ::std::option::Option::Some(tmp);
-                },
+                }
                 11 => {
                     ::protobuf::rt::read_singular_message_into(wire_type, is, &mut self.obfuscated_private_ip)?;
-                },
+                }
                 20 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.deprecated_public_ip = ::std::option::Option::Some(tmp);
-                },
+                }
                 21 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.qos_level = ::std::option::Option::Some(tmp);
-                },
+                }
                 22 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.client_supplied_steam_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 23 => {
                     ::protobuf::rt::read_singular_message_into(wire_type, is, &mut self.public_ip)?;
-                },
+                }
                 30 => {
                     ::protobuf::rt::read_singular_bytes_into(wire_type, is, &mut self.machine_id)?;
-                },
+                }
                 31 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.launcher_type = ::std::option::Option::Some(tmp);
-                },
+                }
                 32 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.ui_mode = ::std::option::Option::Some(tmp);
-                },
+                }
                 33 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.chat_mode = ::std::option::Option::Some(tmp);
-                },
+                }
                 41 => {
                     ::protobuf::rt::read_singular_bytes_into(wire_type, is, &mut self.steam2_auth_ticket)?;
-                },
+                }
                 42 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.email_address)?;
-                },
+                }
                 43 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed32 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed32()?;
                     self.rtime32_account_creation = ::std::option::Option::Some(tmp);
-                },
+                }
                 50 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.account_name)?;
-                },
+                }
                 51 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.password)?;
-                },
+                }
                 52 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.game_server_token)?;
-                },
+                }
                 60 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.login_key)?;
-                },
+                }
                 70 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.was_converted_deprecated_msg = ::std::option::Option::Some(tmp);
-                },
+                }
                 80 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.anon_user_target_account_name)?;
-                },
+                }
                 81 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.resolved_user_steam_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 82 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.eresult_sentryfile = ::std::option::Option::Some(tmp);
-                },
+                }
                 83 => {
                     ::protobuf::rt::read_singular_bytes_into(wire_type, is, &mut self.sha_sentryfile)?;
-                },
+                }
                 84 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.auth_code)?;
-                },
+                }
                 85 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.otp_type = ::std::option::Option::Some(tmp);
-                },
+                }
                 86 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.otp_value = ::std::option::Option::Some(tmp);
-                },
+                }
                 87 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.otp_identifier)?;
-                },
+                }
                 88 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.steam2_ticket_request = ::std::option::Option::Some(tmp);
-                },
+                }
                 90 => {
                     ::protobuf::rt::read_singular_bytes_into(wire_type, is, &mut self.sony_psn_ticket)?;
-                },
+                }
                 91 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.sony_psn_service_id)?;
-                },
+                }
                 92 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.create_new_psn_linked_account_if_needed = ::std::option::Option::Some(tmp);
-                },
+                }
                 93 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.sony_psn_name)?;
-                },
+                }
                 94 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.game_server_app_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 95 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.steamguard_dont_remember_computer = ::std::option::Option::Some(tmp);
-                },
+                }
                 96 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.machine_name)?;
-                },
+                }
                 97 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.machine_name_userchosen)?;
-                },
+                }
                 98 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.country_override)?;
-                },
+                }
                 99 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.is_steam_box = ::std::option::Option::Some(tmp);
-                },
+                }
                 100 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint64()?;
                     self.client_instance_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 101 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.two_factor_code)?;
-                },
+                }
                 102 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.supports_rate_limit_response = ::std::option::Option::Some(tmp);
-                },
+                }
                 103 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.web_logon_nonce)?;
-                },
+                }
                 104 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.priority_reason = ::std::option::Option::Some(tmp);
-                },
+                }
                 105 => {
                     ::protobuf::rt::read_singular_message_into(wire_type, is, &mut self.embedded_client_secret)?;
-                },
+                }
                 106 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.disable_partner_autogrants = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -2988,278 +2986,438 @@ impl ::protobuf::Message for CMsgClientLogon {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "protocol_version",
-                |m: &CMsgClientLogon| { &m.protocol_version },
-                |m: &mut CMsgClientLogon| { &mut m.protocol_version },
+                |m: &CMsgClientLogon| &m.protocol_version,
+                |m: &mut CMsgClientLogon| &mut m.protocol_version,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "deprecated_obfustucated_private_ip",
-                |m: &CMsgClientLogon| { &m.deprecated_obfustucated_private_ip },
-                |m: &mut CMsgClientLogon| { &mut m.deprecated_obfustucated_private_ip },
+                |m: &CMsgClientLogon| &m.deprecated_obfustucated_private_ip,
+                |m: &mut CMsgClientLogon| &mut m.deprecated_obfustucated_private_ip,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "cell_id",
-                |m: &CMsgClientLogon| { &m.cell_id },
-                |m: &mut CMsgClientLogon| { &mut m.cell_id },
+                |m: &CMsgClientLogon| &m.cell_id,
+                |m: &mut CMsgClientLogon| &mut m.cell_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "last_session_id",
-                |m: &CMsgClientLogon| { &m.last_session_id },
-                |m: &mut CMsgClientLogon| { &mut m.last_session_id },
+                |m: &CMsgClientLogon| &m.last_session_id,
+                |m: &mut CMsgClientLogon| &mut m.last_session_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "client_package_version",
-                |m: &CMsgClientLogon| { &m.client_package_version },
-                |m: &mut CMsgClientLogon| { &mut m.client_package_version },
+                |m: &CMsgClientLogon| &m.client_package_version,
+                |m: &mut CMsgClientLogon| &mut m.client_package_version,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "client_language",
-                |m: &CMsgClientLogon| { &m.client_language },
-                |m: &mut CMsgClientLogon| { &mut m.client_language },
+                |m: &CMsgClientLogon| &m.client_language,
+                |m: &mut CMsgClientLogon| &mut m.client_language,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "client_os_type",
-                |m: &CMsgClientLogon| { &m.client_os_type },
-                |m: &mut CMsgClientLogon| { &mut m.client_os_type },
+                |m: &CMsgClientLogon| &m.client_os_type,
+                |m: &mut CMsgClientLogon| &mut m.client_os_type,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "should_remember_password",
-                |m: &CMsgClientLogon| { &m.should_remember_password },
-                |m: &mut CMsgClientLogon| { &mut m.should_remember_password },
+                |m: &CMsgClientLogon| &m.should_remember_password,
+                |m: &mut CMsgClientLogon| &mut m.should_remember_password,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "wine_version",
-                |m: &CMsgClientLogon| { &m.wine_version },
-                |m: &mut CMsgClientLogon| { &mut m.wine_version },
+                |m: &CMsgClientLogon| &m.wine_version,
+                |m: &mut CMsgClientLogon| &mut m.wine_version,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "deprecated_10",
-                |m: &CMsgClientLogon| { &m.deprecated_10 },
-                |m: &mut CMsgClientLogon| { &mut m.deprecated_10 },
+                |m: &CMsgClientLogon| &m.deprecated_10,
+                |m: &mut CMsgClientLogon| &mut m.deprecated_10,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<super::steammessages_base::CMsgIPAddress>>(
+            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeMessage<super::steammessages_base::CMsgIPAddress>,
+            >(
                 "obfuscated_private_ip",
-                |m: &CMsgClientLogon| { &m.obfuscated_private_ip },
-                |m: &mut CMsgClientLogon| { &mut m.obfuscated_private_ip },
+                |m: &CMsgClientLogon| &m.obfuscated_private_ip,
+                |m: &mut CMsgClientLogon| &mut m.obfuscated_private_ip,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "deprecated_public_ip",
-                |m: &CMsgClientLogon| { &m.deprecated_public_ip },
-                |m: &mut CMsgClientLogon| { &mut m.deprecated_public_ip },
+                |m: &CMsgClientLogon| &m.deprecated_public_ip,
+                |m: &mut CMsgClientLogon| &mut m.deprecated_public_ip,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "qos_level",
-                |m: &CMsgClientLogon| { &m.qos_level },
-                |m: &mut CMsgClientLogon| { &mut m.qos_level },
+                |m: &CMsgClientLogon| &m.qos_level,
+                |m: &mut CMsgClientLogon| &mut m.qos_level,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "client_supplied_steam_id",
-                |m: &CMsgClientLogon| { &m.client_supplied_steam_id },
-                |m: &mut CMsgClientLogon| { &mut m.client_supplied_steam_id },
+                |m: &CMsgClientLogon| &m.client_supplied_steam_id,
+                |m: &mut CMsgClientLogon| &mut m.client_supplied_steam_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<super::steammessages_base::CMsgIPAddress>>(
+            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeMessage<super::steammessages_base::CMsgIPAddress>,
+            >(
                 "public_ip",
-                |m: &CMsgClientLogon| { &m.public_ip },
-                |m: &mut CMsgClientLogon| { &mut m.public_ip },
+                |m: &CMsgClientLogon| &m.public_ip,
+                |m: &mut CMsgClientLogon| &mut m.public_ip,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeBytes>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBytes,
+            >(
                 "machine_id",
-                |m: &CMsgClientLogon| { &m.machine_id },
-                |m: &mut CMsgClientLogon| { &mut m.machine_id },
+                |m: &CMsgClientLogon| &m.machine_id,
+                |m: &mut CMsgClientLogon| &mut m.machine_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "launcher_type",
-                |m: &CMsgClientLogon| { &m.launcher_type },
-                |m: &mut CMsgClientLogon| { &mut m.launcher_type },
+                |m: &CMsgClientLogon| &m.launcher_type,
+                |m: &mut CMsgClientLogon| &mut m.launcher_type,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "ui_mode",
-                |m: &CMsgClientLogon| { &m.ui_mode },
-                |m: &mut CMsgClientLogon| { &mut m.ui_mode },
+                |m: &CMsgClientLogon| &m.ui_mode,
+                |m: &mut CMsgClientLogon| &mut m.ui_mode,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "chat_mode",
-                |m: &CMsgClientLogon| { &m.chat_mode },
-                |m: &mut CMsgClientLogon| { &mut m.chat_mode },
+                |m: &CMsgClientLogon| &m.chat_mode,
+                |m: &mut CMsgClientLogon| &mut m.chat_mode,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeBytes>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBytes,
+            >(
                 "steam2_auth_ticket",
-                |m: &CMsgClientLogon| { &m.steam2_auth_ticket },
-                |m: &mut CMsgClientLogon| { &mut m.steam2_auth_ticket },
+                |m: &CMsgClientLogon| &m.steam2_auth_ticket,
+                |m: &mut CMsgClientLogon| &mut m.steam2_auth_ticket,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "email_address",
-                |m: &CMsgClientLogon| { &m.email_address },
-                |m: &mut CMsgClientLogon| { &mut m.email_address },
+                |m: &CMsgClientLogon| &m.email_address,
+                |m: &mut CMsgClientLogon| &mut m.email_address,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed32,
+            >(
                 "rtime32_account_creation",
-                |m: &CMsgClientLogon| { &m.rtime32_account_creation },
-                |m: &mut CMsgClientLogon| { &mut m.rtime32_account_creation },
+                |m: &CMsgClientLogon| &m.rtime32_account_creation,
+                |m: &mut CMsgClientLogon| &mut m.rtime32_account_creation,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "account_name",
-                |m: &CMsgClientLogon| { &m.account_name },
-                |m: &mut CMsgClientLogon| { &mut m.account_name },
+                |m: &CMsgClientLogon| &m.account_name,
+                |m: &mut CMsgClientLogon| &mut m.account_name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "password",
-                |m: &CMsgClientLogon| { &m.password },
-                |m: &mut CMsgClientLogon| { &mut m.password },
+                |m: &CMsgClientLogon| &m.password,
+                |m: &mut CMsgClientLogon| &mut m.password,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "game_server_token",
-                |m: &CMsgClientLogon| { &m.game_server_token },
-                |m: &mut CMsgClientLogon| { &mut m.game_server_token },
+                |m: &CMsgClientLogon| &m.game_server_token,
+                |m: &mut CMsgClientLogon| &mut m.game_server_token,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "login_key",
-                |m: &CMsgClientLogon| { &m.login_key },
-                |m: &mut CMsgClientLogon| { &mut m.login_key },
+                |m: &CMsgClientLogon| &m.login_key,
+                |m: &mut CMsgClientLogon| &mut m.login_key,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "was_converted_deprecated_msg",
-                |m: &CMsgClientLogon| { &m.was_converted_deprecated_msg },
-                |m: &mut CMsgClientLogon| { &mut m.was_converted_deprecated_msg },
+                |m: &CMsgClientLogon| &m.was_converted_deprecated_msg,
+                |m: &mut CMsgClientLogon| &mut m.was_converted_deprecated_msg,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "anon_user_target_account_name",
-                |m: &CMsgClientLogon| { &m.anon_user_target_account_name },
-                |m: &mut CMsgClientLogon| { &mut m.anon_user_target_account_name },
+                |m: &CMsgClientLogon| &m.anon_user_target_account_name,
+                |m: &mut CMsgClientLogon| &mut m.anon_user_target_account_name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "resolved_user_steam_id",
-                |m: &CMsgClientLogon| { &m.resolved_user_steam_id },
-                |m: &mut CMsgClientLogon| { &mut m.resolved_user_steam_id },
+                |m: &CMsgClientLogon| &m.resolved_user_steam_id,
+                |m: &mut CMsgClientLogon| &mut m.resolved_user_steam_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "eresult_sentryfile",
-                |m: &CMsgClientLogon| { &m.eresult_sentryfile },
-                |m: &mut CMsgClientLogon| { &mut m.eresult_sentryfile },
+                |m: &CMsgClientLogon| &m.eresult_sentryfile,
+                |m: &mut CMsgClientLogon| &mut m.eresult_sentryfile,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeBytes>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBytes,
+            >(
                 "sha_sentryfile",
-                |m: &CMsgClientLogon| { &m.sha_sentryfile },
-                |m: &mut CMsgClientLogon| { &mut m.sha_sentryfile },
+                |m: &CMsgClientLogon| &m.sha_sentryfile,
+                |m: &mut CMsgClientLogon| &mut m.sha_sentryfile,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "auth_code",
-                |m: &CMsgClientLogon| { &m.auth_code },
-                |m: &mut CMsgClientLogon| { &mut m.auth_code },
+                |m: &CMsgClientLogon| &m.auth_code,
+                |m: &mut CMsgClientLogon| &mut m.auth_code,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "otp_type",
-                |m: &CMsgClientLogon| { &m.otp_type },
-                |m: &mut CMsgClientLogon| { &mut m.otp_type },
+                |m: &CMsgClientLogon| &m.otp_type,
+                |m: &mut CMsgClientLogon| &mut m.otp_type,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "otp_value",
-                |m: &CMsgClientLogon| { &m.otp_value },
-                |m: &mut CMsgClientLogon| { &mut m.otp_value },
+                |m: &CMsgClientLogon| &m.otp_value,
+                |m: &mut CMsgClientLogon| &mut m.otp_value,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "otp_identifier",
-                |m: &CMsgClientLogon| { &m.otp_identifier },
-                |m: &mut CMsgClientLogon| { &mut m.otp_identifier },
+                |m: &CMsgClientLogon| &m.otp_identifier,
+                |m: &mut CMsgClientLogon| &mut m.otp_identifier,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "steam2_ticket_request",
-                |m: &CMsgClientLogon| { &m.steam2_ticket_request },
-                |m: &mut CMsgClientLogon| { &mut m.steam2_ticket_request },
+                |m: &CMsgClientLogon| &m.steam2_ticket_request,
+                |m: &mut CMsgClientLogon| &mut m.steam2_ticket_request,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeBytes>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBytes,
+            >(
                 "sony_psn_ticket",
-                |m: &CMsgClientLogon| { &m.sony_psn_ticket },
-                |m: &mut CMsgClientLogon| { &mut m.sony_psn_ticket },
+                |m: &CMsgClientLogon| &m.sony_psn_ticket,
+                |m: &mut CMsgClientLogon| &mut m.sony_psn_ticket,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "sony_psn_service_id",
-                |m: &CMsgClientLogon| { &m.sony_psn_service_id },
-                |m: &mut CMsgClientLogon| { &mut m.sony_psn_service_id },
+                |m: &CMsgClientLogon| &m.sony_psn_service_id,
+                |m: &mut CMsgClientLogon| &mut m.sony_psn_service_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "create_new_psn_linked_account_if_needed",
-                |m: &CMsgClientLogon| { &m.create_new_psn_linked_account_if_needed },
-                |m: &mut CMsgClientLogon| { &mut m.create_new_psn_linked_account_if_needed },
+                |m: &CMsgClientLogon| &m.create_new_psn_linked_account_if_needed,
+                |m: &mut CMsgClientLogon| &mut m.create_new_psn_linked_account_if_needed,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "sony_psn_name",
-                |m: &CMsgClientLogon| { &m.sony_psn_name },
-                |m: &mut CMsgClientLogon| { &mut m.sony_psn_name },
+                |m: &CMsgClientLogon| &m.sony_psn_name,
+                |m: &mut CMsgClientLogon| &mut m.sony_psn_name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "game_server_app_id",
-                |m: &CMsgClientLogon| { &m.game_server_app_id },
-                |m: &mut CMsgClientLogon| { &mut m.game_server_app_id },
+                |m: &CMsgClientLogon| &m.game_server_app_id,
+                |m: &mut CMsgClientLogon| &mut m.game_server_app_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "steamguard_dont_remember_computer",
-                |m: &CMsgClientLogon| { &m.steamguard_dont_remember_computer },
-                |m: &mut CMsgClientLogon| { &mut m.steamguard_dont_remember_computer },
+                |m: &CMsgClientLogon| &m.steamguard_dont_remember_computer,
+                |m: &mut CMsgClientLogon| &mut m.steamguard_dont_remember_computer,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "machine_name",
-                |m: &CMsgClientLogon| { &m.machine_name },
-                |m: &mut CMsgClientLogon| { &mut m.machine_name },
+                |m: &CMsgClientLogon| &m.machine_name,
+                |m: &mut CMsgClientLogon| &mut m.machine_name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "machine_name_userchosen",
-                |m: &CMsgClientLogon| { &m.machine_name_userchosen },
-                |m: &mut CMsgClientLogon| { &mut m.machine_name_userchosen },
+                |m: &CMsgClientLogon| &m.machine_name_userchosen,
+                |m: &mut CMsgClientLogon| &mut m.machine_name_userchosen,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "country_override",
-                |m: &CMsgClientLogon| { &m.country_override },
-                |m: &mut CMsgClientLogon| { &mut m.country_override },
+                |m: &CMsgClientLogon| &m.country_override,
+                |m: &mut CMsgClientLogon| &mut m.country_override,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "is_steam_box",
-                |m: &CMsgClientLogon| { &m.is_steam_box },
-                |m: &mut CMsgClientLogon| { &mut m.is_steam_box },
+                |m: &CMsgClientLogon| &m.is_steam_box,
+                |m: &mut CMsgClientLogon| &mut m.is_steam_box,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint64,
+            >(
                 "client_instance_id",
-                |m: &CMsgClientLogon| { &m.client_instance_id },
-                |m: &mut CMsgClientLogon| { &mut m.client_instance_id },
+                |m: &CMsgClientLogon| &m.client_instance_id,
+                |m: &mut CMsgClientLogon| &mut m.client_instance_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "two_factor_code",
-                |m: &CMsgClientLogon| { &m.two_factor_code },
-                |m: &mut CMsgClientLogon| { &mut m.two_factor_code },
+                |m: &CMsgClientLogon| &m.two_factor_code,
+                |m: &mut CMsgClientLogon| &mut m.two_factor_code,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "supports_rate_limit_response",
-                |m: &CMsgClientLogon| { &m.supports_rate_limit_response },
-                |m: &mut CMsgClientLogon| { &mut m.supports_rate_limit_response },
+                |m: &CMsgClientLogon| &m.supports_rate_limit_response,
+                |m: &mut CMsgClientLogon| &mut m.supports_rate_limit_response,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "web_logon_nonce",
-                |m: &CMsgClientLogon| { &m.web_logon_nonce },
-                |m: &mut CMsgClientLogon| { &mut m.web_logon_nonce },
+                |m: &CMsgClientLogon| &m.web_logon_nonce,
+                |m: &mut CMsgClientLogon| &mut m.web_logon_nonce,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "priority_reason",
-                |m: &CMsgClientLogon| { &m.priority_reason },
-                |m: &mut CMsgClientLogon| { &mut m.priority_reason },
+                |m: &CMsgClientLogon| &m.priority_reason,
+                |m: &mut CMsgClientLogon| &mut m.priority_reason,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<CMsgClientSecret>>(
+            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeMessage<CMsgClientSecret>,
+            >(
                 "embedded_client_secret",
-                |m: &CMsgClientLogon| { &m.embedded_client_secret },
-                |m: &mut CMsgClientLogon| { &mut m.embedded_client_secret },
+                |m: &CMsgClientLogon| &m.embedded_client_secret,
+                |m: &mut CMsgClientLogon| &mut m.embedded_client_secret,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "disable_partner_autogrants",
-                |m: &CMsgClientLogon| { &m.disable_partner_autogrants },
-                |m: &mut CMsgClientLogon| { &mut m.disable_partner_autogrants },
+                |m: &CMsgClientLogon| &m.disable_partner_autogrants,
+                |m: &mut CMsgClientLogon| &mut m.disable_partner_autogrants,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientLogon>(
                 "CMsgClientLogon",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -3341,7 +3499,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientLogon {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientLogonResponse {
     // message fields
@@ -3389,7 +3547,6 @@ impl CMsgClientLogonResponse {
 
     // optional int32 eresult = 1;
 
-
     pub fn get_eresult(&self) -> i32 {
         self.eresult.unwrap_or(2i32)
     }
@@ -3407,7 +3564,6 @@ impl CMsgClientLogonResponse {
     }
 
     // optional int32 out_of_game_heartbeat_seconds = 2;
-
 
     pub fn get_out_of_game_heartbeat_seconds(&self) -> i32 {
         self.out_of_game_heartbeat_seconds.unwrap_or(0)
@@ -3427,7 +3583,6 @@ impl CMsgClientLogonResponse {
 
     // optional int32 in_game_heartbeat_seconds = 3;
 
-
     pub fn get_in_game_heartbeat_seconds(&self) -> i32 {
         self.in_game_heartbeat_seconds.unwrap_or(0)
     }
@@ -3445,7 +3600,6 @@ impl CMsgClientLogonResponse {
     }
 
     // optional uint32 deprecated_public_ip = 4;
-
 
     pub fn get_deprecated_public_ip(&self) -> u32 {
         self.deprecated_public_ip.unwrap_or(0)
@@ -3465,7 +3619,6 @@ impl CMsgClientLogonResponse {
 
     // optional fixed32 rtime32_server_time = 5;
 
-
     pub fn get_rtime32_server_time(&self) -> u32 {
         self.rtime32_server_time.unwrap_or(0)
     }
@@ -3483,7 +3636,6 @@ impl CMsgClientLogonResponse {
     }
 
     // optional uint32 account_flags = 6;
-
 
     pub fn get_account_flags(&self) -> u32 {
         self.account_flags.unwrap_or(0)
@@ -3503,7 +3655,6 @@ impl CMsgClientLogonResponse {
 
     // optional uint32 cell_id = 7;
 
-
     pub fn get_cell_id(&self) -> u32 {
         self.cell_id.unwrap_or(0)
     }
@@ -3521,7 +3672,6 @@ impl CMsgClientLogonResponse {
     }
 
     // optional string email_domain = 8;
-
 
     pub fn get_email_domain(&self) -> &str {
         match self.email_domain.as_ref() {
@@ -3558,7 +3708,6 @@ impl CMsgClientLogonResponse {
 
     // optional bytes steam2_ticket = 9;
 
-
     pub fn get_steam2_ticket(&self) -> &[u8] {
         match self.steam2_ticket.as_ref() {
             Some(v) => &v,
@@ -3594,7 +3743,6 @@ impl CMsgClientLogonResponse {
 
     // optional int32 eresult_extended = 10;
 
-
     pub fn get_eresult_extended(&self) -> i32 {
         self.eresult_extended.unwrap_or(0)
     }
@@ -3612,7 +3760,6 @@ impl CMsgClientLogonResponse {
     }
 
     // optional string webapi_authenticate_user_nonce = 11;
-
 
     pub fn get_webapi_authenticate_user_nonce(&self) -> &str {
         match self.webapi_authenticate_user_nonce.as_ref() {
@@ -3644,11 +3791,12 @@ impl CMsgClientLogonResponse {
 
     // Take field
     pub fn take_webapi_authenticate_user_nonce(&mut self) -> ::std::string::String {
-        self.webapi_authenticate_user_nonce.take().unwrap_or_else(|| ::std::string::String::new())
+        self.webapi_authenticate_user_nonce
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional uint32 cell_id_ping_threshold = 12;
-
 
     pub fn get_cell_id_ping_threshold(&self) -> u32 {
         self.cell_id_ping_threshold.unwrap_or(0)
@@ -3668,7 +3816,6 @@ impl CMsgClientLogonResponse {
 
     // optional bool deprecated_use_pics = 13;
 
-
     pub fn get_deprecated_use_pics(&self) -> bool {
         self.deprecated_use_pics.unwrap_or(false)
     }
@@ -3686,7 +3833,6 @@ impl CMsgClientLogonResponse {
     }
 
     // optional string vanity_url = 14;
-
 
     pub fn get_vanity_url(&self) -> &str {
         match self.vanity_url.as_ref() {
@@ -3723,9 +3869,10 @@ impl CMsgClientLogonResponse {
 
     // optional .CMsgIPAddress public_ip = 15;
 
-
     pub fn get_public_ip(&self) -> &super::steammessages_base::CMsgIPAddress {
-        self.public_ip.as_ref().unwrap_or_else(|| <super::steammessages_base::CMsgIPAddress as ::protobuf::Message>::default_instance())
+        self.public_ip
+            .as_ref()
+            .unwrap_or_else(|| <super::steammessages_base::CMsgIPAddress as ::protobuf::Message>::default_instance())
     }
     pub fn clear_public_ip(&mut self) {
         self.public_ip.clear();
@@ -3751,11 +3898,12 @@ impl CMsgClientLogonResponse {
 
     // Take field
     pub fn take_public_ip(&mut self) -> super::steammessages_base::CMsgIPAddress {
-        self.public_ip.take().unwrap_or_else(|| super::steammessages_base::CMsgIPAddress::new())
+        self.public_ip
+            .take()
+            .unwrap_or_else(|| super::steammessages_base::CMsgIPAddress::new())
     }
 
     // optional fixed64 client_supplied_steamid = 20;
-
 
     pub fn get_client_supplied_steamid(&self) -> u64 {
         self.client_supplied_steamid.unwrap_or(0)
@@ -3774,7 +3922,6 @@ impl CMsgClientLogonResponse {
     }
 
     // optional string ip_country_code = 21;
-
 
     pub fn get_ip_country_code(&self) -> &str {
         match self.ip_country_code.as_ref() {
@@ -3806,11 +3953,12 @@ impl CMsgClientLogonResponse {
 
     // Take field
     pub fn take_ip_country_code(&mut self) -> ::std::string::String {
-        self.ip_country_code.take().unwrap_or_else(|| ::std::string::String::new())
+        self.ip_country_code
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional bytes parental_settings = 22;
-
 
     pub fn get_parental_settings(&self) -> &[u8] {
         match self.parental_settings.as_ref() {
@@ -3847,7 +3995,6 @@ impl CMsgClientLogonResponse {
 
     // optional bytes parental_setting_signature = 23;
 
-
     pub fn get_parental_setting_signature(&self) -> &[u8] {
         match self.parental_setting_signature.as_ref() {
             Some(v) => &v,
@@ -3878,11 +4025,12 @@ impl CMsgClientLogonResponse {
 
     // Take field
     pub fn take_parental_setting_signature(&mut self) -> ::std::vec::Vec<u8> {
-        self.parental_setting_signature.take().unwrap_or_else(|| ::std::vec::Vec::new())
+        self.parental_setting_signature
+            .take()
+            .unwrap_or_else(|| ::std::vec::Vec::new())
     }
 
     // optional int32 count_loginfailures_to_migrate = 24;
-
 
     pub fn get_count_loginfailures_to_migrate(&self) -> i32 {
         self.count_loginfailures_to_migrate.unwrap_or(0)
@@ -3902,7 +4050,6 @@ impl CMsgClientLogonResponse {
 
     // optional int32 count_disconnects_to_migrate = 25;
 
-
     pub fn get_count_disconnects_to_migrate(&self) -> i32 {
         self.count_disconnects_to_migrate.unwrap_or(0)
     }
@@ -3920,7 +4067,6 @@ impl CMsgClientLogonResponse {
     }
 
     // optional int32 ogs_data_report_time_window = 26;
-
 
     pub fn get_ogs_data_report_time_window(&self) -> i32 {
         self.ogs_data_report_time_window.unwrap_or(0)
@@ -3940,7 +4086,6 @@ impl CMsgClientLogonResponse {
 
     // optional uint64 client_instance_id = 27;
 
-
     pub fn get_client_instance_id(&self) -> u64 {
         self.client_instance_id.unwrap_or(0)
     }
@@ -3958,7 +4103,6 @@ impl CMsgClientLogonResponse {
     }
 
     // optional bool force_client_update_check = 28;
-
 
     pub fn get_force_client_update_check(&self) -> bool {
         self.force_client_update_check.unwrap_or(false)
@@ -3983,7 +4127,7 @@ impl ::protobuf::Message for CMsgClientLogonResponse {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         true
     }
 
@@ -3997,139 +4141,139 @@ impl ::protobuf::Message for CMsgClientLogonResponse {
                     }
                     let tmp = is.read_int32()?;
                     self.eresult = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.out_of_game_heartbeat_seconds = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.in_game_heartbeat_seconds = ::std::option::Option::Some(tmp);
-                },
+                }
                 4 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.deprecated_public_ip = ::std::option::Option::Some(tmp);
-                },
+                }
                 5 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed32 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed32()?;
                     self.rtime32_server_time = ::std::option::Option::Some(tmp);
-                },
+                }
                 6 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.account_flags = ::std::option::Option::Some(tmp);
-                },
+                }
                 7 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.cell_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 8 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.email_domain)?;
-                },
+                }
                 9 => {
                     ::protobuf::rt::read_singular_bytes_into(wire_type, is, &mut self.steam2_ticket)?;
-                },
+                }
                 10 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.eresult_extended = ::std::option::Option::Some(tmp);
-                },
+                }
                 11 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.webapi_authenticate_user_nonce)?;
-                },
+                }
                 12 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.cell_id_ping_threshold = ::std::option::Option::Some(tmp);
-                },
+                }
                 13 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.deprecated_use_pics = ::std::option::Option::Some(tmp);
-                },
+                }
                 14 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.vanity_url)?;
-                },
+                }
                 15 => {
                     ::protobuf::rt::read_singular_message_into(wire_type, is, &mut self.public_ip)?;
-                },
+                }
                 20 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.client_supplied_steamid = ::std::option::Option::Some(tmp);
-                },
+                }
                 21 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.ip_country_code)?;
-                },
+                }
                 22 => {
                     ::protobuf::rt::read_singular_bytes_into(wire_type, is, &mut self.parental_settings)?;
-                },
+                }
                 23 => {
                     ::protobuf::rt::read_singular_bytes_into(wire_type, is, &mut self.parental_setting_signature)?;
-                },
+                }
                 24 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.count_loginfailures_to_migrate = ::std::option::Option::Some(tmp);
-                },
+                }
                 25 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.count_disconnects_to_migrate = ::std::option::Option::Some(tmp);
-                },
+                }
                 26 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.ogs_data_report_time_window = ::std::option::Option::Some(tmp);
-                },
+                }
                 27 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint64()?;
                     self.client_instance_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 28 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.force_client_update_check = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -4327,133 +4471,206 @@ impl ::protobuf::Message for CMsgClientLogonResponse {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "eresult",
-                |m: &CMsgClientLogonResponse| { &m.eresult },
-                |m: &mut CMsgClientLogonResponse| { &mut m.eresult },
+                |m: &CMsgClientLogonResponse| &m.eresult,
+                |m: &mut CMsgClientLogonResponse| &mut m.eresult,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "out_of_game_heartbeat_seconds",
-                |m: &CMsgClientLogonResponse| { &m.out_of_game_heartbeat_seconds },
-                |m: &mut CMsgClientLogonResponse| { &mut m.out_of_game_heartbeat_seconds },
+                |m: &CMsgClientLogonResponse| &m.out_of_game_heartbeat_seconds,
+                |m: &mut CMsgClientLogonResponse| &mut m.out_of_game_heartbeat_seconds,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "in_game_heartbeat_seconds",
-                |m: &CMsgClientLogonResponse| { &m.in_game_heartbeat_seconds },
-                |m: &mut CMsgClientLogonResponse| { &mut m.in_game_heartbeat_seconds },
+                |m: &CMsgClientLogonResponse| &m.in_game_heartbeat_seconds,
+                |m: &mut CMsgClientLogonResponse| &mut m.in_game_heartbeat_seconds,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "deprecated_public_ip",
-                |m: &CMsgClientLogonResponse| { &m.deprecated_public_ip },
-                |m: &mut CMsgClientLogonResponse| { &mut m.deprecated_public_ip },
+                |m: &CMsgClientLogonResponse| &m.deprecated_public_ip,
+                |m: &mut CMsgClientLogonResponse| &mut m.deprecated_public_ip,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed32,
+            >(
                 "rtime32_server_time",
-                |m: &CMsgClientLogonResponse| { &m.rtime32_server_time },
-                |m: &mut CMsgClientLogonResponse| { &mut m.rtime32_server_time },
+                |m: &CMsgClientLogonResponse| &m.rtime32_server_time,
+                |m: &mut CMsgClientLogonResponse| &mut m.rtime32_server_time,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "account_flags",
-                |m: &CMsgClientLogonResponse| { &m.account_flags },
-                |m: &mut CMsgClientLogonResponse| { &mut m.account_flags },
+                |m: &CMsgClientLogonResponse| &m.account_flags,
+                |m: &mut CMsgClientLogonResponse| &mut m.account_flags,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "cell_id",
-                |m: &CMsgClientLogonResponse| { &m.cell_id },
-                |m: &mut CMsgClientLogonResponse| { &mut m.cell_id },
+                |m: &CMsgClientLogonResponse| &m.cell_id,
+                |m: &mut CMsgClientLogonResponse| &mut m.cell_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "email_domain",
-                |m: &CMsgClientLogonResponse| { &m.email_domain },
-                |m: &mut CMsgClientLogonResponse| { &mut m.email_domain },
+                |m: &CMsgClientLogonResponse| &m.email_domain,
+                |m: &mut CMsgClientLogonResponse| &mut m.email_domain,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeBytes>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBytes,
+            >(
                 "steam2_ticket",
-                |m: &CMsgClientLogonResponse| { &m.steam2_ticket },
-                |m: &mut CMsgClientLogonResponse| { &mut m.steam2_ticket },
+                |m: &CMsgClientLogonResponse| &m.steam2_ticket,
+                |m: &mut CMsgClientLogonResponse| &mut m.steam2_ticket,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "eresult_extended",
-                |m: &CMsgClientLogonResponse| { &m.eresult_extended },
-                |m: &mut CMsgClientLogonResponse| { &mut m.eresult_extended },
+                |m: &CMsgClientLogonResponse| &m.eresult_extended,
+                |m: &mut CMsgClientLogonResponse| &mut m.eresult_extended,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "webapi_authenticate_user_nonce",
-                |m: &CMsgClientLogonResponse| { &m.webapi_authenticate_user_nonce },
-                |m: &mut CMsgClientLogonResponse| { &mut m.webapi_authenticate_user_nonce },
+                |m: &CMsgClientLogonResponse| &m.webapi_authenticate_user_nonce,
+                |m: &mut CMsgClientLogonResponse| &mut m.webapi_authenticate_user_nonce,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "cell_id_ping_threshold",
-                |m: &CMsgClientLogonResponse| { &m.cell_id_ping_threshold },
-                |m: &mut CMsgClientLogonResponse| { &mut m.cell_id_ping_threshold },
+                |m: &CMsgClientLogonResponse| &m.cell_id_ping_threshold,
+                |m: &mut CMsgClientLogonResponse| &mut m.cell_id_ping_threshold,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "deprecated_use_pics",
-                |m: &CMsgClientLogonResponse| { &m.deprecated_use_pics },
-                |m: &mut CMsgClientLogonResponse| { &mut m.deprecated_use_pics },
+                |m: &CMsgClientLogonResponse| &m.deprecated_use_pics,
+                |m: &mut CMsgClientLogonResponse| &mut m.deprecated_use_pics,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "vanity_url",
-                |m: &CMsgClientLogonResponse| { &m.vanity_url },
-                |m: &mut CMsgClientLogonResponse| { &mut m.vanity_url },
+                |m: &CMsgClientLogonResponse| &m.vanity_url,
+                |m: &mut CMsgClientLogonResponse| &mut m.vanity_url,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<super::steammessages_base::CMsgIPAddress>>(
+            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeMessage<super::steammessages_base::CMsgIPAddress>,
+            >(
                 "public_ip",
-                |m: &CMsgClientLogonResponse| { &m.public_ip },
-                |m: &mut CMsgClientLogonResponse| { &mut m.public_ip },
+                |m: &CMsgClientLogonResponse| &m.public_ip,
+                |m: &mut CMsgClientLogonResponse| &mut m.public_ip,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "client_supplied_steamid",
-                |m: &CMsgClientLogonResponse| { &m.client_supplied_steamid },
-                |m: &mut CMsgClientLogonResponse| { &mut m.client_supplied_steamid },
+                |m: &CMsgClientLogonResponse| &m.client_supplied_steamid,
+                |m: &mut CMsgClientLogonResponse| &mut m.client_supplied_steamid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "ip_country_code",
-                |m: &CMsgClientLogonResponse| { &m.ip_country_code },
-                |m: &mut CMsgClientLogonResponse| { &mut m.ip_country_code },
+                |m: &CMsgClientLogonResponse| &m.ip_country_code,
+                |m: &mut CMsgClientLogonResponse| &mut m.ip_country_code,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeBytes>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBytes,
+            >(
                 "parental_settings",
-                |m: &CMsgClientLogonResponse| { &m.parental_settings },
-                |m: &mut CMsgClientLogonResponse| { &mut m.parental_settings },
+                |m: &CMsgClientLogonResponse| &m.parental_settings,
+                |m: &mut CMsgClientLogonResponse| &mut m.parental_settings,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeBytes>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBytes,
+            >(
                 "parental_setting_signature",
-                |m: &CMsgClientLogonResponse| { &m.parental_setting_signature },
-                |m: &mut CMsgClientLogonResponse| { &mut m.parental_setting_signature },
+                |m: &CMsgClientLogonResponse| &m.parental_setting_signature,
+                |m: &mut CMsgClientLogonResponse| &mut m.parental_setting_signature,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "count_loginfailures_to_migrate",
-                |m: &CMsgClientLogonResponse| { &m.count_loginfailures_to_migrate },
-                |m: &mut CMsgClientLogonResponse| { &mut m.count_loginfailures_to_migrate },
+                |m: &CMsgClientLogonResponse| &m.count_loginfailures_to_migrate,
+                |m: &mut CMsgClientLogonResponse| &mut m.count_loginfailures_to_migrate,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "count_disconnects_to_migrate",
-                |m: &CMsgClientLogonResponse| { &m.count_disconnects_to_migrate },
-                |m: &mut CMsgClientLogonResponse| { &mut m.count_disconnects_to_migrate },
+                |m: &CMsgClientLogonResponse| &m.count_disconnects_to_migrate,
+                |m: &mut CMsgClientLogonResponse| &mut m.count_disconnects_to_migrate,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "ogs_data_report_time_window",
-                |m: &CMsgClientLogonResponse| { &m.ogs_data_report_time_window },
-                |m: &mut CMsgClientLogonResponse| { &mut m.ogs_data_report_time_window },
+                |m: &CMsgClientLogonResponse| &m.ogs_data_report_time_window,
+                |m: &mut CMsgClientLogonResponse| &mut m.ogs_data_report_time_window,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint64,
+            >(
                 "client_instance_id",
-                |m: &CMsgClientLogonResponse| { &m.client_instance_id },
-                |m: &mut CMsgClientLogonResponse| { &mut m.client_instance_id },
+                |m: &CMsgClientLogonResponse| &m.client_instance_id,
+                |m: &mut CMsgClientLogonResponse| &mut m.client_instance_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "force_client_update_check",
-                |m: &CMsgClientLogonResponse| { &m.force_client_update_check },
-                |m: &mut CMsgClientLogonResponse| { &mut m.force_client_update_check },
+                |m: &CMsgClientLogonResponse| &m.force_client_update_check,
+                |m: &mut CMsgClientLogonResponse| &mut m.force_client_update_check,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientLogonResponse>(
                 "CMsgClientLogonResponse",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -4506,7 +4723,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientLogonResponse {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientRequestWebAPIAuthenticateUserNonce {
     // message fields
@@ -4530,7 +4747,6 @@ impl CMsgClientRequestWebAPIAuthenticateUserNonce {
     }
 
     // optional int32 token_type = 1;
-
 
     pub fn get_token_type(&self) -> i32 {
         self.token_type.unwrap_or(-1i32)
@@ -4564,10 +4780,10 @@ impl ::protobuf::Message for CMsgClientRequestWebAPIAuthenticateUserNonce {
                     }
                     let tmp = is.read_int32()?;
                     self.token_type = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -4624,24 +4840,29 @@ impl ::protobuf::Message for CMsgClientRequestWebAPIAuthenticateUserNonce {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "token_type",
-                |m: &CMsgClientRequestWebAPIAuthenticateUserNonce| { &m.token_type },
-                |m: &mut CMsgClientRequestWebAPIAuthenticateUserNonce| { &mut m.token_type },
+                |m: &CMsgClientRequestWebAPIAuthenticateUserNonce| &m.token_type,
+                |m: &mut CMsgClientRequestWebAPIAuthenticateUserNonce| &mut m.token_type,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientRequestWebAPIAuthenticateUserNonce>(
                 "CMsgClientRequestWebAPIAuthenticateUserNonce",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
 
     fn default_instance() -> &'static CMsgClientRequestWebAPIAuthenticateUserNonce {
-        static instance: ::protobuf::rt::LazyV2<CMsgClientRequestWebAPIAuthenticateUserNonce> = ::protobuf::rt::LazyV2::INIT;
+        static instance: ::protobuf::rt::LazyV2<CMsgClientRequestWebAPIAuthenticateUserNonce> =
+            ::protobuf::rt::LazyV2::INIT;
         instance.get(CMsgClientRequestWebAPIAuthenticateUserNonce::new)
     }
 }
@@ -4665,7 +4886,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientRequestWebAPIAuthenticateU
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientRequestWebAPIAuthenticateUserNonceResponse {
     // message fields
@@ -4692,7 +4913,6 @@ impl CMsgClientRequestWebAPIAuthenticateUserNonceResponse {
 
     // optional int32 eresult = 1;
 
-
     pub fn get_eresult(&self) -> i32 {
         self.eresult.unwrap_or(2i32)
     }
@@ -4710,7 +4930,6 @@ impl CMsgClientRequestWebAPIAuthenticateUserNonceResponse {
     }
 
     // optional string webapi_authenticate_user_nonce = 11;
-
 
     pub fn get_webapi_authenticate_user_nonce(&self) -> &str {
         match self.webapi_authenticate_user_nonce.as_ref() {
@@ -4742,11 +4961,12 @@ impl CMsgClientRequestWebAPIAuthenticateUserNonceResponse {
 
     // Take field
     pub fn take_webapi_authenticate_user_nonce(&mut self) -> ::std::string::String {
-        self.webapi_authenticate_user_nonce.take().unwrap_or_else(|| ::std::string::String::new())
+        self.webapi_authenticate_user_nonce
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional int32 token_type = 3;
-
 
     pub fn get_token_type(&self) -> i32 {
         self.token_type.unwrap_or(-1i32)
@@ -4780,20 +5000,20 @@ impl ::protobuf::Message for CMsgClientRequestWebAPIAuthenticateUserNonceRespons
                     }
                     let tmp = is.read_int32()?;
                     self.eresult = ::std::option::Option::Some(tmp);
-                },
+                }
                 11 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.webapi_authenticate_user_nonce)?;
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.token_type = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -4862,34 +5082,45 @@ impl ::protobuf::Message for CMsgClientRequestWebAPIAuthenticateUserNonceRespons
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "eresult",
-                |m: &CMsgClientRequestWebAPIAuthenticateUserNonceResponse| { &m.eresult },
-                |m: &mut CMsgClientRequestWebAPIAuthenticateUserNonceResponse| { &mut m.eresult },
+                |m: &CMsgClientRequestWebAPIAuthenticateUserNonceResponse| &m.eresult,
+                |m: &mut CMsgClientRequestWebAPIAuthenticateUserNonceResponse| &mut m.eresult,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "webapi_authenticate_user_nonce",
-                |m: &CMsgClientRequestWebAPIAuthenticateUserNonceResponse| { &m.webapi_authenticate_user_nonce },
-                |m: &mut CMsgClientRequestWebAPIAuthenticateUserNonceResponse| { &mut m.webapi_authenticate_user_nonce },
+                |m: &CMsgClientRequestWebAPIAuthenticateUserNonceResponse| &m.webapi_authenticate_user_nonce,
+                |m: &mut CMsgClientRequestWebAPIAuthenticateUserNonceResponse| &mut m.webapi_authenticate_user_nonce,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "token_type",
-                |m: &CMsgClientRequestWebAPIAuthenticateUserNonceResponse| { &m.token_type },
-                |m: &mut CMsgClientRequestWebAPIAuthenticateUserNonceResponse| { &mut m.token_type },
+                |m: &CMsgClientRequestWebAPIAuthenticateUserNonceResponse| &m.token_type,
+                |m: &mut CMsgClientRequestWebAPIAuthenticateUserNonceResponse| &mut m.token_type,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientRequestWebAPIAuthenticateUserNonceResponse>(
                 "CMsgClientRequestWebAPIAuthenticateUserNonceResponse",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
 
     fn default_instance() -> &'static CMsgClientRequestWebAPIAuthenticateUserNonceResponse {
-        static instance: ::protobuf::rt::LazyV2<CMsgClientRequestWebAPIAuthenticateUserNonceResponse> = ::protobuf::rt::LazyV2::INIT;
+        static instance: ::protobuf::rt::LazyV2<CMsgClientRequestWebAPIAuthenticateUserNonceResponse> =
+            ::protobuf::rt::LazyV2::INIT;
         instance.get(CMsgClientRequestWebAPIAuthenticateUserNonceResponse::new)
     }
 }
@@ -4915,7 +5146,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientRequestWebAPIAuthenticateU
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientLogOff {
     // special fields
@@ -4948,7 +5179,7 @@ impl ::protobuf::Message for CMsgClientLogOff {
             match field_number {
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -4999,13 +5230,14 @@ impl ::protobuf::Message for CMsgClientLogOff {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let fields = ::std::vec::Vec::new();
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientLogOff>(
                 "CMsgClientLogOff",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -5034,7 +5266,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientLogOff {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientLoggedOff {
     // message fields
@@ -5058,7 +5290,6 @@ impl CMsgClientLoggedOff {
     }
 
     // optional int32 eresult = 1;
-
 
     pub fn get_eresult(&self) -> i32 {
         self.eresult.unwrap_or(2i32)
@@ -5092,10 +5323,10 @@ impl ::protobuf::Message for CMsgClientLoggedOff {
                     }
                     let tmp = is.read_int32()?;
                     self.eresult = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -5152,18 +5383,22 @@ impl ::protobuf::Message for CMsgClientLoggedOff {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "eresult",
-                |m: &CMsgClientLoggedOff| { &m.eresult },
-                |m: &mut CMsgClientLoggedOff| { &mut m.eresult },
+                |m: &CMsgClientLoggedOff| &m.eresult,
+                |m: &mut CMsgClientLoggedOff| &mut m.eresult,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientLoggedOff>(
                 "CMsgClientLoggedOff",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -5193,7 +5428,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientLoggedOff {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientNewLoginKey {
     // message fields
@@ -5219,7 +5454,6 @@ impl CMsgClientNewLoginKey {
 
     // optional uint32 unique_id = 1;
 
-
     pub fn get_unique_id(&self) -> u32 {
         self.unique_id.unwrap_or(0)
     }
@@ -5237,7 +5471,6 @@ impl CMsgClientNewLoginKey {
     }
 
     // optional string login_key = 2;
-
 
     pub fn get_login_key(&self) -> &str {
         match self.login_key.as_ref() {
@@ -5288,13 +5521,13 @@ impl ::protobuf::Message for CMsgClientNewLoginKey {
                     }
                     let tmp = is.read_uint32()?;
                     self.unique_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.login_key)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -5357,23 +5590,30 @@ impl ::protobuf::Message for CMsgClientNewLoginKey {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "unique_id",
-                |m: &CMsgClientNewLoginKey| { &m.unique_id },
-                |m: &mut CMsgClientNewLoginKey| { &mut m.unique_id },
+                |m: &CMsgClientNewLoginKey| &m.unique_id,
+                |m: &mut CMsgClientNewLoginKey| &mut m.unique_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "login_key",
-                |m: &CMsgClientNewLoginKey| { &m.login_key },
-                |m: &mut CMsgClientNewLoginKey| { &mut m.login_key },
+                |m: &CMsgClientNewLoginKey| &m.login_key,
+                |m: &mut CMsgClientNewLoginKey| &mut m.login_key,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientNewLoginKey>(
                 "CMsgClientNewLoginKey",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -5404,7 +5644,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientNewLoginKey {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientNewLoginKeyAccepted {
     // message fields
@@ -5428,7 +5668,6 @@ impl CMsgClientNewLoginKeyAccepted {
     }
 
     // optional uint32 unique_id = 1;
-
 
     pub fn get_unique_id(&self) -> u32 {
         self.unique_id.unwrap_or(0)
@@ -5462,10 +5701,10 @@ impl ::protobuf::Message for CMsgClientNewLoginKeyAccepted {
                     }
                     let tmp = is.read_uint32()?;
                     self.unique_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -5522,18 +5761,22 @@ impl ::protobuf::Message for CMsgClientNewLoginKeyAccepted {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "unique_id",
-                |m: &CMsgClientNewLoginKeyAccepted| { &m.unique_id },
-                |m: &mut CMsgClientNewLoginKeyAccepted| { &mut m.unique_id },
+                |m: &CMsgClientNewLoginKeyAccepted| &m.unique_id,
+                |m: &mut CMsgClientNewLoginKeyAccepted| &mut m.unique_id,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientNewLoginKeyAccepted>(
                 "CMsgClientNewLoginKeyAccepted",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -5563,7 +5806,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientNewLoginKeyAccepted {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientAccountInfo {
     // message fields
@@ -5598,7 +5841,6 @@ impl CMsgClientAccountInfo {
     }
 
     // optional string persona_name = 1;
-
 
     pub fn get_persona_name(&self) -> &str {
         match self.persona_name.as_ref() {
@@ -5635,7 +5877,6 @@ impl CMsgClientAccountInfo {
 
     // optional string ip_country = 2;
 
-
     pub fn get_ip_country(&self) -> &str {
         match self.ip_country.as_ref() {
             Some(v) => &v,
@@ -5671,7 +5912,6 @@ impl CMsgClientAccountInfo {
 
     // optional int32 count_authed_computers = 5;
 
-
     pub fn get_count_authed_computers(&self) -> i32 {
         self.count_authed_computers.unwrap_or(0)
     }
@@ -5689,7 +5929,6 @@ impl CMsgClientAccountInfo {
     }
 
     // optional uint32 account_flags = 7;
-
 
     pub fn get_account_flags(&self) -> u32 {
         self.account_flags.unwrap_or(0)
@@ -5709,7 +5948,6 @@ impl CMsgClientAccountInfo {
 
     // optional uint64 facebook_id = 8;
 
-
     pub fn get_facebook_id(&self) -> u64 {
         self.facebook_id.unwrap_or(0)
     }
@@ -5727,7 +5965,6 @@ impl CMsgClientAccountInfo {
     }
 
     // optional string facebook_name = 9;
-
 
     pub fn get_facebook_name(&self) -> &str {
         match self.facebook_name.as_ref() {
@@ -5759,11 +5996,12 @@ impl CMsgClientAccountInfo {
 
     // Take field
     pub fn take_facebook_name(&mut self) -> ::std::string::String {
-        self.facebook_name.take().unwrap_or_else(|| ::std::string::String::new())
+        self.facebook_name
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional bool steamguard_notify_newmachines = 14;
-
 
     pub fn get_steamguard_notify_newmachines(&self) -> bool {
         self.steamguard_notify_newmachines.unwrap_or(false)
@@ -5782,7 +6020,6 @@ impl CMsgClientAccountInfo {
     }
 
     // optional string steamguard_machine_name_user_chosen = 15;
-
 
     pub fn get_steamguard_machine_name_user_chosen(&self) -> &str {
         match self.steamguard_machine_name_user_chosen.as_ref() {
@@ -5814,11 +6051,12 @@ impl CMsgClientAccountInfo {
 
     // Take field
     pub fn take_steamguard_machine_name_user_chosen(&mut self) -> ::std::string::String {
-        self.steamguard_machine_name_user_chosen.take().unwrap_or_else(|| ::std::string::String::new())
+        self.steamguard_machine_name_user_chosen
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional bool is_phone_verified = 16;
-
 
     pub fn get_is_phone_verified(&self) -> bool {
         self.is_phone_verified.unwrap_or(false)
@@ -5838,7 +6076,6 @@ impl CMsgClientAccountInfo {
 
     // optional uint32 two_factor_state = 17;
 
-
     pub fn get_two_factor_state(&self) -> u32 {
         self.two_factor_state.unwrap_or(0)
     }
@@ -5857,7 +6094,6 @@ impl CMsgClientAccountInfo {
 
     // optional bool is_phone_identifying = 18;
 
-
     pub fn get_is_phone_identifying(&self) -> bool {
         self.is_phone_identifying.unwrap_or(false)
     }
@@ -5875,7 +6111,6 @@ impl CMsgClientAccountInfo {
     }
 
     // optional bool is_phone_needing_reverify = 19;
-
 
     pub fn get_is_phone_needing_reverify(&self) -> bool {
         self.is_phone_needing_reverify.unwrap_or(false)
@@ -5905,75 +6140,79 @@ impl ::protobuf::Message for CMsgClientAccountInfo {
             match field_number {
                 1 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.persona_name)?;
-                },
+                }
                 2 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.ip_country)?;
-                },
+                }
                 5 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.count_authed_computers = ::std::option::Option::Some(tmp);
-                },
+                }
                 7 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.account_flags = ::std::option::Option::Some(tmp);
-                },
+                }
                 8 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint64()?;
                     self.facebook_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 9 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.facebook_name)?;
-                },
+                }
                 14 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.steamguard_notify_newmachines = ::std::option::Option::Some(tmp);
-                },
+                }
                 15 => {
-                    ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.steamguard_machine_name_user_chosen)?;
-                },
+                    ::protobuf::rt::read_singular_string_into(
+                        wire_type,
+                        is,
+                        &mut self.steamguard_machine_name_user_chosen,
+                    )?;
+                }
                 16 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.is_phone_verified = ::std::option::Option::Some(tmp);
-                },
+                }
                 17 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.two_factor_state = ::std::option::Option::Some(tmp);
-                },
+                }
                 18 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.is_phone_identifying = ::std::option::Option::Some(tmp);
-                },
+                }
                 19 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.is_phone_needing_reverify = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -6096,73 +6335,110 @@ impl ::protobuf::Message for CMsgClientAccountInfo {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "persona_name",
-                |m: &CMsgClientAccountInfo| { &m.persona_name },
-                |m: &mut CMsgClientAccountInfo| { &mut m.persona_name },
+                |m: &CMsgClientAccountInfo| &m.persona_name,
+                |m: &mut CMsgClientAccountInfo| &mut m.persona_name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "ip_country",
-                |m: &CMsgClientAccountInfo| { &m.ip_country },
-                |m: &mut CMsgClientAccountInfo| { &mut m.ip_country },
+                |m: &CMsgClientAccountInfo| &m.ip_country,
+                |m: &mut CMsgClientAccountInfo| &mut m.ip_country,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "count_authed_computers",
-                |m: &CMsgClientAccountInfo| { &m.count_authed_computers },
-                |m: &mut CMsgClientAccountInfo| { &mut m.count_authed_computers },
+                |m: &CMsgClientAccountInfo| &m.count_authed_computers,
+                |m: &mut CMsgClientAccountInfo| &mut m.count_authed_computers,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "account_flags",
-                |m: &CMsgClientAccountInfo| { &m.account_flags },
-                |m: &mut CMsgClientAccountInfo| { &mut m.account_flags },
+                |m: &CMsgClientAccountInfo| &m.account_flags,
+                |m: &mut CMsgClientAccountInfo| &mut m.account_flags,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint64,
+            >(
                 "facebook_id",
-                |m: &CMsgClientAccountInfo| { &m.facebook_id },
-                |m: &mut CMsgClientAccountInfo| { &mut m.facebook_id },
+                |m: &CMsgClientAccountInfo| &m.facebook_id,
+                |m: &mut CMsgClientAccountInfo| &mut m.facebook_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "facebook_name",
-                |m: &CMsgClientAccountInfo| { &m.facebook_name },
-                |m: &mut CMsgClientAccountInfo| { &mut m.facebook_name },
+                |m: &CMsgClientAccountInfo| &m.facebook_name,
+                |m: &mut CMsgClientAccountInfo| &mut m.facebook_name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "steamguard_notify_newmachines",
-                |m: &CMsgClientAccountInfo| { &m.steamguard_notify_newmachines },
-                |m: &mut CMsgClientAccountInfo| { &mut m.steamguard_notify_newmachines },
+                |m: &CMsgClientAccountInfo| &m.steamguard_notify_newmachines,
+                |m: &mut CMsgClientAccountInfo| &mut m.steamguard_notify_newmachines,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "steamguard_machine_name_user_chosen",
-                |m: &CMsgClientAccountInfo| { &m.steamguard_machine_name_user_chosen },
-                |m: &mut CMsgClientAccountInfo| { &mut m.steamguard_machine_name_user_chosen },
+                |m: &CMsgClientAccountInfo| &m.steamguard_machine_name_user_chosen,
+                |m: &mut CMsgClientAccountInfo| &mut m.steamguard_machine_name_user_chosen,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "is_phone_verified",
-                |m: &CMsgClientAccountInfo| { &m.is_phone_verified },
-                |m: &mut CMsgClientAccountInfo| { &mut m.is_phone_verified },
+                |m: &CMsgClientAccountInfo| &m.is_phone_verified,
+                |m: &mut CMsgClientAccountInfo| &mut m.is_phone_verified,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "two_factor_state",
-                |m: &CMsgClientAccountInfo| { &m.two_factor_state },
-                |m: &mut CMsgClientAccountInfo| { &mut m.two_factor_state },
+                |m: &CMsgClientAccountInfo| &m.two_factor_state,
+                |m: &mut CMsgClientAccountInfo| &mut m.two_factor_state,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "is_phone_identifying",
-                |m: &CMsgClientAccountInfo| { &m.is_phone_identifying },
-                |m: &mut CMsgClientAccountInfo| { &mut m.is_phone_identifying },
+                |m: &CMsgClientAccountInfo| &m.is_phone_identifying,
+                |m: &mut CMsgClientAccountInfo| &mut m.is_phone_identifying,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "is_phone_needing_reverify",
-                |m: &CMsgClientAccountInfo| { &m.is_phone_needing_reverify },
-                |m: &mut CMsgClientAccountInfo| { &mut m.is_phone_needing_reverify },
+                |m: &CMsgClientAccountInfo| &m.is_phone_needing_reverify,
+                |m: &mut CMsgClientAccountInfo| &mut m.is_phone_needing_reverify,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientAccountInfo>(
                 "CMsgClientAccountInfo",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -6203,7 +6479,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientAccountInfo {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientChallengeRequest {
     // message fields
@@ -6227,7 +6503,6 @@ impl CMsgClientChallengeRequest {
     }
 
     // optional fixed64 steamid = 1;
-
 
     pub fn get_steamid(&self) -> u64 {
         self.steamid.unwrap_or(0)
@@ -6261,10 +6536,10 @@ impl ::protobuf::Message for CMsgClientChallengeRequest {
                     }
                     let tmp = is.read_fixed64()?;
                     self.steamid = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -6321,18 +6596,22 @@ impl ::protobuf::Message for CMsgClientChallengeRequest {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "steamid",
-                |m: &CMsgClientChallengeRequest| { &m.steamid },
-                |m: &mut CMsgClientChallengeRequest| { &mut m.steamid },
+                |m: &CMsgClientChallengeRequest| &m.steamid,
+                |m: &mut CMsgClientChallengeRequest| &mut m.steamid,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientChallengeRequest>(
                 "CMsgClientChallengeRequest",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -6362,7 +6641,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgClientChallengeRequest {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgClientChallengeResponse {
     // message fields
@@ -6386,7 +6665,6 @@ impl CMsgClientChallengeResponse {
     }
 
     // optional fixed64 challenge = 1;
-
 
     pub fn get_challenge(&self) -> u64 {
         self.challenge.unwrap_or(0)
@@ -6420,10 +6698,10 @@ impl ::protobuf::Message for CMsgClientChallengeResponse {
                     }
                     let tmp = is.read_fixed64()?;
                     self.challenge = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -6480,18 +6758,22 @@ impl ::protobuf::Message for CMsgClientChallengeResponse {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "challenge",
-                |m: &CMsgClientChallengeResponse| { &m.challenge },
-                |m: &mut CMsgClientChallengeResponse| { &mut m.challenge },
+                |m: &CMsgClientChallengeResponse| &m.challenge,
+                |m: &mut CMsgClientChallengeResponse| &mut m.challenge,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgClientChallengeResponse>(
                 "CMsgClientChallengeResponse",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -6636,14 +6918,13 @@ static file_descriptor_proto_data: &'static [u8] = b"\
     \x06R\tchallengeB\x05H\x01\x80\x01\0\
 ";
 
-static file_descriptor_proto_lazy: ::protobuf::rt::LazyV2<::protobuf::descriptor::FileDescriptorProto> = ::protobuf::rt::LazyV2::INIT;
+static file_descriptor_proto_lazy: ::protobuf::rt::LazyV2<::protobuf::descriptor::FileDescriptorProto> =
+    ::protobuf::rt::LazyV2::INIT;
 
 fn parse_descriptor_proto() -> ::protobuf::descriptor::FileDescriptorProto {
     ::protobuf::Message::parse_from_bytes(file_descriptor_proto_data).unwrap()
 }
 
 pub fn file_descriptor_proto() -> &'static ::protobuf::descriptor::FileDescriptorProto {
-    file_descriptor_proto_lazy.get(|| {
-        parse_descriptor_proto()
-    })
+    file_descriptor_proto_lazy.get(|| parse_descriptor_proto())
 }

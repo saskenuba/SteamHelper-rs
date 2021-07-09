@@ -1,6 +1,5 @@
 use super::Result;
-use base64;
-use hex;
+
 use hmac::{Hmac, Mac};
 use sha1::Sha1;
 
@@ -16,19 +15,28 @@ pub struct Secret {
 impl Secret {
     /// Creates a new Secret from a raw byte slice.
     pub fn new(secret: &[u8]) -> Result<Secret> {
-        Ok(Secret { value: secret.to_vec(), hmac: HmacSha1::new_varkey(&secret)? })
+        Ok(Secret {
+            value: secret.to_vec(),
+            hmac: HmacSha1::new_varkey(&secret)?,
+        })
     }
 
     /// Creates a new Secret from a hex encoded string.
     pub fn from_hex(secret: &str) -> Result<Secret> {
         let value = hex::decode(secret)?;
-        Ok(Secret { value: value.clone(), hmac: HmacSha1::new_varkey(&value)? })
+        Ok(Secret {
+            value: value.clone(),
+            hmac: HmacSha1::new_varkey(&value)?,
+        })
     }
 
     /// Creates a new Secret from a base64 encoded string.
     pub fn from_b64(secret: &str) -> Result<Secret> {
         let value = base64::decode(secret)?;
-        Ok(Secret { value: value.clone(), hmac: HmacSha1::new_varkey(&value)? })
+        Ok(Secret {
+            value: value.clone(),
+            hmac: HmacSha1::new_varkey(&value)?,
+        })
     }
 
     pub(crate) fn code(&self) -> String {

@@ -4,10 +4,7 @@
 // https://github.com/rust-lang/rust-clippy/issues/702
 #![allow(unknown_lints)]
 #![allow(clippy::all)]
-
 #![allow(unused_attributes)]
-#![rustfmt::skip]
-
 #![allow(box_pointers)]
 #![allow(dead_code)]
 #![allow(missing_docs)]
@@ -23,7 +20,7 @@
 /// of protobuf runtime.
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_20_0;
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgIPAddress {
     // message oneof groups
@@ -41,7 +38,7 @@ impl<'a> ::std::default::Default for &'a CMsgIPAddress {
     }
 }
 
-#[derive(Clone,PartialEq,Debug)]
+#[derive(Clone, PartialEq, Debug)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CMsgIPAddress_oneof_ip {
     v4(u32),
@@ -54,7 +51,6 @@ impl CMsgIPAddress {
     }
 
     // optional fixed32 v4 = 1;
-
 
     pub fn get_v4(&self) -> u32 {
         match self.ip {
@@ -79,7 +75,6 @@ impl CMsgIPAddress {
     }
 
     // optional bytes v6 = 2;
-
 
     pub fn get_v6(&self) -> &[u8] {
         match self.ip {
@@ -142,16 +137,16 @@ impl ::protobuf::Message for CMsgIPAddress {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     self.ip = ::std::option::Option::Some(CMsgIPAddress_oneof_ip::v4(is.read_fixed32()?));
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeLengthDelimited {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     self.ip = ::std::option::Option::Some(CMsgIPAddress_oneof_ip::v6(is.read_bytes()?));
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -165,10 +160,10 @@ impl ::protobuf::Message for CMsgIPAddress {
             match v {
                 &CMsgIPAddress_oneof_ip::v4(v) => {
                     my_size += 5;
-                },
+                }
                 &CMsgIPAddress_oneof_ip::v6(ref v) => {
                     my_size += ::protobuf::rt::bytes_size(2, &v);
-                },
+                }
             };
         }
         my_size += ::protobuf::rt::unknown_fields_size(self.get_unknown_fields());
@@ -181,10 +176,10 @@ impl ::protobuf::Message for CMsgIPAddress {
             match v {
                 &CMsgIPAddress_oneof_ip::v4(v) => {
                     os.write_fixed32(1, v)?;
-                },
+                }
                 &CMsgIPAddress_oneof_ip::v6(ref v) => {
                     os.write_bytes(2, v)?;
-                },
+                }
             };
         }
         os.write_unknown_fields(self.get_unknown_fields())?;
@@ -222,7 +217,8 @@ impl ::protobuf::Message for CMsgIPAddress {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
             fields.push(::protobuf::reflect::accessor::make_singular_u32_accessor::<_>(
@@ -238,7 +234,7 @@ impl ::protobuf::Message for CMsgIPAddress {
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgIPAddress>(
                 "CMsgIPAddress",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -269,7 +265,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgIPAddress {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgIPAddressBucket {
     // message fields
@@ -295,9 +291,10 @@ impl CMsgIPAddressBucket {
 
     // optional .CMsgIPAddress original_ip_address = 1;
 
-
     pub fn get_original_ip_address(&self) -> &CMsgIPAddress {
-        self.original_ip_address.as_ref().unwrap_or_else(|| <CMsgIPAddress as ::protobuf::Message>::default_instance())
+        self.original_ip_address
+            .as_ref()
+            .unwrap_or_else(|| <CMsgIPAddress as ::protobuf::Message>::default_instance())
     }
     pub fn clear_original_ip_address(&mut self) {
         self.original_ip_address.clear();
@@ -328,7 +325,6 @@ impl CMsgIPAddressBucket {
 
     // optional fixed64 bucket = 2;
 
-
     pub fn get_bucket(&self) -> u64 {
         self.bucket.unwrap_or(0)
     }
@@ -352,7 +348,7 @@ impl ::protobuf::Message for CMsgIPAddressBucket {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         true
     }
 
@@ -362,17 +358,17 @@ impl ::protobuf::Message for CMsgIPAddressBucket {
             match field_number {
                 1 => {
                     ::protobuf::rt::read_singular_message_into(wire_type, is, &mut self.original_ip_address)?;
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.bucket = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -438,23 +434,30 @@ impl ::protobuf::Message for CMsgIPAddressBucket {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<CMsgIPAddress>>(
+            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeMessage<CMsgIPAddress>,
+            >(
                 "original_ip_address",
-                |m: &CMsgIPAddressBucket| { &m.original_ip_address },
-                |m: &mut CMsgIPAddressBucket| { &mut m.original_ip_address },
+                |m: &CMsgIPAddressBucket| &m.original_ip_address,
+                |m: &mut CMsgIPAddressBucket| &mut m.original_ip_address,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "bucket",
-                |m: &CMsgIPAddressBucket| { &m.bucket },
-                |m: &mut CMsgIPAddressBucket| { &mut m.bucket },
+                |m: &CMsgIPAddressBucket| &m.bucket,
+                |m: &mut CMsgIPAddressBucket| &mut m.bucket,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgIPAddressBucket>(
                 "CMsgIPAddressBucket",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -485,7 +488,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgIPAddressBucket {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgProtoBufHeader {
     // message fields
@@ -528,7 +531,7 @@ impl<'a> ::std::default::Default for &'a CMsgProtoBufHeader {
     }
 }
 
-#[derive(Clone,PartialEq,Debug)]
+#[derive(Clone, PartialEq, Debug)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum CMsgProtoBufHeader_oneof_ip_addr {
     ip(u32),
@@ -541,7 +544,6 @@ impl CMsgProtoBufHeader {
     }
 
     // optional fixed64 steamid = 1;
-
 
     pub fn get_steamid(&self) -> u64 {
         self.steamid.unwrap_or(0)
@@ -561,7 +563,6 @@ impl CMsgProtoBufHeader {
 
     // optional int32 client_sessionid = 2;
 
-
     pub fn get_client_sessionid(&self) -> i32 {
         self.client_sessionid.unwrap_or(0)
     }
@@ -579,7 +580,6 @@ impl CMsgProtoBufHeader {
     }
 
     // optional uint32 routing_appid = 3;
-
 
     pub fn get_routing_appid(&self) -> u32 {
         self.routing_appid.unwrap_or(0)
@@ -599,7 +599,6 @@ impl CMsgProtoBufHeader {
 
     // optional fixed64 jobid_source = 10;
 
-
     pub fn get_jobid_source(&self) -> u64 {
         self.jobid_source.unwrap_or(18446744073709551615u64)
     }
@@ -618,7 +617,6 @@ impl CMsgProtoBufHeader {
 
     // optional fixed64 jobid_target = 11;
 
-
     pub fn get_jobid_target(&self) -> u64 {
         self.jobid_target.unwrap_or(18446744073709551615u64)
     }
@@ -636,7 +634,6 @@ impl CMsgProtoBufHeader {
     }
 
     // optional string target_job_name = 12;
-
 
     pub fn get_target_job_name(&self) -> &str {
         match self.target_job_name.as_ref() {
@@ -668,11 +665,12 @@ impl CMsgProtoBufHeader {
 
     // Take field
     pub fn take_target_job_name(&mut self) -> ::std::string::String {
-        self.target_job_name.take().unwrap_or_else(|| ::std::string::String::new())
+        self.target_job_name
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional int32 seq_num = 24;
-
 
     pub fn get_seq_num(&self) -> i32 {
         self.seq_num.unwrap_or(0)
@@ -692,7 +690,6 @@ impl CMsgProtoBufHeader {
 
     // optional int32 eresult = 13;
 
-
     pub fn get_eresult(&self) -> i32 {
         self.eresult.unwrap_or(2i32)
     }
@@ -710,7 +707,6 @@ impl CMsgProtoBufHeader {
     }
 
     // optional string error_message = 14;
-
 
     pub fn get_error_message(&self) -> &str {
         match self.error_message.as_ref() {
@@ -742,11 +738,12 @@ impl CMsgProtoBufHeader {
 
     // Take field
     pub fn take_error_message(&mut self) -> ::std::string::String {
-        self.error_message.take().unwrap_or_else(|| ::std::string::String::new())
+        self.error_message
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional uint32 auth_account_flags = 16;
-
 
     pub fn get_auth_account_flags(&self) -> u32 {
         self.auth_account_flags.unwrap_or(0)
@@ -766,7 +763,6 @@ impl CMsgProtoBufHeader {
 
     // optional uint32 token_source = 22;
 
-
     pub fn get_token_source(&self) -> u32 {
         self.token_source.unwrap_or(0)
     }
@@ -784,7 +780,6 @@ impl CMsgProtoBufHeader {
     }
 
     // optional bool admin_spoofing_user = 23;
-
 
     pub fn get_admin_spoofing_user(&self) -> bool {
         self.admin_spoofing_user.unwrap_or(false)
@@ -804,7 +799,6 @@ impl CMsgProtoBufHeader {
 
     // optional int32 transport_error = 17;
 
-
     pub fn get_transport_error(&self) -> i32 {
         self.transport_error.unwrap_or(1i32)
     }
@@ -822,7 +816,6 @@ impl CMsgProtoBufHeader {
     }
 
     // optional uint64 messageid = 18;
-
 
     pub fn get_messageid(&self) -> u64 {
         self.messageid.unwrap_or(18446744073709551615u64)
@@ -842,7 +835,6 @@ impl CMsgProtoBufHeader {
 
     // optional uint32 publisher_group_id = 19;
 
-
     pub fn get_publisher_group_id(&self) -> u32 {
         self.publisher_group_id.unwrap_or(0)
     }
@@ -860,7 +852,6 @@ impl CMsgProtoBufHeader {
     }
 
     // optional uint32 sysid = 20;
-
 
     pub fn get_sysid(&self) -> u32 {
         self.sysid.unwrap_or(0)
@@ -880,7 +871,6 @@ impl CMsgProtoBufHeader {
 
     // optional uint64 trace_tag = 21;
 
-
     pub fn get_trace_tag(&self) -> u64 {
         self.trace_tag.unwrap_or(0)
     }
@@ -898,7 +888,6 @@ impl CMsgProtoBufHeader {
     }
 
     // optional uint32 webapi_key_id = 25;
-
 
     pub fn get_webapi_key_id(&self) -> u32 {
         self.webapi_key_id.unwrap_or(0)
@@ -918,7 +907,6 @@ impl CMsgProtoBufHeader {
 
     // optional bool is_from_external_source = 26;
 
-
     pub fn get_is_from_external_source(&self) -> bool {
         self.is_from_external_source.unwrap_or(false)
     }
@@ -936,7 +924,6 @@ impl CMsgProtoBufHeader {
     }
 
     // repeated uint32 forward_to_sysid = 27;
-
 
     pub fn get_forward_to_sysid(&self) -> &[u32] {
         &self.forward_to_sysid
@@ -962,7 +949,6 @@ impl CMsgProtoBufHeader {
 
     // optional uint32 cm_sysid = 28;
 
-
     pub fn get_cm_sysid(&self) -> u32 {
         self.cm_sysid.unwrap_or(0)
     }
@@ -980,7 +966,6 @@ impl CMsgProtoBufHeader {
     }
 
     // optional string wg_token = 30;
-
 
     pub fn get_wg_token(&self) -> &str {
         match self.wg_token.as_ref() {
@@ -1017,7 +1002,6 @@ impl CMsgProtoBufHeader {
 
     // optional uint32 launcher_type = 31;
 
-
     pub fn get_launcher_type(&self) -> u32 {
         self.launcher_type.unwrap_or(0u32)
     }
@@ -1036,7 +1020,6 @@ impl CMsgProtoBufHeader {
 
     // optional uint32 realm = 32;
 
-
     pub fn get_realm(&self) -> u32 {
         self.realm.unwrap_or(0u32)
     }
@@ -1054,7 +1037,6 @@ impl CMsgProtoBufHeader {
     }
 
     // optional uint32 ip = 15;
-
 
     pub fn get_ip(&self) -> u32 {
         match self.ip_addr {
@@ -1079,7 +1061,6 @@ impl CMsgProtoBufHeader {
     }
 
     // optional bytes ip_v6 = 29;
-
 
     pub fn get_ip_v6(&self) -> &[u8] {
         match self.ip_addr {
@@ -1143,167 +1124,168 @@ impl ::protobuf::Message for CMsgProtoBufHeader {
                     }
                     let tmp = is.read_fixed64()?;
                     self.steamid = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.client_sessionid = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.routing_appid = ::std::option::Option::Some(tmp);
-                },
+                }
                 10 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.jobid_source = ::std::option::Option::Some(tmp);
-                },
+                }
                 11 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.jobid_target = ::std::option::Option::Some(tmp);
-                },
+                }
                 12 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.target_job_name)?;
-                },
+                }
                 24 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.seq_num = ::std::option::Option::Some(tmp);
-                },
+                }
                 13 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.eresult = ::std::option::Option::Some(tmp);
-                },
+                }
                 14 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.error_message)?;
-                },
+                }
                 16 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.auth_account_flags = ::std::option::Option::Some(tmp);
-                },
+                }
                 22 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.token_source = ::std::option::Option::Some(tmp);
-                },
+                }
                 23 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.admin_spoofing_user = ::std::option::Option::Some(tmp);
-                },
+                }
                 17 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.transport_error = ::std::option::Option::Some(tmp);
-                },
+                }
                 18 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint64()?;
                     self.messageid = ::std::option::Option::Some(tmp);
-                },
+                }
                 19 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.publisher_group_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 20 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.sysid = ::std::option::Option::Some(tmp);
-                },
+                }
                 21 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint64()?;
                     self.trace_tag = ::std::option::Option::Some(tmp);
-                },
+                }
                 25 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.webapi_key_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 26 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.is_from_external_source = ::std::option::Option::Some(tmp);
-                },
+                }
                 27 => {
                     ::protobuf::rt::read_repeated_uint32_into(wire_type, is, &mut self.forward_to_sysid)?;
-                },
+                }
                 28 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.cm_sysid = ::std::option::Option::Some(tmp);
-                },
+                }
                 30 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.wg_token)?;
-                },
+                }
                 31 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.launcher_type = ::std::option::Option::Some(tmp);
-                },
+                }
                 32 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.realm = ::std::option::Option::Some(tmp);
-                },
+                }
                 15 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     self.ip_addr = ::std::option::Option::Some(CMsgProtoBufHeader_oneof_ip_addr::ip(is.read_uint32()?));
-                },
+                }
                 29 => {
                     if wire_type != ::protobuf::wire_format::WireTypeLengthDelimited {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
-                    self.ip_addr = ::std::option::Option::Some(CMsgProtoBufHeader_oneof_ip_addr::ip_v6(is.read_bytes()?));
-                },
+                    self.ip_addr =
+                        ::std::option::Option::Some(CMsgProtoBufHeader_oneof_ip_addr::ip_v6(is.read_bytes()?));
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -1372,7 +1354,7 @@ impl ::protobuf::Message for CMsgProtoBufHeader {
         }
         for value in &self.forward_to_sysid {
             my_size += ::protobuf::rt::value_size(27, *value, ::protobuf::wire_format::WireTypeVarint);
-        };
+        }
         if let Some(v) = self.cm_sysid {
             my_size += ::protobuf::rt::value_size(28, v, ::protobuf::wire_format::WireTypeVarint);
         }
@@ -1389,10 +1371,10 @@ impl ::protobuf::Message for CMsgProtoBufHeader {
             match v {
                 &CMsgProtoBufHeader_oneof_ip_addr::ip(v) => {
                     my_size += ::protobuf::rt::value_size(15, v, ::protobuf::wire_format::WireTypeVarint);
-                },
+                }
                 &CMsgProtoBufHeader_oneof_ip_addr::ip_v6(ref v) => {
                     my_size += ::protobuf::rt::bytes_size(29, &v);
-                },
+                }
             };
         }
         my_size += ::protobuf::rt::unknown_fields_size(self.get_unknown_fields());
@@ -1460,7 +1442,7 @@ impl ::protobuf::Message for CMsgProtoBufHeader {
         }
         for v in &self.forward_to_sysid {
             os.write_uint32(27, *v)?;
-        };
+        }
         if let Some(v) = self.cm_sysid {
             os.write_uint32(28, v)?;
         }
@@ -1477,10 +1459,10 @@ impl ::protobuf::Message for CMsgProtoBufHeader {
             match v {
                 &CMsgProtoBufHeader_oneof_ip_addr::ip(v) => {
                     os.write_uint32(15, v)?;
-                },
+                }
                 &CMsgProtoBufHeader_oneof_ip_addr::ip_v6(ref v) => {
                     os.write_bytes(29, v)?;
-                },
+                }
             };
         }
         os.write_unknown_fields(self.get_unknown_fields())?;
@@ -1518,128 +1500,201 @@ impl ::protobuf::Message for CMsgProtoBufHeader {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "steamid",
-                |m: &CMsgProtoBufHeader| { &m.steamid },
-                |m: &mut CMsgProtoBufHeader| { &mut m.steamid },
+                |m: &CMsgProtoBufHeader| &m.steamid,
+                |m: &mut CMsgProtoBufHeader| &mut m.steamid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "client_sessionid",
-                |m: &CMsgProtoBufHeader| { &m.client_sessionid },
-                |m: &mut CMsgProtoBufHeader| { &mut m.client_sessionid },
+                |m: &CMsgProtoBufHeader| &m.client_sessionid,
+                |m: &mut CMsgProtoBufHeader| &mut m.client_sessionid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "routing_appid",
-                |m: &CMsgProtoBufHeader| { &m.routing_appid },
-                |m: &mut CMsgProtoBufHeader| { &mut m.routing_appid },
+                |m: &CMsgProtoBufHeader| &m.routing_appid,
+                |m: &mut CMsgProtoBufHeader| &mut m.routing_appid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "jobid_source",
-                |m: &CMsgProtoBufHeader| { &m.jobid_source },
-                |m: &mut CMsgProtoBufHeader| { &mut m.jobid_source },
+                |m: &CMsgProtoBufHeader| &m.jobid_source,
+                |m: &mut CMsgProtoBufHeader| &mut m.jobid_source,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "jobid_target",
-                |m: &CMsgProtoBufHeader| { &m.jobid_target },
-                |m: &mut CMsgProtoBufHeader| { &mut m.jobid_target },
+                |m: &CMsgProtoBufHeader| &m.jobid_target,
+                |m: &mut CMsgProtoBufHeader| &mut m.jobid_target,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "target_job_name",
-                |m: &CMsgProtoBufHeader| { &m.target_job_name },
-                |m: &mut CMsgProtoBufHeader| { &mut m.target_job_name },
+                |m: &CMsgProtoBufHeader| &m.target_job_name,
+                |m: &mut CMsgProtoBufHeader| &mut m.target_job_name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "seq_num",
-                |m: &CMsgProtoBufHeader| { &m.seq_num },
-                |m: &mut CMsgProtoBufHeader| { &mut m.seq_num },
+                |m: &CMsgProtoBufHeader| &m.seq_num,
+                |m: &mut CMsgProtoBufHeader| &mut m.seq_num,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "eresult",
-                |m: &CMsgProtoBufHeader| { &m.eresult },
-                |m: &mut CMsgProtoBufHeader| { &mut m.eresult },
+                |m: &CMsgProtoBufHeader| &m.eresult,
+                |m: &mut CMsgProtoBufHeader| &mut m.eresult,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "error_message",
-                |m: &CMsgProtoBufHeader| { &m.error_message },
-                |m: &mut CMsgProtoBufHeader| { &mut m.error_message },
+                |m: &CMsgProtoBufHeader| &m.error_message,
+                |m: &mut CMsgProtoBufHeader| &mut m.error_message,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "auth_account_flags",
-                |m: &CMsgProtoBufHeader| { &m.auth_account_flags },
-                |m: &mut CMsgProtoBufHeader| { &mut m.auth_account_flags },
+                |m: &CMsgProtoBufHeader| &m.auth_account_flags,
+                |m: &mut CMsgProtoBufHeader| &mut m.auth_account_flags,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "token_source",
-                |m: &CMsgProtoBufHeader| { &m.token_source },
-                |m: &mut CMsgProtoBufHeader| { &mut m.token_source },
+                |m: &CMsgProtoBufHeader| &m.token_source,
+                |m: &mut CMsgProtoBufHeader| &mut m.token_source,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "admin_spoofing_user",
-                |m: &CMsgProtoBufHeader| { &m.admin_spoofing_user },
-                |m: &mut CMsgProtoBufHeader| { &mut m.admin_spoofing_user },
+                |m: &CMsgProtoBufHeader| &m.admin_spoofing_user,
+                |m: &mut CMsgProtoBufHeader| &mut m.admin_spoofing_user,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "transport_error",
-                |m: &CMsgProtoBufHeader| { &m.transport_error },
-                |m: &mut CMsgProtoBufHeader| { &mut m.transport_error },
+                |m: &CMsgProtoBufHeader| &m.transport_error,
+                |m: &mut CMsgProtoBufHeader| &mut m.transport_error,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint64,
+            >(
                 "messageid",
-                |m: &CMsgProtoBufHeader| { &m.messageid },
-                |m: &mut CMsgProtoBufHeader| { &mut m.messageid },
+                |m: &CMsgProtoBufHeader| &m.messageid,
+                |m: &mut CMsgProtoBufHeader| &mut m.messageid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "publisher_group_id",
-                |m: &CMsgProtoBufHeader| { &m.publisher_group_id },
-                |m: &mut CMsgProtoBufHeader| { &mut m.publisher_group_id },
+                |m: &CMsgProtoBufHeader| &m.publisher_group_id,
+                |m: &mut CMsgProtoBufHeader| &mut m.publisher_group_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "sysid",
-                |m: &CMsgProtoBufHeader| { &m.sysid },
-                |m: &mut CMsgProtoBufHeader| { &mut m.sysid },
+                |m: &CMsgProtoBufHeader| &m.sysid,
+                |m: &mut CMsgProtoBufHeader| &mut m.sysid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint64,
+            >(
                 "trace_tag",
-                |m: &CMsgProtoBufHeader| { &m.trace_tag },
-                |m: &mut CMsgProtoBufHeader| { &mut m.trace_tag },
+                |m: &CMsgProtoBufHeader| &m.trace_tag,
+                |m: &mut CMsgProtoBufHeader| &mut m.trace_tag,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "webapi_key_id",
-                |m: &CMsgProtoBufHeader| { &m.webapi_key_id },
-                |m: &mut CMsgProtoBufHeader| { &mut m.webapi_key_id },
+                |m: &CMsgProtoBufHeader| &m.webapi_key_id,
+                |m: &mut CMsgProtoBufHeader| &mut m.webapi_key_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "is_from_external_source",
-                |m: &CMsgProtoBufHeader| { &m.is_from_external_source },
-                |m: &mut CMsgProtoBufHeader| { &mut m.is_from_external_source },
+                |m: &CMsgProtoBufHeader| &m.is_from_external_source,
+                |m: &mut CMsgProtoBufHeader| &mut m.is_from_external_source,
             ));
-            fields.push(::protobuf::reflect::accessor::make_vec_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_vec_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "forward_to_sysid",
-                |m: &CMsgProtoBufHeader| { &m.forward_to_sysid },
-                |m: &mut CMsgProtoBufHeader| { &mut m.forward_to_sysid },
+                |m: &CMsgProtoBufHeader| &m.forward_to_sysid,
+                |m: &mut CMsgProtoBufHeader| &mut m.forward_to_sysid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "cm_sysid",
-                |m: &CMsgProtoBufHeader| { &m.cm_sysid },
-                |m: &mut CMsgProtoBufHeader| { &mut m.cm_sysid },
+                |m: &CMsgProtoBufHeader| &m.cm_sysid,
+                |m: &mut CMsgProtoBufHeader| &mut m.cm_sysid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "wg_token",
-                |m: &CMsgProtoBufHeader| { &m.wg_token },
-                |m: &mut CMsgProtoBufHeader| { &mut m.wg_token },
+                |m: &CMsgProtoBufHeader| &m.wg_token,
+                |m: &mut CMsgProtoBufHeader| &mut m.wg_token,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "launcher_type",
-                |m: &CMsgProtoBufHeader| { &m.launcher_type },
-                |m: &mut CMsgProtoBufHeader| { &mut m.launcher_type },
+                |m: &CMsgProtoBufHeader| &m.launcher_type,
+                |m: &mut CMsgProtoBufHeader| &mut m.launcher_type,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "realm",
-                |m: &CMsgProtoBufHeader| { &m.realm },
-                |m: &mut CMsgProtoBufHeader| { &mut m.realm },
+                |m: &CMsgProtoBufHeader| &m.realm,
+                |m: &mut CMsgProtoBufHeader| &mut m.realm,
             ));
             fields.push(::protobuf::reflect::accessor::make_singular_u32_accessor::<_>(
                 "ip",
@@ -1654,7 +1709,7 @@ impl ::protobuf::Message for CMsgProtoBufHeader {
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgProtoBufHeader>(
                 "CMsgProtoBufHeader",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -1709,7 +1764,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgProtoBufHeader {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgMulti {
     // message fields
@@ -1735,7 +1790,6 @@ impl CMsgMulti {
 
     // optional uint32 size_unzipped = 1;
 
-
     pub fn get_size_unzipped(&self) -> u32 {
         self.size_unzipped.unwrap_or(0)
     }
@@ -1753,7 +1807,6 @@ impl CMsgMulti {
     }
 
     // optional bytes message_body = 2;
-
 
     pub fn get_message_body(&self) -> &[u8] {
         match self.message_body.as_ref() {
@@ -1804,13 +1857,13 @@ impl ::protobuf::Message for CMsgMulti {
                     }
                     let tmp = is.read_uint32()?;
                     self.size_unzipped = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     ::protobuf::rt::read_singular_bytes_into(wire_type, is, &mut self.message_body)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -1873,23 +1926,30 @@ impl ::protobuf::Message for CMsgMulti {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "size_unzipped",
-                |m: &CMsgMulti| { &m.size_unzipped },
-                |m: &mut CMsgMulti| { &mut m.size_unzipped },
+                |m: &CMsgMulti| &m.size_unzipped,
+                |m: &mut CMsgMulti| &mut m.size_unzipped,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeBytes>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBytes,
+            >(
                 "message_body",
-                |m: &CMsgMulti| { &m.message_body },
-                |m: &mut CMsgMulti| { &mut m.message_body },
+                |m: &CMsgMulti| &m.message_body,
+                |m: &mut CMsgMulti| &mut m.message_body,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgMulti>(
                 "CMsgMulti",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -1920,7 +1980,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgMulti {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgProtobufWrapped {
     // message fields
@@ -1944,7 +2004,6 @@ impl CMsgProtobufWrapped {
     }
 
     // optional bytes message_body = 1;
-
 
     pub fn get_message_body(&self) -> &[u8] {
         match self.message_body.as_ref() {
@@ -1991,10 +2050,10 @@ impl ::protobuf::Message for CMsgProtobufWrapped {
             match field_number {
                 1 => {
                     ::protobuf::rt::read_singular_bytes_into(wire_type, is, &mut self.message_body)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -2051,18 +2110,22 @@ impl ::protobuf::Message for CMsgProtobufWrapped {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeBytes>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBytes,
+            >(
                 "message_body",
-                |m: &CMsgProtobufWrapped| { &m.message_body },
-                |m: &mut CMsgProtobufWrapped| { &mut m.message_body },
+                |m: &CMsgProtobufWrapped| &m.message_body,
+                |m: &mut CMsgProtobufWrapped| &mut m.message_body,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgProtobufWrapped>(
                 "CMsgProtobufWrapped",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -2092,7 +2155,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgProtobufWrapped {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgAuthTicket {
     // message fields
@@ -2123,7 +2186,6 @@ impl CMsgAuthTicket {
 
     // optional uint32 estate = 1;
 
-
     pub fn get_estate(&self) -> u32 {
         self.estate.unwrap_or(0)
     }
@@ -2141,7 +2203,6 @@ impl CMsgAuthTicket {
     }
 
     // optional uint32 eresult = 2;
-
 
     pub fn get_eresult(&self) -> u32 {
         self.eresult.unwrap_or(2u32)
@@ -2161,7 +2222,6 @@ impl CMsgAuthTicket {
 
     // optional fixed64 steamid = 3;
 
-
     pub fn get_steamid(&self) -> u64 {
         self.steamid.unwrap_or(0)
     }
@@ -2179,7 +2239,6 @@ impl CMsgAuthTicket {
     }
 
     // optional fixed64 gameid = 4;
-
 
     pub fn get_gameid(&self) -> u64 {
         self.gameid.unwrap_or(0)
@@ -2199,7 +2258,6 @@ impl CMsgAuthTicket {
 
     // optional uint32 h_steam_pipe = 5;
 
-
     pub fn get_h_steam_pipe(&self) -> u32 {
         self.h_steam_pipe.unwrap_or(0)
     }
@@ -2218,7 +2276,6 @@ impl CMsgAuthTicket {
 
     // optional uint32 ticket_crc = 6;
 
-
     pub fn get_ticket_crc(&self) -> u32 {
         self.ticket_crc.unwrap_or(0)
     }
@@ -2236,7 +2293,6 @@ impl CMsgAuthTicket {
     }
 
     // optional bytes ticket = 7;
-
 
     pub fn get_ticket(&self) -> &[u8] {
         match self.ticket.as_ref() {
@@ -2287,48 +2343,48 @@ impl ::protobuf::Message for CMsgAuthTicket {
                     }
                     let tmp = is.read_uint32()?;
                     self.estate = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.eresult = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.steamid = ::std::option::Option::Some(tmp);
-                },
+                }
                 4 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.gameid = ::std::option::Option::Some(tmp);
-                },
+                }
                 5 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.h_steam_pipe = ::std::option::Option::Some(tmp);
-                },
+                }
                 6 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.ticket_crc = ::std::option::Option::Some(tmp);
-                },
+                }
                 7 => {
                     ::protobuf::rt::read_singular_bytes_into(wire_type, is, &mut self.ticket)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -2421,48 +2477,70 @@ impl ::protobuf::Message for CMsgAuthTicket {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "estate",
-                |m: &CMsgAuthTicket| { &m.estate },
-                |m: &mut CMsgAuthTicket| { &mut m.estate },
+                |m: &CMsgAuthTicket| &m.estate,
+                |m: &mut CMsgAuthTicket| &mut m.estate,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "eresult",
-                |m: &CMsgAuthTicket| { &m.eresult },
-                |m: &mut CMsgAuthTicket| { &mut m.eresult },
+                |m: &CMsgAuthTicket| &m.eresult,
+                |m: &mut CMsgAuthTicket| &mut m.eresult,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "steamid",
-                |m: &CMsgAuthTicket| { &m.steamid },
-                |m: &mut CMsgAuthTicket| { &mut m.steamid },
+                |m: &CMsgAuthTicket| &m.steamid,
+                |m: &mut CMsgAuthTicket| &mut m.steamid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "gameid",
-                |m: &CMsgAuthTicket| { &m.gameid },
-                |m: &mut CMsgAuthTicket| { &mut m.gameid },
+                |m: &CMsgAuthTicket| &m.gameid,
+                |m: &mut CMsgAuthTicket| &mut m.gameid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "h_steam_pipe",
-                |m: &CMsgAuthTicket| { &m.h_steam_pipe },
-                |m: &mut CMsgAuthTicket| { &mut m.h_steam_pipe },
+                |m: &CMsgAuthTicket| &m.h_steam_pipe,
+                |m: &mut CMsgAuthTicket| &mut m.h_steam_pipe,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "ticket_crc",
-                |m: &CMsgAuthTicket| { &m.ticket_crc },
-                |m: &mut CMsgAuthTicket| { &mut m.ticket_crc },
+                |m: &CMsgAuthTicket| &m.ticket_crc,
+                |m: &mut CMsgAuthTicket| &mut m.ticket_crc,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeBytes>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBytes,
+            >(
                 "ticket",
-                |m: &CMsgAuthTicket| { &m.ticket },
-                |m: &mut CMsgAuthTicket| { &mut m.ticket },
+                |m: &CMsgAuthTicket| &m.ticket,
+                |m: &mut CMsgAuthTicket| &mut m.ticket,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgAuthTicket>(
                 "CMsgAuthTicket",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -2498,7 +2576,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgAuthTicket {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCDDBAppDetailCommon {
     // message fields
@@ -2534,7 +2612,6 @@ impl CCDDBAppDetailCommon {
 
     // optional uint32 appid = 1;
 
-
     pub fn get_appid(&self) -> u32 {
         self.appid.unwrap_or(0)
     }
@@ -2552,7 +2629,6 @@ impl CCDDBAppDetailCommon {
     }
 
     // optional string name = 2;
-
 
     pub fn get_name(&self) -> &str {
         match self.name.as_ref() {
@@ -2589,7 +2665,6 @@ impl CCDDBAppDetailCommon {
 
     // optional string icon = 3;
 
-
     pub fn get_icon(&self) -> &str {
         match self.icon.as_ref() {
             Some(v) => &v,
@@ -2624,7 +2699,6 @@ impl CCDDBAppDetailCommon {
     }
 
     // optional string logo = 4;
-
 
     pub fn get_logo(&self) -> &str {
         match self.logo.as_ref() {
@@ -2661,7 +2735,6 @@ impl CCDDBAppDetailCommon {
 
     // optional string logo_small = 5;
 
-
     pub fn get_logo_small(&self) -> &str {
         match self.logo_small.as_ref() {
             Some(v) => &v,
@@ -2697,7 +2770,6 @@ impl CCDDBAppDetailCommon {
 
     // optional bool tool = 6;
 
-
     pub fn get_tool(&self) -> bool {
         self.tool.unwrap_or(false)
     }
@@ -2715,7 +2787,6 @@ impl CCDDBAppDetailCommon {
     }
 
     // optional bool demo = 7;
-
 
     pub fn get_demo(&self) -> bool {
         self.demo.unwrap_or(false)
@@ -2735,7 +2806,6 @@ impl CCDDBAppDetailCommon {
 
     // optional bool media = 8;
 
-
     pub fn get_media(&self) -> bool {
         self.media.unwrap_or(false)
     }
@@ -2754,7 +2824,6 @@ impl CCDDBAppDetailCommon {
 
     // optional bool community_visible_stats = 9;
 
-
     pub fn get_community_visible_stats(&self) -> bool {
         self.community_visible_stats.unwrap_or(false)
     }
@@ -2772,7 +2841,6 @@ impl CCDDBAppDetailCommon {
     }
 
     // optional string friendly_name = 10;
-
 
     pub fn get_friendly_name(&self) -> &str {
         match self.friendly_name.as_ref() {
@@ -2804,11 +2872,12 @@ impl CCDDBAppDetailCommon {
 
     // Take field
     pub fn take_friendly_name(&mut self) -> ::std::string::String {
-        self.friendly_name.take().unwrap_or_else(|| ::std::string::String::new())
+        self.friendly_name
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional string propagation = 11;
-
 
     pub fn get_propagation(&self) -> &str {
         match self.propagation.as_ref() {
@@ -2845,7 +2914,6 @@ impl CCDDBAppDetailCommon {
 
     // optional bool has_adult_content = 12;
 
-
     pub fn get_has_adult_content(&self) -> bool {
         self.has_adult_content.unwrap_or(false)
     }
@@ -2878,63 +2946,63 @@ impl ::protobuf::Message for CCDDBAppDetailCommon {
                     }
                     let tmp = is.read_uint32()?;
                     self.appid = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.name)?;
-                },
+                }
                 3 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.icon)?;
-                },
+                }
                 4 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.logo)?;
-                },
+                }
                 5 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.logo_small)?;
-                },
+                }
                 6 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.tool = ::std::option::Option::Some(tmp);
-                },
+                }
                 7 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.demo = ::std::option::Option::Some(tmp);
-                },
+                }
                 8 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.media = ::std::option::Option::Some(tmp);
-                },
+                }
                 9 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.community_visible_stats = ::std::option::Option::Some(tmp);
-                },
+                }
                 10 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.friendly_name)?;
-                },
+                }
                 11 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.propagation)?;
-                },
+                }
                 12 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.has_adult_content = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -3057,73 +3125,110 @@ impl ::protobuf::Message for CCDDBAppDetailCommon {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "appid",
-                |m: &CCDDBAppDetailCommon| { &m.appid },
-                |m: &mut CCDDBAppDetailCommon| { &mut m.appid },
+                |m: &CCDDBAppDetailCommon| &m.appid,
+                |m: &mut CCDDBAppDetailCommon| &mut m.appid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "name",
-                |m: &CCDDBAppDetailCommon| { &m.name },
-                |m: &mut CCDDBAppDetailCommon| { &mut m.name },
+                |m: &CCDDBAppDetailCommon| &m.name,
+                |m: &mut CCDDBAppDetailCommon| &mut m.name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "icon",
-                |m: &CCDDBAppDetailCommon| { &m.icon },
-                |m: &mut CCDDBAppDetailCommon| { &mut m.icon },
+                |m: &CCDDBAppDetailCommon| &m.icon,
+                |m: &mut CCDDBAppDetailCommon| &mut m.icon,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "logo",
-                |m: &CCDDBAppDetailCommon| { &m.logo },
-                |m: &mut CCDDBAppDetailCommon| { &mut m.logo },
+                |m: &CCDDBAppDetailCommon| &m.logo,
+                |m: &mut CCDDBAppDetailCommon| &mut m.logo,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "logo_small",
-                |m: &CCDDBAppDetailCommon| { &m.logo_small },
-                |m: &mut CCDDBAppDetailCommon| { &mut m.logo_small },
+                |m: &CCDDBAppDetailCommon| &m.logo_small,
+                |m: &mut CCDDBAppDetailCommon| &mut m.logo_small,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "tool",
-                |m: &CCDDBAppDetailCommon| { &m.tool },
-                |m: &mut CCDDBAppDetailCommon| { &mut m.tool },
+                |m: &CCDDBAppDetailCommon| &m.tool,
+                |m: &mut CCDDBAppDetailCommon| &mut m.tool,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "demo",
-                |m: &CCDDBAppDetailCommon| { &m.demo },
-                |m: &mut CCDDBAppDetailCommon| { &mut m.demo },
+                |m: &CCDDBAppDetailCommon| &m.demo,
+                |m: &mut CCDDBAppDetailCommon| &mut m.demo,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "media",
-                |m: &CCDDBAppDetailCommon| { &m.media },
-                |m: &mut CCDDBAppDetailCommon| { &mut m.media },
+                |m: &CCDDBAppDetailCommon| &m.media,
+                |m: &mut CCDDBAppDetailCommon| &mut m.media,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "community_visible_stats",
-                |m: &CCDDBAppDetailCommon| { &m.community_visible_stats },
-                |m: &mut CCDDBAppDetailCommon| { &mut m.community_visible_stats },
+                |m: &CCDDBAppDetailCommon| &m.community_visible_stats,
+                |m: &mut CCDDBAppDetailCommon| &mut m.community_visible_stats,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "friendly_name",
-                |m: &CCDDBAppDetailCommon| { &m.friendly_name },
-                |m: &mut CCDDBAppDetailCommon| { &mut m.friendly_name },
+                |m: &CCDDBAppDetailCommon| &m.friendly_name,
+                |m: &mut CCDDBAppDetailCommon| &mut m.friendly_name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "propagation",
-                |m: &CCDDBAppDetailCommon| { &m.propagation },
-                |m: &mut CCDDBAppDetailCommon| { &mut m.propagation },
+                |m: &CCDDBAppDetailCommon| &m.propagation,
+                |m: &mut CCDDBAppDetailCommon| &mut m.propagation,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "has_adult_content",
-                |m: &CCDDBAppDetailCommon| { &m.has_adult_content },
-                |m: &mut CCDDBAppDetailCommon| { &mut m.has_adult_content },
+                |m: &CCDDBAppDetailCommon| &m.has_adult_content,
+                |m: &mut CCDDBAppDetailCommon| &mut m.has_adult_content,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CCDDBAppDetailCommon>(
                 "CCDDBAppDetailCommon",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -3164,7 +3269,7 @@ impl ::protobuf::reflect::ProtobufValue for CCDDBAppDetailCommon {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CMsgAppRights {
     // message fields
@@ -3204,7 +3309,6 @@ impl CMsgAppRights {
 
     // optional bool edit_info = 1;
 
-
     pub fn get_edit_info(&self) -> bool {
         self.edit_info.unwrap_or(false)
     }
@@ -3222,7 +3326,6 @@ impl CMsgAppRights {
     }
 
     // optional bool publish = 2;
-
 
     pub fn get_publish(&self) -> bool {
         self.publish.unwrap_or(false)
@@ -3242,7 +3345,6 @@ impl CMsgAppRights {
 
     // optional bool view_error_data = 3;
 
-
     pub fn get_view_error_data(&self) -> bool {
         self.view_error_data.unwrap_or(false)
     }
@@ -3260,7 +3362,6 @@ impl CMsgAppRights {
     }
 
     // optional bool download = 4;
-
 
     pub fn get_download(&self) -> bool {
         self.download.unwrap_or(false)
@@ -3280,7 +3381,6 @@ impl CMsgAppRights {
 
     // optional bool upload_cdkeys = 5;
 
-
     pub fn get_upload_cdkeys(&self) -> bool {
         self.upload_cdkeys.unwrap_or(false)
     }
@@ -3298,7 +3398,6 @@ impl CMsgAppRights {
     }
 
     // optional bool generate_cdkeys = 6;
-
 
     pub fn get_generate_cdkeys(&self) -> bool {
         self.generate_cdkeys.unwrap_or(false)
@@ -3318,7 +3417,6 @@ impl CMsgAppRights {
 
     // optional bool view_financials = 7;
 
-
     pub fn get_view_financials(&self) -> bool {
         self.view_financials.unwrap_or(false)
     }
@@ -3336,7 +3434,6 @@ impl CMsgAppRights {
     }
 
     // optional bool manage_ceg = 8;
-
 
     pub fn get_manage_ceg(&self) -> bool {
         self.manage_ceg.unwrap_or(false)
@@ -3356,7 +3453,6 @@ impl CMsgAppRights {
 
     // optional bool manage_signing = 9;
 
-
     pub fn get_manage_signing(&self) -> bool {
         self.manage_signing.unwrap_or(false)
     }
@@ -3374,7 +3470,6 @@ impl CMsgAppRights {
     }
 
     // optional bool manage_cdkeys = 10;
-
 
     pub fn get_manage_cdkeys(&self) -> bool {
         self.manage_cdkeys.unwrap_or(false)
@@ -3394,7 +3489,6 @@ impl CMsgAppRights {
 
     // optional bool edit_marketing = 11;
 
-
     pub fn get_edit_marketing(&self) -> bool {
         self.edit_marketing.unwrap_or(false)
     }
@@ -3412,7 +3506,6 @@ impl CMsgAppRights {
     }
 
     // optional bool economy_support = 12;
-
 
     pub fn get_economy_support(&self) -> bool {
         self.economy_support.unwrap_or(false)
@@ -3432,7 +3525,6 @@ impl CMsgAppRights {
 
     // optional bool economy_support_supervisor = 13;
 
-
     pub fn get_economy_support_supervisor(&self) -> bool {
         self.economy_support_supervisor.unwrap_or(false)
     }
@@ -3450,7 +3542,6 @@ impl CMsgAppRights {
     }
 
     // optional bool manage_pricing = 14;
-
 
     pub fn get_manage_pricing(&self) -> bool {
         self.manage_pricing.unwrap_or(false)
@@ -3470,7 +3561,6 @@ impl CMsgAppRights {
 
     // optional bool broadcast_live = 15;
 
-
     pub fn get_broadcast_live(&self) -> bool {
         self.broadcast_live.unwrap_or(false)
     }
@@ -3488,7 +3578,6 @@ impl CMsgAppRights {
     }
 
     // optional bool view_marketing_traffic = 16;
-
 
     pub fn get_view_marketing_traffic(&self) -> bool {
         self.view_marketing_traffic.unwrap_or(false)
@@ -3522,115 +3611,115 @@ impl ::protobuf::Message for CMsgAppRights {
                     }
                     let tmp = is.read_bool()?;
                     self.edit_info = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.publish = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.view_error_data = ::std::option::Option::Some(tmp);
-                },
+                }
                 4 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.download = ::std::option::Option::Some(tmp);
-                },
+                }
                 5 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.upload_cdkeys = ::std::option::Option::Some(tmp);
-                },
+                }
                 6 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.generate_cdkeys = ::std::option::Option::Some(tmp);
-                },
+                }
                 7 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.view_financials = ::std::option::Option::Some(tmp);
-                },
+                }
                 8 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.manage_ceg = ::std::option::Option::Some(tmp);
-                },
+                }
                 9 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.manage_signing = ::std::option::Option::Some(tmp);
-                },
+                }
                 10 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.manage_cdkeys = ::std::option::Option::Some(tmp);
-                },
+                }
                 11 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.edit_marketing = ::std::option::Option::Some(tmp);
-                },
+                }
                 12 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.economy_support = ::std::option::Option::Some(tmp);
-                },
+                }
                 13 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.economy_support_supervisor = ::std::option::Option::Some(tmp);
-                },
+                }
                 14 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.manage_pricing = ::std::option::Option::Some(tmp);
-                },
+                }
                 15 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.broadcast_live = ::std::option::Option::Some(tmp);
-                },
+                }
                 16 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.view_marketing_traffic = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -3777,93 +3866,142 @@ impl ::protobuf::Message for CMsgAppRights {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "edit_info",
-                |m: &CMsgAppRights| { &m.edit_info },
-                |m: &mut CMsgAppRights| { &mut m.edit_info },
+                |m: &CMsgAppRights| &m.edit_info,
+                |m: &mut CMsgAppRights| &mut m.edit_info,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "publish",
-                |m: &CMsgAppRights| { &m.publish },
-                |m: &mut CMsgAppRights| { &mut m.publish },
+                |m: &CMsgAppRights| &m.publish,
+                |m: &mut CMsgAppRights| &mut m.publish,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "view_error_data",
-                |m: &CMsgAppRights| { &m.view_error_data },
-                |m: &mut CMsgAppRights| { &mut m.view_error_data },
+                |m: &CMsgAppRights| &m.view_error_data,
+                |m: &mut CMsgAppRights| &mut m.view_error_data,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "download",
-                |m: &CMsgAppRights| { &m.download },
-                |m: &mut CMsgAppRights| { &mut m.download },
+                |m: &CMsgAppRights| &m.download,
+                |m: &mut CMsgAppRights| &mut m.download,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "upload_cdkeys",
-                |m: &CMsgAppRights| { &m.upload_cdkeys },
-                |m: &mut CMsgAppRights| { &mut m.upload_cdkeys },
+                |m: &CMsgAppRights| &m.upload_cdkeys,
+                |m: &mut CMsgAppRights| &mut m.upload_cdkeys,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "generate_cdkeys",
-                |m: &CMsgAppRights| { &m.generate_cdkeys },
-                |m: &mut CMsgAppRights| { &mut m.generate_cdkeys },
+                |m: &CMsgAppRights| &m.generate_cdkeys,
+                |m: &mut CMsgAppRights| &mut m.generate_cdkeys,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "view_financials",
-                |m: &CMsgAppRights| { &m.view_financials },
-                |m: &mut CMsgAppRights| { &mut m.view_financials },
+                |m: &CMsgAppRights| &m.view_financials,
+                |m: &mut CMsgAppRights| &mut m.view_financials,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "manage_ceg",
-                |m: &CMsgAppRights| { &m.manage_ceg },
-                |m: &mut CMsgAppRights| { &mut m.manage_ceg },
+                |m: &CMsgAppRights| &m.manage_ceg,
+                |m: &mut CMsgAppRights| &mut m.manage_ceg,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "manage_signing",
-                |m: &CMsgAppRights| { &m.manage_signing },
-                |m: &mut CMsgAppRights| { &mut m.manage_signing },
+                |m: &CMsgAppRights| &m.manage_signing,
+                |m: &mut CMsgAppRights| &mut m.manage_signing,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "manage_cdkeys",
-                |m: &CMsgAppRights| { &m.manage_cdkeys },
-                |m: &mut CMsgAppRights| { &mut m.manage_cdkeys },
+                |m: &CMsgAppRights| &m.manage_cdkeys,
+                |m: &mut CMsgAppRights| &mut m.manage_cdkeys,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "edit_marketing",
-                |m: &CMsgAppRights| { &m.edit_marketing },
-                |m: &mut CMsgAppRights| { &mut m.edit_marketing },
+                |m: &CMsgAppRights| &m.edit_marketing,
+                |m: &mut CMsgAppRights| &mut m.edit_marketing,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "economy_support",
-                |m: &CMsgAppRights| { &m.economy_support },
-                |m: &mut CMsgAppRights| { &mut m.economy_support },
+                |m: &CMsgAppRights| &m.economy_support,
+                |m: &mut CMsgAppRights| &mut m.economy_support,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "economy_support_supervisor",
-                |m: &CMsgAppRights| { &m.economy_support_supervisor },
-                |m: &mut CMsgAppRights| { &mut m.economy_support_supervisor },
+                |m: &CMsgAppRights| &m.economy_support_supervisor,
+                |m: &mut CMsgAppRights| &mut m.economy_support_supervisor,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "manage_pricing",
-                |m: &CMsgAppRights| { &m.manage_pricing },
-                |m: &mut CMsgAppRights| { &mut m.manage_pricing },
+                |m: &CMsgAppRights| &m.manage_pricing,
+                |m: &mut CMsgAppRights| &mut m.manage_pricing,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "broadcast_live",
-                |m: &CMsgAppRights| { &m.broadcast_live },
-                |m: &mut CMsgAppRights| { &mut m.broadcast_live },
+                |m: &CMsgAppRights| &m.broadcast_live,
+                |m: &mut CMsgAppRights| &mut m.broadcast_live,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "view_marketing_traffic",
-                |m: &CMsgAppRights| { &m.view_marketing_traffic },
-                |m: &mut CMsgAppRights| { &mut m.view_marketing_traffic },
+                |m: &CMsgAppRights| &m.view_marketing_traffic,
+                |m: &mut CMsgAppRights| &mut m.view_marketing_traffic,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CMsgAppRights>(
                 "CMsgAppRights",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -3908,7 +4046,7 @@ impl ::protobuf::reflect::ProtobufValue for CMsgAppRights {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCuratorPreferences {
     // message fields
@@ -3946,7 +4084,6 @@ impl CCuratorPreferences {
 
     // optional uint32 supported_languages = 1;
 
-
     pub fn get_supported_languages(&self) -> u32 {
         self.supported_languages.unwrap_or(0)
     }
@@ -3964,7 +4101,6 @@ impl CCuratorPreferences {
     }
 
     // optional bool platform_windows = 2;
-
 
     pub fn get_platform_windows(&self) -> bool {
         self.platform_windows.unwrap_or(false)
@@ -3984,7 +4120,6 @@ impl CCuratorPreferences {
 
     // optional bool platform_mac = 3;
 
-
     pub fn get_platform_mac(&self) -> bool {
         self.platform_mac.unwrap_or(false)
     }
@@ -4002,7 +4137,6 @@ impl CCuratorPreferences {
     }
 
     // optional bool platform_linux = 4;
-
 
     pub fn get_platform_linux(&self) -> bool {
         self.platform_linux.unwrap_or(false)
@@ -4022,7 +4156,6 @@ impl CCuratorPreferences {
 
     // optional bool vr_content = 5;
 
-
     pub fn get_vr_content(&self) -> bool {
         self.vr_content.unwrap_or(false)
     }
@@ -4040,7 +4173,6 @@ impl CCuratorPreferences {
     }
 
     // optional bool adult_content_violence = 6;
-
 
     pub fn get_adult_content_violence(&self) -> bool {
         self.adult_content_violence.unwrap_or(false)
@@ -4060,7 +4192,6 @@ impl CCuratorPreferences {
 
     // optional bool adult_content_sex = 7;
 
-
     pub fn get_adult_content_sex(&self) -> bool {
         self.adult_content_sex.unwrap_or(false)
     }
@@ -4079,7 +4210,6 @@ impl CCuratorPreferences {
 
     // optional uint32 timestamp_updated = 8;
 
-
     pub fn get_timestamp_updated(&self) -> u32 {
         self.timestamp_updated.unwrap_or(0)
     }
@@ -4097,7 +4227,6 @@ impl CCuratorPreferences {
     }
 
     // repeated uint32 tagids_curated = 9;
-
 
     pub fn get_tagids_curated(&self) -> &[u32] {
         &self.tagids_curated
@@ -4123,7 +4252,6 @@ impl CCuratorPreferences {
 
     // repeated uint32 tagids_filtered = 10;
 
-
     pub fn get_tagids_filtered(&self) -> &[u32] {
         &self.tagids_filtered
     }
@@ -4147,7 +4275,6 @@ impl CCuratorPreferences {
     }
 
     // optional string website_title = 11;
-
 
     pub fn get_website_title(&self) -> &str {
         match self.website_title.as_ref() {
@@ -4179,11 +4306,12 @@ impl CCuratorPreferences {
 
     // Take field
     pub fn take_website_title(&mut self) -> ::std::string::String {
-        self.website_title.take().unwrap_or_else(|| ::std::string::String::new())
+        self.website_title
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional string website_url = 12;
-
 
     pub fn get_website_url(&self) -> &str {
         match self.website_url.as_ref() {
@@ -4220,7 +4348,6 @@ impl CCuratorPreferences {
 
     // optional string discussion_url = 13;
 
-
     pub fn get_discussion_url(&self) -> &str {
         match self.discussion_url.as_ref() {
             Some(v) => &v,
@@ -4251,11 +4378,12 @@ impl CCuratorPreferences {
 
     // Take field
     pub fn take_discussion_url(&mut self) -> ::std::string::String {
-        self.discussion_url.take().unwrap_or_else(|| ::std::string::String::new())
+        self.discussion_url
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional bool show_broadcast = 14;
-
 
     pub fn get_show_broadcast(&self) -> bool {
         self.show_broadcast.unwrap_or(false)
@@ -4289,81 +4417,81 @@ impl ::protobuf::Message for CCuratorPreferences {
                     }
                     let tmp = is.read_uint32()?;
                     self.supported_languages = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.platform_windows = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.platform_mac = ::std::option::Option::Some(tmp);
-                },
+                }
                 4 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.platform_linux = ::std::option::Option::Some(tmp);
-                },
+                }
                 5 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.vr_content = ::std::option::Option::Some(tmp);
-                },
+                }
                 6 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.adult_content_violence = ::std::option::Option::Some(tmp);
-                },
+                }
                 7 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.adult_content_sex = ::std::option::Option::Some(tmp);
-                },
+                }
                 8 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.timestamp_updated = ::std::option::Option::Some(tmp);
-                },
+                }
                 9 => {
                     ::protobuf::rt::read_repeated_uint32_into(wire_type, is, &mut self.tagids_curated)?;
-                },
+                }
                 10 => {
                     ::protobuf::rt::read_repeated_uint32_into(wire_type, is, &mut self.tagids_filtered)?;
-                },
+                }
                 11 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.website_title)?;
-                },
+                }
                 12 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.website_url)?;
-                },
+                }
                 13 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.discussion_url)?;
-                },
+                }
                 14 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.show_broadcast = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -4399,10 +4527,10 @@ impl ::protobuf::Message for CCuratorPreferences {
         }
         for value in &self.tagids_curated {
             my_size += ::protobuf::rt::value_size(9, *value, ::protobuf::wire_format::WireTypeVarint);
-        };
+        }
         for value in &self.tagids_filtered {
             my_size += ::protobuf::rt::value_size(10, *value, ::protobuf::wire_format::WireTypeVarint);
-        };
+        }
         if let Some(ref v) = self.website_title.as_ref() {
             my_size += ::protobuf::rt::string_size(11, &v);
         }
@@ -4447,10 +4575,10 @@ impl ::protobuf::Message for CCuratorPreferences {
         }
         for v in &self.tagids_curated {
             os.write_uint32(9, *v)?;
-        };
+        }
         for v in &self.tagids_filtered {
             os.write_uint32(10, *v)?;
-        };
+        }
         if let Some(ref v) = self.website_title.as_ref() {
             os.write_string(11, &v)?;
         }
@@ -4498,83 +4626,126 @@ impl ::protobuf::Message for CCuratorPreferences {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "supported_languages",
-                |m: &CCuratorPreferences| { &m.supported_languages },
-                |m: &mut CCuratorPreferences| { &mut m.supported_languages },
+                |m: &CCuratorPreferences| &m.supported_languages,
+                |m: &mut CCuratorPreferences| &mut m.supported_languages,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "platform_windows",
-                |m: &CCuratorPreferences| { &m.platform_windows },
-                |m: &mut CCuratorPreferences| { &mut m.platform_windows },
+                |m: &CCuratorPreferences| &m.platform_windows,
+                |m: &mut CCuratorPreferences| &mut m.platform_windows,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "platform_mac",
-                |m: &CCuratorPreferences| { &m.platform_mac },
-                |m: &mut CCuratorPreferences| { &mut m.platform_mac },
+                |m: &CCuratorPreferences| &m.platform_mac,
+                |m: &mut CCuratorPreferences| &mut m.platform_mac,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "platform_linux",
-                |m: &CCuratorPreferences| { &m.platform_linux },
-                |m: &mut CCuratorPreferences| { &mut m.platform_linux },
+                |m: &CCuratorPreferences| &m.platform_linux,
+                |m: &mut CCuratorPreferences| &mut m.platform_linux,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "vr_content",
-                |m: &CCuratorPreferences| { &m.vr_content },
-                |m: &mut CCuratorPreferences| { &mut m.vr_content },
+                |m: &CCuratorPreferences| &m.vr_content,
+                |m: &mut CCuratorPreferences| &mut m.vr_content,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "adult_content_violence",
-                |m: &CCuratorPreferences| { &m.adult_content_violence },
-                |m: &mut CCuratorPreferences| { &mut m.adult_content_violence },
+                |m: &CCuratorPreferences| &m.adult_content_violence,
+                |m: &mut CCuratorPreferences| &mut m.adult_content_violence,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "adult_content_sex",
-                |m: &CCuratorPreferences| { &m.adult_content_sex },
-                |m: &mut CCuratorPreferences| { &mut m.adult_content_sex },
+                |m: &CCuratorPreferences| &m.adult_content_sex,
+                |m: &mut CCuratorPreferences| &mut m.adult_content_sex,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "timestamp_updated",
-                |m: &CCuratorPreferences| { &m.timestamp_updated },
-                |m: &mut CCuratorPreferences| { &mut m.timestamp_updated },
+                |m: &CCuratorPreferences| &m.timestamp_updated,
+                |m: &mut CCuratorPreferences| &mut m.timestamp_updated,
             ));
-            fields.push(::protobuf::reflect::accessor::make_vec_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_vec_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "tagids_curated",
-                |m: &CCuratorPreferences| { &m.tagids_curated },
-                |m: &mut CCuratorPreferences| { &mut m.tagids_curated },
+                |m: &CCuratorPreferences| &m.tagids_curated,
+                |m: &mut CCuratorPreferences| &mut m.tagids_curated,
             ));
-            fields.push(::protobuf::reflect::accessor::make_vec_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_vec_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "tagids_filtered",
-                |m: &CCuratorPreferences| { &m.tagids_filtered },
-                |m: &mut CCuratorPreferences| { &mut m.tagids_filtered },
+                |m: &CCuratorPreferences| &m.tagids_filtered,
+                |m: &mut CCuratorPreferences| &mut m.tagids_filtered,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "website_title",
-                |m: &CCuratorPreferences| { &m.website_title },
-                |m: &mut CCuratorPreferences| { &mut m.website_title },
+                |m: &CCuratorPreferences| &m.website_title,
+                |m: &mut CCuratorPreferences| &mut m.website_title,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "website_url",
-                |m: &CCuratorPreferences| { &m.website_url },
-                |m: &mut CCuratorPreferences| { &mut m.website_url },
+                |m: &CCuratorPreferences| &m.website_url,
+                |m: &mut CCuratorPreferences| &mut m.website_url,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "discussion_url",
-                |m: &CCuratorPreferences| { &m.discussion_url },
-                |m: &mut CCuratorPreferences| { &mut m.discussion_url },
+                |m: &CCuratorPreferences| &m.discussion_url,
+                |m: &mut CCuratorPreferences| &mut m.discussion_url,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "show_broadcast",
-                |m: &CCuratorPreferences| { &m.show_broadcast },
-                |m: &mut CCuratorPreferences| { &mut m.show_broadcast },
+                |m: &CCuratorPreferences| &m.show_broadcast,
+                |m: &mut CCuratorPreferences| &mut m.show_broadcast,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CCuratorPreferences>(
                 "CCuratorPreferences",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -4617,7 +4788,7 @@ impl ::protobuf::reflect::ProtobufValue for CCuratorPreferences {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CLocalizationToken {
     // message fields
@@ -4643,7 +4814,6 @@ impl CLocalizationToken {
 
     // optional uint32 language = 1;
 
-
     pub fn get_language(&self) -> u32 {
         self.language.unwrap_or(0)
     }
@@ -4661,7 +4831,6 @@ impl CLocalizationToken {
     }
 
     // optional string localized_string = 2;
-
 
     pub fn get_localized_string(&self) -> &str {
         match self.localized_string.as_ref() {
@@ -4693,7 +4862,9 @@ impl CLocalizationToken {
 
     // Take field
     pub fn take_localized_string(&mut self) -> ::std::string::String {
-        self.localized_string.take().unwrap_or_else(|| ::std::string::String::new())
+        self.localized_string
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 }
 
@@ -4712,13 +4883,13 @@ impl ::protobuf::Message for CLocalizationToken {
                     }
                     let tmp = is.read_uint32()?;
                     self.language = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.localized_string)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -4781,23 +4952,30 @@ impl ::protobuf::Message for CLocalizationToken {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "language",
-                |m: &CLocalizationToken| { &m.language },
-                |m: &mut CLocalizationToken| { &mut m.language },
+                |m: &CLocalizationToken| &m.language,
+                |m: &mut CLocalizationToken| &mut m.language,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "localized_string",
-                |m: &CLocalizationToken| { &m.localized_string },
-                |m: &mut CLocalizationToken| { &mut m.localized_string },
+                |m: &CLocalizationToken| &m.localized_string,
+                |m: &mut CLocalizationToken| &mut m.localized_string,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CLocalizationToken>(
                 "CLocalizationToken",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -4828,7 +5006,7 @@ impl ::protobuf::reflect::ProtobufValue for CLocalizationToken {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClanEventUserNewsTuple {
     // message fields
@@ -4862,7 +5040,6 @@ impl CClanEventUserNewsTuple {
 
     // optional uint32 clanid = 1;
 
-
     pub fn get_clanid(&self) -> u32 {
         self.clanid.unwrap_or(0)
     }
@@ -4880,7 +5057,6 @@ impl CClanEventUserNewsTuple {
     }
 
     // optional fixed64 event_gid = 2;
-
 
     pub fn get_event_gid(&self) -> u64 {
         self.event_gid.unwrap_or(0)
@@ -4900,7 +5076,6 @@ impl CClanEventUserNewsTuple {
 
     // optional fixed64 announcement_gid = 3;
 
-
     pub fn get_announcement_gid(&self) -> u64 {
         self.announcement_gid.unwrap_or(0)
     }
@@ -4918,7 +5093,6 @@ impl CClanEventUserNewsTuple {
     }
 
     // optional uint32 rtime_start = 4;
-
 
     pub fn get_rtime_start(&self) -> u32 {
         self.rtime_start.unwrap_or(0)
@@ -4938,7 +5112,6 @@ impl CClanEventUserNewsTuple {
 
     // optional uint32 rtime_end = 5;
 
-
     pub fn get_rtime_end(&self) -> u32 {
         self.rtime_end.unwrap_or(0)
     }
@@ -4956,7 +5129,6 @@ impl CClanEventUserNewsTuple {
     }
 
     // optional uint32 priority_score = 6;
-
 
     pub fn get_priority_score(&self) -> u32 {
         self.priority_score.unwrap_or(0)
@@ -4976,7 +5148,6 @@ impl CClanEventUserNewsTuple {
 
     // optional uint32 type = 7;
 
-
     pub fn get_field_type(&self) -> u32 {
         self.field_type.unwrap_or(0)
     }
@@ -4994,7 +5165,6 @@ impl CClanEventUserNewsTuple {
     }
 
     // optional uint32 clamp_range_slot = 8;
-
 
     pub fn get_clamp_range_slot(&self) -> u32 {
         self.clamp_range_slot.unwrap_or(0)
@@ -5014,7 +5184,6 @@ impl CClanEventUserNewsTuple {
 
     // optional uint32 appid = 9;
 
-
     pub fn get_appid(&self) -> u32 {
         self.appid.unwrap_or(0)
     }
@@ -5032,7 +5201,6 @@ impl CClanEventUserNewsTuple {
     }
 
     // optional uint32 rtime32_last_modified = 10;
-
 
     pub fn get_rtime32_last_modified(&self) -> u32 {
         self.rtime32_last_modified.unwrap_or(0)
@@ -5066,73 +5234,73 @@ impl ::protobuf::Message for CClanEventUserNewsTuple {
                     }
                     let tmp = is.read_uint32()?;
                     self.clanid = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.event_gid = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.announcement_gid = ::std::option::Option::Some(tmp);
-                },
+                }
                 4 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.rtime_start = ::std::option::Option::Some(tmp);
-                },
+                }
                 5 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.rtime_end = ::std::option::Option::Some(tmp);
-                },
+                }
                 6 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.priority_score = ::std::option::Option::Some(tmp);
-                },
+                }
                 7 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.field_type = ::std::option::Option::Some(tmp);
-                },
+                }
                 8 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.clamp_range_slot = ::std::option::Option::Some(tmp);
-                },
+                }
                 9 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.appid = ::std::option::Option::Some(tmp);
-                },
+                }
                 10 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.rtime32_last_modified = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -5243,63 +5411,94 @@ impl ::protobuf::Message for CClanEventUserNewsTuple {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "clanid",
-                |m: &CClanEventUserNewsTuple| { &m.clanid },
-                |m: &mut CClanEventUserNewsTuple| { &mut m.clanid },
+                |m: &CClanEventUserNewsTuple| &m.clanid,
+                |m: &mut CClanEventUserNewsTuple| &mut m.clanid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "event_gid",
-                |m: &CClanEventUserNewsTuple| { &m.event_gid },
-                |m: &mut CClanEventUserNewsTuple| { &mut m.event_gid },
+                |m: &CClanEventUserNewsTuple| &m.event_gid,
+                |m: &mut CClanEventUserNewsTuple| &mut m.event_gid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "announcement_gid",
-                |m: &CClanEventUserNewsTuple| { &m.announcement_gid },
-                |m: &mut CClanEventUserNewsTuple| { &mut m.announcement_gid },
+                |m: &CClanEventUserNewsTuple| &m.announcement_gid,
+                |m: &mut CClanEventUserNewsTuple| &mut m.announcement_gid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "rtime_start",
-                |m: &CClanEventUserNewsTuple| { &m.rtime_start },
-                |m: &mut CClanEventUserNewsTuple| { &mut m.rtime_start },
+                |m: &CClanEventUserNewsTuple| &m.rtime_start,
+                |m: &mut CClanEventUserNewsTuple| &mut m.rtime_start,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "rtime_end",
-                |m: &CClanEventUserNewsTuple| { &m.rtime_end },
-                |m: &mut CClanEventUserNewsTuple| { &mut m.rtime_end },
+                |m: &CClanEventUserNewsTuple| &m.rtime_end,
+                |m: &mut CClanEventUserNewsTuple| &mut m.rtime_end,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "priority_score",
-                |m: &CClanEventUserNewsTuple| { &m.priority_score },
-                |m: &mut CClanEventUserNewsTuple| { &mut m.priority_score },
+                |m: &CClanEventUserNewsTuple| &m.priority_score,
+                |m: &mut CClanEventUserNewsTuple| &mut m.priority_score,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "type",
-                |m: &CClanEventUserNewsTuple| { &m.field_type },
-                |m: &mut CClanEventUserNewsTuple| { &mut m.field_type },
+                |m: &CClanEventUserNewsTuple| &m.field_type,
+                |m: &mut CClanEventUserNewsTuple| &mut m.field_type,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "clamp_range_slot",
-                |m: &CClanEventUserNewsTuple| { &m.clamp_range_slot },
-                |m: &mut CClanEventUserNewsTuple| { &mut m.clamp_range_slot },
+                |m: &CClanEventUserNewsTuple| &m.clamp_range_slot,
+                |m: &mut CClanEventUserNewsTuple| &mut m.clamp_range_slot,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "appid",
-                |m: &CClanEventUserNewsTuple| { &m.appid },
-                |m: &mut CClanEventUserNewsTuple| { &mut m.appid },
+                |m: &CClanEventUserNewsTuple| &m.appid,
+                |m: &mut CClanEventUserNewsTuple| &mut m.appid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "rtime32_last_modified",
-                |m: &CClanEventUserNewsTuple| { &m.rtime32_last_modified },
-                |m: &mut CClanEventUserNewsTuple| { &mut m.rtime32_last_modified },
+                |m: &CClanEventUserNewsTuple| &m.rtime32_last_modified,
+                |m: &mut CClanEventUserNewsTuple| &mut m.rtime32_last_modified,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CClanEventUserNewsTuple>(
                 "CClanEventUserNewsTuple",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -5338,7 +5537,7 @@ impl ::protobuf::reflect::ProtobufValue for CClanEventUserNewsTuple {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClanMatchEventByRange {
     // message fields
@@ -5366,7 +5565,6 @@ impl CClanMatchEventByRange {
 
     // optional uint32 rtime_before = 1;
 
-
     pub fn get_rtime_before(&self) -> u32 {
         self.rtime_before.unwrap_or(0)
     }
@@ -5384,7 +5582,6 @@ impl CClanMatchEventByRange {
     }
 
     // optional uint32 rtime_after = 2;
-
 
     pub fn get_rtime_after(&self) -> u32 {
         self.rtime_after.unwrap_or(0)
@@ -5404,7 +5601,6 @@ impl CClanMatchEventByRange {
 
     // optional uint32 qualified = 3;
 
-
     pub fn get_qualified(&self) -> u32 {
         self.qualified.unwrap_or(0)
     }
@@ -5422,7 +5618,6 @@ impl CClanMatchEventByRange {
     }
 
     // repeated .CClanEventUserNewsTuple events = 4;
-
 
     pub fn get_events(&self) -> &[CClanEventUserNewsTuple] {
         &self.events
@@ -5453,7 +5648,7 @@ impl ::protobuf::Message for CClanMatchEventByRange {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         true
     }
 
@@ -5467,27 +5662,27 @@ impl ::protobuf::Message for CClanMatchEventByRange {
                     }
                     let tmp = is.read_uint32()?;
                     self.rtime_before = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.rtime_after = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.qualified = ::std::option::Option::Some(tmp);
-                },
+                }
                 4 => {
                     ::protobuf::rt::read_repeated_message_into(wire_type, is, &mut self.events)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -5509,7 +5704,7 @@ impl ::protobuf::Message for CClanMatchEventByRange {
         for value in &self.events {
             let len = value.compute_size();
             my_size += 1 + ::protobuf::rt::compute_raw_varint32_size(len) + len;
-        };
+        }
         my_size += ::protobuf::rt::unknown_fields_size(self.get_unknown_fields());
         self.cached_size.set(my_size);
         my_size
@@ -5529,7 +5724,7 @@ impl ::protobuf::Message for CClanMatchEventByRange {
             os.write_tag(4, ::protobuf::wire_format::WireTypeLengthDelimited)?;
             os.write_raw_varint32(v.get_cached_size())?;
             v.write_to_with_cached_sizes(os)?;
-        };
+        }
         os.write_unknown_fields(self.get_unknown_fields())?;
         ::std::result::Result::Ok(())
     }
@@ -5565,33 +5760,46 @@ impl ::protobuf::Message for CClanMatchEventByRange {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "rtime_before",
-                |m: &CClanMatchEventByRange| { &m.rtime_before },
-                |m: &mut CClanMatchEventByRange| { &mut m.rtime_before },
+                |m: &CClanMatchEventByRange| &m.rtime_before,
+                |m: &mut CClanMatchEventByRange| &mut m.rtime_before,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "rtime_after",
-                |m: &CClanMatchEventByRange| { &m.rtime_after },
-                |m: &mut CClanMatchEventByRange| { &mut m.rtime_after },
+                |m: &CClanMatchEventByRange| &m.rtime_after,
+                |m: &mut CClanMatchEventByRange| &mut m.rtime_after,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "qualified",
-                |m: &CClanMatchEventByRange| { &m.qualified },
-                |m: &mut CClanMatchEventByRange| { &mut m.qualified },
+                |m: &CClanMatchEventByRange| &m.qualified,
+                |m: &mut CClanMatchEventByRange| &mut m.qualified,
             ));
-            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<CClanEventUserNewsTuple>>(
+            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeMessage<CClanEventUserNewsTuple>,
+            >(
                 "events",
-                |m: &CClanMatchEventByRange| { &m.events },
-                |m: &mut CClanMatchEventByRange| { &mut m.events },
+                |m: &CClanMatchEventByRange| &m.events,
+                |m: &mut CClanMatchEventByRange| &mut m.events,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CClanMatchEventByRange>(
                 "CClanMatchEventByRange",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -5624,7 +5832,7 @@ impl ::protobuf::reflect::ProtobufValue for CClanMatchEventByRange {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CCommunity_ClanAnnouncementInfo {
     // message fields
@@ -5663,7 +5871,6 @@ impl CCommunity_ClanAnnouncementInfo {
 
     // optional uint64 gid = 1;
 
-
     pub fn get_gid(&self) -> u64 {
         self.gid.unwrap_or(0)
     }
@@ -5681,7 +5888,6 @@ impl CCommunity_ClanAnnouncementInfo {
     }
 
     // optional uint64 clanid = 2;
-
 
     pub fn get_clanid(&self) -> u64 {
         self.clanid.unwrap_or(0)
@@ -5701,7 +5907,6 @@ impl CCommunity_ClanAnnouncementInfo {
 
     // optional uint64 posterid = 3;
 
-
     pub fn get_posterid(&self) -> u64 {
         self.posterid.unwrap_or(0)
     }
@@ -5719,7 +5924,6 @@ impl CCommunity_ClanAnnouncementInfo {
     }
 
     // optional string headline = 4;
-
 
     pub fn get_headline(&self) -> &str {
         match self.headline.as_ref() {
@@ -5756,7 +5960,6 @@ impl CCommunity_ClanAnnouncementInfo {
 
     // optional uint32 posttime = 5;
 
-
     pub fn get_posttime(&self) -> u32 {
         self.posttime.unwrap_or(0)
     }
@@ -5775,7 +5978,6 @@ impl CCommunity_ClanAnnouncementInfo {
 
     // optional uint32 updatetime = 6;
 
-
     pub fn get_updatetime(&self) -> u32 {
         self.updatetime.unwrap_or(0)
     }
@@ -5793,7 +5995,6 @@ impl CCommunity_ClanAnnouncementInfo {
     }
 
     // optional string body = 7;
-
 
     pub fn get_body(&self) -> &str {
         match self.body.as_ref() {
@@ -5830,7 +6031,6 @@ impl CCommunity_ClanAnnouncementInfo {
 
     // optional int32 commentcount = 8;
 
-
     pub fn get_commentcount(&self) -> i32 {
         self.commentcount.unwrap_or(0)
     }
@@ -5848,7 +6048,6 @@ impl CCommunity_ClanAnnouncementInfo {
     }
 
     // repeated string tags = 9;
-
 
     pub fn get_tags(&self) -> &[::std::string::String] {
         &self.tags
@@ -5874,7 +6073,6 @@ impl CCommunity_ClanAnnouncementInfo {
 
     // optional int32 language = 10;
 
-
     pub fn get_language(&self) -> i32 {
         self.language.unwrap_or(0)
     }
@@ -5892,7 +6090,6 @@ impl CCommunity_ClanAnnouncementInfo {
     }
 
     // optional bool hidden = 11;
-
 
     pub fn get_hidden(&self) -> bool {
         self.hidden.unwrap_or(false)
@@ -5912,7 +6109,6 @@ impl CCommunity_ClanAnnouncementInfo {
 
     // optional fixed64 forum_topic_id = 12;
 
-
     pub fn get_forum_topic_id(&self) -> u64 {
         self.forum_topic_id.unwrap_or(0)
     }
@@ -5930,7 +6126,6 @@ impl CCommunity_ClanAnnouncementInfo {
     }
 
     // optional fixed64 event_gid = 13;
-
 
     pub fn get_event_gid(&self) -> u64 {
         self.event_gid.unwrap_or(0)
@@ -5950,7 +6145,6 @@ impl CCommunity_ClanAnnouncementInfo {
 
     // optional int32 voteupcount = 14;
 
-
     pub fn get_voteupcount(&self) -> i32 {
         self.voteupcount.unwrap_or(0)
     }
@@ -5968,7 +6162,6 @@ impl CCommunity_ClanAnnouncementInfo {
     }
 
     // optional int32 votedowncount = 15;
-
 
     pub fn get_votedowncount(&self) -> i32 {
         self.votedowncount.unwrap_or(0)
@@ -6002,96 +6195,96 @@ impl ::protobuf::Message for CCommunity_ClanAnnouncementInfo {
                     }
                     let tmp = is.read_uint64()?;
                     self.gid = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint64()?;
                     self.clanid = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint64()?;
                     self.posterid = ::std::option::Option::Some(tmp);
-                },
+                }
                 4 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.headline)?;
-                },
+                }
                 5 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.posttime = ::std::option::Option::Some(tmp);
-                },
+                }
                 6 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.updatetime = ::std::option::Option::Some(tmp);
-                },
+                }
                 7 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.body)?;
-                },
+                }
                 8 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.commentcount = ::std::option::Option::Some(tmp);
-                },
+                }
                 9 => {
                     ::protobuf::rt::read_repeated_string_into(wire_type, is, &mut self.tags)?;
-                },
+                }
                 10 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.language = ::std::option::Option::Some(tmp);
-                },
+                }
                 11 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.hidden = ::std::option::Option::Some(tmp);
-                },
+                }
                 12 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.forum_topic_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 13 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.event_gid = ::std::option::Option::Some(tmp);
-                },
+                }
                 14 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.voteupcount = ::std::option::Option::Some(tmp);
-                },
+                }
                 15 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.votedowncount = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -6127,7 +6320,7 @@ impl ::protobuf::Message for CCommunity_ClanAnnouncementInfo {
         }
         for value in &self.tags {
             my_size += ::protobuf::rt::string_size(9, &value);
-        };
+        }
         if let Some(v) = self.language {
             my_size += ::protobuf::rt::value_size(10, v, ::protobuf::wire_format::WireTypeVarint);
         }
@@ -6178,7 +6371,7 @@ impl ::protobuf::Message for CCommunity_ClanAnnouncementInfo {
         }
         for v in &self.tags {
             os.write_string(9, &v)?;
-        };
+        }
         if let Some(v) = self.language {
             os.write_int32(10, v)?;
         }
@@ -6232,88 +6425,134 @@ impl ::protobuf::Message for CCommunity_ClanAnnouncementInfo {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint64,
+            >(
                 "gid",
-                |m: &CCommunity_ClanAnnouncementInfo| { &m.gid },
-                |m: &mut CCommunity_ClanAnnouncementInfo| { &mut m.gid },
+                |m: &CCommunity_ClanAnnouncementInfo| &m.gid,
+                |m: &mut CCommunity_ClanAnnouncementInfo| &mut m.gid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint64,
+            >(
                 "clanid",
-                |m: &CCommunity_ClanAnnouncementInfo| { &m.clanid },
-                |m: &mut CCommunity_ClanAnnouncementInfo| { &mut m.clanid },
+                |m: &CCommunity_ClanAnnouncementInfo| &m.clanid,
+                |m: &mut CCommunity_ClanAnnouncementInfo| &mut m.clanid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint64,
+            >(
                 "posterid",
-                |m: &CCommunity_ClanAnnouncementInfo| { &m.posterid },
-                |m: &mut CCommunity_ClanAnnouncementInfo| { &mut m.posterid },
+                |m: &CCommunity_ClanAnnouncementInfo| &m.posterid,
+                |m: &mut CCommunity_ClanAnnouncementInfo| &mut m.posterid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "headline",
-                |m: &CCommunity_ClanAnnouncementInfo| { &m.headline },
-                |m: &mut CCommunity_ClanAnnouncementInfo| { &mut m.headline },
+                |m: &CCommunity_ClanAnnouncementInfo| &m.headline,
+                |m: &mut CCommunity_ClanAnnouncementInfo| &mut m.headline,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "posttime",
-                |m: &CCommunity_ClanAnnouncementInfo| { &m.posttime },
-                |m: &mut CCommunity_ClanAnnouncementInfo| { &mut m.posttime },
+                |m: &CCommunity_ClanAnnouncementInfo| &m.posttime,
+                |m: &mut CCommunity_ClanAnnouncementInfo| &mut m.posttime,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "updatetime",
-                |m: &CCommunity_ClanAnnouncementInfo| { &m.updatetime },
-                |m: &mut CCommunity_ClanAnnouncementInfo| { &mut m.updatetime },
+                |m: &CCommunity_ClanAnnouncementInfo| &m.updatetime,
+                |m: &mut CCommunity_ClanAnnouncementInfo| &mut m.updatetime,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "body",
-                |m: &CCommunity_ClanAnnouncementInfo| { &m.body },
-                |m: &mut CCommunity_ClanAnnouncementInfo| { &mut m.body },
+                |m: &CCommunity_ClanAnnouncementInfo| &m.body,
+                |m: &mut CCommunity_ClanAnnouncementInfo| &mut m.body,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "commentcount",
-                |m: &CCommunity_ClanAnnouncementInfo| { &m.commentcount },
-                |m: &mut CCommunity_ClanAnnouncementInfo| { &mut m.commentcount },
+                |m: &CCommunity_ClanAnnouncementInfo| &m.commentcount,
+                |m: &mut CCommunity_ClanAnnouncementInfo| &mut m.commentcount,
             ));
-            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "tags",
-                |m: &CCommunity_ClanAnnouncementInfo| { &m.tags },
-                |m: &mut CCommunity_ClanAnnouncementInfo| { &mut m.tags },
+                |m: &CCommunity_ClanAnnouncementInfo| &m.tags,
+                |m: &mut CCommunity_ClanAnnouncementInfo| &mut m.tags,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "language",
-                |m: &CCommunity_ClanAnnouncementInfo| { &m.language },
-                |m: &mut CCommunity_ClanAnnouncementInfo| { &mut m.language },
+                |m: &CCommunity_ClanAnnouncementInfo| &m.language,
+                |m: &mut CCommunity_ClanAnnouncementInfo| &mut m.language,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "hidden",
-                |m: &CCommunity_ClanAnnouncementInfo| { &m.hidden },
-                |m: &mut CCommunity_ClanAnnouncementInfo| { &mut m.hidden },
+                |m: &CCommunity_ClanAnnouncementInfo| &m.hidden,
+                |m: &mut CCommunity_ClanAnnouncementInfo| &mut m.hidden,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "forum_topic_id",
-                |m: &CCommunity_ClanAnnouncementInfo| { &m.forum_topic_id },
-                |m: &mut CCommunity_ClanAnnouncementInfo| { &mut m.forum_topic_id },
+                |m: &CCommunity_ClanAnnouncementInfo| &m.forum_topic_id,
+                |m: &mut CCommunity_ClanAnnouncementInfo| &mut m.forum_topic_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "event_gid",
-                |m: &CCommunity_ClanAnnouncementInfo| { &m.event_gid },
-                |m: &mut CCommunity_ClanAnnouncementInfo| { &mut m.event_gid },
+                |m: &CCommunity_ClanAnnouncementInfo| &m.event_gid,
+                |m: &mut CCommunity_ClanAnnouncementInfo| &mut m.event_gid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "voteupcount",
-                |m: &CCommunity_ClanAnnouncementInfo| { &m.voteupcount },
-                |m: &mut CCommunity_ClanAnnouncementInfo| { &mut m.voteupcount },
+                |m: &CCommunity_ClanAnnouncementInfo| &m.voteupcount,
+                |m: &mut CCommunity_ClanAnnouncementInfo| &mut m.voteupcount,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "votedowncount",
-                |m: &CCommunity_ClanAnnouncementInfo| { &m.votedowncount },
-                |m: &mut CCommunity_ClanAnnouncementInfo| { &mut m.votedowncount },
+                |m: &CCommunity_ClanAnnouncementInfo| &m.votedowncount,
+                |m: &mut CCommunity_ClanAnnouncementInfo| &mut m.votedowncount,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CCommunity_ClanAnnouncementInfo>(
                 "CCommunity_ClanAnnouncementInfo",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -6357,7 +6596,7 @@ impl ::protobuf::reflect::ProtobufValue for CCommunity_ClanAnnouncementInfo {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CClanEventData {
     // message fields
@@ -6409,7 +6648,6 @@ impl CClanEventData {
 
     // optional fixed64 gid = 1;
 
-
     pub fn get_gid(&self) -> u64 {
         self.gid.unwrap_or(0)
     }
@@ -6428,7 +6666,6 @@ impl CClanEventData {
 
     // optional fixed64 clan_steamid = 2;
 
-
     pub fn get_clan_steamid(&self) -> u64 {
         self.clan_steamid.unwrap_or(0)
     }
@@ -6446,7 +6683,6 @@ impl CClanEventData {
     }
 
     // optional string event_name = 3;
-
 
     pub fn get_event_name(&self) -> &str {
         match self.event_name.as_ref() {
@@ -6483,7 +6719,6 @@ impl CClanEventData {
 
     // optional .EProtoClanEventType event_type = 4;
 
-
     pub fn get_event_type(&self) -> EProtoClanEventType {
         self.event_type.unwrap_or(EProtoClanEventType::k_EClanOtherEvent)
     }
@@ -6502,7 +6737,6 @@ impl CClanEventData {
 
     // optional uint32 appid = 5;
 
-
     pub fn get_appid(&self) -> u32 {
         self.appid.unwrap_or(0)
     }
@@ -6520,7 +6754,6 @@ impl CClanEventData {
     }
 
     // optional string server_address = 6;
-
 
     pub fn get_server_address(&self) -> &str {
         match self.server_address.as_ref() {
@@ -6552,11 +6785,12 @@ impl CClanEventData {
 
     // Take field
     pub fn take_server_address(&mut self) -> ::std::string::String {
-        self.server_address.take().unwrap_or_else(|| ::std::string::String::new())
+        self.server_address
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional string server_password = 7;
-
 
     pub fn get_server_password(&self) -> &str {
         match self.server_password.as_ref() {
@@ -6588,11 +6822,12 @@ impl CClanEventData {
 
     // Take field
     pub fn take_server_password(&mut self) -> ::std::string::String {
-        self.server_password.take().unwrap_or_else(|| ::std::string::String::new())
+        self.server_password
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional uint32 rtime32_start_time = 8;
-
 
     pub fn get_rtime32_start_time(&self) -> u32 {
         self.rtime32_start_time.unwrap_or(0)
@@ -6612,7 +6847,6 @@ impl CClanEventData {
 
     // optional uint32 rtime32_end_time = 9;
 
-
     pub fn get_rtime32_end_time(&self) -> u32 {
         self.rtime32_end_time.unwrap_or(0)
     }
@@ -6630,7 +6864,6 @@ impl CClanEventData {
     }
 
     // optional int32 comment_count = 10;
-
 
     pub fn get_comment_count(&self) -> i32 {
         self.comment_count.unwrap_or(0)
@@ -6650,7 +6883,6 @@ impl CClanEventData {
 
     // optional fixed64 creator_steamid = 11;
 
-
     pub fn get_creator_steamid(&self) -> u64 {
         self.creator_steamid.unwrap_or(0)
     }
@@ -6669,7 +6901,6 @@ impl CClanEventData {
 
     // optional fixed64 last_update_steamid = 12;
 
-
     pub fn get_last_update_steamid(&self) -> u64 {
         self.last_update_steamid.unwrap_or(0)
     }
@@ -6687,7 +6918,6 @@ impl CClanEventData {
     }
 
     // optional string event_notes = 13;
-
 
     pub fn get_event_notes(&self) -> &str {
         match self.event_notes.as_ref() {
@@ -6724,7 +6954,6 @@ impl CClanEventData {
 
     // optional string jsondata = 14;
 
-
     pub fn get_jsondata(&self) -> &str {
         match self.jsondata.as_ref() {
             Some(v) => &v,
@@ -6760,9 +6989,10 @@ impl CClanEventData {
 
     // optional .CCommunity_ClanAnnouncementInfo announcement_body = 15;
 
-
     pub fn get_announcement_body(&self) -> &CCommunity_ClanAnnouncementInfo {
-        self.announcement_body.as_ref().unwrap_or_else(|| <CCommunity_ClanAnnouncementInfo as ::protobuf::Message>::default_instance())
+        self.announcement_body
+            .as_ref()
+            .unwrap_or_else(|| <CCommunity_ClanAnnouncementInfo as ::protobuf::Message>::default_instance())
     }
     pub fn clear_announcement_body(&mut self) {
         self.announcement_body.clear();
@@ -6788,11 +7018,12 @@ impl CClanEventData {
 
     // Take field
     pub fn take_announcement_body(&mut self) -> CCommunity_ClanAnnouncementInfo {
-        self.announcement_body.take().unwrap_or_else(|| CCommunity_ClanAnnouncementInfo::new())
+        self.announcement_body
+            .take()
+            .unwrap_or_else(|| CCommunity_ClanAnnouncementInfo::new())
     }
 
     // optional bool published = 16;
-
 
     pub fn get_published(&self) -> bool {
         self.published.unwrap_or(false)
@@ -6812,7 +7043,6 @@ impl CClanEventData {
 
     // optional bool hidden = 17;
 
-
     pub fn get_hidden(&self) -> bool {
         self.hidden.unwrap_or(false)
     }
@@ -6830,7 +7060,6 @@ impl CClanEventData {
     }
 
     // optional uint32 rtime32_visibility_start = 18;
-
 
     pub fn get_rtime32_visibility_start(&self) -> u32 {
         self.rtime32_visibility_start.unwrap_or(0)
@@ -6850,7 +7079,6 @@ impl CClanEventData {
 
     // optional uint32 rtime32_visibility_end = 19;
 
-
     pub fn get_rtime32_visibility_end(&self) -> u32 {
         self.rtime32_visibility_end.unwrap_or(0)
     }
@@ -6868,7 +7096,6 @@ impl CClanEventData {
     }
 
     // optional uint32 broadcaster_accountid = 20;
-
 
     pub fn get_broadcaster_accountid(&self) -> u32 {
         self.broadcaster_accountid.unwrap_or(0)
@@ -6888,7 +7115,6 @@ impl CClanEventData {
 
     // optional uint32 follower_count = 21;
 
-
     pub fn get_follower_count(&self) -> u32 {
         self.follower_count.unwrap_or(0)
     }
@@ -6906,7 +7132,6 @@ impl CClanEventData {
     }
 
     // optional uint32 ignore_count = 22;
-
 
     pub fn get_ignore_count(&self) -> u32 {
         self.ignore_count.unwrap_or(0)
@@ -6926,7 +7151,6 @@ impl CClanEventData {
 
     // optional fixed64 forum_topic_id = 23;
 
-
     pub fn get_forum_topic_id(&self) -> u64 {
         self.forum_topic_id.unwrap_or(0)
     }
@@ -6944,7 +7168,6 @@ impl CClanEventData {
     }
 
     // optional uint32 rtime32_last_modified = 24;
-
 
     pub fn get_rtime32_last_modified(&self) -> u32 {
         self.rtime32_last_modified.unwrap_or(0)
@@ -6964,7 +7187,6 @@ impl CClanEventData {
 
     // optional fixed64 news_post_gid = 25;
 
-
     pub fn get_news_post_gid(&self) -> u64 {
         self.news_post_gid.unwrap_or(0)
     }
@@ -6982,7 +7204,6 @@ impl CClanEventData {
     }
 
     // optional uint32 rtime_mod_reviewed = 26;
-
 
     pub fn get_rtime_mod_reviewed(&self) -> u32 {
         self.rtime_mod_reviewed.unwrap_or(0)
@@ -7002,7 +7223,6 @@ impl CClanEventData {
 
     // optional uint32 featured_app_tagid = 27;
 
-
     pub fn get_featured_app_tagid(&self) -> u32 {
         self.featured_app_tagid.unwrap_or(0)
     }
@@ -7020,7 +7240,6 @@ impl CClanEventData {
     }
 
     // repeated uint32 referenced_appids = 28;
-
 
     pub fn get_referenced_appids(&self) -> &[u32] {
         &self.referenced_appids
@@ -7051,7 +7270,7 @@ impl ::protobuf::Message for CClanEventData {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         true
     }
 
@@ -7065,167 +7284,171 @@ impl ::protobuf::Message for CClanEventData {
                     }
                     let tmp = is.read_fixed64()?;
                     self.gid = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.clan_steamid = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.event_name)?;
-                },
-                4 => {
-                    ::protobuf::rt::read_proto2_enum_with_unknown_fields_into(wire_type, is, &mut self.event_type, 4, &mut self.unknown_fields)?
-                },
+                }
+                4 => ::protobuf::rt::read_proto2_enum_with_unknown_fields_into(
+                    wire_type,
+                    is,
+                    &mut self.event_type,
+                    4,
+                    &mut self.unknown_fields,
+                )?,
                 5 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.appid = ::std::option::Option::Some(tmp);
-                },
+                }
                 6 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.server_address)?;
-                },
+                }
                 7 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.server_password)?;
-                },
+                }
                 8 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.rtime32_start_time = ::std::option::Option::Some(tmp);
-                },
+                }
                 9 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.rtime32_end_time = ::std::option::Option::Some(tmp);
-                },
+                }
                 10 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.comment_count = ::std::option::Option::Some(tmp);
-                },
+                }
                 11 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.creator_steamid = ::std::option::Option::Some(tmp);
-                },
+                }
                 12 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.last_update_steamid = ::std::option::Option::Some(tmp);
-                },
+                }
                 13 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.event_notes)?;
-                },
+                }
                 14 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.jsondata)?;
-                },
+                }
                 15 => {
                     ::protobuf::rt::read_singular_message_into(wire_type, is, &mut self.announcement_body)?;
-                },
+                }
                 16 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.published = ::std::option::Option::Some(tmp);
-                },
+                }
                 17 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.hidden = ::std::option::Option::Some(tmp);
-                },
+                }
                 18 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.rtime32_visibility_start = ::std::option::Option::Some(tmp);
-                },
+                }
                 19 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.rtime32_visibility_end = ::std::option::Option::Some(tmp);
-                },
+                }
                 20 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.broadcaster_accountid = ::std::option::Option::Some(tmp);
-                },
+                }
                 21 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.follower_count = ::std::option::Option::Some(tmp);
-                },
+                }
                 22 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.ignore_count = ::std::option::Option::Some(tmp);
-                },
+                }
                 23 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.forum_topic_id = ::std::option::Option::Some(tmp);
-                },
+                }
                 24 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.rtime32_last_modified = ::std::option::Option::Some(tmp);
-                },
+                }
                 25 => {
                     if wire_type != ::protobuf::wire_format::WireTypeFixed64 {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_fixed64()?;
                     self.news_post_gid = ::std::option::Option::Some(tmp);
-                },
+                }
                 26 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.rtime_mod_reviewed = ::std::option::Option::Some(tmp);
-                },
+                }
                 27 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.featured_app_tagid = ::std::option::Option::Some(tmp);
-                },
+                }
                 28 => {
                     ::protobuf::rt::read_repeated_uint32_into(wire_type, is, &mut self.referenced_appids)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -7319,7 +7542,7 @@ impl ::protobuf::Message for CClanEventData {
         }
         for value in &self.referenced_appids {
             my_size += ::protobuf::rt::value_size(28, *value, ::protobuf::wire_format::WireTypeVarint);
-        };
+        }
         my_size += ::protobuf::rt::unknown_fields_size(self.get_unknown_fields());
         self.cached_size.set(my_size);
         my_size
@@ -7411,7 +7634,7 @@ impl ::protobuf::Message for CClanEventData {
         }
         for v in &self.referenced_appids {
             os.write_uint32(28, *v)?;
-        };
+        }
         os.write_unknown_fields(self.get_unknown_fields())?;
         ::std::result::Result::Ok(())
     }
@@ -7447,153 +7670,238 @@ impl ::protobuf::Message for CClanEventData {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "gid",
-                |m: &CClanEventData| { &m.gid },
-                |m: &mut CClanEventData| { &mut m.gid },
+                |m: &CClanEventData| &m.gid,
+                |m: &mut CClanEventData| &mut m.gid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "clan_steamid",
-                |m: &CClanEventData| { &m.clan_steamid },
-                |m: &mut CClanEventData| { &mut m.clan_steamid },
+                |m: &CClanEventData| &m.clan_steamid,
+                |m: &mut CClanEventData| &mut m.clan_steamid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "event_name",
-                |m: &CClanEventData| { &m.event_name },
-                |m: &mut CClanEventData| { &mut m.event_name },
+                |m: &CClanEventData| &m.event_name,
+                |m: &mut CClanEventData| &mut m.event_name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeEnum<EProtoClanEventType>>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeEnum<EProtoClanEventType>,
+            >(
                 "event_type",
-                |m: &CClanEventData| { &m.event_type },
-                |m: &mut CClanEventData| { &mut m.event_type },
+                |m: &CClanEventData| &m.event_type,
+                |m: &mut CClanEventData| &mut m.event_type,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "appid",
-                |m: &CClanEventData| { &m.appid },
-                |m: &mut CClanEventData| { &mut m.appid },
+                |m: &CClanEventData| &m.appid,
+                |m: &mut CClanEventData| &mut m.appid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "server_address",
-                |m: &CClanEventData| { &m.server_address },
-                |m: &mut CClanEventData| { &mut m.server_address },
+                |m: &CClanEventData| &m.server_address,
+                |m: &mut CClanEventData| &mut m.server_address,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "server_password",
-                |m: &CClanEventData| { &m.server_password },
-                |m: &mut CClanEventData| { &mut m.server_password },
+                |m: &CClanEventData| &m.server_password,
+                |m: &mut CClanEventData| &mut m.server_password,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "rtime32_start_time",
-                |m: &CClanEventData| { &m.rtime32_start_time },
-                |m: &mut CClanEventData| { &mut m.rtime32_start_time },
+                |m: &CClanEventData| &m.rtime32_start_time,
+                |m: &mut CClanEventData| &mut m.rtime32_start_time,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "rtime32_end_time",
-                |m: &CClanEventData| { &m.rtime32_end_time },
-                |m: &mut CClanEventData| { &mut m.rtime32_end_time },
+                |m: &CClanEventData| &m.rtime32_end_time,
+                |m: &mut CClanEventData| &mut m.rtime32_end_time,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "comment_count",
-                |m: &CClanEventData| { &m.comment_count },
-                |m: &mut CClanEventData| { &mut m.comment_count },
+                |m: &CClanEventData| &m.comment_count,
+                |m: &mut CClanEventData| &mut m.comment_count,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "creator_steamid",
-                |m: &CClanEventData| { &m.creator_steamid },
-                |m: &mut CClanEventData| { &mut m.creator_steamid },
+                |m: &CClanEventData| &m.creator_steamid,
+                |m: &mut CClanEventData| &mut m.creator_steamid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "last_update_steamid",
-                |m: &CClanEventData| { &m.last_update_steamid },
-                |m: &mut CClanEventData| { &mut m.last_update_steamid },
+                |m: &CClanEventData| &m.last_update_steamid,
+                |m: &mut CClanEventData| &mut m.last_update_steamid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "event_notes",
-                |m: &CClanEventData| { &m.event_notes },
-                |m: &mut CClanEventData| { &mut m.event_notes },
+                |m: &CClanEventData| &m.event_notes,
+                |m: &mut CClanEventData| &mut m.event_notes,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "jsondata",
-                |m: &CClanEventData| { &m.jsondata },
-                |m: &mut CClanEventData| { &mut m.jsondata },
+                |m: &CClanEventData| &m.jsondata,
+                |m: &mut CClanEventData| &mut m.jsondata,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<CCommunity_ClanAnnouncementInfo>>(
+            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeMessage<CCommunity_ClanAnnouncementInfo>,
+            >(
                 "announcement_body",
-                |m: &CClanEventData| { &m.announcement_body },
-                |m: &mut CClanEventData| { &mut m.announcement_body },
+                |m: &CClanEventData| &m.announcement_body,
+                |m: &mut CClanEventData| &mut m.announcement_body,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "published",
-                |m: &CClanEventData| { &m.published },
-                |m: &mut CClanEventData| { &mut m.published },
+                |m: &CClanEventData| &m.published,
+                |m: &mut CClanEventData| &mut m.published,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "hidden",
-                |m: &CClanEventData| { &m.hidden },
-                |m: &mut CClanEventData| { &mut m.hidden },
+                |m: &CClanEventData| &m.hidden,
+                |m: &mut CClanEventData| &mut m.hidden,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "rtime32_visibility_start",
-                |m: &CClanEventData| { &m.rtime32_visibility_start },
-                |m: &mut CClanEventData| { &mut m.rtime32_visibility_start },
+                |m: &CClanEventData| &m.rtime32_visibility_start,
+                |m: &mut CClanEventData| &mut m.rtime32_visibility_start,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "rtime32_visibility_end",
-                |m: &CClanEventData| { &m.rtime32_visibility_end },
-                |m: &mut CClanEventData| { &mut m.rtime32_visibility_end },
+                |m: &CClanEventData| &m.rtime32_visibility_end,
+                |m: &mut CClanEventData| &mut m.rtime32_visibility_end,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "broadcaster_accountid",
-                |m: &CClanEventData| { &m.broadcaster_accountid },
-                |m: &mut CClanEventData| { &mut m.broadcaster_accountid },
+                |m: &CClanEventData| &m.broadcaster_accountid,
+                |m: &mut CClanEventData| &mut m.broadcaster_accountid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "follower_count",
-                |m: &CClanEventData| { &m.follower_count },
-                |m: &mut CClanEventData| { &mut m.follower_count },
+                |m: &CClanEventData| &m.follower_count,
+                |m: &mut CClanEventData| &mut m.follower_count,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "ignore_count",
-                |m: &CClanEventData| { &m.ignore_count },
-                |m: &mut CClanEventData| { &mut m.ignore_count },
+                |m: &CClanEventData| &m.ignore_count,
+                |m: &mut CClanEventData| &mut m.ignore_count,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "forum_topic_id",
-                |m: &CClanEventData| { &m.forum_topic_id },
-                |m: &mut CClanEventData| { &mut m.forum_topic_id },
+                |m: &CClanEventData| &m.forum_topic_id,
+                |m: &mut CClanEventData| &mut m.forum_topic_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "rtime32_last_modified",
-                |m: &CClanEventData| { &m.rtime32_last_modified },
-                |m: &mut CClanEventData| { &mut m.rtime32_last_modified },
+                |m: &CClanEventData| &m.rtime32_last_modified,
+                |m: &mut CClanEventData| &mut m.rtime32_last_modified,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeFixed64>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeFixed64,
+            >(
                 "news_post_gid",
-                |m: &CClanEventData| { &m.news_post_gid },
-                |m: &mut CClanEventData| { &mut m.news_post_gid },
+                |m: &CClanEventData| &m.news_post_gid,
+                |m: &mut CClanEventData| &mut m.news_post_gid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "rtime_mod_reviewed",
-                |m: &CClanEventData| { &m.rtime_mod_reviewed },
-                |m: &mut CClanEventData| { &mut m.rtime_mod_reviewed },
+                |m: &CClanEventData| &m.rtime_mod_reviewed,
+                |m: &mut CClanEventData| &mut m.rtime_mod_reviewed,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "featured_app_tagid",
-                |m: &CClanEventData| { &m.featured_app_tagid },
-                |m: &mut CClanEventData| { &mut m.featured_app_tagid },
+                |m: &CClanEventData| &m.featured_app_tagid,
+                |m: &mut CClanEventData| &mut m.featured_app_tagid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_vec_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_vec_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "referenced_appids",
-                |m: &CClanEventData| { &m.referenced_appids },
-                |m: &mut CClanEventData| { &mut m.referenced_appids },
+                |m: &CClanEventData| &m.referenced_appids,
+                |m: &mut CClanEventData| &mut m.referenced_appids,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CClanEventData>(
                 "CClanEventData",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -7650,7 +7958,7 @@ impl ::protobuf::reflect::ProtobufValue for CClanEventData {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CBilling_Address {
     // message fields
@@ -7683,7 +7991,6 @@ impl CBilling_Address {
     }
 
     // optional string first_name = 1;
-
 
     pub fn get_first_name(&self) -> &str {
         match self.first_name.as_ref() {
@@ -7720,7 +8027,6 @@ impl CBilling_Address {
 
     // optional string last_name = 2;
 
-
     pub fn get_last_name(&self) -> &str {
         match self.last_name.as_ref() {
             Some(v) => &v,
@@ -7755,7 +8061,6 @@ impl CBilling_Address {
     }
 
     // optional string address1 = 3;
-
 
     pub fn get_address1(&self) -> &str {
         match self.address1.as_ref() {
@@ -7792,7 +8097,6 @@ impl CBilling_Address {
 
     // optional string address2 = 4;
 
-
     pub fn get_address2(&self) -> &str {
         match self.address2.as_ref() {
             Some(v) => &v,
@@ -7827,7 +8131,6 @@ impl CBilling_Address {
     }
 
     // optional string city = 5;
-
 
     pub fn get_city(&self) -> &str {
         match self.city.as_ref() {
@@ -7864,7 +8167,6 @@ impl CBilling_Address {
 
     // optional string us_state = 6;
 
-
     pub fn get_us_state(&self) -> &str {
         match self.us_state.as_ref() {
             Some(v) => &v,
@@ -7899,7 +8201,6 @@ impl CBilling_Address {
     }
 
     // optional string country_code = 7;
-
 
     pub fn get_country_code(&self) -> &str {
         match self.country_code.as_ref() {
@@ -7936,7 +8237,6 @@ impl CBilling_Address {
 
     // optional string postcode = 8;
 
-
     pub fn get_postcode(&self) -> &str {
         match self.postcode.as_ref() {
             Some(v) => &v,
@@ -7972,7 +8272,6 @@ impl CBilling_Address {
 
     // optional int32 zip_plus4 = 9;
 
-
     pub fn get_zip_plus4(&self) -> i32 {
         self.zip_plus4.unwrap_or(0)
     }
@@ -7990,7 +8289,6 @@ impl CBilling_Address {
     }
 
     // optional string phone = 10;
-
 
     pub fn get_phone(&self) -> &str {
         match self.phone.as_ref() {
@@ -8037,41 +8335,41 @@ impl ::protobuf::Message for CBilling_Address {
             match field_number {
                 1 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.first_name)?;
-                },
+                }
                 2 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.last_name)?;
-                },
+                }
                 3 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.address1)?;
-                },
+                }
                 4 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.address2)?;
-                },
+                }
                 5 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.city)?;
-                },
+                }
                 6 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.us_state)?;
-                },
+                }
                 7 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.country_code)?;
-                },
+                }
                 8 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.postcode)?;
-                },
+                }
                 9 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.zip_plus4 = ::std::option::Option::Some(tmp);
-                },
+                }
                 10 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.phone)?;
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -8182,63 +8480,94 @@ impl ::protobuf::Message for CBilling_Address {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "first_name",
-                |m: &CBilling_Address| { &m.first_name },
-                |m: &mut CBilling_Address| { &mut m.first_name },
+                |m: &CBilling_Address| &m.first_name,
+                |m: &mut CBilling_Address| &mut m.first_name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "last_name",
-                |m: &CBilling_Address| { &m.last_name },
-                |m: &mut CBilling_Address| { &mut m.last_name },
+                |m: &CBilling_Address| &m.last_name,
+                |m: &mut CBilling_Address| &mut m.last_name,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "address1",
-                |m: &CBilling_Address| { &m.address1 },
-                |m: &mut CBilling_Address| { &mut m.address1 },
+                |m: &CBilling_Address| &m.address1,
+                |m: &mut CBilling_Address| &mut m.address1,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "address2",
-                |m: &CBilling_Address| { &m.address2 },
-                |m: &mut CBilling_Address| { &mut m.address2 },
+                |m: &CBilling_Address| &m.address2,
+                |m: &mut CBilling_Address| &mut m.address2,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "city",
-                |m: &CBilling_Address| { &m.city },
-                |m: &mut CBilling_Address| { &mut m.city },
+                |m: &CBilling_Address| &m.city,
+                |m: &mut CBilling_Address| &mut m.city,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "us_state",
-                |m: &CBilling_Address| { &m.us_state },
-                |m: &mut CBilling_Address| { &mut m.us_state },
+                |m: &CBilling_Address| &m.us_state,
+                |m: &mut CBilling_Address| &mut m.us_state,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "country_code",
-                |m: &CBilling_Address| { &m.country_code },
-                |m: &mut CBilling_Address| { &mut m.country_code },
+                |m: &CBilling_Address| &m.country_code,
+                |m: &mut CBilling_Address| &mut m.country_code,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "postcode",
-                |m: &CBilling_Address| { &m.postcode },
-                |m: &mut CBilling_Address| { &mut m.postcode },
+                |m: &CBilling_Address| &m.postcode,
+                |m: &mut CBilling_Address| &mut m.postcode,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "zip_plus4",
-                |m: &CBilling_Address| { &m.zip_plus4 },
-                |m: &mut CBilling_Address| { &mut m.zip_plus4 },
+                |m: &CBilling_Address| &m.zip_plus4,
+                |m: &mut CBilling_Address| &mut m.zip_plus4,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "phone",
-                |m: &CBilling_Address| { &m.phone },
-                |m: &mut CBilling_Address| { &mut m.phone },
+                |m: &CBilling_Address| &m.phone,
+                |m: &mut CBilling_Address| &mut m.phone,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CBilling_Address>(
                 "CBilling_Address",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -8277,7 +8606,7 @@ impl ::protobuf::reflect::ProtobufValue for CBilling_Address {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub struct CPackageReservationStatus {
     // message fields
@@ -8309,7 +8638,6 @@ impl CPackageReservationStatus {
 
     // optional uint32 packageid = 1;
 
-
     pub fn get_packageid(&self) -> u32 {
         self.packageid.unwrap_or(0)
     }
@@ -8327,7 +8655,6 @@ impl CPackageReservationStatus {
     }
 
     // optional int32 reservation_state = 2;
-
 
     pub fn get_reservation_state(&self) -> i32 {
         self.reservation_state.unwrap_or(0)
@@ -8347,7 +8674,6 @@ impl CPackageReservationStatus {
 
     // optional int32 queue_position = 3;
 
-
     pub fn get_queue_position(&self) -> i32 {
         self.queue_position.unwrap_or(0)
     }
@@ -8366,7 +8692,6 @@ impl CPackageReservationStatus {
 
     // optional int32 total_queue_size = 4;
 
-
     pub fn get_total_queue_size(&self) -> i32 {
         self.total_queue_size.unwrap_or(0)
     }
@@ -8384,7 +8709,6 @@ impl CPackageReservationStatus {
     }
 
     // optional string reservation_country_code = 5;
-
 
     pub fn get_reservation_country_code(&self) -> &str {
         match self.reservation_country_code.as_ref() {
@@ -8416,11 +8740,12 @@ impl CPackageReservationStatus {
 
     // Take field
     pub fn take_reservation_country_code(&mut self) -> ::std::string::String {
-        self.reservation_country_code.take().unwrap_or_else(|| ::std::string::String::new())
+        self.reservation_country_code
+            .take()
+            .unwrap_or_else(|| ::std::string::String::new())
     }
 
     // optional bool expired = 6;
-
 
     pub fn get_expired(&self) -> bool {
         self.expired.unwrap_or(false)
@@ -8440,7 +8765,6 @@ impl CPackageReservationStatus {
 
     // optional uint32 time_expires = 7;
 
-
     pub fn get_time_expires(&self) -> u32 {
         self.time_expires.unwrap_or(0)
     }
@@ -8458,7 +8782,6 @@ impl CPackageReservationStatus {
     }
 
     // optional uint32 time_reserved = 8;
-
 
     pub fn get_time_reserved(&self) -> u32 {
         self.time_reserved.unwrap_or(0)
@@ -8492,55 +8815,55 @@ impl ::protobuf::Message for CPackageReservationStatus {
                     }
                     let tmp = is.read_uint32()?;
                     self.packageid = ::std::option::Option::Some(tmp);
-                },
+                }
                 2 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.reservation_state = ::std::option::Option::Some(tmp);
-                },
+                }
                 3 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.queue_position = ::std::option::Option::Some(tmp);
-                },
+                }
                 4 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_int32()?;
                     self.total_queue_size = ::std::option::Option::Some(tmp);
-                },
+                }
                 5 => {
                     ::protobuf::rt::read_singular_string_into(wire_type, is, &mut self.reservation_country_code)?;
-                },
+                }
                 6 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_bool()?;
                     self.expired = ::std::option::Option::Some(tmp);
-                },
+                }
                 7 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.time_expires = ::std::option::Option::Some(tmp);
-                },
+                }
                 8 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
                         return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
                     }
                     let tmp = is.read_uint32()?;
                     self.time_reserved = ::std::option::Option::Some(tmp);
-                },
+                }
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -8639,53 +8962,78 @@ impl ::protobuf::Message for CPackageReservationStatus {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "packageid",
-                |m: &CPackageReservationStatus| { &m.packageid },
-                |m: &mut CPackageReservationStatus| { &mut m.packageid },
+                |m: &CPackageReservationStatus| &m.packageid,
+                |m: &mut CPackageReservationStatus| &mut m.packageid,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "reservation_state",
-                |m: &CPackageReservationStatus| { &m.reservation_state },
-                |m: &mut CPackageReservationStatus| { &mut m.reservation_state },
+                |m: &CPackageReservationStatus| &m.reservation_state,
+                |m: &mut CPackageReservationStatus| &mut m.reservation_state,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "queue_position",
-                |m: &CPackageReservationStatus| { &m.queue_position },
-                |m: &mut CPackageReservationStatus| { &mut m.queue_position },
+                |m: &CPackageReservationStatus| &m.queue_position,
+                |m: &mut CPackageReservationStatus| &mut m.queue_position,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "total_queue_size",
-                |m: &CPackageReservationStatus| { &m.total_queue_size },
-                |m: &mut CPackageReservationStatus| { &mut m.total_queue_size },
+                |m: &CPackageReservationStatus| &m.total_queue_size,
+                |m: &mut CPackageReservationStatus| &mut m.total_queue_size,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_singular_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "reservation_country_code",
-                |m: &CPackageReservationStatus| { &m.reservation_country_code },
-                |m: &mut CPackageReservationStatus| { &mut m.reservation_country_code },
+                |m: &CPackageReservationStatus| &m.reservation_country_code,
+                |m: &mut CPackageReservationStatus| &mut m.reservation_country_code,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "expired",
-                |m: &CPackageReservationStatus| { &m.expired },
-                |m: &mut CPackageReservationStatus| { &mut m.expired },
+                |m: &CPackageReservationStatus| &m.expired,
+                |m: &mut CPackageReservationStatus| &mut m.expired,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "time_expires",
-                |m: &CPackageReservationStatus| { &m.time_expires },
-                |m: &mut CPackageReservationStatus| { &mut m.time_expires },
+                |m: &CPackageReservationStatus| &m.time_expires,
+                |m: &mut CPackageReservationStatus| &mut m.time_expires,
             ));
-            fields.push(::protobuf::reflect::accessor::make_option_accessor::<_, ::protobuf::types::ProtobufTypeUint32>(
+            fields.push(::protobuf::reflect::accessor::make_option_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeUint32,
+            >(
                 "time_reserved",
-                |m: &CPackageReservationStatus| { &m.time_reserved },
-                |m: &mut CPackageReservationStatus| { &mut m.time_reserved },
+                |m: &CPackageReservationStatus| &m.time_reserved,
+                |m: &mut CPackageReservationStatus| &mut m.time_reserved,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CPackageReservationStatus>(
                 "CPackageReservationStatus",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -8722,7 +9070,7 @@ impl ::protobuf::reflect::ProtobufValue for CPackageReservationStatus {
     }
 }
 
-#[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum EProtoClanEventType {
     k_EClanOtherEvent = 1,
@@ -8804,7 +9152,7 @@ impl ::protobuf::ProtobufEnum for EProtoClanEventType {
             33 => ::std::option::Option::Some(EProtoClanEventType::k_EClanSeasonUpdate),
             34 => ::std::option::Option::Some(EProtoClanEventType::k_EClanCrosspostEvent),
             35 => ::std::option::Option::Some(EProtoClanEventType::k_EClanInGameEventGeneral),
-            _ => ::std::option::Option::None
+            _ => ::std::option::Option::None,
         }
     }
 
@@ -8852,13 +9200,15 @@ impl ::protobuf::ProtobufEnum for EProtoClanEventType {
     fn enum_descriptor_static() -> &'static ::protobuf::reflect::EnumDescriptor {
         static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::EnumDescriptor> = ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
-            ::protobuf::reflect::EnumDescriptor::new_pb_name::<EProtoClanEventType>("EProtoClanEventType", file_descriptor_proto())
+            ::protobuf::reflect::EnumDescriptor::new_pb_name::<EProtoClanEventType>(
+                "EProtoClanEventType",
+                file_descriptor_proto(),
+            )
         })
     }
 }
 
-impl ::std::marker::Copy for EProtoClanEventType {
-}
+impl ::std::marker::Copy for EProtoClanEventType {}
 
 // Note, `Default` is implemented although default value is not 0
 impl ::std::default::Default for EProtoClanEventType {
@@ -8873,7 +9223,7 @@ impl ::protobuf::reflect::ProtobufValue for EProtoClanEventType {
     }
 }
 
-#[derive(Clone,PartialEq,Eq,Debug,Hash)]
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 pub enum PartnerEventNotificationType {
     k_EEventStart = 0,
@@ -8893,7 +9243,7 @@ impl ::protobuf::ProtobufEnum for PartnerEventNotificationType {
             1 => ::std::option::Option::Some(PartnerEventNotificationType::k_EEventBroadcastStart),
             2 => ::std::option::Option::Some(PartnerEventNotificationType::k_EEventMatchStart),
             3 => ::std::option::Option::Some(PartnerEventNotificationType::k_EEventPartnerMaxType),
-            _ => ::std::option::Option::None
+            _ => ::std::option::Option::None,
         }
     }
 
@@ -8910,13 +9260,15 @@ impl ::protobuf::ProtobufEnum for PartnerEventNotificationType {
     fn enum_descriptor_static() -> &'static ::protobuf::reflect::EnumDescriptor {
         static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::EnumDescriptor> = ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
-            ::protobuf::reflect::EnumDescriptor::new_pb_name::<PartnerEventNotificationType>("PartnerEventNotificationType", file_descriptor_proto())
+            ::protobuf::reflect::EnumDescriptor::new_pb_name::<PartnerEventNotificationType>(
+                "PartnerEventNotificationType",
+                file_descriptor_proto(),
+            )
         })
     }
 }
 
-impl ::std::marker::Copy for PartnerEventNotificationType {
-}
+impl ::std::marker::Copy for PartnerEventNotificationType {}
 
 impl ::std::default::Default for PartnerEventNotificationType {
     fn default() -> Self {
@@ -8933,13 +9285,37 @@ impl ::protobuf::reflect::ProtobufValue for PartnerEventNotificationType {
 /// Extension fields
 pub mod exts {
 
-    pub const msgpool_soft_limit: ::protobuf::ext::ExtFieldOptional<::protobuf::descriptor::MessageOptions, ::protobuf::types::ProtobufTypeInt32> = ::protobuf::ext::ExtFieldOptional { field_number: 50000, phantom: ::std::marker::PhantomData };
+    pub const msgpool_soft_limit: ::protobuf::ext::ExtFieldOptional<
+        ::protobuf::descriptor::MessageOptions,
+        ::protobuf::types::ProtobufTypeInt32,
+    > = ::protobuf::ext::ExtFieldOptional {
+        field_number: 50000,
+        phantom: ::std::marker::PhantomData,
+    };
 
-    pub const msgpool_hard_limit: ::protobuf::ext::ExtFieldOptional<::protobuf::descriptor::MessageOptions, ::protobuf::types::ProtobufTypeInt32> = ::protobuf::ext::ExtFieldOptional { field_number: 50001, phantom: ::std::marker::PhantomData };
+    pub const msgpool_hard_limit: ::protobuf::ext::ExtFieldOptional<
+        ::protobuf::descriptor::MessageOptions,
+        ::protobuf::types::ProtobufTypeInt32,
+    > = ::protobuf::ext::ExtFieldOptional {
+        field_number: 50001,
+        phantom: ::std::marker::PhantomData,
+    };
 
-    pub const force_php_generation: ::protobuf::ext::ExtFieldOptional<::protobuf::descriptor::FileOptions, ::protobuf::types::ProtobufTypeBool> = ::protobuf::ext::ExtFieldOptional { field_number: 50000, phantom: ::std::marker::PhantomData };
+    pub const force_php_generation: ::protobuf::ext::ExtFieldOptional<
+        ::protobuf::descriptor::FileOptions,
+        ::protobuf::types::ProtobufTypeBool,
+    > = ::protobuf::ext::ExtFieldOptional {
+        field_number: 50000,
+        phantom: ::std::marker::PhantomData,
+    };
 
-    pub const php_output_always_number: ::protobuf::ext::ExtFieldOptional<::protobuf::descriptor::FieldOptions, ::protobuf::types::ProtobufTypeBool> = ::protobuf::ext::ExtFieldOptional { field_number: 50020, phantom: ::std::marker::PhantomData };
+    pub const php_output_always_number: ::protobuf::ext::ExtFieldOptional<
+        ::protobuf::descriptor::FieldOptions,
+        ::protobuf::types::ProtobufTypeBool,
+    > = ::protobuf::ext::ExtFieldOptional {
+        field_number: 50020,
+        phantom: ::std::marker::PhantomData,
+    };
 }
 
 static file_descriptor_proto_data: &'static [u8] = b"\
@@ -9120,14 +9496,13 @@ static file_descriptor_proto_data: &'static [u8] = b"\
     \x15phpOutputAlwaysNumberB\tH\x01\x80\x01\x01\x80\xb5\x18\x01\
 ";
 
-static file_descriptor_proto_lazy: ::protobuf::rt::LazyV2<::protobuf::descriptor::FileDescriptorProto> = ::protobuf::rt::LazyV2::INIT;
+static file_descriptor_proto_lazy: ::protobuf::rt::LazyV2<::protobuf::descriptor::FileDescriptorProto> =
+    ::protobuf::rt::LazyV2::INIT;
 
 fn parse_descriptor_proto() -> ::protobuf::descriptor::FileDescriptorProto {
     ::protobuf::Message::parse_from_bytes(file_descriptor_proto_data).unwrap()
 }
 
 pub fn file_descriptor_proto() -> &'static ::protobuf::descriptor::FileDescriptorProto {
-    file_descriptor_proto_lazy.get(|| {
-        parse_descriptor_proto()
-    })
+    file_descriptor_proto_lazy.get(|| parse_descriptor_proto())
 }

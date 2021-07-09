@@ -44,7 +44,7 @@
 // pub mod steammessages_contentsystem_steamclient;
 // pub mod steammessages_cloud_steamclient;
 pub mod steammessages_clientserver_login;
-// pub mod steammessages_clientserver_friends;
+pub mod steammessages_clientserver_friends;
 // pub mod steammessages_clientserver_2;
 // pub mod steammessages_clientserver;
 // pub mod steammessages_clientmetrics_steamclient;
