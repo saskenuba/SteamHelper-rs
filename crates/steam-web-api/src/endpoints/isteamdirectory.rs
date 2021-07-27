@@ -12,7 +12,7 @@ convert_with_endpoint!(@GetQueryBuilder -> @ISteamDirectory);
 #[derive(Parameters, Serialize, Debug, Default)]
 #[doc(hidden)]
 pub struct GetCMListParameters {
-    cellid: u32,
+    cellid: Option<u32>,
     maxcount: Option<u32>,
 }
 
@@ -20,7 +20,7 @@ pub struct GetCMListParameters {
 #[derive(Parameters, Serialize, Debug, Default)]
 #[doc(hidden)]
 pub struct GetCSListParameters {
-    cellid: u32,
+    cellid: Option<u32>,
     maxcount: Option<u32>,
 }
 

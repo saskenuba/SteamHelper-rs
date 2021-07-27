@@ -21,9 +21,9 @@ enum VecMethod {
 }
 
 #[proc_macro_attribute]
-pub fn interface(_attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn interface(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as DeriveInput);
-    let attribute = _attr.to_string();
+    let attribute = attr.to_string();
 
     let name = &input.ident;
     let my_ident = name.to_string();
@@ -165,7 +165,7 @@ fn process_fields(fields: &SimpleFields) -> Vec<proc_macro2::TokenStream> {
     tokens
 }
 
-fn is_comma_or_indexed(field: &&Field) -> VecMethod {
+fn is_comma_or_indexed(field: &Field) -> VecMethod {
     let is_vec_marked = &field
         .attrs
         .iter()
@@ -184,7 +184,7 @@ fn is_comma_or_indexed(field: &&Field) -> VecMethod {
     }
 }
 
-fn get_fields(derive_input: &syn::DeriveInput) -> Option<&SimpleFields> {
+const fn get_fields(derive_input: &syn::DeriveInput) -> Option<&SimpleFields> {
     if let Data::Struct(data_struct) = &derive_input.data {
         if let Fields::Named(fields) = &data_struct.fields {
             Some(&fields.named)
