@@ -57,8 +57,8 @@ use crate::types::trade_offer_web::{
     TradeOfferGenericErrorResponse, TradeOfferGenericRequest, TradeOfferParams,
 };
 use crate::types::TradeKind;
-use std::time::Duration;
 use futures_timer::Delay;
+use std::time::Duration;
 
 pub mod api_extensions;
 mod errors;
@@ -384,7 +384,7 @@ impl<'a> SteamTradeManager<'a> {
 
         request.set_sessionid(session_id_cookie);
 
-        let response_text = self
+        let response_text: String = self
             .authenticator
             .request_custom_endpoint(tradeoffer_endpoint, Method::POST, header, Some(request))
             .and_then(|response| response.text())
@@ -404,7 +404,8 @@ impl<'a> SteamTradeManager<'a> {
                         Err(tradeoffer_error_from_eresult(eresult).into())
                     }
                 } else {
-                    Err(OfferError::GeneralFailure("Something went terribly wrong.".to_string()).into())
+                    tracing::error!("Failure to deserialize a valid response Steam Offer response. Maybe Steam Servers are offline.");
+                    Err(OfferError::GeneralFailure(format!("Steam Response: {}", response_text)).into())
                 }
             }
         }
