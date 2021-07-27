@@ -1,6 +1,8 @@
 use std::borrow::Cow;
 
+use crate::errors::LoginError;
 use serde::{Deserialize, Serialize};
+
 use steam_language_gen::generated::enums::EResult;
 
 #[derive(Serialize, Debug, Clone)]
@@ -259,4 +261,25 @@ pub struct ResolveVanityUrlRequest {
     api_key: String,
     #[serde(rename = "vanityurl")]
     vanity_url: String,
+}
+
+pub fn resolve_login_response(response_text: String) -> Result<LoginResponseMobile, LoginError> {
+    if let Ok(login_resp) = serde_json::from_str::<LoginResponseMobile>(&*response_text) {
+        Ok(login_resp)
+    } else {
+        // checks for captcha error
+        if let Ok(res) = serde_json::from_str::<LoginErrorCaptcha>(&*response_text) {
+            tracing::warn!("Captcha is required.");
+            return Err(LoginError::CaptchaRequired {
+                captcha_guid: res.captcha_gid,
+            });
+        }
+
+        if response_text.contains("account name or password that you have entered is incorrect") {
+            return Err(LoginError::IncorrectCredentials);
+        }
+
+        tracing::warn!("Generic error {:?}", response_text);
+        Err(LoginError::GeneralFailure(response_text))
+    }
 }

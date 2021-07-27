@@ -45,6 +45,8 @@ pub enum LoginError {
     NeedSteamID,
     #[error("Parental unlock error `{0}`")]
     ParentalUnlock(String),
+    #[error("Account name or password entered are incorrect.")]
+    IncorrectCredentials,
     #[error("Requires a captcha code. If a previous attempt was made, the captcha was probably incorrect. \
     Captcha GUID: `{0}`", .captcha_guid)]
     CaptchaRequired { captcha_guid: String },

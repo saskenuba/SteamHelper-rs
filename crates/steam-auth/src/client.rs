@@ -13,18 +13,18 @@ use crate::errors::{AuthError, LinkerError, LoginError};
 use crate::retry::login_retry_strategy;
 use crate::types::LoginCaptcha;
 use crate::utils::{dump_cookies_by_domain, dump_cookies_by_name, retrieve_header_location};
+use crate::web_handler::confirmation::Confirmations;
+use crate::web_handler::login::login_website;
 use crate::web_handler::steam_guard_linker::{
     account_has_phone, add_authenticator_to_account, add_phone_to_account, check_email_confirmation, check_sms,
     finalize, validate_phone_number, AddAuthenticatorStep, STEAM_ADD_PHONE_CATCHUP_SECS,
 };
-use crate::web_handler::confirmation::Confirmations;
-use crate::web_handler::login::login_website;
 use crate::web_handler::{cache_resolve, confirmations_retrieve_all, confirmations_send, parental_unlock};
 use crate::{CachedInfo, ConfirmationMethod, MobileAuthFile, User, STEAM_COMMUNITY_HOST};
 use backoff::future::retry;
+use futures::TryFutureExt;
 use futures_timer::Delay;
 use std::time::Duration;
-use futures::TryFutureExt;
 
 #[derive(Debug)]
 /// Main authenticator. We use it to spawn and act as our "mobile" client.
@@ -87,10 +87,12 @@ impl SteamAuthenticator {
         retry(login_retry_strategy(), || async {
             login_website(&self.client, &self.user, self.cached_data.borrow_mut(), captcha.clone())
                 .await
-                .map_err(|error| {
-                    if let LoginError::CaptchaRequired { captcha_guid } = error {
+                .map_err(|error| match error {
+                    LoginError::IncorrectCredentials => backoff::Error::Permanent(LoginError::IncorrectCredentials),
+                    LoginError::CaptchaRequired { captcha_guid } => {
                         backoff::Error::Permanent(LoginError::CaptchaRequired { captcha_guid })
-                    } else {
+                    }
+                    _ => {
                         warn!("Transient error happened: Trying again..");
                         backoff::Error::Transient(error)
                     }

@@ -10,11 +10,10 @@ use reqwest::{Client, Method};
 use rsa::padding::PaddingScheme;
 use rsa::{BigUint, PublicKey, RSAPublicKey};
 use steam_totp::{Secret, Time};
-use tracing::warn;
 
 use crate::client::MobileClient;
 use crate::errors::LoginError;
-use crate::types::{LoginCaptcha, LoginErrorCaptcha, LoginRequest, LoginResponseMobile, RSAResponse};
+use crate::types::{resolve_login_response, LoginCaptcha, LoginRequest, LoginResponseMobile, RSAResponse};
 use crate::{
     CachedInfo, User, MOBILE_REFERER, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_DELAY_MS, STEAM_HELP_HOST,
     STEAM_STORE_HOST,
@@ -103,7 +102,7 @@ pub(crate) async fn login_website<'a, LC: Into<Option<LoginCaptcha<'a>>>>(
 
     // rsa handling
     let response = rsa_response.json::<RSAResponse>().await.unwrap();
-    let encrypted_pwd_b64 = website_handle_rsa(&user, response.clone());
+    let encrypted_pwd_b64 = website_handle_rsa(user, response.clone());
 
     let offset = Time::offset().await.unwrap();
     let time = Time::now(Some(offset)).unwrap();
@@ -113,8 +112,7 @@ pub(crate) async fn login_website<'a, LC: Into<Option<LoginCaptcha<'a>>>>(
         .linked_mafile
         .as_ref()
         .map(|f| Secret::from_b64(&f.shared_secret).unwrap())
-        .map(|s| steam_totp::generate_auth_code(s, time))
-        .unwrap_or_else(|| "".to_string());
+        .map_or_else(|| "".to_string(), |s| steam_totp::generate_auth_code(s, time));
 
     let login_captcha = captcha.into();
 
@@ -124,8 +122,8 @@ pub(crate) async fn login_website<'a, LC: Into<Option<LoginCaptcha<'a>>>>(
         username: &user.username,
         twofactorcode: &two_factor_code,
         emailauth: "",
-        captcha_gid: login_captcha.as_ref().map(|x| x.guid).unwrap_or_else(|| "-1"),
-        captcha_text: login_captcha.map(|x| x.text).unwrap_or_else(|| ""),
+        captcha_gid: login_captcha.as_ref().map_or_else(|| "-1", |x| x.guid),
+        captcha_text: login_captcha.map_or_else(|| "", |x| x.text),
         emailsteamid: "",
         rsa_timestamp: response.timestamp,
         ..Default::default()
@@ -139,20 +137,7 @@ pub(crate) async fn login_website<'a, LC: Into<Option<LoginCaptcha<'a>>>>(
         .await?;
 
     let login_response_text = login_response.text().await?;
-    let login_response_json = serde_json::from_str::<LoginResponseMobile>(&*login_response_text).map_err(|_| {
-        match serde_json::from_str::<LoginErrorCaptcha>(&*login_response_text) {
-            Ok(res) => {
-                warn!("Captcha is required.");
-                LoginError::CaptchaRequired {
-                    captcha_guid: res.captcha_gid,
-                }
-            }
-            Err(_) => {
-                warn!("Generic error {:?}", login_response_text);
-                LoginError::GeneralFailure(login_response_text)
-            }
-        }
-    })?;
+    let login_response_json = resolve_login_response(login_response_text)?;
 
     let steamid = login_response_json.oauth.steamid;
     let oauth_token = login_response_json.oauth.oauth_token;
@@ -166,32 +151,30 @@ pub(crate) async fn login_website<'a, LC: Into<Option<LoginCaptcha<'a>>>>(
     {
         // Recover cookies to authorize store.steampowered and help.steampowered subdomains.
         let mut cookie_jar = client.cookie_store.borrow_mut();
-        vec![STEAM_COMMUNITY_HOST, STEAM_HELP_HOST, STEAM_STORE_HOST]
-            .into_iter()
-            .for_each(|host| {
-                let timezone_offset = format!("{},0", chrono::Local::now().offset().fix().local_minus_utc());
-                let fmt_token = format!("{}%7C%7C{}", steamid, token);
-                let fmt_secure_token = format!("{}%7C%7C{}", steamid, token_secure);
-                cookie_jar.add_original(
-                    Cookie::build("steamLoginSecure", fmt_secure_token)
-                        .domain(host)
-                        .path("/")
-                        .finish(),
-                );
-                cookie_jar.add_original(Cookie::build("steamLogin", fmt_token).domain(host).path("/").finish());
-                cookie_jar.add_original(
-                    Cookie::build("sessionid", session_id.clone())
-                        .domain(host)
-                        .path("/")
-                        .finish(),
-                );
-                cookie_jar.add_original(
-                    Cookie::build("timezoneOffset", timezone_offset)
-                        .domain(host)
-                        .path("/")
-                        .finish(),
-                );
-            });
+        for host in &[STEAM_COMMUNITY_HOST, STEAM_HELP_HOST, STEAM_STORE_HOST] {
+            let timezone_offset = format!("{},0", chrono::Local::now().offset().fix().local_minus_utc());
+            let fmt_token = format!("{}%7C%7C{}", steamid, token);
+            let fmt_secure_token = format!("{}%7C%7C{}", steamid, token_secure);
+            cookie_jar.add_original(
+                Cookie::build("steamLoginSecure", fmt_secure_token)
+                    .domain(*host)
+                    .path("/")
+                    .finish(),
+            );
+            cookie_jar.add_original(Cookie::build("steamLogin", fmt_token).domain(*host).path("/").finish());
+            cookie_jar.add_original(
+                Cookie::build("sessionid", session_id.clone())
+                    .domain(*host)
+                    .path("/")
+                    .finish(),
+            );
+            cookie_jar.add_original(
+                Cookie::build("timezoneOffset", timezone_offset)
+                    .domain(*host)
+                    .path("/")
+                    .finish(),
+            );
+        }
     }
 
     Ok(())
