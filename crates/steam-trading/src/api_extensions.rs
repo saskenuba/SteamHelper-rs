@@ -31,7 +31,7 @@ impl FilterBy<TradeOffer_Trade> for GetTradeOffersResponse {
         match (trades_sent, trades_received) {
             (Some(sent), Some(received)) => sent.into_iter().chain(received.into_iter()).partition(|c| filter_fn(c)),
             (None, Some(trades)) | (Some(trades), None) => trades.into_iter().partition(|c| filter_fn(c)),
-            _ => unreachable!(),
+            _ => (vec![], vec![]),
         }
     }
 }

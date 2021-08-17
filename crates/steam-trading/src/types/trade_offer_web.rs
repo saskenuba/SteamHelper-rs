@@ -3,6 +3,7 @@ use steam_language_gen::generated::enums::EResult;
 
 use crate::types::sessionid::{HasSessionID, SessionID};
 use crate::{AssetCollection, TradeOffer};
+use std::str::FromStr;
 
 macro_rules! impl_sessionid {
     ($name:ident) => {
@@ -59,15 +60,14 @@ pub(crate) struct TradeOfferAcceptRequest {
     pub tradeofferid: i64,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 /// Response after the creation of a new trade offer.
 ///
 /// There is no need of confirmations if not trading items from self account.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TradeOfferCreateResponse {
     /// This is the trade offer ID of our offer. We can use this to mobile confirm.
     /// Ex: 4112828817
-    #[serde(with = "serde_with::rust::display_fromstr")]
-    pub tradeofferid: i64,
+    pub tradeofferid: Option<String>,
     pub needs_mobile_confirmation: Option<bool>,
     pub needs_email_confirmation: Option<bool>,
     pub email_domain: Option<String>,

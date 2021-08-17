@@ -50,7 +50,10 @@ pub enum OfferError {
     )]
     InvalidState,
 
-    #[error("This trade offer if could not be found. Are you sure this is the correct id?")]
+    #[error(
+        "This trade offer id could not be found. It may be already canceled or even accepted.\
+         Are you sure this is the correct id?"
+    )]
     NoMatch,
 
     #[error(

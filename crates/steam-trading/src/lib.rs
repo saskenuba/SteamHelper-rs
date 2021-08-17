@@ -58,6 +58,7 @@ use crate::types::trade_offer_web::{
 };
 use crate::types::TradeKind;
 use futures_timer::Delay;
+use std::str::FromStr;
 use std::time::Duration;
 
 pub mod api_extensions;
@@ -269,25 +270,56 @@ impl<'a> SteamTradeManager<'a> {
     /// Convenience function to create a trade offer.
     /// Returns the trade offer id.
     pub async fn create_offer(&self, tradeoffer: TradeOffer) -> Result<i64, TradeError> {
-        self.request(TradeKind::Create(tradeoffer), None)
-            .map_ok(|c: TradeOfferCreateResponse| c.tradeofferid)
+        self.request::<TradeOfferCreateResponse>(TradeKind::Create(tradeoffer), None)
+            .map_ok(|c| c.tradeofferid.map(|x| i64::from_str(&*x).unwrap()).unwrap())
             .await
     }
 
     /// Convenience function to accept a single trade offer that was made to this account.
+    ///
+    /// Note: It will confirm with the mobile authenticator, be extra careful when accepting any request.
     pub async fn accept_offer(&self, tradeoffer_id: i64) -> Result<(), TradeError> {
-        self.request(TradeKind::Accept, Some(tradeoffer_id)).await?;
-        Ok(())
+        let resp: TradeOfferCreateResponse = self.request(TradeKind::Accept, Some(tradeoffer_id)).await?;
+
+        if resp.needs_mobile_confirmation.is_none() && !resp.needs_mobile_confirmation.unwrap() {
+            return Ok(());
+        }
+
+        let confirmations: Option<Confirmations> = self
+            .authenticator
+            .fetch_confirmations()
+            .inspect_ok(|_| debug!("Confirmations fetched successfully."))
+            .await?
+            .map(|mut conf: Confirmations| {
+                debug!("{:#?}", conf);
+                conf.filter_by_trade_offer_ids(&[tradeoffer_id]);
+                conf
+            });
+
+        // If for some reason we end up not finding the confirmation, return an error
+        if confirmations.is_none() {
+            return Err(ConfirmationError::NotFound.into());
+        }
+
+        self.authenticator
+            .process_confirmations(ConfirmationMethod::Accept, confirmations.unwrap())
+            .err_into()
+            .await
+            .map(|_| ())
     }
 
     /// Convenience function to deny a single trade offer that was made to this account.
     pub async fn deny_offer(&self, tradeoffer_id: i64) -> Result<(), TradeError> {
+
+        // fixme: retrieve correct type or this will panic
         self.request(TradeKind::Decline, Some(tradeoffer_id)).await?;
         Ok(())
     }
 
     /// Convenience function to cancel a single trade offer that was created by this account.
     pub async fn cancel_offer(&self, tradeoffer_id: i64) -> Result<(), TradeError> {
+
+        // fixme: retrieve correct type or this will panic
         self.request(TradeKind::Cancel, Some(tradeoffer_id)).await?;
         Ok(())
     }
@@ -355,7 +387,7 @@ impl<'a> SteamTradeManager<'a> {
                     .first()
                     .map(|c| SteamID::from_steam3(c.tradeofferid as u32, None, None))
                     .map(|steamid| steamid.to_steam64())
-                    .unwrap();
+                    .ok_or(OfferError::NoMatch)?;
 
                 let trade_request_data = TradeOfferAcceptRequest {
                     common: TradeOfferCommonParameters {
@@ -399,9 +431,12 @@ impl<'a> SteamTradeManager<'a> {
                     if resp.error_message.is_some() {
                         let err_msg = resp.error_message.unwrap();
                         Err(error_from_strmessage(&*err_msg).unwrap().into())
-                    } else {
+                    } else if resp.eresult.is_some() {
                         let eresult = resp.eresult.unwrap();
                         Err(tradeoffer_error_from_eresult(eresult).into())
+                    } else {
+                        tracing::error!("Unable to understand Steam Response. Please report it as bug.");
+                        Err(OfferError::GeneralFailure(format!("Steam Response: {}", response_text)).into())
                     }
                 } else {
                     tracing::error!("Failure to deserialize a valid response Steam Offer response. Maybe Steam Servers are offline.");
