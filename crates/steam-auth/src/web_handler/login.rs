@@ -32,7 +32,7 @@ type LoginResult<T> = Result<T, LoginError>;
 /// Currently not possible without the implementation of the [steam-client] crate.
 /// For website that currently works, check [login_website] method.
 async fn login_isteam_user_auth(_client: &Client, _user: User, _webapi_nonce: &[u8]) -> LoginResult<()> {
-    let _session_key = steam_crypto::generate_session_key(None).unwrap();
+    // let _session_key = steam_crypto::generate_session_key(None).unwrap();
 
     unimplemented!();
 }
