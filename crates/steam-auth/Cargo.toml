@@ -21,7 +21,6 @@ chrono = "0.4"
 const_format = "^0.2"
 cookie = { git = "https://github.com/saskenuba/cookie-rs", branch = "master" }
 hex = "0.4"
-itertools = "0.9"
 num-traits = "0.2"
 num-derive = "0.3"
 rand = "0.7"
@@ -43,8 +42,7 @@ futures = "^0.3"
 futures-util = "0.3.15"
 futures-timer = "^3"
 
-strum = "0.19.5"
-strum_macros = "0.19.4"
+strum_macros = "0.21"
 
 anyhow = { version = "1", optional = true }
 dialoguer = { version = "^0.8", optional = true }
@@ -56,12 +54,11 @@ version = "3.0.0-beta.2"
 optional = true
 
 [dependencies.steam-totp]
+version = "^0.2"
 path = "../steam-totp"
 
-[dependencies.steam-crypto]
-path = "../steam-crypto"
-
 [dependencies.steam-language-gen]
+version = "^0.1"
 path = "../steam-language-gen"
 
 [dependencies.steamid-parser]
