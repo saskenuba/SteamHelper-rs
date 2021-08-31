@@ -3,6 +3,9 @@ name = "steamid-parser"
 version = "0.2.0"
 authors = ["Martin <martin@hotmail.com.br>"]
 edition = "2018"
+repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steamid-parser"
+license = "MIT"
+description = "Utility crate for de/serialization of various Steam IDs, such as Steam3, Steam64."
 
 [features]
 default = ["serialize"]
@@ -16,6 +19,7 @@ regex = "1"
 serde = { version = "^1", optional = true }
 
 [dependencies.steam-language-gen]
+version = "0.1"
 path = "../steam-language-gen"
 
 [dev-dependencies]
