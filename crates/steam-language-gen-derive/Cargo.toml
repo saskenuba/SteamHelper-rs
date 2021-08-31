@@ -1,6 +1,6 @@
 [package]
 name = "steam-language-gen-derive"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Martin <martin@hotmail.com.br>"]
 edition = "2018"
 license = "MIT"
