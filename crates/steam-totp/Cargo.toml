@@ -3,7 +3,9 @@ name = "steam-totp"
 version = "0.2.1"
 authors = ["Martin <martin@hotmail.com.br>", "Leorii <leorii@pm.me>"]
 edition = "2018"
-publish = false
+repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-totp"
+license = "MIT"
+description = "Utility crate to generate Steam TOTP codes."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
