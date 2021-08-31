@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{generated::enums::EMsg, DeserializableBytes, HasJobId, MessageHeaderExt, SerializableBytes};
 
+use steam_language_gen_derive::MsgHeader;
 use steam_protobuf::steam::steammessages_base::CMsgProtoBufHeader;
 
 // add protobuf
