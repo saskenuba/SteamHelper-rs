@@ -1,6 +1,6 @@
 [package]
 name = "steam-trading"
-version = "0.3.2"
+version = "0.4.2"
 authors = ["Martin <martin@hotmail.com.br>"]
 edition = "2018"
 
