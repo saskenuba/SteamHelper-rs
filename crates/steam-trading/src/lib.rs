@@ -1,6 +1,6 @@
 //! Steam trade manager is the module that allows you to automate trade offers, by extending `SteamAuthenticator`.
 //!
-//! It inherently needs SteamAuthenticator as a dependency, since we need cookies from Steam Community and Steam Store
+//! It inherently needs `SteamAuthenticator` as a dependency, since we need cookies from Steam Community and Steam Store
 //! to be able to create and accept trade offers, along with mobile confirmations.
 //!
 //! **IT IS VERY IMPORTANT THAT STEAM GUARD IS ENABLED ON THE ACCOUNT BEING USED, WITH MOBILE CONFIRMATIONS.**
@@ -61,6 +61,7 @@ use futures_timer::Delay;
 use std::str::FromStr;
 use std::time::Duration;
 
+mod additional_checks;
 pub mod api_extensions;
 mod errors;
 #[cfg(feature = "time")]
@@ -310,7 +311,6 @@ impl<'a> SteamTradeManager<'a> {
 
     /// Convenience function to deny a single trade offer that was made to this account.
     pub async fn deny_offer(&self, tradeoffer_id: i64) -> Result<(), TradeError> {
-
         // fixme: retrieve correct type or this will panic
         self.request(TradeKind::Decline, Some(tradeoffer_id)).await?;
         Ok(())
@@ -318,7 +318,6 @@ impl<'a> SteamTradeManager<'a> {
 
     /// Convenience function to cancel a single trade offer that was created by this account.
     pub async fn cancel_offer(&self, tradeoffer_id: i64) -> Result<(), TradeError> {
-
         // fixme: retrieve correct type or this will panic
         self.request(TradeKind::Cancel, Some(tradeoffer_id)).await?;
         Ok(())
@@ -359,13 +358,20 @@ impl<'a> SteamTradeManager<'a> {
         let tradeoffer_endpoint = operation.endpoint(tradeoffer_id);
 
         let mut header: Option<HeaderMap> = None;
+        let mut partner_id_and_token = None;
+
         match &operation {
-            TradeKind::Create(_) => {
+            TradeKind::Create(offer) => {
                 header.replace(HeaderMap::new());
                 header
                     .as_mut()
                     .unwrap()
                     .insert("Referer", (TRADEOFFER_BASE.to_owned() + "new").parse().unwrap());
+
+                partner_id_and_token = Some((
+                    offer.their_tradelink.partner_id.clone(),
+                    offer.their_tradelink.token.clone(),
+                ));
             }
             TradeKind::Accept => {
                 header.replace(HeaderMap::new());
@@ -439,6 +445,15 @@ impl<'a> SteamTradeManager<'a> {
                         Err(OfferError::GeneralFailure(format!("Steam Response: {}", response_text)).into())
                     }
                 } else {
+                    if let Some((steamid, token)) = partner_id_and_token {
+                        let steam_guard_result =
+                            additional_checks::check_steam_guard_error(self.authenticator, steamid, &*token).await;
+
+                        if let Err(err) = steam_guard_result {
+                            return Err(err);
+                        }
+                    }
+
                     tracing::error!("Failure to deserialize a valid response Steam Offer response. Maybe Steam Servers are offline.");
                     Err(OfferError::GeneralFailure(format!("Steam Response: {}", response_text)).into())
                 }
@@ -451,12 +466,12 @@ impl<'a> SteamTradeManager<'a> {
     fn prepare_offer(tradeoffer: TradeOffer) -> Result<TradeOfferCreateRequest, TradeError> {
         TradeOffer::validate(&tradeoffer.my_assets, &tradeoffer.their_assets)?;
 
-        let (steamid3, trade_token) = TradeOffer::parse_url(&tradeoffer.their_trade_url)?;
+        let tradelink = tradeoffer.their_tradelink.clone();
 
-        let their_steamid64 = SteamID::from_steam3((&*steamid3).parse().unwrap(), None, None).to_steam64();
-        let trade_offer_params = trade_token.map(|token| TradeOfferParams {
-            trade_offer_access_token: token,
-        });
+        let their_steamid64 = tradelink.partner_id.to_steam64();
+        let trade_offer_params = TradeOfferParams {
+            trade_offer_access_token: tradelink.token,
+        };
 
         Ok(TradeOfferCreateRequest::new(
             their_steamid64,
@@ -709,12 +724,6 @@ mod tests {
 }
 "#;
         serde_json::from_str::<GetTradeHistoryResponse>(&response).unwrap()
-    }
-
-    #[test]
-    fn tradeoffer_url() {
-        let parsed = TradeOffer::parse_url(get_tradeoffer_url_with_token()).unwrap();
-        assert_eq!((String::from("79925588"), Some(String::from("Ob27qXzn"))), parsed)
     }
 
     #[test]

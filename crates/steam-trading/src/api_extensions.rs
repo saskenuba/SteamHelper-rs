@@ -100,10 +100,10 @@ impl HasAssets for TradeHistory_Trade {
         let received = self.assets_received;
 
         if let Some(asset) = given {
-            traded_assets.push(asset)
+            traded_assets.push(asset);
         }
         if let Some(asset) = received {
-            traded_assets.push(asset)
+            traded_assets.push(asset);
         }
 
         traded_assets.into_iter().flatten().collect()

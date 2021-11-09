@@ -3,7 +3,6 @@ use steam_language_gen::generated::enums::EResult;
 
 use crate::types::sessionid::{HasSessionID, SessionID};
 use crate::{AssetCollection, TradeOffer};
-use std::str::FromStr;
 
 macro_rules! impl_sessionid {
     ($name:ident) => {

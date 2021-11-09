@@ -47,6 +47,6 @@ mod tests {
     #[test]
     fn t_estimate() {
         let estimated = estimate_tradelock_end(trade_complete_time_sample(), ONE_WEEK_SECONDS);
-        assert_eq!(estimated.timestamp(), expected_tradelock_end())
+        assert_eq!(estimated.timestamp(), expected_tradelock_end());
     }
 }

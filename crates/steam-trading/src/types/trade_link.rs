@@ -15,7 +15,12 @@ lazy_static! {
     .unwrap();
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+/// A tradelink generated from Steam Trade Offer page.
+///
+/// # Notes
+/// A tradelink does not need a token if is from a friend.
+/// But Steam always generates one with a token, and it is also kind of pointless to remove the token, so they are standardized to have it.
 pub struct Tradelink {
     pub link: String,
     pub partner_id: SteamID,
@@ -72,9 +77,10 @@ impl Tradelink {
         let captures = TRADE_LINK_REGEX.captures(&trade_link).unwrap();
         let partner_id = captures
             .name("partner")
-            .map(|partner_id_raw| u32::from_str(partner_id_raw.as_str()).unwrap())
+            .and_then(|partner_id_raw| u32::from_str(partner_id_raw.as_str()).ok())
             .map(|partner_id| SteamID::from_steam3(partner_id, None, None))
-            .unwrap();
+            .ok_or_else(|| TradelinkError::Invalid)?;
+
         let token = captures.name("token").unwrap().as_str();
 
         Ok(Self {

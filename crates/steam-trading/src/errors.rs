@@ -17,6 +17,9 @@ pub enum TradeError {
     TradeOfferError(#[from] OfferError),
 
     #[error(transparent)]
+    TradeValidationError(#[from] OfferValidationError),
+
+    #[error(transparent)]
     SteamAPIError(#[from] SteamAPIError),
 
     #[error(transparent)]
@@ -36,14 +39,18 @@ pub enum TradelinkError {
 }
 
 #[derive(Error, Debug, PartialEq)]
-///
-pub enum OfferError {
-    #[error("The Tradeoffer URL was not valid.")]
-    InvalidTradeOfferUrl,
+#[non_exhaustive]
+pub enum OfferValidationError {
+    #[error(transparent)]
+    TradelinkError(#[from] TradelinkError),
 
     #[error("`{0}`")]
     InvalidTrade(String),
+}
 
+#[derive(Error, Debug, PartialEq)]
+#[non_exhaustive]
+pub enum OfferError {
     #[error(
         "This trade offer is in an invalid state, and cannot be acted upon. Perhaps you are trying to cancel a trade \
          offer that was already canceled, or something similar."
@@ -61,6 +68,12 @@ pub enum OfferError {
          inventory from which it was requested."
     )]
     Revoked,
+
+    #[error(
+        "This suggests that the user receiving the trade offer recently activated his mobile SteamGuard and \
+         is under the 7 day restriction period."
+    )]
+    SteamGuardRecentlyEnabled,
 
     #[error("General Failure: `{0}`")]
     GeneralFailure(String),
