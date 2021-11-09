@@ -1,6 +1,6 @@
 [package]
 name = "steam-auth"
-version = "0.2.3"
+version = "0.2.4"
 authors = ["Martin <martin@hotmail.com.br>"]
 repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-auth/"
 homepage = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-auth/"
