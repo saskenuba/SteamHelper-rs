@@ -35,8 +35,6 @@ pub async fn check_steam_guard_error(
         token
     );
 
-    authenticator.
-
     let response = authenticator
         .request_custom_endpoint(endpoint, Method::GET, None, None::<&u8>)
         .and_then(|x| x.text())
