@@ -21,8 +21,7 @@ pub(crate) fn confirmation_retrieve(confirmation_html: Html) -> Option<Vec<Confi
             let confirmation_type = element
                 .value()
                 .attr("data-type")
-                .map(|s| EConfirmationType::from_str(s).unwrap())
-                .unwrap_or(EConfirmationType::Unknown);
+                .map_or(EConfirmationType::Unknown, |s| EConfirmationType::from_str(s).unwrap());
 
             let tradeoffer_id = if let EConfirmationType::Trade = confirmation_type {
                 element.value().attr("data-creator").map(|s| i64::from_str(s).unwrap())
@@ -144,13 +143,13 @@ mod tests {
     fn test_multi_confirmation() {
         let api_doc = Html::parse_document(include_str!("../assets/multi_confirmation.html"));
         let confirmations = confirmation_retrieve(api_doc);
-        assert!(confirmations.is_some())
+        assert!(confirmations.is_some());
     }
 
     #[test]
     fn test_empty_confirmation() {
         let api_doc = Html::parse_document(include_str!("../assets/empty_confirmation.html"));
         let confirmations = confirmation_retrieve(api_doc);
-        assert!(confirmations.is_none())
+        assert!(confirmations.is_none());
     }
 }

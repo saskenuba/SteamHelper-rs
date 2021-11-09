@@ -17,7 +17,7 @@ cli = ["clap", "dialoguer", "anyhow", "tokio"]
 
 [dependencies]
 base64 = "0.13"
-bytes = "0.6"
+bytes = "^1.1"
 chrono = "0.4"
 const_format = "^0.2"
 cookie = { git = "https://github.com/saskenuba/cookie-rs", branch = "master" }
@@ -26,7 +26,7 @@ num-traits = "0.2"
 num-derive = "0.3"
 rand = "0.7"
 rsa = "0.3"
-reqwest = { version = "^0.11", features = ["json"] }
+reqwest = { version = "^0.11", features = ["cookies", "json"] }
 scraper = "0.12"
 serde = "1"
 serde_derive = "1"
@@ -46,7 +46,7 @@ futures-timer = "^3"
 strum_macros = "0.21"
 
 anyhow = { version = "1", optional = true }
-dialoguer = { version = "^0.8", optional = true }
+dialoguer = { version = "^0.9", optional = true }
 tokio = { version = "1.0.2", features = ["rt-multi-thread", "macros", "fs"], optional = true }
 
 # Clap 3.0

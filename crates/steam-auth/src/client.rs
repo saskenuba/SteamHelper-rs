@@ -399,7 +399,8 @@ impl MobileClient {
 
         reqwest::Client::builder()
             .user_agent(user_agent)
-            .redirect(Policy::none())
+            .cookie_store(true)
+            .redirect(Policy::limited(5))
             .default_headers(default_headers)
             .referer(false)
             .build()
