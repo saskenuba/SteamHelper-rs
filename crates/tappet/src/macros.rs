@@ -30,6 +30,7 @@ macro_rules! import {
             blocking::{Executor, ExecutorResponse, GetQueryBuilder, PostQueryBuilder},
             helpers::{comma_delimited, indexed_array, querify},
         };
+        use serde::{Deserialize, Serialize};
     };
 }
 

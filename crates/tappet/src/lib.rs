@@ -93,6 +93,8 @@ pub type Result<T> = std::result::Result<T, SteamAPIError>;
 pub mod blocking {
     use serde::de::DeserializeOwned;
 
+    use crate::Result;
+
     /// Requests the endpoint and returns the raw response.
     pub trait Executor {
         fn execute(self) -> Result<String>;
