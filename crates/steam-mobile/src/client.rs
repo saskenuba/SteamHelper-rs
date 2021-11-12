@@ -34,8 +34,8 @@ use std::time::Duration;
 /// # Example: Fetch mobile notifications
 ///
 /// ```rust
-/// use steam_auth::client::SteamAuthenticator;
-/// use steam_auth::User;
+/// use steam_mobile::client::SteamAuthenticator;
+/// use steam_mobile::User;
 /// ```
 pub struct SteamAuthenticator {
     /// Inner client with cookie storage

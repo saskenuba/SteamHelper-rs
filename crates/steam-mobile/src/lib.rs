@@ -71,7 +71,7 @@ const MOBILE_REFERER: &str = concatcp!(
 ///
 /// A simple implementation that has everything required to work properly:
 /// ```no_run
-/// use steam_auth::User;
+/// use steam_mobile::User;
 ///
 /// User::build()
 ///     .username("test_username")

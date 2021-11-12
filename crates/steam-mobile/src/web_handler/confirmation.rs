@@ -62,9 +62,9 @@ impl Confirmations {
     ///
     /// # Example
     /// ```no_run
-    /// use steam_auth::{ConfirmationMethod, EConfirmationType, User};
-    /// # use steam_auth::client::SteamAuthenticator;
-    /// # use steam_auth::Confirmations;
+    /// use steam_mobile::{ConfirmationMethod, EConfirmationType, User};
+    /// # use steam_mobile::client::SteamAuthenticator;
+    /// # use steam_mobile::Confirmations;
     ///
     /// # #[tokio::main]
     /// # async fn main() {
@@ -94,9 +94,9 @@ impl Confirmations {
     ///
     /// # Example
     /// ```no_run
-    /// # use steam_auth::{ConfirmationMethod, EConfirmationType, User};
-    /// # use steam_auth::client::SteamAuthenticator;
-    /// # use steam_auth::Confirmations;
+    /// # use steam_mobile::{ConfirmationMethod, EConfirmationType, User};
+    /// # use steam_mobile::client::SteamAuthenticator;
+    /// # use steam_mobile::Confirmations;
     ///
     /// # #[tokio::main]
     /// # async fn main() {

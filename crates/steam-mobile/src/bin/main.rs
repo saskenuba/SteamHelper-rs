@@ -7,14 +7,14 @@ use std::path::PathBuf;
 use anyhow::Result;
 use clap::{App, Arg};
 use dialoguer::{Confirm, Input};
-use steam_auth::client::SteamAuthenticator;
-use steam_auth::errors::{AuthError, LoginError};
-use steam_auth::{format_captcha_url, AddAuthenticatorStep, MobileAuthFile, User};
+use steam_mobile::client::SteamAuthenticator;
+use steam_mobile::errors::{AuthError, LoginError};
+use steam_mobile::{format_captcha_url, AddAuthenticatorStep, MobileAuthFile, User};
 use steam_totp::{generate_auth_code_async, Secret};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let matches = App::new("steam-auth")
+    let matches = App::new("steam-mobile")
         .version("0.1")
         .author("Martin Mariano <contato@martinmariano.com>")
         .subcommand(
