@@ -84,7 +84,7 @@ async fn main() -> Result<()> {
     if let Some(matches) = matches.subcommand_matches("auth") {
         let account = matches.value_of("account").unwrap();
         let password = matches.value_of("password").unwrap();
-        let parental_code = matches.value_of("parental_code");
+        let _parental_code = matches.value_of("parental_code");
 
         if let Some(add_subcommand) = matches.subcommand_matches("add") {
             let phone_number = add_subcommand.value_of("phone_number").unwrap();
@@ -102,7 +102,7 @@ async fn main() -> Result<()> {
                                 "A captcha is required. Open the link to check it: {}",
                                 format_captcha_url(&*captcha_guid)
                             );
-                            let captcha: String =
+                            let _captcha: String =
                                 Input::new().with_prompt("Please enter the captcha:").interact_text()?;
                         }
                         // other LoginErrors
@@ -144,7 +144,7 @@ async fn main() -> Result<()> {
 
                             mobile_auth_file = mafile.clone();
                             tokio::task::spawn_blocking(move || {
-                                save_file_to_path(&mafile, &*filename, save_path.unwrap());
+                                save_file_to_path(&mafile, &*filename, save_path.unwrap()).unwrap();
                             })
                             .await?;
                             break;

@@ -14,7 +14,7 @@
 )]
 
 use std::fmt;
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{Debug, Formatter};
 use std::fs::OpenOptions;
 use std::io::Read;
 use std::path::PathBuf;
@@ -28,8 +28,8 @@ use steamid_parser::SteamID;
 pub use utils::format_captcha_url;
 use uuid::Uuid;
 
-pub use web_handler::steam_guard_linker::AddAuthenticatorStep;
 pub use web_handler::confirmation::{ConfirmationMethod, Confirmations, EConfirmationType};
+pub use web_handler::steam_guard_linker::AddAuthenticatorStep;
 
 pub mod client;
 pub mod errors;
@@ -229,15 +229,9 @@ impl Debug for MobileAuthFile {
     }
 }
 
-impl Display for MobileAuthFile {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        unimplemented!()
-    }
-}
-
 impl MobileAuthFile {
     fn set_device_id(&mut self, device_id: String) {
-        self.device_id = Some(device_id)
+        self.device_id = Some(device_id);
     }
 
     /// Creates a new `MobileAuthFile`

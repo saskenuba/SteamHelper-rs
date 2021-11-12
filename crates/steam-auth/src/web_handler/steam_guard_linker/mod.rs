@@ -140,7 +140,7 @@ pub(crate) async fn finalize(
 
         let response = match serde_json::from_str::<FinalizeAddAuthenticatorBase>(&*response_text) {
             Ok(resp) => resp.response,
-            Err(err) => {
+            Err(_err) => {
                 let error_resp = serde_json::from_str::<FinalizeAddAuthenticatorErrorBase>(&*response_text).unwrap();
                 return match error_resp.response.status {
                     89 => Err(LinkerError::BadSMSCode),

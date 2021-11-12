@@ -13,7 +13,7 @@ use steam_totp::{Secret, Time};
 
 use crate::client::MobileClient;
 use crate::errors::LoginError;
-use crate::types::{resolve_login_response, LoginCaptcha, LoginRequest, LoginResponseMobile, RSAResponse};
+use crate::types::{resolve_login_response, LoginCaptcha, LoginRequest, RSAResponse};
 use crate::{
     CachedInfo, User, MOBILE_REFERER, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_DELAY_MS, STEAM_HELP_HOST,
     STEAM_STORE_HOST,

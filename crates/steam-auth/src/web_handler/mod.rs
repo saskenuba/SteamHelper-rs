@@ -23,9 +23,9 @@ use crate::{
     CachedInfo, User, STEAM_API_BASE, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_STORE_BASE, STEAM_STORE_HOST,
 };
 
-pub(crate) mod steam_guard_linker;
 pub mod confirmation;
 pub(crate) mod login;
+pub(crate) mod steam_guard_linker;
 
 /// used to refresh session
 const MOBILE_AUTH_GETWGTOKEN: &str = concatcp!(STEAM_API_BASE, "/IMobileAuthService/GetWGToken/v0001");
@@ -165,7 +165,7 @@ pub(crate) async fn confirmations_send(
         ..Default::default()
     };
 
-    let response = client
+    client
         .request_with_session_guard(url, Method::POST, None, Some(request))
         .await?
         .json::<BooleanResponse>()
