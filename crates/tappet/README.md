@@ -1,4 +1,4 @@
- # Steam-Web-API
+# Tappet
 
 Pure Rust bindings to the [Steam Web
 API](https://partner.steamgames.com/doc/webapi) and [XPAW Steam
@@ -28,14 +28,14 @@ Add the following to your `Cargo.toml`
 
 ```toml
 [dependencies]
-tappet = { git = "https://github.com/saskenuba/SteamHelper-rs.git", branch = "master" }
+tappet = "^0.4"
 
 ```
 
 Or if you want the blocking client:
 
 ```toml
-tappet = { git = "https://github.com/saskenuba/SteamHelper-rs.git", branch = "master", default-features = false, features = ["blocking"] }
+tappet = { version = "^0.4", default-features = false, features = ["blocking"] }
 ```
 
 Then in your `lib.rs` or `main.rs` file add:
@@ -44,11 +44,13 @@ Then in your `lib.rs` or `main.rs` file add:
 use tappet::{Executor, SteamAPI};
 ```
 
+
+## Example Usage
  ``` rust
 use tappet::{Executor, SteamAPI};
 
 // if using blocking client
-// use tappet::blocking::{Executor, Github};
+// use tappet::blocking::{Executor, SteamAPI};
 
 
 #[tokio::main]
@@ -71,6 +73,22 @@ async fn main() -> Result<()> {
         .execute()
         .await?;
 }
+```
 
-// Not all endpoints have the structured endpoint response. You can contribute!
- ```
+
+## Reuse with different bots
+```rust
+
+// the bot you want to recover pending trade offers
+let bot_api_key: &str = "..."
+
+let response: GetTradeOffersResponse = api_client
+    .get()
+    .IEconService()
+    .GetTradeOffers(true, false, u32::MAX, None, None, None, None)
+    .inject_custom_key(bot_api_key)
+    .execute_with_response()
+    .await?;
+```
+
+Not all endpoints have the structured endpoint response. You can contribute!
