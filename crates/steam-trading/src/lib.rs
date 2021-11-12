@@ -48,6 +48,7 @@ pub use types::asset_collection::AssetCollection;
 pub use types::trade_link::Tradelink;
 pub use types::trade_offer::TradeOffer;
 
+use crate::additional_checks::check_steam_guard_error;
 use crate::api_extensions::{FilterBy, HasAssets};
 use crate::errors::TradeError::PayloadError;
 use crate::errors::{error_from_strmessage, tradeoffer_error_from_eresult, ConfirmationError};
@@ -115,6 +116,13 @@ impl<'a> SteamTradeManager<'a> {
         }
 
         &self.api_client
+    }
+
+    /// Checks whether the user of `tradelink` has recently activated his mobile SteamGuard.
+    pub async fn check_steam_guard_recently_activated(&self, tradelink: Tradelink) -> Result<(), TradeError> {
+        let Tradelink { partner_id, token, .. } = tradelink;
+
+        check_steam_guard_error(self.authenticator, partner_id, &*token).await
     }
 
     /// Call to GetTradeOffers endpoint.
@@ -446,8 +454,7 @@ impl<'a> SteamTradeManager<'a> {
                     }
                 } else {
                     if let Some((steamid, token)) = partner_id_and_token {
-                        let steam_guard_result =
-                            additional_checks::check_steam_guard_error(self.authenticator, steamid, &*token).await;
+                        let steam_guard_result = check_steam_guard_error(self.authenticator, steamid, &*token).await;
 
                         if let Err(err) = steam_guard_result {
                             return Err(err);
