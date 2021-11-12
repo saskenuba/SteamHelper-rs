@@ -20,7 +20,6 @@ base64 = "0.13"
 bytes = "^1.1"
 chrono = "0.4"
 const_format = "^0.2"
-cookie = { git = "https://github.com/saskenuba/cookie-rs", branch = "master" }
 hex = "0.4"
 num-traits = "0.2"
 num-derive = "0.3"
@@ -49,6 +48,10 @@ anyhow = { version = "1", optional = true }
 dialoguer = { version = "^0.9", optional = true }
 tokio = { version = "1.0.2", features = ["rt-multi-thread", "macros", "fs"], optional = true }
 
+[dependencies.cookie]
+version = "0.16.0-rc.1"
+package = "cookie-hashed-domain"
+
 # Clap 3.0
 [dependencies.clap]
 version = "3.0.0-beta.2"
@@ -63,6 +66,7 @@ version = "^0.1"
 path = "../steam-language-gen"
 
 [dependencies.steamid-parser]
+version = "^0.2"
 path = "../steamid-parser"
 
 [dev-dependencies]
