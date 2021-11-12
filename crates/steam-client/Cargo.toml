@@ -56,8 +56,8 @@ path = "../steam-language-gen"
 [dependencies.steam-language-gen-derive]
 path = "../steam-language-gen-derive"
 
-[dependencies.steam-web-api]
-path = "../steam-web-api"
+[dependencies.tappet]
+path = "../tappet"
 
 [dependencies.steamid-parser]
 path = "../steamid-parser"

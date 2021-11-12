@@ -1,7 +1,7 @@
 use steam_mobile::errors::AuthError;
 use steam_mobile::HttpError;
 use steam_language_gen::generated::enums::EResult;
-use steam_web_api::errors::SteamAPIError;
+use tappet::errors::SteamAPIError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]

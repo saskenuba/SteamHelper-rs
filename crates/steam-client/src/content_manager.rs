@@ -1,7 +1,7 @@
 use anyhow::Result;
 use reqwest::Error;
-use steam_web_api::response_types::GetCMListResponseBase;
-use steam_web_api::ExecutorResponse;
+use tappet::response_types::GetCMListResponseBase;
+use tappet::ExecutorResponse;
 use tokio_compat_02::FutureExt;
 
 use crate::API_CLIENT;

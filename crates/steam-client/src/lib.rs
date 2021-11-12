@@ -16,7 +16,7 @@ extern crate log;
 use std::sync::Arc;
 
 use lazy_static::lazy_static;
-use steam_web_api::SteamAPI;
+use tappet::SteamAPI;
 
 pub mod client;
 pub mod config;

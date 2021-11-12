@@ -1,4 +1,4 @@
-use steam_web_api::response_types::{
+use tappet::response_types::{
     CEcon_Asset, GetTradeHistoryResponse, GetTradeOfferResponse, GetTradeOffersResponse, TradeHistory_Trade,
     TradeHistory_TradedAsset, TradeOffer_Trade,
 };

@@ -38,10 +38,10 @@ use serde::de::DeserializeOwned;
 use steam_mobile::client::SteamAuthenticator;
 use steam_mobile::{ConfirmationMethod, Confirmations, HeaderMap, Method, STEAM_COMMUNITY_HOST};
 use steam_language_gen::generated::enums::ETradeOfferState;
-use steam_web_api::response_types::{
+use tappet::response_types::{
     GetTradeHistoryResponse, GetTradeOffersResponse, TradeHistory_Trade, TradeOffer_Trade,
 };
-use steam_web_api::{Executor, ExecutorResponse, SteamAPI};
+use tappet::{Executor, ExecutorResponse, SteamAPI};
 use steamid_parser::SteamID;
 use tracing::{debug, info};
 pub use types::asset_collection::AssetCollection;

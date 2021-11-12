@@ -40,8 +40,8 @@ default-features = false
 [dependencies.steamid-parser]
 path = "../steamid-parser"
 
-[dependencies.steam-web-api]
-path = "../steam-web-api"
+[dependencies.tappet]
+path = "../tappet"
 
 [dev-dependencies]
 tokio = { version = "^1.0.2", features = ["rt", "macros"] }
