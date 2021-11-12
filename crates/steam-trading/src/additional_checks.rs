@@ -1,7 +1,7 @@
 use crate::{OfferError, TradeError, TryFutureExt, TRADEOFFER_BASE};
 use scraper::{Html, Selector};
-use steam_auth::client::SteamAuthenticator;
-use steam_auth::Method;
+use steam_mobile::client::SteamAuthenticator;
+use steam_mobile::Method;
 use steamid_parser::SteamID;
 
 fn is_steam_guard_error(document: &str) -> bool {

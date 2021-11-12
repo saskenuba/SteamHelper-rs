@@ -1,5 +1,5 @@
-use steam_auth::errors::AuthError;
-use steam_auth::HttpError;
+use steam_mobile::errors::AuthError;
+use steam_mobile::HttpError;
 use steam_language_gen::generated::enums::EResult;
 use steam_web_api::errors::SteamAPIError;
 use thiserror::Error;

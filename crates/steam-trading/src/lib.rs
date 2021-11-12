@@ -35,8 +35,8 @@ pub use errors::{OfferError, TradeError, TradelinkError};
 use futures::stream::FuturesOrdered;
 use futures::{StreamExt, TryFutureExt};
 use serde::de::DeserializeOwned;
-use steam_auth::client::SteamAuthenticator;
-use steam_auth::{ConfirmationMethod, Confirmations, HeaderMap, Method, STEAM_COMMUNITY_HOST};
+use steam_mobile::client::SteamAuthenticator;
+use steam_mobile::{ConfirmationMethod, Confirmations, HeaderMap, Method, STEAM_COMMUNITY_HOST};
 use steam_language_gen::generated::enums::ETradeOfferState;
 use steam_web_api::response_types::{
     GetTradeHistoryResponse, GetTradeOffersResponse, TradeHistory_Trade, TradeOffer_Trade,
