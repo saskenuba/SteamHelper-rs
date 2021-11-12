@@ -2,8 +2,8 @@
 name = "steam-mobile"
 version = "0.2.4"
 authors = ["Martin <martin@hotmail.com.br>"]
-repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-auth/"
-homepage = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-auth/"
+repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-mobile/"
+homepage = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-mobile/"
 readme = "README.md"
 license = "MIT"
 edition = "2018"

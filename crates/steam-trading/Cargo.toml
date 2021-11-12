@@ -3,6 +3,12 @@ name = "steam-trading"
 version = "0.4.2"
 authors = ["Martin <martin@hotmail.com.br>"]
 edition = "2018"
+repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-trading/"
+homepage = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-trading/"
+readme = "README.md"
+license = "MIT"
+description = "Create, accept and deny trade offers without your mobile device."
+keywords = ["steam", "tradeoffer", "trading"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
