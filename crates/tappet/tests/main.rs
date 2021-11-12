@@ -1,6 +1,6 @@
 use compile_fail::compile_fail;
 
-use steam_web_api::SteamAPI;
+use tappet::SteamAPI;
 
 fn should_appear_in_post_namespace() {
     let client = SteamAPI::new(std::env!("STEAM_API"));

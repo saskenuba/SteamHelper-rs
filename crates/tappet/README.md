@@ -28,27 +28,27 @@ Add the following to your `Cargo.toml`
 
 ```toml
 [dependencies]
-steam-web-api = { git = "https://github.com/saskenuba/SteamHelper-rs.git", branch = "master" }
+tappet = { git = "https://github.com/saskenuba/SteamHelper-rs.git", branch = "master" }
 
 ```
 
 Or if you want the blocking client:
 
 ```toml
-steam-web-api = { git = "https://github.com/saskenuba/SteamHelper-rs.git", branch = "master", default-features = false, features = ["blocking"] }
+tappet = { git = "https://github.com/saskenuba/SteamHelper-rs.git", branch = "master", default-features = false, features = ["blocking"] }
 ```
 
 Then in your `lib.rs` or `main.rs` file add:
 
 ```rust
-use steam_web_api::{Executor, SteamAPI};
+use tappet::{Executor, SteamAPI};
 ```
 
  ``` rust
-use steam_web_api::{Executor, SteamAPI};
+use tappet::{Executor, SteamAPI};
 
 // if using blocking client
-// use steam_web_api::blocking::{Executor, Github};
+// use tappet::blocking::{Executor, Github};
 
 
 #[tokio::main]
@@ -56,7 +56,7 @@ async fn main() -> Result<()> {
     let client = SteamAPI::new(std::env!("STEAM_API"));
 
     // You choose between the already structured response
-    let response: steam-web-api::response_types::GetPlayerBansBase = client
+    let response: tappet::response_types::GetPlayerBansBase = client
         .get()
         .ISteamUser()
         .GetPlayerBans(vec!["76561197984835396".to_string()])

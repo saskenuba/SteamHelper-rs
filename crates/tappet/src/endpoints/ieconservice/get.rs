@@ -1,4 +1,4 @@
-use steam_web_api_derive::{interface, Parameters};
+use tappet_derive::{interface, Parameters};
 
 use crate::response_types::GetTradeHoldDurationsResponseBase;
 

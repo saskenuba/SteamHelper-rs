@@ -1,11 +1,11 @@
 [package]
-name = "steam-web-api"
+name = "tappet"
 version = "0.4.0"
 authors = ["Martin <martin@hotmail.com.br>"]
 license = "MIT"
 edition = "2018"
-repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-web-api"
-homepage = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-web-api"
+repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/tappet"
+homepage = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/tappet"
 readme = "README.md"
 description = "Strongly typed wrapper for the official Valve's Steam API."
 keywords = ["steam", "api"]
@@ -29,11 +29,11 @@ url = "^2"
 async-trait = { version = "^0.1", optional = true }
 futures = { version = "^0.3", optional = true }
 
-serde_repr = { version = "^0.1", optional = true}
-serde_with = { version = "^1.4", features = ["json"] , optional = true}
+serde_repr = { version = "^0.1", optional = true }
+serde_with = { version = "^1.4", features = ["json"], optional = true }
 
-[dependencies.steam-web-api-derive]
-path = "../steam-web-api-derive"
+[dependencies.tappet-derive]
+path = "../tappet-derive"
 version = "0.3.1"
 
 [dependencies.steam-language-gen]

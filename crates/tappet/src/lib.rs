@@ -1,7 +1,7 @@
 //!
 //! Provides a wrapper around documented and some undocumented Steam API endpoints.
 //!
-//! The `steam-web-api` crate provides a practical way to query the Steam Web API using strongly typed
+//! The `tappet` crate provides a practical way to query the Steam Web API using strongly typed
 //! methods.
 //!
 //! # Endpoints
@@ -17,8 +17,8 @@
 //! # Usage
 //!
 //! ```no_run
-//! use steam_web_api::{SteamAPI, Executor};
-//! use steam_web_api::response_types;
+//! use tappet::{SteamAPI, Executor};
+//! use tappet::response_types;
 //! use anyhow::Result;
 //! # use tokio;
 //!
@@ -38,7 +38,7 @@
 //! # Reuse
 //!
 //! There are some endpoints that only returns information for the account vinculated with the api key that you are using at the moment.
-//! `steam_web_api` has a convenience function that circunvents this, allow the user to inject a custom api key before the request is made.
+//! `tappet` has a convenience function that circunvents this, allow the user to inject a custom api key before the request is made.
 //!
 //! This can be useful if you don't want to keep instantiating new clients every time you want to call with a different api keys,
 //! but still need to to call agnostic methods that doesn't return api specific information.
@@ -46,8 +46,8 @@
 //! But a "master" api key is still needed to instantiate `SteamAPI` in order to avoid panics.
 //!
 //! ```no_run
-//! use steam_web_api::{SteamAPI, Executor};
-//! use steam_web_api::response_types;
+//! use tappet::{SteamAPI, Executor};
+//! use tappet::response_types;
 //! use anyhow::Result;
 //! # use tokio;
 //!
@@ -99,7 +99,7 @@ pub mod blocking {
     }
 
     /// Requests the endpoint and returns the proper deserialized response.
-    /// Response types are exposed on `steam_web_api::response_types`.
+    /// Response types are exposed on `tappet::response_types`.
     pub trait ExecutorResponse<T: DeserializeOwned> {
         fn execute_with_response(self) -> Result<T>;
     }
@@ -151,7 +151,7 @@ mod async_client {
 
     #[async_trait]
     /// Requests the endpoint and returns the proper deserialized response.
-    /// Response types are exposed on `steam_web_api::response_types`.
+    /// Response types are exposed on `tappet::response_types`.
     pub trait ExecutorResponse<T: DeserializeOwned> {
         async fn execute_with_response(self) -> Result<T>;
     }
