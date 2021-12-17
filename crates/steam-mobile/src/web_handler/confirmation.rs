@@ -106,7 +106,10 @@ impl Confirmations {
     /// confirmations.filter_by_trade_offer_ids(&trade_offer_ids);
     /// # }
     /// ```
-    pub fn filter_by_trade_offer_ids<T: AsRef<[i64]>>(&mut self, trade_offer_ids: T) {
+    pub fn filter_by_trade_offer_ids<T>(&mut self, trade_offer_ids: T)
+    where
+        T: AsRef<[i64]>,
+    {
         self.0.retain(|c| {
             if let Some(conf_details) = c.details {
                 let trade_offer_id = conf_details.trade_offer_id.unwrap();
@@ -114,6 +117,14 @@ impl Confirmations {
             }
             false
         });
+    }
+
+    pub fn has_trade_offer_id(&self, trade_offer_id: i64) -> bool {
+        self.0.iter().any(|conf| {
+            conf.details
+                .as_ref()
+                .map_or(false, |details| details.trade_offer_id == Some(trade_offer_id))
+        })
     }
 }
 
@@ -194,6 +205,13 @@ mod tests {
         assert_eq!(confirmations.0.len(), 4);
         confirmations.filter_by_confirmation_type(EConfirmationType::Market);
         assert_eq!(confirmations.0.len(), 1);
+    }
+
+    #[test]
+    fn has_tradeoffer_id() {
+        let confirmations = get_confirmations();
+        assert!(confirmations.has_trade_offer_id(4000980011));
+        assert!(!confirmations.has_trade_offer_id(4000793104));
     }
 
     #[test]
