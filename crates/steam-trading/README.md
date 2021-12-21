@@ -1,4 +1,9 @@
-# SteamTrading
+# Steam-Trading
+
+[![Crate version on crates.io](https://img.shields.io/crates/v/steam-trading)](https://crates.io/crates/steam-trading)
+[![Crate documentation on docs.rs](https://img.shields.io/docsrs/steam-trading)](https://docs.rs/steam-trading)
+![Crate license](https://img.shields.io/crates/l/steam-trading)
+
 
 This library provides functionality regarding Steam Trade.
 
@@ -13,14 +18,10 @@ To use it, add this to your Cargo.toml:
 
 ```toml
 [dependencies.steam-trading]
-version = "*"
+version = "^0.4"
 ```
-
 
 ## Implemented
 * Abstractions of Trade Offers, and assets to make offers easy to use;
 * Create and send a new trade offer;
-
-# Planned Features
 * Accept and Deny trade offers;
-* Keep track of statuses changes;

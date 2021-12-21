@@ -1,5 +1,9 @@
 # Tappet
 
+[![Crate version on crates.io](https://img.shields.io/crates/v/tappet)](https://crates.io/crates/tappet)
+[![Crate documentation on docs.rs](https://img.shields.io/docsrs/tappet)](https://docs.rs/tappet)
+![Crate license](https://img.shields.io/crates/l/tappet)
+
 Pure Rust bindings to the [Steam Web
 API](https://partner.steamgames.com/doc/webapi) and [XPAW Steam
 API](https://steamapi.xpaw.me), where the latter contains some undocumented

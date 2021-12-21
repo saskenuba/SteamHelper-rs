@@ -1,5 +1,10 @@
 # Steam-Mobile
 
+[![Crate version on crates.io](https://img.shields.io/crates/v/steam-mobile)](https://crates.io/crates/steam-mobile)
+[![Crate documentation on docs.rs](https://img.shields.io/docsrs/steam-mobile)](https://docs.rs/steam-mobile)
+![Crate license](https://img.shields.io/crates/l/steam-mobile)
+
+
 This library provides vital Steam Mobile Authenticator functionality, especially
 useful for building Steam trading bots, but not limited to, managing your Steam
 Account outside of the mobile app, which certainly is bad for accepting
