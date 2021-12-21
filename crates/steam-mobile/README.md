@@ -1,4 +1,4 @@
-# SteamAuth
+# Steam-Mobile
 
 This library provides vital Steam Mobile Authenticator functionality, especially
 useful for building Steam trading bots, but not limited to, managing your Steam
@@ -20,8 +20,8 @@ automation, you disable it by adding this to your Cargo.toml:
 
 
 ```toml
-[dependencies.steam-auth]
-version = "*"
+[dependencies.steam-mobile]
+version = "0.2.4"
 default-features = false
 ```
 
