@@ -44,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 8 commits contributed to the release over the course of 186 calendar days.
+ - 9 commits contributed to the release over the course of 186 calendar days.
  - 6 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release steam-language-gen-derive v0.1.2, steam-protobuf v0.1.2, steam-language-gen v0.1.2, steam-totp v0.2.2, steamid-parser v0.2.1, steam-mobile v0.3.0 ([`cf773b0`](https://github.comgit//saskenuba/SteamHelper-rs/commit/cf773b07e0ae68376bf960d12f94ecb96afa9211))
     - added CHANGELOG.md, modified manifest versions ([`fb87360`](https://github.comgit//saskenuba/SteamHelper-rs/commit/fb87360214c2f6d1319f467b82b27706ae157111))
     - Added accept/deny mobile confirmations on CLI. ([`fdcf407`](https://github.comgit//saskenuba/SteamHelper-rs/commit/fdcf4076fe266964f5e8c9aa5beb81ab38281a51))
     - decoupled disk logic into fn `read_from_disk` on utils, + ([`0fc7ca6`](https://github.comgit//saskenuba/SteamHelper-rs/commit/0fc7ca6876a61d07945a4f6d5a0a937a44fe6af2))
