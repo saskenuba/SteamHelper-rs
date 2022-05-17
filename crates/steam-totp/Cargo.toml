@@ -1,6 +1,6 @@
 [package]
 name = "steam-totp"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Martin <martin@hotmail.com.br>", "Leorii <leorii@pm.me>"]
 edition = "2018"
 repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-totp"
