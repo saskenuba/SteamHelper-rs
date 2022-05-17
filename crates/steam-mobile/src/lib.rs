@@ -15,7 +15,6 @@
 
 use std::fmt;
 use std::fmt::{Debug, Formatter};
-use std::fs::OpenOptions;
 use std::io::Read;
 use std::path::PathBuf;
 
@@ -28,6 +27,8 @@ use steamid_parser::SteamID;
 pub use utils::format_captcha_url;
 use uuid::Uuid;
 
+use crate::errors::{AuthError, MobileAuthFileError};
+use crate::utils::read_from_disk;
 pub use web_handler::confirmation::{ConfirmationMethod, Confirmations, EConfirmationType};
 pub use web_handler::steam_guard_linker::AddAuthenticatorStep;
 
@@ -148,7 +149,7 @@ impl User {
     }
 
     fn device_id(&self) -> Option<&str> {
-        Some(&self.linked_mafile.as_ref()?.device_id.as_ref()?)
+        Some(self.linked_mafile.as_ref()?.device_id.as_ref()?)
     }
 
     /// Sets the account username, mandatory
@@ -170,16 +171,12 @@ impl User {
     }
 
     /// Convenience function that imports the file from disk
-    pub fn ma_file_from_disk<T>(mut self, path: T) -> Self
+    pub fn ma_file_from_disk<T>(mut self, path: T) -> Result<Self, AuthError>
     where
         T: Into<PathBuf>,
     {
-        let mut file = OpenOptions::new().read(true).open(path.into()).unwrap();
-        let mut buffer = String::new();
-
-        file.read_to_string(&mut buffer).unwrap();
-        self.linked_mafile = Some(serde_json::from_str::<MobileAuthFile>(&buffer).unwrap());
-        self
+        self.linked_mafile = Some(MobileAuthFile::from_disk(path)?);
+        Ok(self)
     }
 
     pub fn ma_file(mut self, ma_file: MobileAuthFile) -> Self {
@@ -188,12 +185,11 @@ impl User {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
-/// The MobileAuthFile (.maFile) is the standard file format that custom authenticators use to save auth secrets to
+/// The `MobileAuthFile` (.maFile) is the standard file format that custom authenticators use to save auth secrets to
 /// disk.
 ///
 /// It follows strictly the JSON format.
-/// Both identity_secret and shared_secret should be base64 encoded. If you don't know if they are, they probably
+/// Both `identity_secret` and `shared_secret` should be base64 encoded. If you don't know if they are, they probably
 /// already are.
 ///
 ///
@@ -205,6 +201,7 @@ impl User {
 ///     device_id: "android:xxxxxxxxxxxxxxx"
 /// }
 /// ```
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct MobileAuthFile {
     /// Identity secret is used to generate the confirmation links for our trade requests.
     /// If we are generating our own Authenticator, this is given by Steam.
@@ -247,6 +244,22 @@ impl MobileAuthFile {
             account_name: None,
         }
     }
+
+    pub fn from_str(string: &str) -> Result<Self, MobileAuthFileError> {
+        serde_json::from_str::<MobileAuthFile>(string).map_err(|e| e.into())
+    }
+
+    /// Convenience function that imports the file from disk
+    ///
+    /// # Panic
+    /// Will panic if file is not found.
+    pub fn from_disk<T>(path: T) -> Result<Self, MobileAuthFileError>
+    where
+        T: Into<PathBuf>,
+    {
+        let buffer = read_from_disk(path);
+        Self::from_str(&*buffer)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -261,9 +274,7 @@ impl DeviceId {
     /// Generates a random device ID on the format of UUID v4
     /// Example: android:780c3700-2b4f-4b9a-a196-9af6e6010d09
     pub fn generate() -> Self {
-        Self {
-            0: Self::PREFIX.to_owned() + &Uuid::new_v4().to_string(),
-        }
+        Self(Self::PREFIX.to_owned() + &Uuid::new_v4().to_string())
     }
     pub fn validate() {}
 }

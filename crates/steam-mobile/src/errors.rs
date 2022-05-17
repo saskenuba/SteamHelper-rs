@@ -17,6 +17,8 @@ pub enum AuthError {
     #[error(transparent)]
     Login(#[from] LoginError),
     #[error(transparent)]
+    MobileAuthFile(#[from] MobileAuthFileError),
+    #[error(transparent)]
     HttpError(#[from] reqwest::Error),
 }
 
@@ -73,4 +75,14 @@ pub enum LinkerError {
     HttpError(#[from] reqwest::Error),
     #[error(transparent)]
     TotpError(#[from] steam_totp::error::TotpError),
+}
+
+/// Errors related to the Authenticator Linker.
+#[derive(Error, Debug)]
+pub enum MobileAuthFileError {
+    #[error(transparent)]
+    DeserializationError(#[from] serde_json::Error),
+
+    #[error("{0}")]
+    GeneralFailure(String),
 }

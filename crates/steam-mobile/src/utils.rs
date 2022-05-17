@@ -1,5 +1,8 @@
 use cookie::{Cookie, CookieJar};
 use reqwest::{Response, StatusCode};
+use std::fs::OpenOptions;
+use std::io::Read;
+use std::path::PathBuf;
 
 const CAPTCHA_URL: &str = "https://steamcommunity.com/login/rendercaptcha/?gid=";
 
@@ -67,4 +70,22 @@ pub fn retrieve_header_location(response: &Response) -> Option<&str> {
         _ => return None,
     };
     Some(location_url.unwrap().to_str().unwrap())
+}
+
+/// Convenience function that imports the file from disk
+///
+/// # Panic
+/// Will panic if file is not found.
+pub fn read_from_disk<T>(path: T) -> String
+where
+    T: Into<PathBuf>,
+{
+    let mut file = OpenOptions::new()
+        .read(true)
+        .open(path.into())
+        .expect("Failed to read file from disk. Is it there?");
+    let mut buffer = String::new();
+
+    file.read_to_string(&mut buffer).unwrap();
+    buffer
 }
