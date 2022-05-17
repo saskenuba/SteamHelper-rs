@@ -18,7 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 
  - <csr-id-60e3691a305ec8cd3f32fdf5ed68f6b28185b42d/> added CHANGELOG.md, prepare smart-release
-
+ - <csr-id-fb87360214c2f6d1319f467b82b27706ae157111/> added CHANGELOG.md, modified manifest versions
+   We are now using cargo-smart-release to organize releases among with
+   conventional commits;
 
 ### Other
 
@@ -42,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - added CHANGELOG.md, prepare smart-release ([`60e3691`](https://github.comgit//saskenuba/SteamHelper-rs/commit/60e3691a305ec8cd3f32fdf5ed68f6b28185b42d))
+    - added CHANGELOG.md, modified manifest versions ([`fb87360`](https://github.comgit//saskenuba/SteamHelper-rs/commit/fb87360214c2f6d1319f467b82b27706ae157111))
     - (steam-lang-derive): bump to 0.1.1 ([`05152ce`](https://github.comgit//saskenuba/SteamHelper-rs/commit/05152ce6395cf5d99647a62b3becdac60467e89a))
     - renamed traits, impl serializablebytes for proto.. ([`843013c`](https://github.comgit//saskenuba/SteamHelper-rs/commit/843013c43386a837de6b816f65ab2e520677bab4))
     - fix (steam-lang-gen): message structs are now packed, and copy types ([`10aa5f8`](https://github.comgit//saskenuba/SteamHelper-rs/commit/10aa5f8cffe944cb9ec82ea392db0e3bf715ff62))

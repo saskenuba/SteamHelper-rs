@@ -27,7 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 
  - <csr-id-60e3691a305ec8cd3f32fdf5ed68f6b28185b42d/> added CHANGELOG.md, prepare smart-release
-
+ - <csr-id-fb87360214c2f6d1319f467b82b27706ae157111/> added CHANGELOG.md, modified manifest versions
+   We are now using cargo-smart-release to organize releases among with
+   conventional commits;
 
 ### Other
 
@@ -53,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - added CHANGELOG.md, prepare smart-release ([`60e3691`](https://github.comgit//saskenuba/SteamHelper-rs/commit/60e3691a305ec8cd3f32fdf5ed68f6b28185b42d))
+    - added CHANGELOG.md, modified manifest versions ([`fb87360`](https://github.comgit//saskenuba/SteamHelper-rs/commit/fb87360214c2f6d1319f467b82b27706ae157111))
     - Added accept/deny mobile confirmations on CLI. ([`fdcf407`](https://github.comgit//saskenuba/SteamHelper-rs/commit/fdcf4076fe266964f5e8c9aa5beb81ab38281a51))
     - decoupled disk logic into fn `read_from_disk` on utils, + ([`0fc7ca6`](https://github.comgit//saskenuba/SteamHelper-rs/commit/0fc7ca6876a61d07945a4f6d5a0a937a44fe6af2))
     - updated README with badges and minor fixes ([`14404f4`](https://github.comgit//saskenuba/SteamHelper-rs/commit/14404f4fd83c4c74893e3888693398d98bc3f199))

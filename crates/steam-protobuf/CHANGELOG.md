@@ -16,7 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 
  - <csr-id-60e3691a305ec8cd3f32fdf5ed68f6b28185b42d/> added CHANGELOG.md, prepare smart-release
-
+ - <csr-id-fb87360214c2f6d1319f467b82b27706ae157111/> added CHANGELOG.md, modified manifest versions
+   We are now using cargo-smart-release to organize releases among with
+   conventional commits;
 
 ### Bug Fixes
 
@@ -37,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - added CHANGELOG.md, prepare smart-release ([`60e3691`](https://github.comgit//saskenuba/SteamHelper-rs/commit/60e3691a305ec8cd3f32fdf5ed68f6b28185b42d))
+    - added CHANGELOG.md, modified manifest versions ([`fb87360`](https://github.comgit//saskenuba/SteamHelper-rs/commit/fb87360214c2f6d1319f467b82b27706ae157111))
     - (steam-protobuf): added license, repo and description to manifest ([`b593dc5`](https://github.comgit//saskenuba/SteamHelper-rs/commit/b593dc5b687757a74177fb1983289bfd5c94f439))
     - fixed rustfmt error preventing crate being compiled ([`8d078c2`](https://github.comgit//saskenuba/SteamHelper-rs/commit/8d078c2aadc8b04f7c128a4fb7f8bdb1349935b6))
     - rebuild (steam-protobuf): protobufs regenerated with serde support ([`094dbdc`](https://github.comgit//saskenuba/SteamHelper-rs/commit/094dbdccc8dc5a4ba9cc9c29221b99da3124edf8))

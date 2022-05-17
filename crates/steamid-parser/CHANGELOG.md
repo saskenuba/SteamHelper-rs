@@ -18,7 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 
  - <csr-id-60e3691a305ec8cd3f32fdf5ed68f6b28185b42d/> added CHANGELOG.md, prepare smart-release
-
+ - <csr-id-fb87360214c2f6d1319f467b82b27706ae157111/> added CHANGELOG.md, modified manifest versions
+   We are now using cargo-smart-release to organize releases among with
+   conventional commits;
 
 ### Other
 
@@ -42,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - added CHANGELOG.md, prepare smart-release ([`60e3691`](https://github.comgit//saskenuba/SteamHelper-rs/commit/60e3691a305ec8cd3f32fdf5ed68f6b28185b42d))
+    - added CHANGELOG.md, modified manifest versions ([`fb87360`](https://github.comgit//saskenuba/SteamHelper-rs/commit/fb87360214c2f6d1319f467b82b27706ae157111))
     - updated README with badges and minor fixes ([`14404f4`](https://github.comgit//saskenuba/SteamHelper-rs/commit/14404f4fd83c4c74893e3888693398d98bc3f199))
     - (steamid): added repo, license and desc, upload to crates.io ([`032c3c9`](https://github.comgit//saskenuba/SteamHelper-rs/commit/032c3c9b8fc3e64458105f26737a10cf277defc3))
     - SteamID has now serde support by default ([`fc097e8`](https://github.comgit//saskenuba/SteamHelper-rs/commit/fc097e8451163de3cc88dece43438d100ec0ddb3))

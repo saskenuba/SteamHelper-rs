@@ -10,7 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 
  - <csr-id-60e3691a305ec8cd3f32fdf5ed68f6b28185b42d/> added CHANGELOG.md, prepare smart-release
-
+ - <csr-id-fb87360214c2f6d1319f467b82b27706ae157111/> added CHANGELOG.md, modified manifest versions
+   We are now using cargo-smart-release to organize releases among with
+   conventional commits;
 
 ### Commit Statistics
 
@@ -27,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - added CHANGELOG.md, prepare smart-release ([`60e3691`](https://github.comgit//saskenuba/SteamHelper-rs/commit/60e3691a305ec8cd3f32fdf5ed68f6b28185b42d))
+    - added CHANGELOG.md, modified manifest versions ([`fb87360`](https://github.comgit//saskenuba/SteamHelper-rs/commit/fb87360214c2f6d1319f467b82b27706ae157111))
     - (steam-totp): added repo, license and description to manifest ([`7aa6f58`](https://github.comgit//saskenuba/SteamHelper-rs/commit/7aa6f58d9aaea48a292ea4fefc9909ea97350e7a))
     - (totp): reqwest dep bump, rustfmt, bumped to 0.2.1 ([`144b67f`](https://github.comgit//saskenuba/SteamHelper-rs/commit/144b67fad9cdbb4b973a79dcfb62073e7a63ac3d))
     - Merge branch 'master' of github.com:saskenuba/SteamHelper-rs ([`a7f33dc`](https://github.comgit//saskenuba/SteamHelper-rs/commit/a7f33dc69ffac55b175d7e071f755a4b917cb9d0))
