@@ -66,7 +66,6 @@ const MOBILE_REFERER: &str = concatcp!(
     "/mobilelogin?oauth_client_id=DE45CD61&oauth_scope=read_profile%20write_profile%20read_client%20write_client"
 );
 
-#[derive(Debug, Clone)]
 /// User that is needed for the authenticator to work.
 /// Ideally all fields should be populated before authenticator operations are made.
 ///
@@ -74,12 +73,11 @@ const MOBILE_REFERER: &str = concatcp!(
 /// ```no_run
 /// use steam_mobile::User;
 ///
-/// User::build()
-///     .username("test_username")
-///     .password("password")
+/// User::new("test_username".to_string(),"password".to_string())
 ///     .parental_code("1111") // Only needed if the is a parental code, otherwise skip
 ///     .ma_file_from_disk("assets/my.maFile");
 /// ```
+#[derive(Debug, Clone)]
 pub struct User {
     username: String,
     password: String,
@@ -129,12 +127,12 @@ impl CachedInfo {
 }
 
 impl User {
-    /// Constructs a new user.
-    // TODO: This should be a UserBuilder, not simply this methods.
-    pub fn build() -> Self {
+    #[must_use]
+    /// Creates a new valid `User` with the bare minimum credentials.
+    pub fn new(username: String, password: String) -> Self {
         Self {
-            username: "".to_string(),
-            password: "".to_string(),
+            username,
+            password,
             parental_code: None,
             linked_mafile: None,
         }

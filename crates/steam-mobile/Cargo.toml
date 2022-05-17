@@ -19,7 +19,7 @@ cli = ["clap", "dialoguer", "anyhow", "tokio"]
 base64 = "0.13"
 bytes = "^1.1"
 chrono = "0.4"
-const_format = "^0.2"
+const_format = "0.2"
 hex = "0.4"
 num-traits = "0.2"
 num-derive = "0.3"
@@ -34,28 +34,25 @@ serde_repr = "0.1.5"
 serde_with = { version = "1.5", features = ["json"] }
 tracing = "0.1"
 tracing-futures = "0.2"
-thiserror = "1.0.20"
-uuid = { version = "0.8.1", features = ["v4"] }
+thiserror = "1"
+uuid = { version = "1", features = ["v4"] }
 
 backoff = { version = "0.3.0", features = ["tokio", "futures"] }
 futures = "^0.3"
 futures-util = "0.3.15"
 futures-timer = "^3"
 
+strum = "0.21"
 strum_macros = "0.21"
 
 anyhow = { version = "1", optional = true }
-dialoguer = { version = "^0.9", optional = true }
+clap = { version = "3.1.18", optional = true }
+dialoguer = { version = "0.10", optional = true }
 tokio = { version = "1.0.2", features = ["rt-multi-thread", "macros", "fs"], optional = true }
 
 [dependencies.cookie]
 version = "0.16.0-rc.1"
 package = "cookie-hashed-domain"
-
-# Clap 3.0
-[dependencies.clap]
-version = "3.0.0-beta.2"
-optional = true
 
 [dependencies.steam-totp]
 version = "^0.2"
