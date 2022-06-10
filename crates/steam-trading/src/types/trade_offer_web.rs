@@ -72,6 +72,12 @@ pub struct TradeOfferCreateResponse {
     pub email_domain: Option<String>,
 }
 
+/// Response after we cancel an trade offer we've sent.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TradeOfferCancelResponse {
+    pub tradeofferid: Option<String>,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 /// We create a trade offer from a Steam Trade link the user shares with us.
 /// The "partner" number, is the SteamID3. In order to send the trade offer, first we need to to

@@ -29,20 +29,21 @@
 
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::str::FromStr;
+use std::time::Duration;
 
 use const_format::concatcp;
 pub use errors::{OfferError, TradeError, TradelinkError};
 use futures::stream::FuturesOrdered;
 use futures::{StreamExt, TryFutureExt};
+use futures_timer::Delay;
 use serde::de::DeserializeOwned;
+use steam_language_gen::generated::enums::ETradeOfferState;
 use steam_mobile::client::SteamAuthenticator;
 use steam_mobile::{ConfirmationMethod, Confirmations, HeaderMap, Method, STEAM_COMMUNITY_HOST};
-use steam_language_gen::generated::enums::ETradeOfferState;
-use tappet::response_types::{
-    GetTradeHistoryResponse, GetTradeOffersResponse, TradeHistory_Trade, TradeOffer_Trade,
-};
-use tappet::{Executor, ExecutorResponse, SteamAPI};
 use steamid_parser::SteamID;
+use tappet::response_types::{GetTradeHistoryResponse, GetTradeOffersResponse, TradeHistory_Trade, TradeOffer_Trade};
+use tappet::{Executor, ExecutorResponse, SteamAPI};
 use tracing::{debug, info};
 pub use types::asset_collection::AssetCollection;
 pub use types::trade_link::Tradelink;
@@ -54,13 +55,10 @@ use crate::errors::TradeError::PayloadError;
 use crate::errors::{error_from_strmessage, tradeoffer_error_from_eresult, ConfirmationError};
 use crate::types::sessionid::HasSessionID;
 use crate::types::trade_offer_web::{
-    TradeOfferAcceptRequest, TradeOfferCommonParameters, TradeOfferCreateRequest, TradeOfferCreateResponse,
-    TradeOfferGenericErrorResponse, TradeOfferGenericRequest, TradeOfferParams,
+    TradeOfferAcceptRequest, TradeOfferCancelResponse, TradeOfferCommonParameters, TradeOfferCreateRequest,
+    TradeOfferCreateResponse, TradeOfferGenericErrorResponse, TradeOfferGenericRequest, TradeOfferParams,
 };
 use crate::types::TradeKind;
-use futures_timer::Delay;
-use std::str::FromStr;
-use std::time::Duration;
 
 mod additional_checks;
 pub mod api_extensions;
@@ -318,51 +316,32 @@ impl<'a> SteamTradeManager<'a> {
     }
 
     /// Convenience function to deny a single trade offer that was made to this account.
+    ///
+    /// # Errors
+    ///
+    /// Will error if couldn't deny the tradeoffer.
     pub async fn deny_offer(&self, tradeoffer_id: i64) -> Result<(), TradeError> {
-        // fixme: retrieve correct type or this will panic
-        self.request(TradeKind::Decline, Some(tradeoffer_id)).await?;
-        Ok(())
+        self.request::<TradeOfferCancelResponse>(TradeKind::Decline, Some(tradeoffer_id))
+            .await
+            .map(|_| ())
     }
 
     /// Convenience function to cancel a single trade offer that was created by this account.
+    ///
+    /// # Errors
+    ///
+    /// Will error if couldn't cancel the tradeoffer.
     pub async fn cancel_offer(&self, tradeoffer_id: i64) -> Result<(), TradeError> {
-        // fixme: retrieve correct type or this will panic
-        self.request(TradeKind::Cancel, Some(tradeoffer_id)).await?;
-        Ok(())
-    }
-
-    #[allow(dead_code)]
-    /// Calling the API is more efficient.
-    async fn deny_offer_api() {}
-
-    /// Calling the API is more efficient.
-    pub async fn cancel_offer_api(&self, tradeoffer_id: i64) -> Result<(), TradeError> {
-        let api_key = self
-            .authenticator
-            .api_key()
-            .expect("Api should be cached for this method to work.");
-        let api_client = self.lazy_web_api_client(api_key).borrow();
-
-        api_client
-            .as_ref()
-            .unwrap()
-            .post()
-            .IEconService()
-            .CancelTradeOffer(tradeoffer_id)
-            .execute()
-            .err_into()
+        self.request::<TradeOfferCancelResponse>(TradeKind::Cancel, Some(tradeoffer_id))
             .await
-            .map(|resp| {
-                info!("{}", resp);
-            })
+            .map(|_| ())
     }
 
     /// Check current session health, injects SessionID cookie, and send the request.
-    async fn request<T: DeserializeOwned>(
-        &self,
-        operation: TradeKind,
-        tradeoffer_id: Option<i64>,
-    ) -> Result<T, TradeError> {
+    async fn request<T>(&self, operation: TradeKind, tradeoffer_id: Option<i64>) -> Result<T, TradeError>
+    where
+        T: DeserializeOwned,
+    {
         let tradeoffer_endpoint = operation.endpoint(tradeoffer_id);
 
         let mut header: Option<HeaderMap> = None;
@@ -461,7 +440,10 @@ impl<'a> SteamTradeManager<'a> {
                         }
                     }
 
-                    tracing::error!("Failure to deserialize a valid response Steam Offer response. Maybe Steam Servers are offline.");
+                    tracing::error!(
+                        "Failure to deserialize a valid response Steam Offer response. Maybe Steam Servers are \
+                         offline."
+                    );
                     Err(OfferError::GeneralFailure(format!("Steam Response: {}", response_text)).into())
                 }
             }

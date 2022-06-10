@@ -22,9 +22,9 @@ impl TradeKind {
 
         let tradeofferid = tradeofferid.unwrap();
         let url_path = match self {
-            TradeKind::Accept => "/accept",
-            TradeKind::Cancel => "/cancel",
-            TradeKind::Decline => "/decline",
+            Self::Accept => "/accept",
+            Self::Cancel => "/cancel",
+            Self::Decline => "/decline",
             _ => unreachable!(),
         };
         TRADEOFFER_BASE.to_owned() + &*tradeofferid.to_string() + url_path
