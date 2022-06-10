@@ -7,11 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.5.0 (2022-06-10)
 
+<csr-id-b2186a6426e52516cecfbda6201028c63229330f/>
+<csr-id-14404f4fd83c4c74893e3888693398d98bc3f199/>
+<csr-id-a690cf419f36bb737250f0de65aed897e7b5237f/>
+<csr-id-02d3b260b9b77a9979073dd3ce2dba792f831ced/>
+<csr-id-4bae88942672f2196733df6bc58a82c5a2a7bdf0/>
+
 ### Documentation
 
  - <csr-id-fb87360214c2f6d1319f467b82b27706ae157111/> added CHANGELOG.md, modified manifest versions
    We are now using cargo-smart-release to organize releases among with
    conventional commits;
+ - <csr-id-fb999c76e06ac25b09708b0b744115d29520c04f/> added CHANGELOG.md to tappet
+
 
 ### Other
 
@@ -33,8 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 9 commits contributed to the release over the course of 209 calendar days.
- - 6 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 10 commits contributed to the release over the course of 209 calendar days.
+ - 7 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -44,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - added CHANGELOG.md to tappet ([`fb999c7`](https://github.comgit//saskenuba/SteamHelper-rs/commit/fb999c76e06ac25b09708b0b744115d29520c04f))
     - tappet minor bump ([`b2186a6`](https://github.comgit//saskenuba/SteamHelper-rs/commit/b2186a6426e52516cecfbda6201028c63229330f))
     - removed the now deprecated endpoints CancelTradeOffer and .. ([`4bae889`](https://github.comgit//saskenuba/SteamHelper-rs/commit/4bae88942672f2196733df6bc58a82c5a2a7bdf0))
     - added CHANGELOG.md, modified manifest versions ([`fb87360`](https://github.comgit//saskenuba/SteamHelper-rs/commit/fb87360214c2f6d1319f467b82b27706ae157111))
