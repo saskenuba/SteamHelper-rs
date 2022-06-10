@@ -1,6 +1,6 @@
 [package]
 name = "tappet-derive"
-version = "0.3.1"
+version = "0.3.2"
 authors = ["Martin <martin@hotmail.com.br>"]
 edition = "2018"
 description = "Implementation detail of the `tappet` crate."
