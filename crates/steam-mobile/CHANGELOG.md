@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.3.1 (2022-06-22)
+
+### Refactor
+
+ - <csr-id-e266af7ab0b709059f71c63e4e73eeea323fd1d4/> improved error handling of login and confirmations fetch
+
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 35 days passed between releases.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' where seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - improved error handling of login and confirmations fetch ([`e266af7`](https://github.comgit//saskenuba/SteamHelper-rs/commit/e266af7ab0b709059f71c63e4e73eeea323fd1d4))
+</details>
+
 ## 0.3.0 (2022-05-17)
 
 <csr-id-0fc7ca6876a61d07945a4f6d5a0a937a44fe6af2/>
@@ -44,7 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release over the course of 186 calendar days.
+ - 11 commits contributed to the release over the course of 186 calendar days.
  - 6 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -55,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release steamid-parser v0.2.1, steam-mobile v0.3.0 ([`fd04253`](https://github.comgit//saskenuba/SteamHelper-rs/commit/fd0425344eb5d24093154320cc0ed81bf82a0b1a))
     - Release steamid-parser v0.2.1, steam-mobile v0.3.0 ([`ea7632d`](https://github.comgit//saskenuba/SteamHelper-rs/commit/ea7632d2fe5fcd85b48315f246f815afba88e62e))
     - Release steam-language-gen-derive v0.1.2, steam-protobuf v0.1.2, steam-language-gen v0.1.2, steam-totp v0.2.2, steamid-parser v0.2.1, steam-mobile v0.3.0 ([`cf773b0`](https://github.comgit//saskenuba/SteamHelper-rs/commit/cf773b07e0ae68376bf960d12f94ecb96afa9211))
     - added CHANGELOG.md, modified manifest versions ([`fb87360`](https://github.comgit//saskenuba/SteamHelper-rs/commit/fb87360214c2f6d1319f467b82b27706ae157111))

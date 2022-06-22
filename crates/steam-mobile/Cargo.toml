@@ -1,6 +1,6 @@
 [package]
 name = "steam-mobile"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Martin <martin@hotmail.com.br>"]
 repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-mobile/"
 homepage = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-mobile/"
