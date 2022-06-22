@@ -219,10 +219,27 @@ pub(crate) async fn confirmations_retrieve_all(
         })
         .collect::<Vec<_>>();
 
-    let joined_fut = futures::future::join_all(conf_details_fut).await;
+    let joined_fut: Vec<Result<reqwest::Response, _>> = futures::future::join_all(conf_details_fut).await;
     let mut details_vec = Vec::new();
-    for response in joined_fut {
-        let response_content = response.unwrap().json::<ConfirmationDetailsResponse>().await.unwrap();
+    for response_res in joined_fut {
+        let response_content = match response_res {
+            Err(err) => {
+                warn!("Failed to fetch details page for confirmation: {}\nSkipping..", err);
+                continue;
+            }
+            Ok(response) => {
+                let deserialized = response.json::<ConfirmationDetailsResponse>().await;
+                if let Err(err) = deserialized {
+                    warn!(
+                        "Failed to deserialize confirmation details response: {}\nSkipping..",
+                        err
+                    );
+                    continue;
+                }
+                deserialized.unwrap()
+            }
+        };
+
         let html = Html::parse_document(&response_content.html);
         details_vec.push(confirmation_details_single(html));
     }

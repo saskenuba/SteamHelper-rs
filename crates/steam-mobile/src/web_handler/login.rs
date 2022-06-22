@@ -5,6 +5,7 @@ use std::time::Duration;
 use chrono::Offset;
 use const_format::concatcp;
 use cookie::Cookie;
+use futures_timer::Delay;
 use rand::thread_rng;
 use reqwest::{Client, Method};
 use rsa::padding::PaddingScheme;
@@ -18,7 +19,6 @@ use crate::{
     CachedInfo, User, MOBILE_REFERER, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_DELAY_MS, STEAM_HELP_HOST,
     STEAM_STORE_HOST,
 };
-use futures_timer::Delay;
 
 const LOGIN_GETRSA_URL: &str = concatcp!(STEAM_COMMUNITY_BASE, "/login/getrsakey");
 const LOGIN_DO_URL: &str = concatcp!(STEAM_COMMUNITY_BASE, "/login/dologin");
@@ -89,7 +89,7 @@ pub(crate) async fn login_website<'a, LC: Into<Option<LoginCaptcha<'a>>>>(
         })?;
 
     let mut post_data = HashMap::new();
-    let steam_time_offset = (steam_totp::time::Time::offset().await.unwrap() * 1000).to_string();
+    let steam_time_offset = (Time::offset().await? * 1000).to_string();
     post_data.insert("donotcache", &steam_time_offset);
     post_data.insert("username", &user.username);
 
@@ -101,10 +101,13 @@ pub(crate) async fn login_website<'a, LC: Into<Option<LoginCaptcha<'a>>>>(
     Delay::new(Duration::from_millis(STEAM_DELAY_MS)).await;
 
     // rsa handling
-    let response = rsa_response.json::<RSAResponse>().await.unwrap();
+    let response = rsa_response
+        .json::<RSAResponse>()
+        .await
+        .expect("There was an error deserializing RSA Response.");
     let encrypted_pwd_b64 = website_handle_rsa(user, response.clone());
 
-    let offset = Time::offset().await.unwrap();
+    let offset = Time::offset().await?;
     let time = Time::now(Some(offset)).unwrap();
 
     let steam_time_offset = (offset * 1000).to_string();

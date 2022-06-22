@@ -52,8 +52,12 @@ pub enum LoginError {
     #[error("Requires a captcha code. If a previous attempt was made, the captcha was probably incorrect. \
     Captcha GUID: `{0}`", .captcha_guid)]
     CaptchaRequired { captcha_guid: String },
+
     #[error(transparent)]
     HttpError(#[from] reqwest::Error),
+
+    #[error(transparent)]
+    TotpError(#[from] steam_totp::error::TotpError),
 }
 
 /// Errors related to the Authenticator Linker.

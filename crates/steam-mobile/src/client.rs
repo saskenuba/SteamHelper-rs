@@ -1,7 +1,11 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::time::Duration;
 
+use backoff::future::retry;
 use cookie::{Cookie, CookieJar};
+use futures::TryFutureExt;
+use futures_timer::Delay;
 use reqwest::header::HeaderMap;
 use reqwest::redirect::Policy;
 use reqwest::{Client, Method, Response, Url};
@@ -21,10 +25,6 @@ use crate::web_handler::steam_guard_linker::{
 };
 use crate::web_handler::{cache_resolve, confirmations_retrieve_all, confirmations_send, parental_unlock};
 use crate::{CachedInfo, ConfirmationMethod, MobileAuthFile, User, STEAM_COMMUNITY_HOST};
-use backoff::future::retry;
-use futures::TryFutureExt;
-use futures_timer::Delay;
-use std::time::Duration;
 
 #[derive(Debug)]
 /// Main authenticator. We use it to spawn and act as our "mobile" client.
@@ -206,10 +206,15 @@ impl SteamAuthenticator {
         Ok(response)
     }
 
-    /// Fetch confirmations with the authenticator.
+    /// Fetch all confirmations available with the authenticator.
     pub async fn fetch_confirmations(&self) -> Result<Option<Confirmations>, AuthError> {
         // TODO: With details? Maybe we need to check if there is a need to gather more details.
-        let steamid = self.cached_data.borrow().steam_id().unwrap();
+        let steamid = self
+            .cached_data
+            .borrow()
+            .steam_id()
+            .expect("Failed to retrieve cached SteamID. Are you logged in?");
+
         let confirmations = confirmations_retrieve_all(&self.client, &self.user, steamid, false)
             .await?
             .map(Confirmations::from);
@@ -222,7 +227,11 @@ impl SteamAuthenticator {
         operation: ConfirmationMethod,
         confirmations: Confirmations,
     ) -> Result<(), AuthError> {
-        let steamid = self.cached_data.borrow().steam_id().unwrap();
+        let steamid = self
+            .cached_data
+            .borrow()
+            .steam_id()
+            .expect("Failed to retrieve cached SteamID. Are you logged in?");
 
         confirmations_send(&self.client, &self.user, steamid, operation, confirmations.0)
             .await
