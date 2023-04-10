@@ -4,7 +4,7 @@ use steam_language_gen::{
         enums::EMsg,
         headers::{ExtendedMessageHeader, StandardMessageHeader},
     },
-    DeserializableBytes, MessageHeader, MessageHeaderExt, MessageHeaderWrapper, SerializableBytes,
+    DeserializableBytes, HasJobId, MessageHeaderExt, MessageHeaderWrapper, SerializableBytes,
 };
 use steam_protobuf::{steam::steammessages_base::CMsgProtoBufHeader, Message};
 

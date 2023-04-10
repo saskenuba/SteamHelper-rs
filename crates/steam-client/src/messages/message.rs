@@ -14,7 +14,7 @@ use steam_language_gen::generated::enums::EMsg;
 use steam_language_gen::generated::headers::{ExtendedMessageHeader, MessageHeaders, StandardMessageHeader};
 use steam_language_gen::generated::messages::HasEMsg;
 use steam_language_gen::{DeserializableBytes, MessageBodyExt, MessageHeaderWrapper, SerializableBytes};
-use steam_language_gen::{MessageHeader, MessageHeaderExt};
+use steam_language_gen::{HasJobId, MessageHeaderExt};
 use steam_protobuf::steam::steammessages_base::CMsgProtoBufHeader;
 use steam_protobuf::Message;
 

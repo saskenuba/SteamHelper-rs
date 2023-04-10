@@ -4,7 +4,7 @@ use steam_language_gen::generated::enums::EMsg;
 use steam_language_gen::generated::messages::{
     MsgChannelEncryptRequest, MsgChannelEncryptResponse, MsgChannelEncryptResult,
 };
-use steam_language_gen::{MessageHeader, SerializableBytes};
+use steam_language_gen::{HasJobId, SerializableBytes};
 
 use crate::connection::{BytesTx, EncryptionState};
 use crate::errors::PacketError;
@@ -39,7 +39,7 @@ pub(crate) fn handle_encryption_negotiation(
 
     Ok(())
 }
-
+#[allow(unaligned_references)]
 fn handle_encrypt_result(message: PacketMessage) -> anyhow::Result<()> {
     let incoming_message: ClientMessage<MsgChannelEncryptResult> = ClientMessage::from_packet_message(message);
     println!("{:?}", incoming_message.body.result);
