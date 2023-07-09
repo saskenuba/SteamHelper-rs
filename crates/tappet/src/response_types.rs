@@ -36,6 +36,24 @@ pub struct PlayerBans {
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
+/// Base response for GetFriendList endpoint.
+pub struct GetFriendListResponseBase {
+    pub friendslist: FriendsList,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub struct FriendsList {
+    pub friends: Vec<Friend>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub struct Friend {
+    pub steamid: String,
+    pub relationship: String,
+    pub friend_since: u64,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 /// Base response for GetPlayerSummaries endpoint.
 pub struct GetPlayerSummariesResponseBase {
