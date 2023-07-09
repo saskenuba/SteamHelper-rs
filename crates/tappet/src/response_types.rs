@@ -38,7 +38,7 @@ pub struct PlayerBans {
 #[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
 /// Base response for GetFriendList endpoint.
 pub struct GetFriendListResponseBase {
-    pub friendslist: FriendsList,
+    pub friendslist: Option<FriendsList>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
