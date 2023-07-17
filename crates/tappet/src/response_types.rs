@@ -78,7 +78,7 @@ pub struct PlayerSummary {
     pub avatarfull: String,
     pub avatarhash: String,
     pub personastate: i64,
-    pub personastateflags: i64,
+    pub personastateflags: Option<i64>,
     pub lastlogoff: Option<i64>,
     pub profilestate: Option<i64>,
     pub commentpermission: Option<i32>,
