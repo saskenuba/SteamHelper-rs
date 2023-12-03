@@ -39,7 +39,7 @@ pub(crate) fn handle_encryption_negotiation(
 
     Ok(())
 }
-#[allow(unaligned_references)]
+
 fn handle_encrypt_result(message: PacketMessage) -> anyhow::Result<()> {
     let incoming_message: ClientMessage<MsgChannelEncryptResult> = ClientMessage::from_packet_message(message);
     println!("{:?}", incoming_message.body.result);
