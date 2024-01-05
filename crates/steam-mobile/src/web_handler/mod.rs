@@ -1,8 +1,5 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use const_format::concatcp;
-use cookie::{Cookie, CookieJar};
+use cookie::Cookie;
 use futures::FutureExt;
 use reqwest::Method;
 use scraper::Html;
@@ -10,7 +7,7 @@ use steam_language_gen::generated::enums::EResult;
 use steam_totp::Time;
 use tracing::{debug, trace, warn};
 
-use crate::client::MobileClient;
+use crate::client::{MobileClient, SteamAuthenticator};
 use crate::errors::{ApiKeyError, LoginError};
 use crate::page_scraper::{api_key_resolve_status, confirmation_details_single, confirmation_retrieve};
 use crate::types::{
@@ -19,9 +16,7 @@ use crate::types::{
 };
 use crate::utils::{dump_cookie_from_header, dump_cookies_by_name};
 use crate::web_handler::confirmation::{Confirmation, ConfirmationMethod};
-use crate::{
-    CachedInfo, User, STEAM_API_BASE, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_STORE_BASE, STEAM_STORE_HOST,
-};
+use crate::{User, STEAM_API_BASE, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_STORE_BASE, STEAM_STORE_HOST};
 
 pub mod confirmation;
 pub(crate) mod login;
@@ -39,40 +34,25 @@ pub(crate) async fn parental_unlock(client: &MobileClient, user: &User) -> Resul
 
     // unlocks parental on steam community
     {
-        parental_unlock_by_service(
-            Rc::clone(&client.cookie_store),
-            client,
-            &parental_code,
-            STEAM_COMMUNITY_BASE,
-            STEAM_COMMUNITY_HOST,
-        )
-        .await?;
+        parental_unlock_by_service(client, &parental_code, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST).await?;
     }
 
     // unlocks parental on steam store
     {
-        parental_unlock_by_service(
-            Rc::clone(&client.cookie_store),
-            client,
-            &parental_code,
-            STEAM_STORE_BASE,
-            STEAM_STORE_HOST,
-        )
-        .await?;
+        parental_unlock_by_service(client, &parental_code, STEAM_STORE_BASE, STEAM_STORE_HOST).await?;
     }
     Ok(())
 }
 
 /// Try to unlock account with parental controls (Family Sharing).
 async fn parental_unlock_by_service(
-    cookie_jar: Rc<RefCell<CookieJar>>,
     client: &MobileClient,
     parental_control_code: &str,
     url: &str,
     cookie_host: &str,
 ) -> Result<(), LoginError> {
     let unlock_url = format!("{}/parental/ajaxunlock", url);
-    let session_id = dump_cookies_by_name(&cookie_jar.borrow(), cookie_host, "sessionid").unwrap();
+    let session_id = dump_cookies_by_name(&*client.cookie_store.read(), cookie_host, "sessionid").unwrap();
 
     let request = ParentalUnlockRequest {
         pin: parental_control_code,
@@ -82,7 +62,7 @@ async fn parental_unlock_by_service(
 
     let parental_cookie_name = "steamparental";
     if let Some(cookie) = dump_cookie_from_header(&response, parental_cookie_name) {
-        let mut cookie_jar = cookie_jar.borrow_mut();
+        let mut cookie_jar = client.cookie_store.write();
         cookie_jar.add_original(
             Cookie::build(parental_cookie_name, cookie.clone())
                 .domain(STEAM_STORE_HOST)
@@ -115,14 +95,11 @@ async fn parental_unlock_by_service(
 
 /// Resolve caching of the user APIKey.
 /// This is done after user logon for the first time in this session.
-pub(crate) async fn cache_resolve(
-    client: &MobileClient,
-    cached_data: Rc<RefCell<CachedInfo>>,
-) -> Result<(), ApiKeyError> {
-    match api_key_retrieve(client).await? {
+pub(crate) async fn cache_resolve(authenticator: &SteamAuthenticator) -> Result<(), ApiKeyError> {
+    match api_key_retrieve(&authenticator.client).await? {
         Some(api_key) => {
             debug!("{}", &api_key);
-            let mut cached_data = cached_data.borrow_mut();
+            let mut cached_data = authenticator.cached_data.write();
             cached_data.set_api_key(api_key);
         }
         None => {
@@ -134,6 +111,7 @@ pub(crate) async fn cache_resolve(
 }
 
 /// Send confirmations to Steam Servers for accepting/denying.
+///
 /// # Panics
 /// This method will panic if the `User` doesn't have a linked `device_id`.
 pub(crate) async fn confirmations_send(

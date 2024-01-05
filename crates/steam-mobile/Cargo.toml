@@ -19,28 +19,30 @@ cli = ["clap", "dialoguer", "anyhow", "tokio"]
 base64 = "0.13"
 bytes = "^1.1"
 chrono = "0.4"
-const_format = "0.2"
 hex = "0.4"
-num-traits = "0.2"
 num-derive = "0.3"
-rand = "0.7"
-rsa = "0.3"
+num-traits = "0.2"
+parking_lot = "^0"
 reqwest = { version = "^0.11", features = ["cookies", "json"] }
-scraper = "0.12"
-serde = "1"
-serde_derive = "1"
-serde_json = "1"
-serde_repr = "0.1.5"
+rsa = "0.7"
+scraper = "0.18"
 serde_with = { version = "1.5", features = ["json"] }
+thiserror = "1"
 tracing = "0.1"
 tracing-futures = "0.2"
-thiserror = "1"
 uuid = { version = "1", features = ["v4"] }
 
-backoff = { version = "0.3.0", features = ["tokio", "futures"] }
-futures = "^0.3"
-futures-util = "0.3.15"
-futures-timer = "^3"
+backoff = { version = "0.4", features = ["tokio", "futures"] }
+
+const_format.workspace = true
+futures-timer.workspace = true
+futures-util.workspace = true
+futures.workspace = true
+rand.workspace = true
+serde.workspace = true
+serde_derive.workspace = true
+serde_json.workspace = true
+serde_repr.workspace = true
 
 strum = "0.21"
 strum_macros = "0.21"

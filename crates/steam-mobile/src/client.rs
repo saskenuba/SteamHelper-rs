@@ -1,11 +1,11 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::Arc;
 use std::time::Duration;
 
 use backoff::future::retry;
 use cookie::{Cookie, CookieJar};
 use futures::TryFutureExt;
 use futures_timer::Delay;
+use parking_lot::RwLock;
 use reqwest::header::HeaderMap;
 use reqwest::redirect::Policy;
 use reqwest::{Client, Method, Response, Url};
@@ -21,12 +21,12 @@ use crate::web_handler::confirmation::Confirmations;
 use crate::web_handler::login::login_website;
 use crate::web_handler::steam_guard_linker::{
     account_has_phone, add_authenticator_to_account, add_phone_to_account, check_email_confirmation, check_sms,
-    finalize, validate_phone_number, AddAuthenticatorStep, STEAM_ADD_PHONE_CATCHUP_SECS,
+    finalize, remove_authenticator, validate_phone_number, AddAuthenticatorStep, RemoveAuthenticatorScheme,
+    STEAM_ADD_PHONE_CATCHUP_SECS,
 };
 use crate::web_handler::{cache_resolve, confirmations_retrieve_all, confirmations_send, parental_unlock};
 use crate::{CachedInfo, ConfirmationMethod, MobileAuthFile, User, STEAM_COMMUNITY_HOST};
 
-#[derive(Debug)]
 /// Main authenticator. We use it to spawn and act as our "mobile" client.
 /// Responsible for accepting/denying trades, and some other operations that may or not be related
 /// to mobile operations.
@@ -37,32 +37,29 @@ use crate::{CachedInfo, ConfirmationMethod, MobileAuthFile, User, STEAM_COMMUNIT
 /// use steam_mobile::client::SteamAuthenticator;
 /// use steam_mobile::User;
 /// ```
+#[derive(Debug)]
 pub struct SteamAuthenticator {
     /// Inner client with cookie storage
-    client: MobileClient,
+    pub(crate) client: MobileClient,
     user: User,
-    cached_data: Rc<RefCell<CachedInfo>>,
+    pub(crate) cached_data: Arc<RwLock<CachedInfo>>,
 }
 
 impl SteamAuthenticator {
     /// Constructs a Steam Authenticator that you use to login into the Steam Community / Steam
     /// Store.
+    #[must_use]
     pub fn new(user: User) -> Self {
         Self {
             client: MobileClient::default(),
             user,
-            cached_data: Rc::new(RefCell::new(CachedInfo::default())),
+            cached_data: Arc::new(RwLock::new(CachedInfo::default())),
         }
     }
 
     /// Returns current user API Key. Need to login first.
     pub fn api_key(&self) -> Option<String> {
-        let api_key;
-
-        {
-            api_key = self.cached_data.borrow().api_key().map(ToString::to_string)
-        }
-        api_key
+        self.cached_data.read().api_key().map(ToString::to_string)
     }
 
     fn client(&self) -> &MobileClient {
@@ -85,7 +82,7 @@ impl SteamAuthenticator {
     pub async fn login(&self, captcha: Option<LoginCaptcha<'_>>) -> Result<(), AuthError> {
         // FIXME: Add more permanent errors, such as bad credentials
         retry(login_retry_strategy(), || async {
-            login_website(&self.client, &self.user, self.cached_data.borrow_mut(), captcha.clone())
+            login_website(&self.client, &self.user, self.cached_data.clone(), captcha.clone())
                 .await
                 .map_err(|error| match error {
                     LoginError::IncorrectCredentials => backoff::Error::Permanent(LoginError::IncorrectCredentials),
@@ -94,7 +91,7 @@ impl SteamAuthenticator {
                     }
                     _ => {
                         warn!("Transient error happened: Trying again..");
-                        backoff::Error::Transient(error)
+                        backoff::Error::transient(error)
                     }
                 })
         })
@@ -107,10 +104,7 @@ impl SteamAuthenticator {
             info!("Parental unlock successfully.");
         }
 
-        {
-            let cached_data = Rc::clone(&self.cached_data);
-            cache_resolve(&self.client, cached_data).await?;
-        }
+        cache_resolve(self).await?;
         info!("Cached API Key successfully.");
 
         Ok(())
@@ -153,10 +147,10 @@ impl SteamAuthenticator {
             debug!("Email confirmation signal sent.");
         }
 
-        add_authenticator_to_account(&self.client, self.cached_data.borrow())
+        add_authenticator_to_account(&self.client, self.cached_data.read())
             .await
             .map(AddAuthenticatorStep::MobileAuth)
-            .map_err(|e| e.into())
+            .map_err(Into::into)
     }
 
     /// Finalize the authenticator process, enabling `SteamGuard` for the account.
@@ -177,9 +171,9 @@ impl SteamAuthenticator {
 
         info!("Successfully confirmed SMS code.");
 
-        finalize(&self.client, self.cached_data.borrow(), mafile, sms_code)
+        finalize(&self.client, self.cached_data.read(), mafile, sms_code)
             .await
-            .map_err(|e| e.into())
+            .map_err(Into::into)
     }
 
     pub async fn remove_authenticator(&self) {
@@ -211,7 +205,7 @@ impl SteamAuthenticator {
         // TODO: With details? Maybe we need to check if there is a need to gather more details.
         let steamid = self
             .cached_data
-            .borrow()
+            .read()
             .steam_id()
             .expect("Failed to retrieve cached SteamID. Are you logged in?");
 
@@ -229,13 +223,13 @@ impl SteamAuthenticator {
     ) -> Result<(), AuthError> {
         let steamid = self
             .cached_data
-            .borrow()
+            .read()
             .steam_id()
             .expect("Failed to retrieve cached SteamID. Are you logged in?");
 
         confirmations_send(&self.client, &self.user, steamid, operation, confirmations.0)
             .await
-            .map_err(|e| e.into())
+            .map_err(Into::into)
     }
 
     /// You can request custom operations for any Steam operation that requires logging in.
@@ -250,7 +244,7 @@ impl SteamAuthenticator {
         data: Option<T>,
     ) -> Result<Response, reqwest::Error>
     where
-        T: Serialize,
+        T: Serialize + Send + Sync,
     {
         self.client
             .request_with_session_guard(url, method, custom_headers, data)
@@ -259,7 +253,7 @@ impl SteamAuthenticator {
 
     pub fn dump_cookie(&self, steam_domain_host: &str, steam_cookie_name: &str) -> Option<String> {
         // TODO: Change domain and names to enums
-        dump_cookies_by_name(&self.client.cookie_store.borrow(), steam_domain_host, steam_cookie_name)
+        dump_cookies_by_name(&self.client.cookie_store.read(), steam_domain_host, steam_cookie_name)
     }
 }
 
@@ -269,7 +263,7 @@ pub struct MobileClient {
     pub inner_http_client: Client,
     /// Cookie jar that manually handle cookies, because reqwest doesn't let us handle its
     /// cookies.
-    pub cookie_store: Rc<RefCell<CookieJar>>,
+    pub cookie_store: Arc<RwLock<CookieJar>>,
 }
 
 impl MobileClient {
@@ -282,7 +276,7 @@ impl MobileClient {
         data: Option<T>,
     ) -> Result<Response, reqwest::Error>
     where
-        T: Serialize,
+        T: Serialize + Send + Sync,
     {
         // We check preemptively if the session is still working.
         if self.session_is_expired().await? {
@@ -302,17 +296,17 @@ impl MobileClient {
         data: Option<&T>,
     ) -> Result<Response, reqwest::Error>
     where
-        T: Serialize,
+        T: Serialize + Send + Sync,
     {
         let parsed_url = Url::parse(&url).unwrap();
         let mut header_map = custom_headers.unwrap_or_default();
 
         // Send cookies stored on jar, based on the domain that we are requesting
         let domain = &format!(".{}", parsed_url.host_str().unwrap());
-        let domain_cookies = dump_cookies_by_domain(&self.cookie_store.borrow(), domain);
+        let domain_cookies = dump_cookies_by_domain(&self.cookie_store.read(), domain);
         header_map.insert(
             reqwest::header::COOKIE,
-            domain_cookies.unwrap_or_else(|| "".to_string()).parse().unwrap(),
+            domain_cookies.unwrap_or_default().parse().unwrap(),
         );
 
         let req_builder = self.inner_http_client.request(method, parsed_url).headers(header_map);
@@ -362,7 +356,7 @@ impl MobileClient {
 
     /// Replace current cookie jar with a new one.
     fn reset_jar(&mut self) {
-        self.cookie_store = Rc::new(RefCell::new(CookieJar::new()));
+        self.cookie_store = Arc::new(RwLock::new(CookieJar::new()));
     }
 
     /// Mobile cookies that makes us look like the mobile app
@@ -421,7 +415,7 @@ impl Default for MobileClient {
     fn default() -> Self {
         Self {
             inner_http_client: Self::init_mobile_client(),
-            cookie_store: Rc::new(RefCell::new(Self::init_cookie_jar())),
+            cookie_store: Arc::new(RwLock::new(Self::init_cookie_jar())),
         }
     }
 }

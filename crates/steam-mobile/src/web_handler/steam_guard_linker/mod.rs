@@ -1,21 +1,23 @@
-use std::cell::Ref;
+use std::time::Duration;
 
 use const_format::concatcp;
 use futures::TryFutureExt;
+use futures_timer::Delay;
+use parking_lot::lock_api::RwLockReadGuard;
+use parking_lot::RawRwLock;
 use reqwest::Method;
 use tracing::debug;
 
 use crate::client::MobileClient;
-use crate::errors::LinkerError;
+use crate::errors::{AuthError, LinkerError};
 use crate::utils::{dump_cookies_by_name, generate_canonical_device_id};
 use crate::web_handler::steam_guard_linker::types::{
     AddAuthenticatorErrorResponseBase, AddAuthenticatorRequest, AddAuthenticatorResponseBase,
     FinalizeAddAuthenticatorBase, FinalizeAddAuthenticatorErrorBase, FinalizeAddAuthenticatorRequest,
-    GenericSuccessResponse, HasPhoneResponse, PhoneAjaxRequest,
+    GenericSuccessResponse, HasPhoneResponse, PhoneAjaxRequest, RemoveAuthenticatorRequest,
+    RemoveAuthenticatorResponseBase,
 };
 use crate::{CachedInfo, MobileAuthFile, STEAM_API_BASE, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST};
-use futures_timer::Delay;
-use std::time::Duration;
 
 mod types;
 
@@ -36,9 +38,9 @@ struct AuthenticatorOptions {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AddAuthenticatorStep {
-    /// User is signin up for the first time.
+    /// The user is signing up for the first time.
     InitialStep,
-    /// Authenticator is waiting user's email confirmation to allow Steam add phone number.
+    /// The authenticator is awaiting the user's email confirmation to enable the addition of a phone number to Steam.
     EmailConfirmation,
     /// Authenticator succeeded and retrieved `MobileAuthFile`.
     MobileAuth(MobileAuthFile),
@@ -47,7 +49,7 @@ pub enum AddAuthenticatorStep {
 /// Queries the `/steamguard/phoneajax` to check if the user has a phone number.
 /// Returns true if user has already a phone registered.
 pub async fn account_has_phone(client: &MobileClient) -> LinkerResult<bool> {
-    let session_id = dump_cookies_by_name(&client.cookie_store.borrow(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
+    let session_id = dump_cookies_by_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
     let payload = PhoneAjaxRequest::has_phone(&*session_id);
 
     let response: HasPhoneResponse = client
@@ -59,8 +61,8 @@ pub async fn account_has_phone(client: &MobileClient) -> LinkerResult<bool> {
 }
 
 pub async fn check_sms(client: &MobileClient, sms_code: &str) -> LinkerResult<bool> {
-    let session_id = dump_cookies_by_name(&client.cookie_store.borrow(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
-    let payload = PhoneAjaxRequest::check_sms(&*session_id, sms_code);
+    let session_id = dump_cookies_by_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
+    let payload = PhoneAjaxRequest::check_sms(&session_id, sms_code);
 
     let response: GenericSuccessResponse = client
         .request_with_session_guard(PHONEAJAX_URL.to_owned(), Method::POST, None, Some(payload))
@@ -73,7 +75,7 @@ pub async fn check_sms(client: &MobileClient, sms_code: &str) -> LinkerResult<bo
 /// Signals Steam that the user confirmed the phone add request email, and is ready for the next step.
 /// Confirming the email allows `SteamAuthenticator` to register a new phone number to account.
 pub async fn check_email_confirmation(client: &MobileClient) -> LinkerResult<bool> {
-    let session_id = dump_cookies_by_name(&client.cookie_store.borrow(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
+    let session_id = dump_cookies_by_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
     let payload = PhoneAjaxRequest::check_email_confirmation(&*session_id);
 
     let response: GenericSuccessResponse = client
@@ -85,7 +87,7 @@ pub async fn check_email_confirmation(client: &MobileClient) -> LinkerResult<boo
 }
 
 pub async fn add_phone_to_account(client: &MobileClient, phone_number: &str) -> LinkerResult<bool> {
-    let session_id = dump_cookies_by_name(&client.cookie_store.borrow(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
+    let session_id = dump_cookies_by_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
 
     let payload = PhoneAjaxRequest::add_phone(&*session_id, phone_number);
 
@@ -104,7 +106,7 @@ pub fn validate_phone_number(phone_number: &str) -> bool {
 /// Last step to add a new authenticator.
 pub(crate) async fn finalize(
     client: &MobileClient,
-    cached_data: Ref<'_, CachedInfo>,
+    cached_data: RwLockReadGuard<'_, RawRwLock, CachedInfo>,
     mafile: &MobileAuthFile,
     sms_code: &str,
 ) -> LinkerResult<()> {
@@ -178,14 +180,14 @@ pub(crate) async fn finalize(
 /// otherwise the user is on risk of losing the account, since the `revocation_code` will also be lost.
 pub(crate) async fn add_authenticator_to_account(
     client: &MobileClient,
-    cached_data: Ref<'_, CachedInfo>,
+    cached_data: RwLockReadGuard<'_, RawRwLock, CachedInfo>,
 ) -> Result<MobileAuthFile, LinkerError> {
     let add_auth_url = format!("{}{}", STEAM_API_BASE, "/ITwoFactorService/AddAuthenticator/v0001");
     let oauth_token = cached_data.oauth_token().unwrap();
     let steamid = cached_data.steam_id().unwrap().to_string();
     let time = steam_totp::time::Time::with_offset().await?.to_string();
 
-    let payload = AddAuthenticatorRequest::new(oauth_token, &*steamid, time.parse().unwrap());
+    let payload = AddAuthenticatorRequest::new(oauth_token, &steamid, time.parse().unwrap());
 
     let response_text: String = client
         .request_with_session_guard(add_auth_url, Method::POST, None, Some(payload))
@@ -194,11 +196,11 @@ pub(crate) async fn add_authenticator_to_account(
 
     debug!("Steam addauth raw response: {:?}", response_text);
 
-    let mut mafile = match serde_json::from_str::<AddAuthenticatorResponseBase>(&*response_text) {
+    let mut mafile = match serde_json::from_str::<AddAuthenticatorResponseBase>(&response_text) {
         Ok(resp) => resp.steam_guard_success_details.mobile_auth,
         Err(err) => {
             eprintln!("Error found deserializing add auth response: {:#?}", err);
-            let error_resp = serde_json::from_str::<AddAuthenticatorErrorResponseBase>(&*response_text).unwrap();
+            let error_resp = serde_json::from_str::<AddAuthenticatorErrorResponseBase>(&response_text).unwrap();
             return match error_resp.response.status {
                 29 => Err(LinkerError::AuthenticatorPresent),
                 2 => Err(LinkerError::GeneralFailure(

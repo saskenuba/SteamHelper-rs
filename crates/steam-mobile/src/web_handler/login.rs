@@ -1,15 +1,16 @@
-use std::cell::RefMut;
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::Duration;
 
 use chrono::Offset;
 use const_format::concatcp;
 use cookie::Cookie;
 use futures_timer::Delay;
+use parking_lot::RwLock;
 use rand::thread_rng;
 use reqwest::{Client, Method};
 use rsa::padding::PaddingScheme;
-use rsa::{BigUint, PublicKey, RSAPublicKey};
+use rsa::{BigUint, PublicKey, RsaPublicKey};
 use steam_totp::{Secret, Time};
 
 use crate::client::MobileClient;
@@ -25,15 +26,13 @@ const LOGIN_DO_URL: &str = concatcp!(STEAM_COMMUNITY_BASE, "/login/dologin");
 
 type LoginResult<T> = Result<T, LoginError>;
 
-/// This method is used to login through Steam ISteamAuthUser interface.
+/// This method is used to login through Steam `ISteamAuthUser` interface.
 ///
 /// Webapi_nonce is received by connecting to the Steam Network.
 ///
 /// Currently not possible without the implementation of the [steam-client] crate.
 /// For website that currently works, check [login_website] method.
 async fn login_isteam_user_auth(_client: &Client, _user: User, _webapi_nonce: &[u8]) -> LoginResult<()> {
-    // let _session_key = steam_crypto::generate_session_key(None).unwrap();
-
     unimplemented!();
 }
 
@@ -43,8 +42,7 @@ fn website_handle_rsa(user: &User, response: RSAResponse) -> String {
     let modulus = hex::decode(response.modulus).unwrap();
     let exponent = hex::decode(response.exponent).unwrap();
 
-    let rsa_encryptor =
-        RSAPublicKey::new(BigUint::from_bytes_be(&*modulus), BigUint::from_bytes_be(&*exponent)).unwrap();
+    let rsa_encryptor = RsaPublicKey::new(BigUint::from_bytes_be(&modulus), BigUint::from_bytes_be(&exponent)).unwrap();
     let mut random_gen = thread_rng();
     let encrypted_pwd_bytes = rsa_encryptor
         .encrypt(&mut random_gen, PaddingScheme::PKCS1v15Encrypt, password_bytes)
@@ -66,12 +64,15 @@ fn website_handle_rsa(user: &User, response: RSAResponse) -> String {
 //
 // Should accept closure to handle cases such as needing a captcha or sms.
 // But the best way is to have it already setup to use TOTP codes.
-pub(crate) async fn login_website<'a, LC: Into<Option<LoginCaptcha<'a>>>>(
+pub(crate) async fn login_website<'a, LC>(
     client: &MobileClient,
     user: &User,
-    mut cached_data: RefMut<'_, CachedInfo>,
+    cached_data: Arc<RwLock<CachedInfo>>,
     captcha: LC,
-) -> LoginResult<()> {
+) -> LoginResult<()>
+where
+    LC: Into<Option<LoginCaptcha<'a>>>,
+{
     // we request to generate sessionID cookies
     let response = client
         .request(MOBILE_REFERER.to_owned(), Method::GET, None, None::<&u8>)
@@ -82,7 +83,7 @@ pub(crate) async fn login_website<'a, LC: Into<Option<LoginCaptcha<'a>>>>(
         .map(|cookie| cookie.to_str().unwrap())
         .map(|c| {
             let index = c.find('=').unwrap();
-            (&c[index + 1..index + 25]).to_string()
+            c[index + 1..index + 25].to_string()
         })
         .ok_or_else(|| {
             LoginError::GeneralFailure("Something went wrong while getting sessionid. Should retry".to_string())
@@ -115,7 +116,7 @@ pub(crate) async fn login_website<'a, LC: Into<Option<LoginCaptcha<'a>>>>(
         .linked_mafile
         .as_ref()
         .map(|f| Secret::from_b64(&f.shared_secret).unwrap())
-        .map_or_else(|| "".to_string(), |s| steam_totp::generate_auth_code(s, time));
+        .map_or_else(String::new, |s| steam_totp::generate_auth_code(s, time));
 
     let login_captcha = captcha.into();
 
@@ -148,16 +149,19 @@ pub(crate) async fn login_website<'a, LC: Into<Option<LoginCaptcha<'a>>>>(
     let token_secure = login_response_json.oauth.wgtoken_secure;
 
     // cache steamid
-    cached_data.set_steamid(&steamid);
-    cached_data.set_oauth_token(oauth_token);
+    {
+        let mut cached_data = cached_data.write();
+        cached_data.set_steamid(&steamid);
+        cached_data.set_oauth_token(oauth_token);
+    }
 
     {
         // Recover cookies to authorize store.steampowered and help.steampowered subdomains.
-        let mut cookie_jar = client.cookie_store.borrow_mut();
+        let mut cookie_jar = client.cookie_store.write();
         for host in &[STEAM_COMMUNITY_HOST, STEAM_HELP_HOST, STEAM_STORE_HOST] {
             let timezone_offset = format!("{},0", chrono::Local::now().offset().fix().local_minus_utc());
-            let fmt_token = format!("{}%7C%7C{}", steamid, token);
-            let fmt_secure_token = format!("{}%7C%7C{}", steamid, token_secure);
+            let fmt_token = format!("{steamid}%7C%7C{token}");
+            let fmt_secure_token = format!("{steamid}%7C%7C{token_secure}");
             cookie_jar.add_original(
                 Cookie::build("steamLoginSecure", fmt_secure_token)
                     .domain(*host)
