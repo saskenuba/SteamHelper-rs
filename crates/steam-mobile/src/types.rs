@@ -1,11 +1,10 @@
 use std::borrow::Cow;
 
-use crate::errors::LoginError;
 use serde::{Deserialize, Serialize};
-
 use steam_language_gen::generated::enums::EResult;
 
-#[derive(Serialize, Debug, Clone)]
+use crate::errors::LoginError;
+
 /// Used to login into Steam website if it detects something different on your account.
 /// This may be because of unsuccessful logins, numerous retries on some operations. or anything. Really.
 /// Requiring a captcha certainly can occur on an account with SteamGuard disabled, but still not sure on an account
@@ -13,6 +12,7 @@ use steam_language_gen::generated::enums::EResult;
 ///
 /// The safe way to use this if you are automating something, is to match the error and perhaps have a captcha solver.
 /// You can get the captcha GUID if it is required through the `LoginError::CaptchaRequired`.
+#[derive(Serialize, Debug, Clone)]
 pub struct LoginCaptcha<'a> {
     #[serde(rename = "captcha_gid")]
     /// Captcha GUID. I.e unique identifier.
@@ -48,7 +48,7 @@ impl<'a> Default for ConfirmationMultiAcceptRequest<'a> {
     fn default() -> Self {
         Self {
             steamid: "",
-            confirmation_hash: "".to_string(),
+            confirmation_hash: String::new(),
             device_kind: "android",
             operation: "",
             device_id: "",

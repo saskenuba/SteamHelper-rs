@@ -23,7 +23,7 @@ pub(crate) fn confirmation_retrieve(confirmation_html: Html) -> Option<Vec<Confi
                 .attr("data-type")
                 .map_or(EConfirmationType::Unknown, |s| EConfirmationType::from_str(s).unwrap());
 
-            let tradeoffer_id = if let EConfirmationType::Trade = confirmation_type {
+            let tradeoffer_id = if confirmation_type == EConfirmationType::Trade {
                 element.value().attr("data-creator").map(|s| i64::from_str(s).unwrap())
             } else {
                 None
@@ -46,7 +46,7 @@ pub(crate) fn confirmation_retrieve(confirmation_html: Html) -> Option<Vec<Confi
 /// Parse a single confirmation details into a [ConfirmationDetails] struct.
 ///
 /// Does not need to have error since we already have a confirmation, and it has to have details.
-pub(crate) fn confirmation_details_single(confirmation_details_html: Html) -> ConfirmationDetails {
+pub(crate) fn confirmation_details_single(confirmation_details_html: &Html) -> ConfirmationDetails {
     let trade_selector = Selector::parse("div.mobileconf_trade_area").unwrap();
     let market_selector = Selector::parse("div.mobileconf_listing_prices").unwrap();
 
@@ -124,11 +124,11 @@ pub(crate) fn api_key_resolve_status(api_key_html: Html) -> Result<String, ApiKe
 mod tests {
     use super::*;
 
-    fn sample_multi_confirmation() -> &'static str {
+    const fn sample_multi_confirmation() -> &'static str {
         include_str!("../assets/multi_confirmation.html")
     }
 
-    fn sample_empty_confirmation() -> &'static str {
+    const fn sample_empty_confirmation() -> &'static str {
         include_str!("../assets/empty_confirmation.html")
     }
 

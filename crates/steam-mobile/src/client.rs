@@ -176,8 +176,18 @@ impl SteamAuthenticator {
             .map_err(Into::into)
     }
 
-    pub async fn remove_authenticator(&self) {
-        unimplemented!()
+    pub async fn remove_authenticator(
+        &self,
+        revocation_code: &str,
+        remove_authenticator_scheme: RemoveAuthenticatorScheme,
+    ) -> Result<(), AuthError> {
+        remove_authenticator(
+            &self.client,
+            self.cached_data.read(),
+            revocation_code,
+            remove_authenticator_scheme,
+        )
+        .await
     }
 
     /// Add a phone number into the account, and then checks it to make sure it has been added.
@@ -385,8 +395,7 @@ impl MobileClient {
 
     /// Initiate mobile client with default headers
     fn init_mobile_client() -> Client {
-        let user_agent = "Mozilla/5.0 (Linux; U; Android 4.1.1; en-us; Google Nexus 4 - 4.1.1 - API 16 - 768x1280 \
-                          Build/JRO03S) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30";
+        let user_agent = "Dalvik/2.1.0 (Linux; U; Android 9; Valve Steam App Version/3)";
         let mut default_headers = HeaderMap::new();
         default_headers.insert(
             reqwest::header::ACCEPT,

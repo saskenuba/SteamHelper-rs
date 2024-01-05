@@ -1,7 +1,7 @@
 //! A port of the famous C# SteamAuth library, that allows users to add/remove a mobile
 //! authenticator, and also confirm/deny mobile confirmations.
 
-#![allow(dead_code)]
+#![allow(dead_code, clippy::missing_errors_doc)]
 #![warn(missing_docs, missing_doc_code_examples)]
 #![deny(
     missing_debug_implementations,
@@ -15,22 +15,21 @@
 
 use std::fmt;
 use std::fmt::{Debug, Formatter};
-use std::io::Read;
 use std::path::PathBuf;
 
 use const_format::concatcp;
-/// re-export
-pub use reqwest::{header::HeaderMap, Error as HttpError, Method, Url};
+pub use reqwest::header::HeaderMap;
+pub use reqwest::{Error as HttpError, Method, Url};
 use serde::{Deserialize, Serialize};
 use steam_totp::Secret;
 use steamid_parser::SteamID;
 pub use utils::format_captcha_url;
 use uuid::Uuid;
+pub use web_handler::confirmation::{ConfirmationMethod, Confirmations, EConfirmationType};
+pub use web_handler::steam_guard_linker::AddAuthenticatorStep;
 
 use crate::errors::{AuthError, MobileAuthFileError};
 use crate::utils::read_from_disk;
-pub use web_handler::confirmation::{ConfirmationMethod, Confirmations, EConfirmationType};
-pub use web_handler::steam_guard_linker::AddAuthenticatorStep;
 
 pub mod client;
 pub mod errors;
@@ -48,18 +47,18 @@ const MA_FILE_EXT: &str = ".maFile";
 // HOST SHOULD BE USED FOR COOKIE RETRIEVAL INSIDE COOKIE JAR!!
 
 /// Steam Community Cookie Host
-pub const STEAM_COMMUNITY_HOST: &str = ".steamcommunity.com";
+pub(crate) const STEAM_COMMUNITY_HOST: &str = ".steamcommunity.com";
 /// Steam Help Cookie Host
-pub const STEAM_HELP_HOST: &str = ".help.steampowered.com";
+pub(crate) const STEAM_HELP_HOST: &str = ".help.steampowered.com";
 /// Steam Store Cookie Host
-pub const STEAM_STORE_HOST: &str = ".store.steampowered.com";
+pub(crate) const STEAM_STORE_HOST: &str = ".store.steampowered.com";
 
 /// Should not be used for cookie retrieval. Use `STEAM_COMMUNTY_HOST` instead.
-const STEAM_COMMUNITY_BASE: &str = "https://steamcommunity.com";
+pub(crate) const STEAM_COMMUNITY_BASE: &str = "https://steamcommunity.com";
 /// Should not be used for cookie retrieval. Use `STEAM_STORE_HOST` instead.
-const STEAM_STORE_BASE: &str = "https://store.steampowered.com";
+pub(crate) const STEAM_STORE_BASE: &str = "https://store.steampowered.com";
 /// Should not be used for cookie retrieval. Use `STEAM_API_HOST` instead.
-const STEAM_API_BASE: &str = "https://api.steampowered.com";
+pub(crate) const STEAM_API_BASE: &str = "https://api.steampowered.com";
 
 const MOBILE_REFERER: &str = concatcp!(
     STEAM_COMMUNITY_BASE,
@@ -73,7 +72,7 @@ const MOBILE_REFERER: &str = concatcp!(
 /// ```no_run
 /// use steam_mobile::User;
 ///
-/// User::new("test_username".to_string(),"password".to_string())
+/// User::new("test_username".to_string(), "password".to_string())
 ///     .parental_code("1111") // Only needed if the is a parental code, otherwise skip
 ///     .ma_file_from_disk("assets/my.maFile");
 /// ```
@@ -127,8 +126,8 @@ impl CachedInfo {
 }
 
 impl User {
-    #[must_use]
     /// Creates a new valid `User` with the bare minimum credentials.
+    #[must_use]
     pub fn new(username: String, password: String) -> Self {
         Self {
             username,
@@ -151,18 +150,21 @@ impl User {
     }
 
     /// Sets the account username, mandatory
+    #[must_use]
     pub fn username<T: ToString>(mut self, username: T) -> Self {
         self.username = username.to_string();
         self
     }
 
     /// Sets the account password, mandatory
+    #[must_use]
     pub fn password<T: ToString>(mut self, password: T) -> Self {
         self.password = password.to_string();
         self
     }
 
     /// Sets the parental code, if any.
+    #[must_use]
     pub fn parental_code<T: ToString>(mut self, parental_code: T) -> Self {
         self.parental_code = Some(parental_code.to_string());
         self
@@ -177,6 +179,7 @@ impl User {
         Ok(self)
     }
 
+    #[must_use]
     pub fn ma_file(mut self, ma_file: MobileAuthFile) -> Self {
         self.linked_mafile = Some(ma_file);
         self
@@ -199,7 +202,7 @@ impl User {
 ///     device_id: "android:xxxxxxxxxxxxxxx"
 /// }
 /// ```
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct MobileAuthFile {
     /// Identity secret is used to generate the confirmation links for our trade requests.
     /// If we are generating our own Authenticator, this is given by Steam.
@@ -256,7 +259,7 @@ impl MobileAuthFile {
         T: Into<PathBuf>,
     {
         let buffer = read_from_disk(path);
-        Self::from_str(&*buffer)
+        Self::from_str(&buffer)
     }
 }
 

@@ -8,6 +8,7 @@ use thiserror::Error;
 ///
 ///
 /// For a general explanation of EResults, check: https://steamerrors.com/
+#[allow(missing_docs)]
 #[derive(Error, Debug)]
 pub enum AuthError {
     #[error(transparent)]
@@ -22,6 +23,7 @@ pub enum AuthError {
     HttpError(#[from] reqwest::Error),
 }
 
+#[allow(missing_docs)]
 #[derive(Error, Debug)]
 /// This kind of error should only be raised, if the user tried to use a method that requires the API KEY, but it could
 /// not be cached for any reason.
@@ -39,6 +41,7 @@ pub enum ApiKeyError {
     HttpError(#[from] reqwest::Error),
 }
 
+#[allow(missing_docs)]
 #[derive(Error, Debug)]
 pub enum LoginError {
     #[error("Message returned: `{0}`")]
@@ -61,13 +64,12 @@ pub enum LoginError {
 }
 
 /// Errors related to the Authenticator Linker.
+#[allow(missing_docs)]
 #[derive(Error, Debug)]
 pub enum LinkerError {
     #[error("{0}")]
     GeneralFailure(String),
-    #[error("There is already a authenticator vinculated with this account. Remove the old to add another one.")]
-    /// There is already a finalized authenticator on this account. If you want to add on another number, first remove
-    /// the old one.
+    #[error("An authenticator is already linked to this account. Please remove the old one before adding a new one.")]
     AuthenticatorPresent,
 
     #[error("The SMS code you entered is incorrect.")]
@@ -82,6 +84,7 @@ pub enum LinkerError {
 }
 
 /// Errors related to the Authenticator Linker.
+#[allow(missing_docs)]
 #[derive(Error, Debug)]
 pub enum MobileAuthFileError {
     #[error(transparent)]

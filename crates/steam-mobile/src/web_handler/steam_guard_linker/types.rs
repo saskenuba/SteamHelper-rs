@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use strum_macros::{Display, IntoStaticStr};
 
 use crate::utils::generate_canonical_device_id;
+use crate::web_handler::steam_guard_linker::RemoveAuthenticatorScheme;
 use crate::MobileAuthFile;
 
 #[derive(Copy, Clone, Debug, Serialize, Display, IntoStaticStr)]
@@ -116,17 +117,36 @@ pub(super) struct GenericSuccessResponse {
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct RemoveAuthenticatorRequest<'a> {
-    pub steamid: &'a str,
+    pub steamid: String,
     pub revocation_code: &'a str,
     #[serde(rename = "access_token")]
     pub oauth_token: &'a str,
     pub steamguard_scheme: &'a str,
 }
 
+impl<'a> RemoveAuthenticatorRequest<'a> {
+    pub fn new<T>(
+        oauth_token: &'a str,
+        steam_id: T,
+        revocation_code: &'a str,
+        remove_authenticator_scheme: RemoveAuthenticatorScheme,
+    ) -> RemoveAuthenticatorRequest<'a>
+    where
+        T: ToString,
+    {
+        Self {
+            steamid: steam_id.to_string(),
+            revocation_code,
+            oauth_token,
+            steamguard_scheme: remove_authenticator_scheme.as_str(),
+        }
+    }
+}
+
 impl<'a> Default for RemoveAuthenticatorRequest<'a> {
     fn default() -> Self {
         Self {
-            steamid: "",
+            steamid: String::new(),
             revocation_code: "",
             oauth_token: "",
             steamguard_scheme: "2",
@@ -192,6 +212,18 @@ impl<'a> Default for AddAuthenticatorRequest<'a> {
     }
 }
 
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct RemoveAuthenticatorResponseBase {
+    #[serde(rename = "response")]
+    steam_guard_details: RemoveAuthenticatorResponse,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+struct RemoveAuthenticatorResponse {
+    pub success: bool,
+    pub revocation_attempts_remaining: i64,
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AddAuthenticatorResponseBase {
     #[serde(rename = "response")]
@@ -204,16 +236,16 @@ pub struct AddAuthenticatorResponse {
     pub mobile_auth: MobileAuthFile,
 
     pub status: i64,
-    /* pub shared_secret: String,
-     * pub revocation_code: String,
-     * pub identity_secret: String,
-     * pub account_name: String,
-     * pub secret1: String,
-     * Deprecated
-     * pub serial_number: String,
-     * pub server_time: String,
-     * pub token_gid: String,
-     * pub uri: String, */
+    // pub shared_secret: String,
+    // pub revocation_code: String,
+    // pub identity_secret: String,
+    // pub account_name: String,
+    // pub secret1: String,
+    // Deprecated
+    // pub serial_number: String,
+    // pub server_time: String,
+    // pub token_gid: String,
+    // pub uri: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -251,8 +283,6 @@ pub struct FinalizeAddAuthenticatorErrorResponse {
     pub status: i64,
 }
 
-/// operacao após receber o SMS
-/// endpoint na store https://store.steampowered.com/phone/add_ajaxop
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct StoreFinalizeAuthenticatorRequest {
     input: String,
@@ -276,9 +306,6 @@ impl Default for StoreFinalizeAuthenticatorRequest {
         }
     }
 }
-
-// {"success":true,"showResend":false,"state":"done","errorText":"","token":"0","vac_policy":0,"tos_policy":2,"showDone"
-// :true,"maxLength":"5"}
 
 #[derive(Default, Debug, Clone, PartialEq, serde_derive::Serialize, serde_derive::Deserialize)]
 #[serde(rename_all = "camelCase")]

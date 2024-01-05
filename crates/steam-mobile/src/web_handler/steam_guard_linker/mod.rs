@@ -212,12 +212,49 @@ pub(crate) async fn add_authenticator_to_account(
             };
         }
     };
-    mafile.set_device_id(generate_canonical_device_id(&*steamid));
+    mafile.set_device_id(generate_canonical_device_id(&steamid));
     Ok(mafile)
 }
 
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum RemoveAuthenticatorScheme {
+    ReturnToEmailCodes,
+    RemoveSteamGuard,
+}
+
+impl RemoveAuthenticatorScheme {
+    fn as_str(self) -> &'static str {
+        match self {
+            RemoveAuthenticatorScheme::ReturnToEmailCodes => "1",
+            RemoveAuthenticatorScheme::RemoveSteamGuard => "2",
+        }
+    }
+}
+
 /// Remove authenticator from account.
-pub(crate) async fn remove_authenticator(_client: &MobileClient, _cached_data: Ref<'_, CachedInfo>) {
-    let _url = format!("{}{}", STEAM_API_BASE, "/ITwoFactorService/AddAuthenticator/v0001");
-    todo!()
+pub(crate) async fn remove_authenticator(
+    client: &MobileClient,
+    cached_data: RwLockReadGuard<'_, RawRwLock, CachedInfo>,
+    revocation_token: &str,
+    remove_authenticator_scheme: RemoveAuthenticatorScheme,
+) -> Result<(), AuthError> {
+    let _url = format!(
+        "{}{}",
+        STEAM_API_BASE, "/ITwoFactorService/RemoveAuthenticator/v1?access_token="
+    );
+
+    let steamid = cached_data
+        .steam_id()
+        .map(|s| s.to_string())
+        .expect("Should have been set.");
+    let oauth_token = cached_data.oauth_token().expect("Should have been set.");
+    let payload = RemoveAuthenticatorRequest::new(oauth_token, steamid, revocation_token, remove_authenticator_scheme);
+
+    // FIXME: add error handling and error variants
+    client
+        .request_with_session_guard(_url, Method::POST, None, Some(payload))
+        .and_then(|resp| resp.json::<RemoveAuthenticatorResponseBase>())
+        .await
+        .map(|_| ())
+        .map_err(Into::into)
 }

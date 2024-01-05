@@ -126,7 +126,7 @@ pub(crate) async fn confirmations_send(
 
     let mut id_vec = vec![];
     let mut key_vec = vec![];
-    for confirmation in confirmations.into_iter() {
+    for confirmation in confirmations {
         id_vec.push(("cid[]", confirmation.id));
         key_vec.push(("ck[]", confirmation.key));
     }
@@ -219,7 +219,7 @@ pub(crate) async fn confirmations_retrieve_all(
         };
 
         let html = Html::parse_document(&response_content.html);
-        details_vec.push(confirmation_details_single(html));
+        details_vec.push(confirmation_details_single(&html));
     }
 
     for (confirmation, detail) in user_confirmations.iter_mut().zip(details_vec.into_iter()) {
