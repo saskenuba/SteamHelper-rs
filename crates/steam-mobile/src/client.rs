@@ -219,25 +219,31 @@ impl SteamAuthenticator {
             .steam_id()
             .expect("Failed to retrieve cached SteamID. Are you logged in?");
 
-        let confirmations = confirmations_retrieve_all(&self.client, &self.user, steamid, false)
-            .await?
-            .map(Confirmations::from);
-        Ok(confirmations)
+        confirmations_retrieve_all(&self.client, &self.user, steamid, false)
+            .map_ok(|confs| confs.map(Confirmations::from))
+            .err_into()
+            .await
     }
 
     /// Accept or deny confirmations.
-    pub async fn process_confirmations(
+    ///
+    /// # Panics
+    /// Will panic if not logged in with [`SteamAuthenticator`] first.
+    pub async fn process_confirmations<I>(
         &self,
         operation: ConfirmationMethod,
-        confirmations: Confirmations,
-    ) -> Result<(), AuthError> {
+        confirmations: I,
+    ) -> Result<(), AuthError>
+    where
+        I: IntoIterator<Item = Confirmation> + Send + Sync,
+    {
         let steamid = self
             .cached_data
             .read()
             .steam_id()
             .expect("Failed to retrieve cached SteamID. Are you logged in?");
 
-        confirmations_send(&self.client, &self.user, steamid, operation, confirmations.0)
+        confirmations_send(&self.client, &self.user, steamid, operation, confirmations)
             .await
             .map_err(Into::into)
     }
