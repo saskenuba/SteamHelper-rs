@@ -28,9 +28,10 @@ use uuid::Uuid;
 pub use web_handler::confirmation::{ConfirmationMethod, Confirmations, EConfirmationType};
 pub use web_handler::steam_guard_linker::AddAuthenticatorStep;
 
-use crate::errors::{AuthError, MobileAuthFileError};
+use crate::errors::{AuthError, InternalError, MobileAuthFileError};
 use crate::utils::read_from_disk;
 
+mod adapter;
 pub mod client;
 pub mod errors;
 mod page_scraper;
@@ -60,10 +61,14 @@ pub(crate) const STEAM_STORE_BASE: &str = "https://store.steampowered.com";
 /// Should not be used for cookie retrieval. Use `STEAM_API_HOST` instead.
 pub(crate) const STEAM_API_BASE: &str = "https://api.steampowered.com";
 
+pub(crate) const STEAM_LOGIN_BASE: &str = "https://login.steampowered.com";
+
 const MOBILE_REFERER: &str = concatcp!(
     STEAM_COMMUNITY_BASE,
     "/mobilelogin?oauth_client_id=DE45CD61&oauth_scope=read_profile%20write_profile%20read_client%20write_client"
 );
+
+pub type AuthResult<T> = Result<T, AuthError>;
 
 /// User that is needed for the authenticator to work.
 /// Ideally all fields should be populated before authenticator operations are made.
@@ -89,7 +94,7 @@ pub struct User {
 ///
 ///
 /// SteamID, API KEY and the login Oauth token are currently cached by `SteamAuthenticator`.
-struct CachedInfo {
+struct SteamCache {
     steamid: Option<SteamID>,
     api_key: Option<String>,
     /// Oauth token recovered at the login.
@@ -97,7 +102,7 @@ struct CachedInfo {
     oauth_token: Option<String>,
 }
 
-impl CachedInfo {
+impl SteamCache {
     // FIXME: This should not unwrap, probably result with steamid parse error.
     fn set_steamid(&mut self, steamid: &str) {
         let parsed_steamid = SteamID::parse(steamid).unwrap();
@@ -246,8 +251,10 @@ impl MobileAuthFile {
         }
     }
 
-    pub fn from_str(string: &str) -> Result<Self, MobileAuthFileError> {
-        serde_json::from_str::<MobileAuthFile>(string).map_err(|e| e.into())
+    /// Parses a [`MobileAuthFile`] from a json string.
+    pub fn from_json(string: &str) -> Result<Self, MobileAuthFileError> {
+        serde_json::from_str::<Self>(string)
+            .map_err(|e| MobileAuthFileError::InternalError(InternalError::DeserializationError(e)))
     }
 
     /// Convenience function that imports the file from disk
@@ -259,7 +266,7 @@ impl MobileAuthFile {
         T: Into<PathBuf>,
     {
         let buffer = read_from_disk(path);
-        Self::from_str(&buffer)
+        Self::from_json(&buffer)
     }
 }
 
