@@ -2,6 +2,7 @@
 
 use std::fs::OpenOptions;
 use std::io::{BufWriter, Write};
+use std::ops::Deref;
 use std::path::PathBuf;
 use std::str::FromStr;
 
@@ -155,7 +156,7 @@ async fn main() -> Result<()> {
                 let phone_number = add_subcommand.value_of("phone_number").unwrap();
                 let save_path = add_subcommand.value_of("save_path").as_deref().map(PathBuf::from);
 
-                let authenticator = handles_login(account, password, None).await?;
+                let authenticator = handle_login(account, password, None).await?;
 
                 let mut auth_step = AddAuthenticatorStep::InitialStep;
                 let mobile_auth_file;
@@ -163,9 +164,9 @@ async fn main() -> Result<()> {
                     match authenticator.add_authenticator(auth_step.clone(), phone_number).await {
                         Ok(AddAuthenticatorStep::EmailConfirmation) => {
                             println!(
-                                    "Phone number was added successfully, A Steam email was sent to your registered inbox to \
-                             allow a phone\nnumber to be registered. Please confirm it now.\n"
-                                );
+                                "Phone number was added successfully, A Steam email was sent to your registered inbox \
+                                 to allow a phone\nnumber to be registered. Please confirm it now.\n"
+                            );
                             Confirm::new()
                                 .with_prompt("Have you confirmed your email?")
                                 .wait_for_newline(true)
@@ -242,7 +243,7 @@ async fn process_confirmations(subcomm_args: &ArgMatches) -> Result<()> {
         _ => unreachable!(),
     };
 
-    let authenticator = handles_login(account, password, Some(ma_file)).await?;
+    let authenticator = handle_login(account, password, Some(ma_file)).await?;
 
     println!("Please wait while we fetch your pending confirmations...");
     let confirmations = authenticator.fetch_confirmations().await;
@@ -261,9 +262,9 @@ async fn process_confirmations(subcomm_args: &ArgMatches) -> Result<()> {
             .await;
 
         if process_results.is_ok() {
-            println!("Success! {} confirmations were processed.", total_confirmations);
+            println!("Success! {total_confirmations} confirmations were processed.");
         } else {
-            println!("Error processing {} confirmations.", total_confirmations);
+            println!("Error processing {total_confirmations} confirmations.");
         }
     } else {
         panic!("There was an error fetching confirmations. Please try again")
@@ -272,7 +273,7 @@ async fn process_confirmations(subcomm_args: &ArgMatches) -> Result<()> {
     Ok(())
 }
 
-async fn handles_login(
+async fn handle_login(
     account: &str,
     password: &str,
     shared_secret: Option<MobileAuthFile>,
@@ -283,7 +284,7 @@ async fn handles_login(
     );
 
     let authenticator = SteamAuthenticator::new(user);
-    match authenticator.login(None).await {
+    match authenticator.login().await {
         Ok(_) => (),
         Err(auth_error) => match auth_error {
             AuthError::Login(login_error) => match login_error {
