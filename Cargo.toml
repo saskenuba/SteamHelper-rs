@@ -4,14 +4,26 @@ resolver = "2"
 
 [workspace.dependencies]
 
+# local crates
+tappet = { path = "./crates/tappet", version = "0.5.0" }
+tappet-derive = { path = "./crates/tappet-derive", version = "0.3.2" }
+
+base64 = "^0.21"
 const_format = "^0.2"
+derive_more = { version = "1.0.0-beta.6", features = ["full"] }
 rand = "^0.8"
+reqwest = { version = "^0.11", features = ["cookies"] }
 futures = "^0.3"
-futures-util = "0.3.15"
+futures-util = "^0.3"
 futures-timer = "^3"
+strum = "0.25"
+strum_macros = "0.25"
 
 serde = "1"
 serde_derive = "1"
 serde_json = "1"
 serde_repr = "0.1.5"
+
+
+
 
