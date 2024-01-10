@@ -20,7 +20,7 @@ pub enum AuthError {
     #[error(transparent)]
     MobileAuthFile(#[from] MobileAuthFileError),
     #[error(transparent)]
-    HttpError(#[from] reqwest::Error),
+    InternalError(#[from] InternalError),
 }
 
 #[allow(missing_docs)]
@@ -34,11 +34,11 @@ pub enum ApiKeyError {
     AccessDenied,
     #[error("Key not yet registered.")]
     NotRegistered,
-
     #[error("A method requiring a cached key was used, but this account API KEY could not be cached.")]
     NotCached,
+
     #[error(transparent)]
-    HttpError(#[from] reqwest::Error),
+    InternalError(#[from] InternalError),
 }
 
 #[allow(missing_docs)]
@@ -50,6 +50,8 @@ pub enum LoginError {
     NeedSteamID,
     #[error("Parental unlock error `{0}`")]
     ParentalUnlock(String),
+    #[error("Steam Guard Mobile is not enabled. Email codes are not supported.")]
+    Need2FA,
     #[error("Account name or password entered are incorrect.")]
     IncorrectCredentials,
     #[error("Requires a captcha code. If a previous attempt was made, the captcha was probably incorrect. \
@@ -57,7 +59,7 @@ pub enum LoginError {
     CaptchaRequired { captcha_guid: String },
 
     #[error(transparent)]
-    HttpError(#[from] reqwest::Error),
+    InternalError(#[from] InternalError),
 
     #[error(transparent)]
     TotpError(#[from] steam_totp::error::TotpError),
@@ -78,7 +80,8 @@ pub enum LinkerError {
     UnableToGenerateCorrectCodes,
 
     #[error(transparent)]
-    HttpError(#[from] reqwest::Error),
+    InternalError(#[from] InternalError),
+
     #[error(transparent)]
     TotpError(#[from] steam_totp::error::TotpError),
 }
@@ -88,8 +91,21 @@ pub enum LinkerError {
 #[derive(Error, Debug)]
 pub enum MobileAuthFileError {
     #[error(transparent)]
-    DeserializationError(#[from] serde_json::Error),
+    InternalError(#[from] InternalError),
 
     #[error("{0}")]
     GeneralFailure(String),
+}
+
+/// Errors from networking or failure to deserialize internal types.
+#[derive(Error, Debug)]
+pub enum InternalError {
+    #[error(transparent)]
+    HttpError(#[from] reqwest::Error),
+
+    #[error(
+        "A deserialization error has occurred. This indicates a change in the response or an unexpected situation. \
+         Please report this issue."
+    )]
+    DeserializationError(#[from] serde_json::Error),
 }
