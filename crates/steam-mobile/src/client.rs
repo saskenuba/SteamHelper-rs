@@ -79,19 +79,19 @@ impl SteamAuthenticator {
     /// Also caches the API Key, if the user wants to use it for any operation later.
     ///
     /// The cookies are inside the [MobileClient] inner cookie storage.
-    pub async fn login(&self, captcha: Option<LoginCaptcha<'_>>) -> Result<(), AuthError> {
+    pub async fn login(&self) -> Result<(), AuthError> {
         // FIXME: Add more permanent errors, such as bad credentials
         retry(login_retry_strategy(), || async {
-            login_website(&self.client, &self.user, self.cached_data.clone(), captcha.clone())
+            login_and_store_cookies(&self.client, &self.user, self.cached_data.clone())
                 .await
                 .map_err(|error| match error {
-                    LoginError::IncorrectCredentials => backoff::Error::Permanent(LoginError::IncorrectCredentials),
-                    LoginError::CaptchaRequired { captcha_guid } => {
-                        backoff::Error::Permanent(LoginError::CaptchaRequired { captcha_guid })
-                    }
-                    _ => {
+                    err @ (LoginError::IncorrectCredentials
+                    | LoginError::CaptchaRequired { .. }
+                    | LoginError::GeneralFailure(_)) => backoff::Error::Permanent(err),
+                    e => {
                         warn!("Transient error happened: Trying again..");
-                        backoff::Error::transient(error)
+                        warn!("{e}");
+                        backoff::Error::transient(e)
                     }
                 })
         })

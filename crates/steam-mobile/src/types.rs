@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use serde::{Deserialize, Serialize};
 use steam_language_gen::generated::enums::EResult;
 
-use crate::errors::LoginError;
+use crate::STEAM_COMMUNITY_BASE;
 
 /// Used to login into Steam website if it detects something different on your account.
 /// This may be because of unsuccessful logins, numerous retries on some operations. or anything. Really.
@@ -109,85 +109,10 @@ impl Default for IEconServiceGetTradeOffersRequest {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct RSAResponse {
-    success: bool,
-    #[serde(rename = "publickey_exp")]
-    pub exponent: String,
-    #[serde(rename = "publickey_mod")]
-    pub modulus: String,
-    pub timestamp: String,
-    token_gid: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct LoginRequest<'a> {
-    pub donotcache: &'a str,
-    pub password: &'a str,
-    pub username: &'a str,
-    pub twofactorcode: &'a str,
-    pub emailauth: &'a str,
-    pub loginfriendlyname: &'a str,
-    #[serde(rename = "captchagid")]
-    pub captcha_gid: &'a str,
-    pub captcha_text: &'a str,
-    pub emailsteamid: &'a str,
-    #[serde(rename = "rsatimestamp")]
-    pub rsa_timestamp: String,
-    pub remember_login: &'a str,
-    pub oauth_client_id: &'a str,
-    pub oauth_score: &'a str,
-}
-
-impl<'a> Default for LoginRequest<'a> {
-    fn default() -> Self {
-        Self {
-            donotcache: "",
-            password: "",
-            username: "",
-            twofactorcode: "",
-            emailauth: "",
-            loginfriendlyname: "",
-            captcha_gid: "-1",
-            captcha_text: "",
-            emailsteamid: "",
-            rsa_timestamp: "".to_string(),
-            remember_login: "false",
-            oauth_client_id: "DE45CD61",
-            oauth_score: "read_profile write_profile read_client write_client",
-        }
-    }
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
-pub struct LoginResponse {
-    pub success: bool,
-    pub requires_twofactor: bool,
-    pub login_complete: bool,
-    pub transfer_urls: Vec<String>,
-    pub transfer_parameters: TransferParameters,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
-pub struct TransferParameters {
-    pub steamid: String,
-    pub token_secure: String,
-    pub auth: String,
-    pub remember_login: bool,
-}
-
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LoginErrorGenericMessage<'a> {
     pub success: bool,
     pub message: Cow<'a, str>,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct LoginErrorCaptcha<'a> {
-    pub success: bool,
-    pub message: Cow<'a, str>,
-    pub captcha_needed: bool,
-    pub captcha_gid: String,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
@@ -263,23 +188,84 @@ pub struct ResolveVanityUrlRequest {
     vanity_url: String,
 }
 
-pub fn resolve_login_response(response_text: String) -> Result<LoginResponseMobile, LoginError> {
-    if let Ok(login_resp) = serde_json::from_str::<LoginResponseMobile>(&*response_text) {
-        Ok(login_resp)
-    } else {
-        // checks for captcha error
-        if let Ok(res) = serde_json::from_str::<LoginErrorCaptcha>(&*response_text) {
-            tracing::warn!("Captcha is required.");
-            return Err(LoginError::CaptchaRequired {
-                captcha_guid: res.captcha_gid,
-            });
-        }
+#[allow(non_camel_case_types)]
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RSAResponseBase {
+    #[serde(rename = "response")]
+    pub inner: RSAResponse,
+}
 
-        if response_text.contains("account name or password that you have entered is incorrect") {
-            return Err(LoginError::IncorrectCredentials);
-        }
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RSAResponse {
+    pub publickey_mod: String,
+    pub publickey_exp: String,
+    pub timestamp: String,
+}
 
-        tracing::warn!("Generic error {:?}", response_text);
-        Err(LoginError::GeneralFailure(response_text))
+#[derive(Debug, Deserialize)]
+struct AjaxRefreshResponse {
+    success: bool,
+    login_url: String, // settoken url
+    #[serde(rename = "steamID")]
+    steam_id: String,
+    nonce: String,
+    redit: String,
+    auth: String,
+}
+
+/// Request containing data coming from AjaxRefresh
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct SetTokenRequest {
+    #[serde(rename = "steamID")]
+    steam_id: String,
+    nonce: String,
+    redir: String,
+    auth: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct SetTokenResponse {
+    response: i32, // 1 if ok
+}
+
+#[derive(Debug, Serialize)]
+pub struct FinalizeLoginRequest {
+    nonce: String,
+    #[serde(rename = "sessionid")]
+    session_id: String,
+    redir: String,
+}
+
+impl FinalizeLoginRequest {
+    pub(crate) fn new(refresh_token: String, session_id: String) -> Self {
+        Self {
+            nonce: refresh_token,
+            session_id,
+            redir: STEAM_COMMUNITY_BASE.to_owned() + "/login/home?goto=",
+        }
     }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct FinalizeLoginResponseBase {
+    #[serde(rename = "steamID")]
+    pub(crate) steam_id: String,
+    redir: String,
+    #[serde(rename = "transfer_info")]
+    pub(crate) domain_tokens: Vec<DomainToken>,
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DomainToken {
+    pub url: String,
+    pub params: DomainTokenData,
+}
+
+/// Contains tokens to authenticate into multiple steam channels.
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DomainTokenData {
+    pub nonce: String,
+    pub auth: String,
+    #[serde(rename = "steamID")]
+    pub steam_id: Option<String>,
 }
