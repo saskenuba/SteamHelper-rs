@@ -1,8 +1,10 @@
-use cookie::{Cookie, CookieJar};
-use reqwest::{Response, StatusCode};
+use std::fmt::Write;
 use std::fs::OpenOptions;
 use std::io::Read;
 use std::path::PathBuf;
+
+use cookie::{Cookie, CookieJar};
+use reqwest::{Response, StatusCode};
 
 const CAPTCHA_URL: &str = "https://steamcommunity.com/login/rendercaptcha/?gid=";
 
@@ -30,7 +32,7 @@ pub fn dump_cookie_from_header(response: &Response, name: &str) -> Option<String
             let end_separator = c.find(';')?;
 
             // + 1 here because of '=' sign
-            Some((&c[name_separator + name_len + 1..end_separator]).to_string())
+            Some(c[name_separator + name_len + 1..end_separator].to_string())
         })
 }
 
@@ -41,20 +43,21 @@ pub fn dump_cookies_by_domain(jar: &CookieJar, domain: &str) -> Option<String> {
 
     jar.iter()
         .filter(|c| c.domain() == Some(domain))
-        .map(|c| format!("{}={}; ", c.name(), c.value()))
-        .collect::<String>()
+        .fold(String::new(), |mut output, c| {
+            let _ = write!(output, "{}={}; ", c.name(), c.value());
+            output
+        })
         .strip_suffix("; ")
         .map(ToString::to_string)
 }
 
 /// Retrieve cookie from jar,  filtered by domain and name, and them dumps into String.
-pub fn dump_cookies_by_name(jar: &CookieJar, domain: &str, name: &str) -> Option<String> {
+pub fn dump_cookies_by_domain_and_name(jar: &CookieJar, domain: &str, name: &str) -> Option<String> {
     jar.iter().peekable().peek()?;
 
     Some(
         jar.iter()
-            .filter(|c| c.domain() == Some(domain))
-            .filter(|c| c.name() == name)
+            .filter(|c| c.domain() == Some(domain) && c.name() == name)
             .map(Cookie::value)
             .collect::<String>(),
     )
