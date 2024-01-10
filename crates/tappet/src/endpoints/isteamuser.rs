@@ -2,7 +2,7 @@ use tappet_derive::{interface, Parameters};
 
 import!();
 
-use crate::response_types::{GetPlayerBansResponseBase, GetPlayerSummariesResponseBase};
+use crate::response_types::{GetFriendListResponseBase, GetPlayerBansResponseBase, GetPlayerSummariesResponseBase};
 
 new_type!(ISteamUser);
 impl_conversions!(@GetQueryBuilder -> @ISteamUser);
@@ -44,7 +44,7 @@ convert_with_endpoint!(@ISteamUser -> GetPlayerSummaries |> "GetPlayerSummaries/
 convert_with_endpoint!(@ISteamUser -> ResolveVanityURL |> "ResolveVanityURL/v1");
 convert_with_endpoint!(@ISteamUser -> GetFriendList |> "GetFriendList/v1");
 
-impl_executor!(GetFriendList);
 impl_executor!(ResolveVanityURL);
+impl_executor!(GetFriendList -> GetFriendListResponseBase);
 impl_executor!(GetPlayerSummaries -> GetPlayerSummariesResponseBase);
 impl_executor!(GetPlayerBans -> GetPlayerBansResponseBase);
