@@ -1,13 +1,13 @@
 use thiserror::Error;
 
-/// Main error type that SteamAuthenticator uses.
+/// Main error type of `SteamAuthenticator`.
 ///
 /// If an internal error occurs, it simply delegates to the correct error type.
 /// Generally, this isn't a good strategy, but 90% of the errors happen because of a
 /// misconfiguration, they are not recoverable and we choose to just fail fast.
 ///
 ///
-/// For a general explanation of EResults, check: https://steamerrors.com/
+/// For a general explanation of EResults, check: [steam errors website](https://steamerrors.com/).
 #[allow(missing_docs)]
 #[derive(Error, Debug)]
 pub enum AuthError {

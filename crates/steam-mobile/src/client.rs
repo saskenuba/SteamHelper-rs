@@ -2,30 +2,55 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use backoff::future::retry;
-use cookie::{Cookie, CookieJar};
+use cookie::Cookie;
+use cookie::CookieJar;
 use futures::TryFutureExt;
 use futures_timer::Delay;
 use parking_lot::RwLock;
 use reqwest::header::HeaderMap;
 use reqwest::redirect::Policy;
-use reqwest::{Client, Method, Response, Url};
+use reqwest::Client;
+use reqwest::Method;
+use reqwest::Response;
+use reqwest::Url;
 use scraper::Html;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use tracing::{debug, info, warn};
+use tracing::debug;
+use tracing::info;
+use tracing::warn;
 
-use crate::errors::{AuthError, InternalError, LinkerError, LoginError};
+use crate::errors::AuthError;
+use crate::errors::InternalError;
+use crate::errors::LinkerError;
+use crate::errors::LoginError;
 use crate::retry::login_retry_strategy;
-use crate::utils::{dump_cookies_by_domain, dump_cookies_by_domain_and_name, retrieve_header_location};
-use crate::web_handler::confirmation::{Confirmation, Confirmations};
+use crate::utils::dump_cookies_by_domain;
+use crate::utils::dump_cookies_by_domain_and_name;
+use crate::utils::retrieve_header_location;
+use crate::web_handler::cache_api_key;
+use crate::web_handler::confirmation::Confirmation;
+use crate::web_handler::confirmation::Confirmations;
+use crate::web_handler::confirmations_retrieve_all;
+use crate::web_handler::confirmations_send;
 use crate::web_handler::login::login_and_store_cookies;
-use crate::web_handler::steam_guard_linker::{
-    account_has_phone, add_authenticator_to_account, add_phone_to_account, check_email_confirmation, check_sms,
-    finalize, remove_authenticator, validate_phone_number, AddAuthenticatorStep, RemoveAuthenticatorScheme,
-    STEAM_ADD_PHONE_CATCHUP_SECS,
-};
-use crate::web_handler::{cache_resolve, confirmations_retrieve_all, confirmations_send, parental_unlock};
-use crate::{ConfirmationMethod, MobileAuthFile, SteamCache, User, STEAM_COMMUNITY_HOST};
+use crate::web_handler::parental_unlock;
+use crate::web_handler::steam_guard_linker::account_has_phone;
+use crate::web_handler::steam_guard_linker::add_authenticator_to_account;
+use crate::web_handler::steam_guard_linker::add_phone_to_account;
+use crate::web_handler::steam_guard_linker::check_email_confirmation;
+use crate::web_handler::steam_guard_linker::check_sms;
+use crate::web_handler::steam_guard_linker::finalize;
+use crate::web_handler::steam_guard_linker::remove_authenticator;
+use crate::web_handler::steam_guard_linker::validate_phone_number;
+use crate::web_handler::steam_guard_linker::AddAuthenticatorStep;
+use crate::web_handler::steam_guard_linker::RemoveAuthenticatorScheme;
+use crate::web_handler::steam_guard_linker::STEAM_ADD_PHONE_CATCHUP_SECS;
+use crate::ConfirmationMethod;
+use crate::MobileAuthFile;
+use crate::SteamCache;
+use crate::User;
+use crate::STEAM_COMMUNITY_HOST;
 
 /// Main authenticator. We use it to spawn and act as our "mobile" client.
 /// Responsible for accepting/denying trades, and some other operations that may or not be related
@@ -57,7 +82,9 @@ impl SteamAuthenticator {
         }
     }
 
-    /// Returns current user API Key. Need to login first.
+    /// Returns current user API Key.
+    ///
+    /// Will return `None` if you are not logged in.
     pub fn api_key(&self) -> Option<String> {
         self.cached_data.read().api_key().map(ToString::to_string)
     }
@@ -104,7 +131,7 @@ impl SteamAuthenticator {
             info!("Parental unlock successfully.");
         }
 
-        cache_resolve(self).await?;
+        cache_api_key(self).await?;
         info!("Cached API Key successfully.");
 
         Ok(())
@@ -113,10 +140,10 @@ impl SteamAuthenticator {
     /// Add an authenticator to the account.
     /// Note that this makes various assumptions about the account.
     ///
-    /// This function takes the `AddAuthenticatorStep` to help you automate the process of adding an authenticator to
-    /// the account.
+    /// The first argument is an enum of  `AddAuthenticatorStep` to help you automate the process of adding an
+    /// authenticator to the account.
     ///
-    /// You will first call this method with `AddAuthenticatorStep::InitialStep`. This requires the account to be
+    /// First call this method with `AddAuthenticatorStep::InitialStep`. This requires the account to be
     /// already connected with a verified email address. After this step is finished, you will receive an email
     /// about the phone confirmation.
     ///
@@ -156,7 +183,9 @@ impl SteamAuthenticator {
     /// Finalize the authenticator process, enabling `SteamGuard` for the account.
     /// This method wraps up the whole process, finishing the registration of the phone number into the account.
     ///
-    /// You **should** only call this method after saving your maFile, because otherwise you WILL lose access to your
+    /// * EXTREMELY IMPORTANT *
+    ///
+    /// Call this method **ONLY** after saving your maFile, because otherwise you WILL lose access to your
     /// account.
     pub async fn finalize_authenticator(&self, mafile: &MobileAuthFile, sms_code: &str) -> Result<(), AuthError> {
         // The delay is that Steam need some seconds to catch up with the new phone number associated.

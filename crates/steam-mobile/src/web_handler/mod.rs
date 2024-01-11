@@ -5,31 +5,49 @@ use reqwest::Method;
 use scraper::Html;
 use steam_language_gen::generated::enums::EResult;
 use steam_totp::Time;
-use tracing::{debug, trace, warn};
+use tracing::debug;
+use tracing::trace;
+use tracing::warn;
 
-use crate::client::{MobileClient, SteamAuthenticator};
-use crate::errors::{ApiKeyError, InternalError, LoginError};
-use crate::page_scraper::{api_key_resolve_status, confirmation_details_single, confirmation_retrieve};
-use crate::types::{
-    ApiKeyRegisterRequest, BooleanResponse, ConfirmationDetailsResponse, ConfirmationMultiAcceptRequest,
-    ParentalUnlockRequest, ParentalUnlockResponse,
-};
-use crate::utils::{dump_cookie_from_header, dump_cookies_by_domain_and_name};
-use crate::web_handler::confirmation::{Confirmation, ConfirmationMethod};
-use crate::{User, STEAM_API_BASE, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_STORE_BASE, STEAM_STORE_HOST};
+use crate::client::MobileClient;
+use crate::client::SteamAuthenticator;
+use crate::errors::ApiKeyError;
+use crate::errors::InternalError;
+use crate::errors::LoginError;
+use crate::page_scraper::api_key_resolve_status;
+use crate::page_scraper::confirmation_details_single;
+use crate::page_scraper::confirmation_retrieve;
+use crate::types::ApiKeyRegisterRequest;
+use crate::types::BooleanResponse;
+use crate::types::ConfirmationDetailsResponse;
+use crate::types::ConfirmationMultiAcceptRequest;
+use crate::types::ParentalUnlockRequest;
+use crate::types::ParentalUnlockResponse;
+use crate::utils::dump_cookie_from_header;
+use crate::utils::dump_cookies_by_domain_and_name;
+use crate::web_handler::confirmation::Confirmation;
+use crate::web_handler::confirmation::ConfirmationMethod;
+use crate::User;
+use crate::STEAM_API_BASE;
+use crate::STEAM_COMMUNITY_BASE;
+use crate::STEAM_COMMUNITY_HOST;
+use crate::STEAM_STORE_BASE;
+use crate::STEAM_STORE_HOST;
 
 pub mod confirmation;
-pub(crate) mod login;
-pub(crate) mod steam_guard_linker;
+pub mod login;
+pub mod steam_guard_linker;
 
 /// used to refresh session
 const MOBILE_AUTH_GETWGTOKEN: &str = concatcp!(STEAM_API_BASE, "/IMobileAuthService/GetWGToken/v0001");
 
+// TODO: Refresh session for long-time running authenticators.
+#[allow(clippy::unused_async)]
 async fn session_refresh() {}
 
 /// Parental unlock operation should be made otherwise any operation will fail and should be
 /// performed immediately after login
-pub(crate) async fn parental_unlock(client: &MobileClient, user: &User) -> Result<(), LoginError> {
+pub async fn parental_unlock(client: &MobileClient, user: &User) -> Result<(), LoginError> {
     let parental_code = user.parental_code.clone().unwrap();
 
     // unlocks parental on steam community
@@ -51,8 +69,8 @@ async fn parental_unlock_by_service(
     url: &str,
     cookie_host: &str,
 ) -> Result<(), LoginError> {
-    let unlock_url = format!("{}/parental/ajaxunlock", url);
-    let session_id = dump_cookies_by_domain_and_name(&*client.cookie_store.read(), cookie_host, "sessionid").unwrap();
+    let unlock_url = format!("{url}/parental/ajaxunlock");
+    let session_id = dump_cookies_by_domain_and_name(&client.cookie_store.read(), cookie_host, "sessionid").unwrap();
 
     let request = ParentalUnlockRequest {
         pin: parental_control_code,
@@ -83,7 +101,7 @@ async fn parental_unlock_by_service(
     // We should try again
     let response = response.text().await.unwrap();
 
-    let response = serde_json::from_str::<ParentalUnlockResponse>(&*response)
+    let response = serde_json::from_str::<ParentalUnlockResponse>(&response)
         .map_err(|e| warn!("{}", e))
         .unwrap();
 
@@ -97,7 +115,7 @@ async fn parental_unlock_by_service(
 
 /// Resolve caching of the user APIKey.
 /// This is done after user logon for the first time in this session.
-pub(crate) async fn cache_resolve(authenticator: &SteamAuthenticator) -> Result<(), ApiKeyError> {
+pub async fn cache_api_key(authenticator: &SteamAuthenticator) -> Result<(), ApiKeyError> {
     match api_key_retrieve(&authenticator.client).await? {
         Some(api_key) => {
             debug!("{}", &api_key);

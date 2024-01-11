@@ -36,7 +36,7 @@ struct AuthenticatorOptions {
     print_output: bool,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AddAuthenticatorStep {
     /// The user is signing up for the first time.
     InitialStep,
