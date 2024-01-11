@@ -4,7 +4,7 @@ use steam_language_gen::generated::enums::EMsg;
 use steam_language_gen::generated::messages::{
     MsgChannelEncryptRequest, MsgChannelEncryptResponse, MsgChannelEncryptResult,
 };
-use steam_language_gen::{MessageHeader, SerializableBytes};
+use steam_language_gen::{HasJobId, SerializableBytes};
 
 use crate::connection::{BytesTx, EncryptionState};
 use crate::errors::PacketError;

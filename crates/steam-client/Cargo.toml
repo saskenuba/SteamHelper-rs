@@ -34,7 +34,7 @@ thiserror = "^1.0"
 
 # futures
 tokio = { version = "^1.1", features = ["net", "rt", "macros"] }
-tokio-util = "^0.6"
+tokio-util = { version = "^0.6", features = ["codec"] }
 tokio-tungstenite = { version = "^0.13", optional = true }
 tokio-compat-02 = "0.2.0"
 
