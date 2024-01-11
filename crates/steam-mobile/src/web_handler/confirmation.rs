@@ -75,12 +75,12 @@ impl Confirmations {
     /// use steam_mobile::ConfirmationMethod;
     /// use steam_mobile::EConfirmationType;
     /// use steam_mobile::User;
-    /// # use steam_mobile::client::SteamAuthenticator;
+    /// # use steam_mobile::SteamAuthenticator;
     /// # use steam_mobile::Confirmations;
     ///
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # let user = User::build();
+    /// # let user = User::new("username".to_string(), "password".to_string());
     /// # let authenticator = SteamAuthenticator::new(user);
     ///
     /// // .. authenticator setup and login above
@@ -108,7 +108,7 @@ impl Confirmations {
     /// # Example
     /// ```no_run
     /// # use steam_mobile::{ConfirmationMethod, EConfirmationType, User};
-    /// # use steam_mobile::client::SteamAuthenticator;
+    /// # use steam_mobile::SteamAuthenticator;
     /// # use steam_mobile::Confirmations;
     ///
     /// # #[tokio::main]

@@ -59,7 +59,7 @@ use crate::STEAM_COMMUNITY_HOST;
 /// # Example: Fetch mobile notifications
 ///
 /// ```rust
-/// use steam_mobile::client::SteamAuthenticator;
+/// use steam_mobile::SteamAuthenticator;
 /// use steam_mobile::User;
 /// ```
 #[derive(Debug)]
