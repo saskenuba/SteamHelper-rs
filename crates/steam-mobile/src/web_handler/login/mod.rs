@@ -1,4 +1,3 @@
-use std::borrow::Cow::Owned;
 use std::ops::Deref;
 use std::sync::Arc;
 use std::time::Duration;
@@ -16,7 +15,6 @@ use parking_lot::RwLock;
 use rand::thread_rng;
 use reqwest::Client;
 use reqwest::Method;
-use reqwest::Url;
 use rsa::BigUint;
 use rsa::Pkcs1v15Encrypt;
 use rsa::RsaPublicKey;
