@@ -9,15 +9,26 @@ use reqwest::Method;
 use tracing::debug;
 
 use crate::client::MobileClient;
-use crate::errors::{AuthError, LinkerError};
-use crate::utils::{dump_cookies_by_name, generate_canonical_device_id};
-use crate::web_handler::steam_guard_linker::types::{
-    AddAuthenticatorErrorResponseBase, AddAuthenticatorRequest, AddAuthenticatorResponseBase,
-    FinalizeAddAuthenticatorBase, FinalizeAddAuthenticatorErrorBase, FinalizeAddAuthenticatorRequest,
-    GenericSuccessResponse, HasPhoneResponse, PhoneAjaxRequest, RemoveAuthenticatorRequest,
-    RemoveAuthenticatorResponseBase,
-};
-use crate::{CachedInfo, MobileAuthFile, STEAM_API_BASE, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST};
+use crate::errors::AuthError;
+use crate::errors::LinkerError;
+use crate::utils::dump_cookies_by_domain_and_name;
+use crate::utils::generate_canonical_device_id;
+use crate::web_handler::steam_guard_linker::types::AddAuthenticatorErrorResponseBase;
+use crate::web_handler::steam_guard_linker::types::AddAuthenticatorRequest;
+use crate::web_handler::steam_guard_linker::types::AddAuthenticatorResponseBase;
+use crate::web_handler::steam_guard_linker::types::FinalizeAddAuthenticatorBase;
+use crate::web_handler::steam_guard_linker::types::FinalizeAddAuthenticatorErrorBase;
+use crate::web_handler::steam_guard_linker::types::FinalizeAddAuthenticatorRequest;
+use crate::web_handler::steam_guard_linker::types::GenericSuccessResponse;
+use crate::web_handler::steam_guard_linker::types::HasPhoneResponse;
+use crate::web_handler::steam_guard_linker::types::PhoneAjaxRequest;
+use crate::web_handler::steam_guard_linker::types::RemoveAuthenticatorRequest;
+use crate::web_handler::steam_guard_linker::types::RemoveAuthenticatorResponseBase;
+use crate::MobileAuthFile;
+use crate::SteamCache;
+use crate::STEAM_API_BASE;
+use crate::STEAM_COMMUNITY_BASE;
+use crate::STEAM_COMMUNITY_HOST;
 
 mod types;
 
@@ -36,7 +47,8 @@ struct AuthenticatorOptions {
     print_output: bool,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+/// Steps to add an authenticator to a Steam Account.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AddAuthenticatorStep {
     /// The user is signing up for the first time.
     InitialStep,
@@ -49,24 +61,30 @@ pub enum AddAuthenticatorStep {
 /// Queries the `/steamguard/phoneajax` to check if the user has a phone number.
 /// Returns true if user has already a phone registered.
 pub async fn account_has_phone(client: &MobileClient) -> LinkerResult<bool> {
-    let session_id = dump_cookies_by_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
+    let session_id =
+        dump_cookies_by_domain_and_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
     let payload = PhoneAjaxRequest::has_phone(&*session_id);
 
     let response: HasPhoneResponse = client
         .request_with_session_guard(PHONEAJAX_URL.to_owned(), Method::POST, None, Some(payload))
-        .and_then(|x| x.json::<HasPhoneResponse>())
+        .and_then(|x| x.json::<HasPhoneResponse>().err_into())
         .await?;
 
     Ok(response.user_has_phone)
 }
 
 pub async fn check_sms(client: &MobileClient, sms_code: &str) -> LinkerResult<bool> {
-    let session_id = dump_cookies_by_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
+    let session_id =
+        dump_cookies_by_domain_and_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
     let payload = PhoneAjaxRequest::check_sms(&session_id, sms_code);
 
-    let response: GenericSuccessResponse = client
-        .request_with_session_guard(PHONEAJAX_URL.to_owned(), Method::POST, None, Some(payload))
-        .and_then(|x| x.json::<GenericSuccessResponse>())
+    let response = client
+        .request_with_session_guard_and_decode::<_, GenericSuccessResponse>(
+            PHONEAJAX_URL.to_owned(),
+            Method::POST,
+            None,
+            Some(payload),
+        )
         .await?;
 
     Ok(response.success)
@@ -75,25 +93,35 @@ pub async fn check_sms(client: &MobileClient, sms_code: &str) -> LinkerResult<bo
 /// Signals Steam that the user confirmed the phone add request email, and is ready for the next step.
 /// Confirming the email allows `SteamAuthenticator` to register a new phone number to account.
 pub async fn check_email_confirmation(client: &MobileClient) -> LinkerResult<bool> {
-    let session_id = dump_cookies_by_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
+    let session_id =
+        dump_cookies_by_domain_and_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
     let payload = PhoneAjaxRequest::check_email_confirmation(&*session_id);
 
     let response: GenericSuccessResponse = client
-        .request_with_session_guard(PHONEAJAX_URL.to_owned(), Method::POST, None, Some(payload))
-        .and_then(|x| x.json::<GenericSuccessResponse>())
+        .request_with_session_guard_and_decode::<_, GenericSuccessResponse>(
+            PHONEAJAX_URL.to_owned(),
+            Method::POST,
+            None,
+            Some(payload),
+        )
         .await?;
 
     Ok(response.success)
 }
 
 pub async fn add_phone_to_account(client: &MobileClient, phone_number: &str) -> LinkerResult<bool> {
-    let session_id = dump_cookies_by_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
+    let session_id =
+        dump_cookies_by_domain_and_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
 
     let payload = PhoneAjaxRequest::add_phone(&*session_id, phone_number);
 
     let response: GenericSuccessResponse = client
-        .request_with_session_guard(PHONEAJAX_URL.to_owned(), Method::POST, None, Some(payload))
-        .and_then(|x| x.json::<GenericSuccessResponse>())
+        .request_with_session_guard_and_decode::<_, GenericSuccessResponse>(
+            PHONEAJAX_URL.to_owned(),
+            Method::POST,
+            None,
+            Some(payload),
+        )
         .await?;
 
     Ok(response.success)
@@ -106,7 +134,7 @@ pub fn validate_phone_number(phone_number: &str) -> bool {
 /// Last step to add a new authenticator.
 pub(crate) async fn finalize(
     client: &MobileClient,
-    cached_data: RwLockReadGuard<'_, RawRwLock, CachedInfo>,
+    cached_data: RwLockReadGuard<'_, RawRwLock, SteamCache>,
     mafile: &MobileAuthFile,
     sms_code: &str,
 ) -> LinkerResult<()> {
@@ -133,9 +161,9 @@ pub(crate) async fn finalize(
         time.0 += 1;
         initial_payload.swap_codes(code, time.0);
 
-        let response_text: String = client
+        let response_text = client
             .request_with_session_guard(finalize_url.clone(), Method::POST, None, Some(&initial_payload))
-            .and_then(|resp| resp.text())
+            .and_then(|resp| resp.text().err_into())
             .await?;
 
         debug!("FinalizeAuthenticator raw response: {:#}", response_text);
@@ -180,7 +208,7 @@ pub(crate) async fn finalize(
 /// otherwise the user is on risk of losing the account, since the `revocation_code` will also be lost.
 pub(crate) async fn add_authenticator_to_account(
     client: &MobileClient,
-    cached_data: RwLockReadGuard<'_, RawRwLock, CachedInfo>,
+    cached_data: RwLockReadGuard<'_, RawRwLock, SteamCache>,
 ) -> Result<MobileAuthFile, LinkerError> {
     let add_auth_url = format!("{}{}", STEAM_API_BASE, "/ITwoFactorService/AddAuthenticator/v0001");
     let oauth_token = cached_data.oauth_token().unwrap();
@@ -189,9 +217,9 @@ pub(crate) async fn add_authenticator_to_account(
 
     let payload = AddAuthenticatorRequest::new(oauth_token, &steamid, time.parse().unwrap());
 
-    let response_text: String = client
+    let response_text = client
         .request_with_session_guard(add_auth_url, Method::POST, None, Some(payload))
-        .and_then(|resp| resp.text())
+        .and_then(|resp| resp.text().err_into())
         .await?;
 
     debug!("Steam addauth raw response: {:?}", response_text);
@@ -234,7 +262,7 @@ impl RemoveAuthenticatorScheme {
 /// Remove authenticator from account.
 pub(crate) async fn remove_authenticator(
     client: &MobileClient,
-    cached_data: RwLockReadGuard<'_, RawRwLock, CachedInfo>,
+    cached_data: RwLockReadGuard<'_, RawRwLock, SteamCache>,
     revocation_token: &str,
     remove_authenticator_scheme: RemoveAuthenticatorScheme,
 ) -> Result<(), AuthError> {
@@ -252,8 +280,12 @@ pub(crate) async fn remove_authenticator(
 
     // FIXME: add error handling and error variants
     client
-        .request_with_session_guard(_url, Method::POST, None, Some(payload))
-        .and_then(|resp| resp.json::<RemoveAuthenticatorResponseBase>())
+        .request_with_session_guard_and_decode::<_, RemoveAuthenticatorResponseBase>(
+            _url,
+            Method::POST,
+            None,
+            Some(payload),
+        )
         .await
         .map(|_| ())
         .map_err(Into::into)

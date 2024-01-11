@@ -5,31 +5,49 @@ use reqwest::Method;
 use scraper::Html;
 use steam_language_gen::generated::enums::EResult;
 use steam_totp::Time;
-use tracing::{debug, trace, warn};
+use tracing::debug;
+use tracing::trace;
+use tracing::warn;
 
-use crate::client::{MobileClient, SteamAuthenticator};
-use crate::errors::{ApiKeyError, LoginError};
-use crate::page_scraper::{api_key_resolve_status, confirmation_details_single, confirmation_retrieve};
-use crate::types::{
-    ApiKeyRegisterRequest, BooleanResponse, ConfirmationDetailsResponse, ConfirmationMultiAcceptRequest,
-    ParentalUnlockRequest, ParentalUnlockResponse,
-};
-use crate::utils::{dump_cookie_from_header, dump_cookies_by_name};
-use crate::web_handler::confirmation::{Confirmation, ConfirmationMethod};
-use crate::{User, STEAM_API_BASE, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST, STEAM_STORE_BASE, STEAM_STORE_HOST};
+use crate::client::MobileClient;
+use crate::client::SteamAuthenticator;
+use crate::errors::ApiKeyError;
+use crate::errors::InternalError;
+use crate::errors::LoginError;
+use crate::page_scraper::api_key_resolve_status;
+use crate::page_scraper::confirmation_details_single;
+use crate::page_scraper::confirmation_retrieve;
+use crate::types::ApiKeyRegisterRequest;
+use crate::types::BooleanResponse;
+use crate::types::ConfirmationDetailsResponse;
+use crate::types::ConfirmationMultiAcceptRequest;
+use crate::types::ParentalUnlockRequest;
+use crate::types::ParentalUnlockResponse;
+use crate::utils::dump_cookie_from_header;
+use crate::utils::dump_cookies_by_domain_and_name;
+use crate::web_handler::confirmation::Confirmation;
+use crate::web_handler::confirmation::ConfirmationMethod;
+use crate::User;
+use crate::STEAM_API_BASE;
+use crate::STEAM_COMMUNITY_BASE;
+use crate::STEAM_COMMUNITY_HOST;
+use crate::STEAM_STORE_BASE;
+use crate::STEAM_STORE_HOST;
 
 pub mod confirmation;
-pub(crate) mod login;
-pub(crate) mod steam_guard_linker;
+pub mod login;
+pub mod steam_guard_linker;
 
 /// used to refresh session
 const MOBILE_AUTH_GETWGTOKEN: &str = concatcp!(STEAM_API_BASE, "/IMobileAuthService/GetWGToken/v0001");
 
+// TODO: Refresh session for long-time running authenticators.
+#[allow(clippy::unused_async)]
 async fn session_refresh() {}
 
 /// Parental unlock operation should be made otherwise any operation will fail and should be
 /// performed immediately after login
-pub(crate) async fn parental_unlock(client: &MobileClient, user: &User) -> Result<(), LoginError> {
+pub async fn parental_unlock(client: &MobileClient, user: &User) -> Result<(), LoginError> {
     let parental_code = user.parental_code.clone().unwrap();
 
     // unlocks parental on steam community
@@ -51,14 +69,16 @@ async fn parental_unlock_by_service(
     url: &str,
     cookie_host: &str,
 ) -> Result<(), LoginError> {
-    let unlock_url = format!("{}/parental/ajaxunlock", url);
-    let session_id = dump_cookies_by_name(&*client.cookie_store.read(), cookie_host, "sessionid").unwrap();
+    let unlock_url = format!("{url}/parental/ajaxunlock");
+    let session_id = dump_cookies_by_domain_and_name(&client.cookie_store.read(), cookie_host, "sessionid").unwrap();
 
     let request = ParentalUnlockRequest {
         pin: parental_control_code,
         sessionid: &session_id,
     };
-    let response = client.request(unlock_url, Method::POST, None, Some(&request)).await?;
+    let response = client
+        .request(unlock_url, Method::POST, None, Some(&request), None::<u8>)
+        .await?;
 
     let parental_cookie_name = "steamparental";
     if let Some(cookie) = dump_cookie_from_header(&response, parental_cookie_name) {
@@ -81,7 +101,7 @@ async fn parental_unlock_by_service(
     // We should try again
     let response = response.text().await.unwrap();
 
-    let response = serde_json::from_str::<ParentalUnlockResponse>(&*response)
+    let response = serde_json::from_str::<ParentalUnlockResponse>(&response)
         .map_err(|e| warn!("{}", e))
         .unwrap();
 
@@ -95,7 +115,7 @@ async fn parental_unlock_by_service(
 
 /// Resolve caching of the user APIKey.
 /// This is done after user logon for the first time in this session.
-pub(crate) async fn cache_resolve(authenticator: &SteamAuthenticator) -> Result<(), ApiKeyError> {
+pub async fn cache_api_key(authenticator: &SteamAuthenticator) -> Result<(), ApiKeyError> {
     match api_key_retrieve(&authenticator.client).await? {
         Some(api_key) => {
             debug!("{}", &api_key);
@@ -114,14 +134,17 @@ pub(crate) async fn cache_resolve(authenticator: &SteamAuthenticator) -> Result<
 ///
 /// # Panics
 /// This method will panic if the `User` doesn't have a linked `device_id`.
-pub(crate) async fn confirmations_send(
+pub async fn confirmations_send<I>(
     client: &MobileClient,
     user: &User,
     steamid: u64,
     method: ConfirmationMethod,
-    confirmations: Vec<Confirmation>,
-) -> Result<(), reqwest::Error> {
-    let url = format!("{}/mobileconf/multiajaxop", STEAM_COMMUNITY_BASE);
+    confirmations: I,
+) -> Result<(), InternalError>
+where
+    I: IntoIterator<Item = Confirmation> + Send + Sync,
+{
+    let url = format!("{STEAM_COMMUNITY_BASE}/mobileconf/multiajaxop");
     let operation = method.value();
 
     let mut id_vec = vec![];
@@ -165,12 +188,12 @@ pub(crate) async fn confirmations_retrieve_all(
     user: &User,
     steamid: u64,
     require_details: bool,
-) -> Result<Option<Vec<Confirmation>>, reqwest::Error> {
+) -> Result<Option<Vec<Confirmation>>, InternalError> {
     let (time, confirmation_hash, device_id) = generate_confirmation_query_params(user).await;
 
     let confirmation_all_url = format!(
-        "{}/mobileconf/conf?a={}&k={}&l=english&m=android&p={}&t={}&tag=conf",
-        STEAM_COMMUNITY_BASE, steamid, confirmation_hash, device_id, time
+        "{STEAM_COMMUNITY_BASE}/mobileconf/conf?a={}&k={}&l=english&m=android&p={}&t={}&tag=conf",
+        steamid, confirmation_hash, device_id, time
     );
     trace!("Confirmation url: {}", confirmation_all_url);
 
@@ -193,7 +216,7 @@ pub(crate) async fn confirmations_retrieve_all(
                 "{}/mobileconf/details/{}?a={}&k={}&l=english&m=android&p={}&t={}&tag=conf",
                 STEAM_COMMUNITY_BASE, confirmation.id, steamid, confirmation_hash, device_id, time
             );
-            client.request(details_url, Method::GET, None, None::<&u8>)
+            client.request(details_url, Method::GET, None, None::<u8>, None::<u8>)
         })
         .collect::<Vec<_>>();
 

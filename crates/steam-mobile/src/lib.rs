@@ -14,24 +14,33 @@
 )]
 
 use std::fmt;
-use std::fmt::{Debug, Formatter};
+use std::fmt::Debug;
+use std::fmt::Formatter;
 use std::path::PathBuf;
 
+pub use client::SteamAuthenticator;
 use const_format::concatcp;
 pub use reqwest::header::HeaderMap;
-pub use reqwest::{Error as HttpError, Method, Url};
-use serde::{Deserialize, Serialize};
+pub use reqwest::Method;
+pub use reqwest::Url;
+use serde::Deserialize;
+use serde::Serialize;
 use steam_totp::Secret;
 use steamid_parser::SteamID;
 pub use utils::format_captcha_url;
 use uuid::Uuid;
-pub use web_handler::confirmation::{ConfirmationMethod, Confirmations, EConfirmationType};
+pub use web_handler::confirmation::ConfirmationMethod;
+pub use web_handler::confirmation::Confirmations;
+pub use web_handler::confirmation::EConfirmationType;
 pub use web_handler::steam_guard_linker::AddAuthenticatorStep;
 
-use crate::errors::{AuthError, MobileAuthFileError};
+use crate::errors::AuthError;
+use crate::errors::InternalError;
+use crate::errors::MobileAuthFileError;
 use crate::utils::read_from_disk;
 
-pub mod client;
+mod adapter;
+pub(crate) mod client;
 pub mod errors;
 mod page_scraper;
 pub(crate) mod retry;
@@ -60,10 +69,15 @@ pub(crate) const STEAM_STORE_BASE: &str = "https://store.steampowered.com";
 /// Should not be used for cookie retrieval. Use `STEAM_API_HOST` instead.
 pub(crate) const STEAM_API_BASE: &str = "https://api.steampowered.com";
 
+pub(crate) const STEAM_LOGIN_BASE: &str = "https://login.steampowered.com";
+
 const MOBILE_REFERER: &str = concatcp!(
     STEAM_COMMUNITY_BASE,
     "/mobilelogin?oauth_client_id=DE45CD61&oauth_scope=read_profile%20write_profile%20read_client%20write_client"
 );
+
+#[allow(missing_docs)]
+pub type AuthResult<T> = Result<T, AuthError>;
 
 /// User that is needed for the authenticator to work.
 /// Ideally all fields should be populated before authenticator operations are made.
@@ -89,7 +103,7 @@ pub struct User {
 ///
 ///
 /// SteamID, API KEY and the login Oauth token are currently cached by `SteamAuthenticator`.
-struct CachedInfo {
+struct SteamCache {
     steamid: Option<SteamID>,
     api_key: Option<String>,
     /// Oauth token recovered at the login.
@@ -97,11 +111,14 @@ struct CachedInfo {
     oauth_token: Option<String>,
 }
 
-impl CachedInfo {
-    // FIXME: This should not unwrap, probably result with steamid parse error.
-    fn set_steamid(&mut self, steamid: &str) {
-        let parsed_steamid = SteamID::parse(steamid).unwrap();
+impl SteamCache {
+    fn set_steamid(&mut self, steamid: &str) -> Result<(), InternalError> {
+        let parsed_steamid = SteamID::parse(steamid).ok_or_else(|| {
+            let err_str = format!("Failed to parse {steamid} as SteamID.");
+            InternalError::GeneralFailure(err_str)
+        })?;
         self.steamid = Some(parsed_steamid);
+        Ok(())
     }
 
     fn set_oauth_token(&mut self, token: String) {
@@ -179,6 +196,7 @@ impl User {
         Ok(self)
     }
 
+    #[allow(missing_docs)]
     #[must_use]
     pub fn ma_file(mut self, ma_file: MobileAuthFile) -> Self {
         self.linked_mafile = Some(ma_file);
@@ -246,8 +264,10 @@ impl MobileAuthFile {
         }
     }
 
-    pub fn from_str(string: &str) -> Result<Self, MobileAuthFileError> {
-        serde_json::from_str::<MobileAuthFile>(string).map_err(|e| e.into())
+    /// Parses a [`MobileAuthFile`] from a json string.
+    pub fn from_json(string: &str) -> Result<Self, MobileAuthFileError> {
+        serde_json::from_str::<Self>(string)
+            .map_err(|e| MobileAuthFileError::InternalError(InternalError::DeserializationError(e)))
     }
 
     /// Convenience function that imports the file from disk
@@ -259,7 +279,7 @@ impl MobileAuthFile {
         T: Into<PathBuf>,
     {
         let buffer = read_from_disk(path);
-        Self::from_str(&buffer)
+        Self::from_json(&buffer)
     }
 }
 

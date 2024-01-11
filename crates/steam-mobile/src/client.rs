@@ -2,30 +2,55 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use backoff::future::retry;
-use cookie::{Cookie, CookieJar};
+use cookie::Cookie;
+use cookie::CookieJar;
 use futures::TryFutureExt;
 use futures_timer::Delay;
 use parking_lot::RwLock;
 use reqwest::header::HeaderMap;
 use reqwest::redirect::Policy;
-use reqwest::{Client, Method, Response, Url};
+use reqwest::Client;
+use reqwest::Method;
+use reqwest::Response;
+use reqwest::Url;
 use scraper::Html;
+use serde::de::DeserializeOwned;
 use serde::Serialize;
-use tracing::{debug, info, warn};
+use tracing::debug;
+use tracing::info;
+use tracing::warn;
 
-use crate::errors::{AuthError, LinkerError, LoginError};
+use crate::errors::AuthError;
+use crate::errors::InternalError;
+use crate::errors::LinkerError;
+use crate::errors::LoginError;
 use crate::retry::login_retry_strategy;
-use crate::types::LoginCaptcha;
-use crate::utils::{dump_cookies_by_domain, dump_cookies_by_name, retrieve_header_location};
+use crate::utils::dump_cookies_by_domain;
+use crate::utils::dump_cookies_by_domain_and_name;
+use crate::utils::retrieve_header_location;
+use crate::web_handler::cache_api_key;
+use crate::web_handler::confirmation::Confirmation;
 use crate::web_handler::confirmation::Confirmations;
-use crate::web_handler::login::login_website;
-use crate::web_handler::steam_guard_linker::{
-    account_has_phone, add_authenticator_to_account, add_phone_to_account, check_email_confirmation, check_sms,
-    finalize, remove_authenticator, validate_phone_number, AddAuthenticatorStep, RemoveAuthenticatorScheme,
-    STEAM_ADD_PHONE_CATCHUP_SECS,
-};
-use crate::web_handler::{cache_resolve, confirmations_retrieve_all, confirmations_send, parental_unlock};
-use crate::{CachedInfo, ConfirmationMethod, MobileAuthFile, User, STEAM_COMMUNITY_HOST};
+use crate::web_handler::confirmations_retrieve_all;
+use crate::web_handler::confirmations_send;
+use crate::web_handler::login::login_and_store_cookies;
+use crate::web_handler::parental_unlock;
+use crate::web_handler::steam_guard_linker::account_has_phone;
+use crate::web_handler::steam_guard_linker::add_authenticator_to_account;
+use crate::web_handler::steam_guard_linker::add_phone_to_account;
+use crate::web_handler::steam_guard_linker::check_email_confirmation;
+use crate::web_handler::steam_guard_linker::check_sms;
+use crate::web_handler::steam_guard_linker::finalize;
+use crate::web_handler::steam_guard_linker::remove_authenticator;
+use crate::web_handler::steam_guard_linker::validate_phone_number;
+use crate::web_handler::steam_guard_linker::AddAuthenticatorStep;
+use crate::web_handler::steam_guard_linker::RemoveAuthenticatorScheme;
+use crate::web_handler::steam_guard_linker::STEAM_ADD_PHONE_CATCHUP_SECS;
+use crate::ConfirmationMethod;
+use crate::MobileAuthFile;
+use crate::SteamCache;
+use crate::User;
+use crate::STEAM_COMMUNITY_HOST;
 
 /// Main authenticator. We use it to spawn and act as our "mobile" client.
 /// Responsible for accepting/denying trades, and some other operations that may or not be related
@@ -34,7 +59,7 @@ use crate::{CachedInfo, ConfirmationMethod, MobileAuthFile, User, STEAM_COMMUNIT
 /// # Example: Fetch mobile notifications
 ///
 /// ```rust
-/// use steam_mobile::client::SteamAuthenticator;
+/// use steam_mobile::SteamAuthenticator;
 /// use steam_mobile::User;
 /// ```
 #[derive(Debug)]
@@ -42,7 +67,7 @@ pub struct SteamAuthenticator {
     /// Inner client with cookie storage
     pub(crate) client: MobileClient,
     user: User,
-    pub(crate) cached_data: Arc<RwLock<CachedInfo>>,
+    pub(crate) cached_data: Arc<RwLock<SteamCache>>,
 }
 
 impl SteamAuthenticator {
@@ -53,11 +78,13 @@ impl SteamAuthenticator {
         Self {
             client: MobileClient::default(),
             user,
-            cached_data: Arc::new(RwLock::new(CachedInfo::default())),
+            cached_data: Arc::new(RwLock::new(SteamCache::default())),
         }
     }
 
-    /// Returns current user API Key. Need to login first.
+    /// Returns current user API Key.
+    ///
+    /// Will return `None` if you are not logged in.
     pub fn api_key(&self) -> Option<String> {
         self.cached_data.read().api_key().map(ToString::to_string)
     }
@@ -79,19 +106,19 @@ impl SteamAuthenticator {
     /// Also caches the API Key, if the user wants to use it for any operation later.
     ///
     /// The cookies are inside the [MobileClient] inner cookie storage.
-    pub async fn login(&self, captcha: Option<LoginCaptcha<'_>>) -> Result<(), AuthError> {
+    pub async fn login(&self) -> Result<(), AuthError> {
         // FIXME: Add more permanent errors, such as bad credentials
         retry(login_retry_strategy(), || async {
-            login_website(&self.client, &self.user, self.cached_data.clone(), captcha.clone())
+            login_and_store_cookies(&self.client, &self.user, self.cached_data.clone())
                 .await
                 .map_err(|error| match error {
-                    LoginError::IncorrectCredentials => backoff::Error::Permanent(LoginError::IncorrectCredentials),
-                    LoginError::CaptchaRequired { captcha_guid } => {
-                        backoff::Error::Permanent(LoginError::CaptchaRequired { captcha_guid })
-                    }
-                    _ => {
+                    err @ (LoginError::IncorrectCredentials
+                    | LoginError::CaptchaRequired { .. }
+                    | LoginError::GeneralFailure(_)) => backoff::Error::Permanent(err),
+                    e => {
                         warn!("Transient error happened: Trying again..");
-                        backoff::Error::transient(error)
+                        warn!("{e}");
+                        backoff::Error::transient(e)
                     }
                 })
         })
@@ -104,7 +131,7 @@ impl SteamAuthenticator {
             info!("Parental unlock successfully.");
         }
 
-        cache_resolve(self).await?;
+        cache_api_key(self).await?;
         info!("Cached API Key successfully.");
 
         Ok(())
@@ -113,10 +140,10 @@ impl SteamAuthenticator {
     /// Add an authenticator to the account.
     /// Note that this makes various assumptions about the account.
     ///
-    /// This function takes the `AddAuthenticatorStep` to help you automate the process of adding an authenticator to
-    /// the account.
+    /// The first argument is an enum of  `AddAuthenticatorStep` to help you automate the process of adding an
+    /// authenticator to the account.
     ///
-    /// You will first call this method with `AddAuthenticatorStep::InitialStep`. This requires the account to be
+    /// First call this method with `AddAuthenticatorStep::InitialStep`. This requires the account to be
     /// already connected with a verified email address. After this step is finished, you will receive an email
     /// about the phone confirmation.
     ///
@@ -156,7 +183,9 @@ impl SteamAuthenticator {
     /// Finalize the authenticator process, enabling `SteamGuard` for the account.
     /// This method wraps up the whole process, finishing the registration of the phone number into the account.
     ///
-    /// You **should** only call this method after saving your maFile, because otherwise you WILL lose access to your
+    /// * EXTREMELY IMPORTANT *
+    ///
+    /// Call this method **ONLY** after saving your maFile, because otherwise you WILL lose access to your
     /// account.
     pub async fn finalize_authenticator(&self, mafile: &MobileAuthFile, sms_code: &str) -> Result<(), AuthError> {
         // The delay is that Steam need some seconds to catch up with the new phone number associated.
@@ -176,6 +205,9 @@ impl SteamAuthenticator {
             .map_err(Into::into)
     }
 
+    /// Remove an authenticator from a Steam Account.
+    ///
+    /// Sets account back to use SteamGuard Email codes or even remove SteamGuard completely.
     pub async fn remove_authenticator(
         &self,
         revocation_code: &str,
@@ -219,25 +251,31 @@ impl SteamAuthenticator {
             .steam_id()
             .expect("Failed to retrieve cached SteamID. Are you logged in?");
 
-        let confirmations = confirmations_retrieve_all(&self.client, &self.user, steamid, false)
-            .await?
-            .map(Confirmations::from);
-        Ok(confirmations)
+        confirmations_retrieve_all(&self.client, &self.user, steamid, false)
+            .map_ok(|confs| confs.map(Confirmations::from))
+            .err_into()
+            .await
     }
 
     /// Accept or deny confirmations.
-    pub async fn process_confirmations(
+    ///
+    /// # Panics
+    /// Will panic if not logged in with [`SteamAuthenticator`] first.
+    pub async fn process_confirmations<I>(
         &self,
         operation: ConfirmationMethod,
-        confirmations: Confirmations,
-    ) -> Result<(), AuthError> {
+        confirmations: I,
+    ) -> Result<(), AuthError>
+    where
+        I: IntoIterator<Item = Confirmation> + Send + Sync,
+    {
         let steamid = self
             .cached_data
             .read()
             .steam_id()
             .expect("Failed to retrieve cached SteamID. Are you logged in?");
 
-        confirmations_send(&self.client, &self.user, steamid, operation, confirmations.0)
+        confirmations_send(&self.client, &self.user, steamid, operation, confirmations)
             .await
             .map_err(Into::into)
     }
@@ -252,7 +290,7 @@ impl SteamAuthenticator {
         method: Method,
         custom_headers: Option<HeaderMap>,
         data: Option<T>,
-    ) -> Result<Response, reqwest::Error>
+    ) -> Result<Response, InternalError>
     where
         T: Serialize + Send + Sync,
     {
@@ -261,9 +299,9 @@ impl SteamAuthenticator {
             .await
     }
 
+    #[allow(missing_docs)]
     pub fn dump_cookie(&self, steam_domain_host: &str, steam_cookie_name: &str) -> Option<String> {
-        // TODO: Change domain and names to enums
-        dump_cookies_by_name(&self.client.cookie_store.read(), steam_domain_host, steam_cookie_name)
+        dump_cookies_by_domain_and_name(&self.client.cookie_store.read(), steam_domain_host, steam_cookie_name)
     }
 }
 
@@ -271,12 +309,19 @@ impl SteamAuthenticator {
 pub struct MobileClient {
     /// Standard HTTP Client to make requests.
     pub inner_http_client: Client,
-    /// Cookie jar that manually handle cookies, because reqwest doesn't let us handle its
-    /// cookies.
+    /// Cookie jar that manually handle cookies, because reqwest doesn't let us handle its cookies.
     pub cookie_store: Arc<RwLock<CookieJar>>,
 }
 
 impl MobileClient {
+    pub(crate) fn get_cookie_value(&self, domain: &str, name: &str) -> Option<String> {
+        dump_cookies_by_domain_and_name(&self.cookie_store.read(), domain, name)
+        // self.cookie_store.read().get(name).map(|c| c.value().to_string())
+    }
+    pub(crate) fn set_cookie_value(&self, cookie: Cookie<'static>) {
+        self.cookie_store.write().add_original(cookie);
+    }
+
     /// Wrapper to make requests while preemptively checking if the session is still valid.
     pub(crate) async fn request_with_session_guard<T>(
         &self,
@@ -284,7 +329,7 @@ impl MobileClient {
         method: Method,
         custom_headers: Option<HeaderMap>,
         data: Option<T>,
-    ) -> Result<Response, reqwest::Error>
+    ) -> Result<Response, InternalError>
     where
         T: Serialize + Send + Sync,
     {
@@ -294,40 +339,99 @@ impl MobileClient {
             unimplemented!()
         };
 
-        self.request(url, method, custom_headers, data.as_ref()).await
+        self.request(url, method, custom_headers, data.as_ref(), None::<&u8>)
+            .err_into()
+            .await
     }
-
-    /// Simple wrapper to allow generic requests to be made.
-    pub(crate) async fn request<T>(
+    pub(crate) async fn request_with_session_guard_and_decode<T, OUTPUT>(
         &self,
         url: String,
         method: Method,
         custom_headers: Option<HeaderMap>,
-        data: Option<&T>,
-    ) -> Result<Response, reqwest::Error>
+        data: Option<T>,
+    ) -> Result<OUTPUT, InternalError>
     where
         T: Serialize + Send + Sync,
+        OUTPUT: DeserializeOwned,
     {
-        let parsed_url = Url::parse(&url).unwrap();
-        let mut header_map = custom_headers.unwrap_or_default();
+        let req = self
+            .request_with_session_guard(url, method, custom_headers, data.as_ref())
+            .await?;
 
-        // Send cookies stored on jar, based on the domain that we are requesting
-        let domain = &format!(".{}", parsed_url.host_str().unwrap());
-        let domain_cookies = dump_cookies_by_domain(&self.cookie_store.read(), domain);
+        let response_body = req
+            .text()
+            .inspect_ok(|s| {
+                debug!("{} text: {}", std::any::type_name::<OUTPUT>(), s);
+            })
+            .await?;
+
+        serde_json::from_str::<OUTPUT>(&response_body).map_err(InternalError::DeserializationError)
+    }
+
+    /// Simple wrapper to allow generic requests to be made.
+    pub(crate) async fn request<T, QS>(
+        &self,
+        url: String,
+        method: Method,
+        headers: Option<HeaderMap>,
+        form_data: Option<T>,
+        query_params: QS,
+    ) -> Result<Response, InternalError>
+    where
+        QS: Serialize + Send + Sync,
+        T: Serialize + Send + Sync,
+    {
+        let parsed_url = Url::parse(&url)
+            .map_err(|_| InternalError::GeneralFailure("Couldn't parse passed URL. Insert a valid one.".to_string()))?;
+        let mut header_map = headers.unwrap_or_default();
+
+        let domain_cookies = dump_cookies_by_domain(&self.cookie_store.read(), parsed_url.host_str().unwrap());
         header_map.insert(
             reqwest::header::COOKIE,
             domain_cookies.unwrap_or_default().parse().unwrap(),
         );
 
-        let req_builder = self.inner_http_client.request(method, parsed_url).headers(header_map);
+        let req_builder = self
+            .inner_http_client
+            .request(method, parsed_url)
+            .headers(header_map)
+            .query(&query_params);
 
-        let request = match data {
+        let request = match form_data {
             None => req_builder.build().unwrap(),
-            Some(data) => req_builder.form(data).build().unwrap(),
+            Some(data) => req_builder.form(&data).build().unwrap(),
         };
 
         debug!("{:?}", &request);
-        self.inner_http_client.execute(request).await
+        self.inner_http_client.execute(request).err_into().await
+    }
+
+    pub(crate) async fn request_and_decode<T, OUTPUT, QS>(
+        &self,
+        url: String,
+        method: Method,
+        headers: Option<HeaderMap>,
+        form_data: Option<T>,
+        query_params: QS,
+    ) -> Result<OUTPUT, InternalError>
+    where
+        OUTPUT: DeserializeOwned,
+        QS: Serialize + Send + Sync,
+        T: Serialize + Send + Sync,
+    {
+        let req = self.request(url, method, headers, form_data, query_params).await?;
+
+        // FIXME: error checking
+        let _headers = req.headers();
+
+        let response_body = req
+            .text()
+            .inspect_ok(|s| {
+                debug!("{} text: {}", std::any::type_name::<OUTPUT>(), s);
+            })
+            .await?;
+
+        serde_json::from_str::<OUTPUT>(&response_body).map_err(InternalError::DeserializationError)
     }
 
     /// Checks if session is expired by parsing the the redirect URL for "steamobile:://lostauth"
@@ -335,11 +439,13 @@ impl MobileClient {
     ///
     /// This is the most reliable way to find out, since we check the session by requesting our
     /// account page at Steam Store, which is not going to be deprecated anytime soon.
-    async fn session_is_expired(&self) -> Result<bool, reqwest::Error> {
+    async fn session_is_expired(&self) -> Result<bool, InternalError> {
         let account_url = format!("{}/account", crate::STEAM_STORE_BASE);
 
         // FIXME: Not sure if we should request from client directly
-        let response = self.request(account_url, Method::HEAD, None, None::<&u8>).await?;
+        let response = self
+            .request(account_url, Method::HEAD, None, None::<u8>, None::<u8>)
+            .await?;
 
         if let Some(location) = retrieve_header_location(&response) {
             return Ok(Url::parse(location).map(Self::url_expired_check).unwrap());
@@ -353,7 +459,7 @@ impl MobileClient {
     }
 
     /// Convenience function to retrieve HTML w/ session
-    pub(crate) async fn get_html(&self, url: String) -> Result<Html, reqwest::Error> {
+    pub(crate) async fn get_html(&self, url: String) -> Result<Html, InternalError> {
         let response = self
             .request_with_session_guard(url, Method::GET, None, None::<&str>)
             .await?;

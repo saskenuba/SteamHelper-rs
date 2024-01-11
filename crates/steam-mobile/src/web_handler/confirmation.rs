@@ -1,15 +1,29 @@
+use std::iter::FromIterator;
 use std::str::FromStr;
 
+use derive_more::Deref;
+use derive_more::IntoIterator;
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 
-#[derive(Default, Debug)]
-/// FIXME: describe confirmations..
-pub struct Confirmations(pub Vec<Confirmation>);
+/// A collection of [`Confirmation`]
+#[derive(IntoIterator, Deref, Default, Debug)]
+pub struct Confirmations(#[into_iterator(owned, ref)] pub Vec<Confirmation>);
 
-/// To retrieve a [Confirmation] we need to scrape the page
-#[derive(Debug, Clone, PartialEq)]
+impl<'a> FromIterator<&'a Confirmation> for Confirmations {
+    fn from_iter<T>(iter: T) -> Self
+    where
+        T: IntoIterator<Item = &'a Confirmation>,
+    {
+        let buffer = iter.into_iter().cloned().collect::<Vec<_>>();
+        Self(buffer)
+    }
+}
+
+/// A pending Steam confirmation.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Confirmation {
     pub id: String,
     pub key: String,
@@ -17,9 +31,9 @@ pub struct Confirmation {
     pub details: Option<ConfirmationDetails>,
 }
 
-/// We retrieve [ConfirmationDetails] as a json object.
+/// We retrieve [`ConfirmationDetails`] as a json object.
 /// There is also the need to already have a [Confirmation].
-#[derive(Debug, Clone, PartialEq, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy)]
 pub struct ConfirmationDetails {
     /// ID of the trade offer. Has a value if EConfirmationType::Trade
     pub trade_offer_id: Option<i64>,
@@ -54,21 +68,19 @@ impl FromStr for EConfirmationType {
 }
 
 impl Confirmations {
-    /// This is a convenience function that lets you handle confirmations based if is a trade or
-    /// market confirmation.
-    ///
-    /// For example, you could have them coming from some other service, or  elsewhere and you can
-    /// easily filter them.
+    /// Convenience function that filters confirmations based directly on [`EConfirmationType`].
     ///
     /// # Example
     /// ```no_run
-    /// use steam_mobile::{ConfirmationMethod, EConfirmationType, User};
-    /// # use steam_mobile::client::SteamAuthenticator;
+    /// use steam_mobile::ConfirmationMethod;
+    /// use steam_mobile::EConfirmationType;
+    /// use steam_mobile::User;
+    /// # use steam_mobile::SteamAuthenticator;
     /// # use steam_mobile::Confirmations;
     ///
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # let user = User::build();
+    /// # let user = User::new("username".to_string(), "password".to_string());
     /// # let authenticator = SteamAuthenticator::new(user);
     ///
     /// // .. authenticator setup and login above
@@ -82,20 +94,21 @@ impl Confirmations {
     ///     .unwrap();
     /// # }
     /// ```
-    pub fn filter_by_confirmation_type(&mut self, confirmation_type: EConfirmationType) {
-        self.0.retain(|confirmation| confirmation.kind == confirmation_type);
+    pub fn filter_by_confirmation_type(
+        &self,
+        confirmation_type: EConfirmationType,
+    ) -> impl Iterator<Item = &Confirmation> {
+        self.0
+            .iter()
+            .filter(move |confirmation| confirmation.kind == confirmation_type)
     }
 
-    /// Filter tradeoffers ids in-place.
-    ///
-    /// This is a convenience function that lets you handle confirmations based on trade offer ids.
-    /// For example, you could have them coming from some other service, or elsewhere and you can
-    /// easily filter them.
+    /// Filters [`Confirmations`] based on trade offer ids.
     ///
     /// # Example
     /// ```no_run
     /// # use steam_mobile::{ConfirmationMethod, EConfirmationType, User};
-    /// # use steam_mobile::client::SteamAuthenticator;
+    /// # use steam_mobile::SteamAuthenticator;
     /// # use steam_mobile::Confirmations;
     ///
     /// # #[tokio::main]
@@ -106,19 +119,21 @@ impl Confirmations {
     /// confirmations.filter_by_trade_offer_ids(&trade_offer_ids);
     /// # }
     /// ```
-    pub fn filter_by_trade_offer_ids<T>(&mut self, trade_offer_ids: T)
+    pub fn filter_by_trade_offer_ids<'a, 'b, T>(&'a self, trade_offer_ids: T) -> impl Iterator<Item = &'a Confirmation>
     where
-        T: AsRef<[i64]>,
+        T: AsRef<[i64]> + 'a,
     {
-        self.0.retain(|c| {
-            if let Some(conf_details) = c.details {
-                let trade_offer_id = conf_details.trade_offer_id.unwrap();
-                return trade_offer_ids.as_ref().iter().any(|&id| id == trade_offer_id);
-            }
-            false
-        });
+        self.0.iter().filter(move |c| {
+            c.details.map_or(false, |conf_details| {
+                let trade_offer_id = conf_details
+                    .trade_offer_id
+                    .expect("Confirmation detail comes from a trade and must have a trade_offer_id.");
+                trade_offer_ids.as_ref().iter().any(|&id| id == trade_offer_id)
+            })
+        })
     }
 
+    /// Checks if any of the `Confirmation` have the `trade_offer_id`.
     pub fn has_trade_offer_id(&self, trade_offer_id: i64) -> bool {
         self.0.iter().any(|conf| {
             conf.details
@@ -134,20 +149,18 @@ impl From<Vec<Confirmation>> for Confirmations {
     }
 }
 
-/// Either accept the confirmation, or cancel it.
+#[allow(missing_docs)]
 #[derive(Copy, Clone, Debug)]
 pub enum ConfirmationMethod {
-    /// Discriminant to accept a trade
     Accept,
-    /// Discriminant to deny a trade
     Deny,
 }
 
 impl ConfirmationMethod {
     pub(crate) fn value(&self) -> &'static str {
         match *self {
-            ConfirmationMethod::Accept => "allow",
-            ConfirmationMethod::Deny => "cancel",
+            Self::Accept => "allow",
+            Self::Deny => "cancel",
         }
     }
 }
@@ -165,46 +178,50 @@ mod tests {
     use super::*;
 
     fn get_confirmations() -> Confirmations {
-        let mut vec = Vec::new();
-        vec.push(Confirmation {
-            id: "7676451136".to_string(),
-            key: "18064583892738866189".to_string(),
-            kind: EConfirmationType::Trade,
-            details: Some(ConfirmationDetails {
-                trade_offer_id: Some(4009687284),
-            }),
-        });
-        vec.push(Confirmation {
-            id: "7652515663".to_string(),
-            key: "10704556181383316145".to_string(),
-            kind: EConfirmationType::Trade,
-            details: Some(ConfirmationDetails {
-                trade_offer_id: Some(4000980011),
-            }),
-        });
-        vec.push(Confirmation {
-            id: "7652555421".to_string(),
-            key: "10704556181383323456".to_string(),
-            kind: EConfirmationType::Trade,
-            details: Some(ConfirmationDetails {
-                trade_offer_id: Some(4000793103),
-            }),
-        });
-        vec.push(Confirmation {
-            id: "7652515663".to_string(),
-            key: "20845677815483316145".to_string(),
-            kind: EConfirmationType::Market,
-            details: None,
-        });
-        Confirmations::from(vec)
+        let confirmations = vec![
+            Confirmation {
+                id: "7676451136".to_string(),
+                key: "18064583892738866189".to_string(),
+                kind: EConfirmationType::Trade,
+                details: Some(ConfirmationDetails {
+                    trade_offer_id: Some(4009687284),
+                }),
+            },
+            Confirmation {
+                id: "7652515663".to_string(),
+                key: "10704556181383316145".to_string(),
+                kind: EConfirmationType::Trade,
+                details: Some(ConfirmationDetails {
+                    trade_offer_id: Some(4000980011),
+                }),
+            },
+            Confirmation {
+                id: "7652555421".to_string(),
+                key: "10704556181383323456".to_string(),
+                kind: EConfirmationType::Trade,
+                details: Some(ConfirmationDetails {
+                    trade_offer_id: Some(4000793103),
+                }),
+            },
+            Confirmation {
+                id: "7652515663".to_string(),
+                key: "20845677815483316145".to_string(),
+                kind: EConfirmationType::Market,
+                details: None,
+            },
+        ];
+        Confirmations::from(confirmations)
     }
 
     #[test]
     fn filter_confirmation_type() {
-        let mut confirmations = get_confirmations();
-        assert_eq!(confirmations.0.len(), 4);
-        confirmations.filter_by_confirmation_type(EConfirmationType::Market);
-        assert_eq!(confirmations.0.len(), 1);
+        let confirmations = get_confirmations();
+        assert_eq!(confirmations.len(), 4);
+
+        let filtered_confirmations: Vec<_> = confirmations
+            .filter_by_confirmation_type(EConfirmationType::Market)
+            .collect();
+        assert_eq!(filtered_confirmations.len(), 1);
     }
 
     #[test]
@@ -216,7 +233,7 @@ mod tests {
 
     #[test]
     fn filter_trade_offer_id() {
-        let mut confirmations = get_confirmations();
+        let confirmations = get_confirmations();
         let first = 4009687284;
         let second = 4000793103;
         let third = 33311221; // no existant
@@ -229,9 +246,11 @@ mod tests {
             trade_offer_id: Some(second),
         };
 
-        confirmations.filter_by_trade_offer_ids(tradeoffer_id);
-        assert_eq!(confirmations.0.get(0).unwrap().details, Some(details_0));
-        assert_eq!(confirmations.0.get(1).unwrap().details, Some(details_1));
-        assert_eq!(confirmations.0.get(2), None);
+        let filtered = confirmations
+            .filter_by_trade_offer_ids(tradeoffer_id)
+            .collect::<Vec<_>>();
+        assert_eq!(filtered.first().unwrap().details, Some(details_0));
+        assert_eq!(filtered.get(1).unwrap().details, Some(details_1));
+        assert_eq!(filtered.get(2), None);
     }
 }

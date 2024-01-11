@@ -1,13 +1,13 @@
+//! Main error type of `SteamAuthenticator`.
+//!
+//! If an internal error occurs, it simply delegates to the correct error type.
+//! Generally, this isn't a good strategy, but 90% of the errors happen because of a
+//! misconfiguration, they are not recoverable and we choose to just fail fast.
+//!
+//!
+//! For a general explanation of EResults, check: [steam errors website](https://steamerrors.com/).
 use thiserror::Error;
 
-/// Main error type that SteamAuthenticator uses.
-///
-/// If an internal error occurs, it simply delegates to the correct error type.
-/// Generally, this isn't a good strategy, but 90% of the errors happen because of a
-/// misconfiguration, they are not recoverable and we choose to just fail fast.
-///
-///
-/// For a general explanation of EResults, check: https://steamerrors.com/
 #[allow(missing_docs)]
 #[derive(Error, Debug)]
 pub enum AuthError {
@@ -20,13 +20,11 @@ pub enum AuthError {
     #[error(transparent)]
     MobileAuthFile(#[from] MobileAuthFileError),
     #[error(transparent)]
-    HttpError(#[from] reqwest::Error),
+    InternalError(#[from] InternalError),
 }
 
 #[allow(missing_docs)]
 #[derive(Error, Debug)]
-/// This kind of error should only be raised, if the user tried to use a method that requires the API KEY, but it could
-/// not be cached for any reason.
 pub enum ApiKeyError {
     #[error("General Failure: `{0}`")]
     GeneralError(String),
@@ -34,11 +32,10 @@ pub enum ApiKeyError {
     AccessDenied,
     #[error("Key not yet registered.")]
     NotRegistered,
-
     #[error("A method requiring a cached key was used, but this account API KEY could not be cached.")]
     NotCached,
     #[error(transparent)]
-    HttpError(#[from] reqwest::Error),
+    InternalError(#[from] InternalError),
 }
 
 #[allow(missing_docs)]
@@ -50,6 +47,8 @@ pub enum LoginError {
     NeedSteamID,
     #[error("Parental unlock error `{0}`")]
     ParentalUnlock(String),
+    #[error("Steam Guard Mobile is not enabled. Email codes are not supported.")]
+    Need2FA,
     #[error("Account name or password entered are incorrect.")]
     IncorrectCredentials,
     #[error("Requires a captcha code. If a previous attempt was made, the captcha was probably incorrect. \
@@ -57,7 +56,7 @@ pub enum LoginError {
     CaptchaRequired { captcha_guid: String },
 
     #[error(transparent)]
-    HttpError(#[from] reqwest::Error),
+    InternalError(#[from] InternalError),
 
     #[error(transparent)]
     TotpError(#[from] steam_totp::error::TotpError),
@@ -78,7 +77,8 @@ pub enum LinkerError {
     UnableToGenerateCorrectCodes,
 
     #[error(transparent)]
-    HttpError(#[from] reqwest::Error),
+    InternalError(#[from] InternalError),
+
     #[error(transparent)]
     TotpError(#[from] steam_totp::error::TotpError),
 }
@@ -88,8 +88,25 @@ pub enum LinkerError {
 #[derive(Error, Debug)]
 pub enum MobileAuthFileError {
     #[error(transparent)]
-    DeserializationError(#[from] serde_json::Error),
+    InternalError(#[from] InternalError),
 
     #[error("{0}")]
     GeneralFailure(String),
+}
+
+/// Errors from networking or failure to deserialize internal types.
+#[allow(missing_docs)]
+#[derive(Error, Debug)]
+pub enum InternalError {
+    #[error("`{0}`")]
+    GeneralFailure(String),
+
+    #[error(transparent)]
+    HttpError(#[from] reqwest::Error),
+
+    #[error(
+        "A deserialization error has occurred. This indicates a change in the response or an unexpected situation. \
+         Please report this issue."
+    )]
+    DeserializationError(#[from] serde_json::Error),
 }
