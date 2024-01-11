@@ -14,26 +14,34 @@
 )]
 
 use std::fmt;
-use std::fmt::{Debug, Formatter};
+use std::fmt::Debug;
+use std::fmt::Formatter;
 use std::path::PathBuf;
 
+pub use client::SteamAuthenticator;
 use const_format::concatcp;
 pub use reqwest::header::HeaderMap;
-pub use reqwest::{Error as HttpError, Method, Url};
-use serde::{Deserialize, Serialize};
+pub use reqwest::Method;
+pub use reqwest::Url;
+use serde::Deserialize;
+use serde::Serialize;
 use steam_totp::Secret;
 use steamid_parser::SteamID;
 pub use utils::format_captcha_url;
 use uuid::Uuid;
-pub use web_handler::confirmation::{ConfirmationMethod, Confirmations, EConfirmationType};
+pub use web_handler::confirmation::ConfirmationMethod;
+pub use web_handler::confirmation::Confirmations;
+pub use web_handler::confirmation::EConfirmationType;
 pub use web_handler::steam_guard_linker::AddAuthenticatorStep;
 
-use crate::errors::{AuthError, InternalError, MobileAuthFileError};
+use crate::errors::AuthError;
+use crate::errors::InternalError;
+use crate::errors::MobileAuthFileError;
 use crate::utils::read_from_disk;
 
 mod adapter;
-pub mod client;
-pub mod errors;
+pub(crate) mod client;
+mod errors;
 mod page_scraper;
 pub(crate) mod retry;
 mod types;

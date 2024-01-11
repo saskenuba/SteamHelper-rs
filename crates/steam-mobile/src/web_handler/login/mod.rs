@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::Arc;
 use std::time::Duration;
@@ -25,10 +24,7 @@ use crate::client::MobileClient;
 use crate::errors::LoginError;
 use crate::types::{DomainToken, FinalizeLoginRequest, FinalizeLoginResponseBase, RSAResponseBase};
 use crate::web_handler::login::login_types::{PollAuthSessionStatusRequest, PollAuthSessionStatusResponseBase};
-use crate::{
-    AuthResult, SteamCache, User, MOBILE_REFERER, STEAM_API_BASE, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST,
-    STEAM_DELAY_MS, STEAM_HELP_HOST, STEAM_LOGIN_BASE, STEAM_STORE_HOST,
-};
+use crate::{AuthResult, SteamCache, User, MOBILE_REFERER, STEAM_API_BASE, STEAM_DELAY_MS, STEAM_LOGIN_BASE};
 
 mod login_types;
 
@@ -47,9 +43,11 @@ const LOGIN_POLL_AUTH_STATUS_ENDPOINT: &str =
 
 const LOGIN_FINALIZE_LOGIN_ENDPOINT: &str = concatcp!(STEAM_LOGIN_BASE, "/jwt/finalizelogin");
 
-/// This method is used to login through Steam `ISteamAuthUser` interface.
+const SESSION_ID_COOKIE: &str = "sessionid";
+
+/// Logs in Steam through Steam `ISteamAuthUser` interface.
 ///
-/// Webapi_nonce is received by connecting to the Steam Network.
+/// `Webapi_nonce` is received by connecting to the Steam Network.
 ///
 /// Currently not possible without the implementation of the [steam-client] crate.
 /// For website that currently works, check [login_and_store_cookies] method.
@@ -74,23 +72,15 @@ where
     base64::engine::general_purpose::STANDARD.encode(encrypted)
 }
 
-pub const SESSION_ID_COOKIE: &str = "sessionid";
-
-/// Used to login through the Steam Website.
-/// Caches user's steamID.
+/// Logs in through the Steam website, caching the user's SteamID,
+/// and storing session cookies for steamcommunity and steampowered domains.
 ///
-/// Stores sessions cookies for steamcommunity, steampowered.
+/// Additionally, there is a method for logging in through an API interface called ISteamUserAuth.
+/// For more details, refer to [`login_isteam_user_auth`].
 ///
+/// For the implementation details, you can check the original C# source code [here](https://github.com/Jessecar96/SteamBot/blob/e8e9e5fcd64ae35b201e2597068849c10a667b60/SteamTrade/SteamWeb.cs#L325).
 ///
-/// There is also the method that logs in through an API interface called ISteamUserAuth.
-/// Check [login_isteam_user_auth]
-///
-/// https://github.com/Jessecar96/SteamBot/blob/e8e9e5fcd64ae35b201e2597068849c10a667b60/SteamTrade/SteamWeb.cs#L325
-// We can really do that method yet, because connection to the SteamNetwork is not yet implemented
-// by steam-client crate, and consequently we can't get the user webapi_nonce beforehand.
-//
-// Should accept closure to handle cases such as needing a captcha or sms.
-// But the best way is to have it already setup to use TOTP codes.
+/// [login_isteam_user_auth]: #method.login_isteam_user_auth
 #[allow(clippy::too_many_lines)]
 pub(crate) async fn login_and_store_cookies<'a>(
     client: &MobileClient,
@@ -197,10 +187,6 @@ pub(crate) async fn login_and_store_cookies<'a>(
     // This next operation will fail if called too fast, we should wait a bit.
     Delay::new(Duration::from_millis(STEAM_DELAY_MS)).await;
 
-    // let session_id_cookie = client
-    //     .get_cookie_value(STEAM_COMMUNITY_BASE, SESSION_ID_COOKIE)
-    //     .expect("SessionID cookie should be set.");
-
     let refresh_token = inner.refresh_token.expect("Safe to unwrap");
     let finalize_payload = FinalizeLoginRequest::new(refresh_token, session_id_cookie);
 
@@ -216,36 +202,10 @@ pub(crate) async fn login_and_store_cookies<'a>(
 
     let domain_tokens = finalize_login_response.domain_tokens;
     let steam_id = finalize_login_response.steam_id;
+    {
+        cached_data.write().set_steamid(&steam_id)?;
+    }
     set_cookies_on_steam_domains(client, domain_tokens, steam_id).await;
-
-    // {
-    //     // Recover cookies to authorize store.steampowered and help.steampowered subdomains.
-    //     let mut cookie_jar = client.cookie_store.write();
-    //     for host in &[STEAM_COMMUNITY_HOST, STEAM_HELP_HOST, STEAM_STORE_HOST] {
-    //         let timezone_offset = format!("{},0", chrono::Local::now().offset().fix().local_minus_utc());
-    //         let fmt_token = format!("{steamid}%7C%7C{token}");
-    //         let fmt_secure_token = format!("{steamid}%7C%7C{token_secure}");
-    //         cookie_jar.add_original(
-    //             Cookie::build("steamLoginSecure", fmt_secure_token)
-    //                 .domain(*host)
-    //                 .path("/")
-    //                 .finish(),
-    //         );
-    //         cookie_jar.add_original(Cookie::build("steamLogin", fmt_token).domain(*host).path("/").finish());
-    //         cookie_jar.add_original(
-    //             Cookie::build("sessionid", session_id.clone())
-    //                 .domain(*host)
-    //                 .path("/")
-    //                 .finish(),
-    //         );
-    //         cookie_jar.add_original(
-    //             Cookie::build("timezoneOffset", timezone_offset)
-    //                 .domain(*host)
-    //                 .path("/")
-    //                 .finish(),
-    //         );
-    //     }
-    // }
 
     Ok(())
 }
@@ -258,8 +218,7 @@ pub async fn set_cookies_on_steam_domains(client: &MobileClient, domain_tokens: 
             let url = c.url;
             let mut token_data = c.params;
             token_data.steam_id = Some(steam_id.clone());
-            let payload = json!({"params": token_data});
-            client.request(url, Method::POST, None, Some(payload), None::<u8>)
+            client.request(url, Method::POST, None, Some(token_data), None::<u8>)
         })
         .collect::<FuturesUnordered<_>>();
 
@@ -270,12 +229,12 @@ pub async fn set_cookies_on_steam_domains(client: &MobileClient, domain_tokens: 
                 error!("Error happened while setting tokens for all domains.\n{err}");
             }
             Ok(response) => {
-                let mut cache = client.cookie_store.write();
+                let mut cookie_jar = client.cookie_store.write();
                 debug!("URL: {:?}", response.url());
                 for cookie in response.cookies() {
                     debug!("cookie_name: {}, value: {}", cookie.name(), cookie.value());
                     let our_cookie = SteamCookie::from(cookie);
-                    cache.add_original(our_cookie.deref().clone());
+                    cookie_jar.add_original(our_cookie.deref().clone());
                 }
             }
         }
