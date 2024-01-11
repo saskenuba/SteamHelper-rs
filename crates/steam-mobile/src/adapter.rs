@@ -1,8 +1,9 @@
 use cookie::Cookie;
 use derive_more::Deref;
+use derive_more::DerefMut;
 
-#[derive(Deref, Clone, Debug)]
-pub(crate) struct SteamCookie(Cookie<'static>);
+#[derive(Deref, DerefMut, Clone, Debug)]
+pub struct SteamCookie(Cookie<'static>);
 
 impl From<reqwest::cookie::Cookie<'_>> for SteamCookie {
     fn from(value: reqwest::cookie::Cookie) -> Self {
@@ -12,6 +13,6 @@ impl From<reqwest::cookie::Cookie<'_>> for SteamCookie {
             cookie = cookie.domain(domain.to_owned());
         }
 
-        Self { 0: cookie.finish() }
+        Self(cookie.finish())
     }
 }

@@ -1,3 +1,4 @@
+use std::borrow::Cow::Owned;
 use std::ops::Deref;
 use std::sync::Arc;
 use std::time::Duration;
@@ -15,6 +16,7 @@ use parking_lot::RwLock;
 use rand::thread_rng;
 use reqwest::Client;
 use reqwest::Method;
+use reqwest::Url;
 use rsa::BigUint;
 use rsa::Pkcs1v15Encrypt;
 use rsa::RsaPublicKey;
@@ -243,11 +245,20 @@ pub async fn set_cookies_on_steam_domains(client: &MobileClient, domain_tokens: 
                 error!("Error happened while setting tokens for all domains.\n{err}");
             }
             Ok(response) => {
+                let host = response.url().host().expect("Safe.").to_string();
+                debug!("Host: {:?}", &host);
+
                 let mut cookie_jar = client.cookie_store.write();
-                debug!("URL: {:?}", response.url());
                 for cookie in response.cookies() {
-                    debug!("cookie_name: {}, value: {}", cookie.name(), cookie.value());
-                    let our_cookie = SteamCookie::from(cookie);
+                    let mut our_cookie = SteamCookie::from(cookie);
+                    our_cookie.set_domain(host.clone());
+
+                    debug!(
+                        "domain: {:?}, cookie_name: {}, value: {} ",
+                        our_cookie.domain(),
+                        our_cookie.name(),
+                        our_cookie.value()
+                    );
                     cookie_jar.add_original(our_cookie.deref().clone());
                 }
             }

@@ -381,12 +381,11 @@ impl MobileClient {
         QS: Serialize + Send + Sync,
         T: Serialize + Send + Sync,
     {
-        let parsed_url = Url::parse(&url).unwrap();
+        let parsed_url = Url::parse(&url)
+            .map_err(|_| InternalError::GeneralFailure("Couldn't parse passed URL. Insert a valid one.".to_string()))?;
         let mut header_map = headers.unwrap_or_default();
 
-        // Send cookies stored on jar, based on the domain that we are requesting
-        let domain = &format!(".{}", parsed_url.host_str().unwrap());
-        let domain_cookies = dump_cookies_by_domain(&self.cookie_store.read(), domain);
+        let domain_cookies = dump_cookies_by_domain(&self.cookie_store.read(), parsed_url.host_str().unwrap());
         header_map.insert(
             reqwest::header::COOKIE,
             domain_cookies.unwrap_or_default().parse().unwrap(),
