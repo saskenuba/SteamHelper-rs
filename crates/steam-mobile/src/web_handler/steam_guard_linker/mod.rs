@@ -9,15 +9,26 @@ use reqwest::Method;
 use tracing::debug;
 
 use crate::client::MobileClient;
-use crate::errors::{AuthError, LinkerError};
-use crate::utils::{dump_cookies_by_domain_and_name, generate_canonical_device_id};
-use crate::web_handler::steam_guard_linker::types::{
-    AddAuthenticatorErrorResponseBase, AddAuthenticatorRequest, AddAuthenticatorResponseBase,
-    FinalizeAddAuthenticatorBase, FinalizeAddAuthenticatorErrorBase, FinalizeAddAuthenticatorRequest,
-    GenericSuccessResponse, HasPhoneResponse, PhoneAjaxRequest, RemoveAuthenticatorRequest,
-    RemoveAuthenticatorResponseBase,
-};
-use crate::{SteamCache, MobileAuthFile, STEAM_API_BASE, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST};
+use crate::errors::AuthError;
+use crate::errors::LinkerError;
+use crate::utils::dump_cookies_by_domain_and_name;
+use crate::utils::generate_canonical_device_id;
+use crate::web_handler::steam_guard_linker::types::AddAuthenticatorErrorResponseBase;
+use crate::web_handler::steam_guard_linker::types::AddAuthenticatorRequest;
+use crate::web_handler::steam_guard_linker::types::AddAuthenticatorResponseBase;
+use crate::web_handler::steam_guard_linker::types::FinalizeAddAuthenticatorBase;
+use crate::web_handler::steam_guard_linker::types::FinalizeAddAuthenticatorErrorBase;
+use crate::web_handler::steam_guard_linker::types::FinalizeAddAuthenticatorRequest;
+use crate::web_handler::steam_guard_linker::types::GenericSuccessResponse;
+use crate::web_handler::steam_guard_linker::types::HasPhoneResponse;
+use crate::web_handler::steam_guard_linker::types::PhoneAjaxRequest;
+use crate::web_handler::steam_guard_linker::types::RemoveAuthenticatorRequest;
+use crate::web_handler::steam_guard_linker::types::RemoveAuthenticatorResponseBase;
+use crate::MobileAuthFile;
+use crate::SteamCache;
+use crate::STEAM_API_BASE;
+use crate::STEAM_COMMUNITY_BASE;
+use crate::STEAM_COMMUNITY_HOST;
 
 mod types;
 
@@ -36,6 +47,7 @@ struct AuthenticatorOptions {
     print_output: bool,
 }
 
+/// Steps to add an authenticator to a Steam Account.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AddAuthenticatorStep {
     /// The user is signing up for the first time.

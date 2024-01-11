@@ -6,25 +6,39 @@ use base64::Engine;
 use const_format::concatcp;
 use futures_timer::Delay;
 use futures_util::stream::FuturesUnordered;
-use futures_util::{StreamExt, TryFutureExt};
-use login_types::{
-    BeginAuthSessionViaCredentialsRequest, BeginAuthSessionViaCredentialsResponseBase,
-    UpdateAuthSessionWithSteamGuardCodeRequest,
-};
+use futures_util::StreamExt;
+use futures_util::TryFutureExt;
+use login_types::BeginAuthSessionViaCredentialsRequest;
+use login_types::BeginAuthSessionViaCredentialsResponseBase;
+use login_types::UpdateAuthSessionWithSteamGuardCodeRequest;
 use parking_lot::RwLock;
 use rand::thread_rng;
-use reqwest::{Client, Method};
-use rsa::{BigUint, Pkcs1v15Encrypt, RsaPublicKey};
-use serde_json::json;
-use steam_totp::{Secret, Time};
-use tracing::{debug, error};
+use reqwest::Client;
+use reqwest::Method;
+use rsa::BigUint;
+use rsa::Pkcs1v15Encrypt;
+use rsa::RsaPublicKey;
+use steam_totp::Secret;
+use steam_totp::Time;
+use tracing::debug;
+use tracing::error;
 
 use crate::adapter::SteamCookie;
 use crate::client::MobileClient;
 use crate::errors::LoginError;
-use crate::types::{DomainToken, FinalizeLoginRequest, FinalizeLoginResponseBase, RSAResponseBase};
-use crate::web_handler::login::login_types::{PollAuthSessionStatusRequest, PollAuthSessionStatusResponseBase};
-use crate::{AuthResult, SteamCache, User, MOBILE_REFERER, STEAM_API_BASE, STEAM_DELAY_MS, STEAM_LOGIN_BASE};
+use crate::types::DomainToken;
+use crate::types::FinalizeLoginRequest;
+use crate::types::FinalizeLoginResponseBase;
+use crate::types::RSAResponseBase;
+use crate::web_handler::login::login_types::PollAuthSessionStatusRequest;
+use crate::web_handler::login::login_types::PollAuthSessionStatusResponseBase;
+use crate::AuthResult;
+use crate::SteamCache;
+use crate::User;
+use crate::MOBILE_REFERER;
+use crate::STEAM_API_BASE;
+use crate::STEAM_DELAY_MS;
+use crate::STEAM_LOGIN_BASE;
 
 mod login_types;
 

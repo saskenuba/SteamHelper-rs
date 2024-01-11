@@ -2,14 +2,13 @@
 
 use std::fs::OpenOptions;
 use std::io::{BufWriter, Write};
-use std::ops::Deref;
 use std::path::PathBuf;
 use std::str::FromStr;
 
 use anyhow::Result;
 use clap::{Arg, ArgMatches, Command};
 use dialoguer::{Confirm, Input};
-use steam_mobile::client::SteamAuthenticator;
+use steam_mobile::SteamAuthenticator;
 use steam_mobile::errors::{AuthError, LoginError};
 use steam_mobile::{format_captcha_url, AddAuthenticatorStep, ConfirmationMethod, MobileAuthFile, User};
 use steam_totp::{generate_auth_code_async, Secret};

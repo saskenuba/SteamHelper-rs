@@ -1,10 +1,12 @@
 use std::iter::FromIterator;
 use std::str::FromStr;
 
-use derive_more::{Deref, IntoIterator};
+use derive_more::Deref;
+use derive_more::IntoIterator;
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 
 /// A collection of [`Confirmation`]
 #[derive(IntoIterator, Deref, Default, Debug)]
@@ -70,7 +72,9 @@ impl Confirmations {
     ///
     /// # Example
     /// ```no_run
-    /// use steam_mobile::{ConfirmationMethod, EConfirmationType, User};
+    /// use steam_mobile::ConfirmationMethod;
+    /// use steam_mobile::EConfirmationType;
+    /// use steam_mobile::User;
     /// # use steam_mobile::client::SteamAuthenticator;
     /// # use steam_mobile::Confirmations;
     ///
@@ -121,12 +125,15 @@ impl Confirmations {
     {
         self.0.iter().filter(move |c| {
             c.details.map_or(false, |conf_details| {
-                let trade_offer_id = conf_details.trade_offer_id.unwrap();
+                let trade_offer_id = conf_details
+                    .trade_offer_id
+                    .expect("Confirmation detail comes from a trade and must have a trade_offer_id.");
                 trade_offer_ids.as_ref().iter().any(|&id| id == trade_offer_id)
             })
         })
     }
 
+    /// Checks if any of the `Confirmation` have the `trade_offer_id`.
     pub fn has_trade_offer_id(&self, trade_offer_id: i64) -> bool {
         self.0.iter().any(|conf| {
             conf.details

@@ -41,7 +41,7 @@ use crate::utils::read_from_disk;
 
 mod adapter;
 pub(crate) mod client;
-mod errors;
+pub mod errors;
 mod page_scraper;
 pub(crate) mod retry;
 mod types;
@@ -76,6 +76,7 @@ const MOBILE_REFERER: &str = concatcp!(
     "/mobilelogin?oauth_client_id=DE45CD61&oauth_scope=read_profile%20write_profile%20read_client%20write_client"
 );
 
+#[allow(missing_docs)]
 pub type AuthResult<T> = Result<T, AuthError>;
 
 /// User that is needed for the authenticator to work.
@@ -195,6 +196,7 @@ impl User {
         Ok(self)
     }
 
+    #[allow(missing_docs)]
     #[must_use]
     pub fn ma_file(mut self, ma_file: MobileAuthFile) -> Self {
         self.linked_mafile = Some(ma_file);

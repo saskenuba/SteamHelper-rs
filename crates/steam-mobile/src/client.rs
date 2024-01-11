@@ -205,6 +205,9 @@ impl SteamAuthenticator {
             .map_err(Into::into)
     }
 
+    /// Remove an authenticator from a Steam Account.
+    ///
+    /// Sets account back to use SteamGuard Email codes or even remove SteamGuard completely.
     pub async fn remove_authenticator(
         &self,
         revocation_code: &str,
@@ -296,8 +299,8 @@ impl SteamAuthenticator {
             .await
     }
 
+    #[allow(missing_docs)]
     pub fn dump_cookie(&self, steam_domain_host: &str, steam_cookie_name: &str) -> Option<String> {
-        // TODO: Change domain and names to enums
         dump_cookies_by_domain_and_name(&self.client.cookie_store.read(), steam_domain_host, steam_cookie_name)
     }
 }
