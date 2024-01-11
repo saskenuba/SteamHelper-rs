@@ -103,10 +103,13 @@ struct SteamCache {
 }
 
 impl SteamCache {
-    // FIXME: This should not unwrap, probably result with steamid parse error.
-    fn set_steamid(&mut self, steamid: &str) {
-        let parsed_steamid = SteamID::parse(steamid).unwrap();
+    fn set_steamid(&mut self, steamid: &str) -> Result<(), InternalError> {
+        let parsed_steamid = SteamID::parse(steamid).ok_or_else(|| {
+            let err_str = format!("Failed to parse {steamid} as SteamID.");
+            InternalError::GeneralFailure(err_str)
+        })?;
         self.steamid = Some(parsed_steamid);
+        Ok(())
     }
 
     fn set_oauth_token(&mut self, token: String) {

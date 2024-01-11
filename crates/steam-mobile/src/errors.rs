@@ -25,8 +25,6 @@ pub enum AuthError {
 
 #[allow(missing_docs)]
 #[derive(Error, Debug)]
-/// This kind of error should only be raised, if the user tried to use a method that requires the API KEY, but it could
-/// not be cached for any reason.
 pub enum ApiKeyError {
     #[error("General Failure: `{0}`")]
     GeneralError(String),
@@ -36,7 +34,6 @@ pub enum ApiKeyError {
     NotRegistered,
     #[error("A method requiring a cached key was used, but this account API KEY could not be cached.")]
     NotCached,
-
     #[error(transparent)]
     InternalError(#[from] InternalError),
 }
@@ -100,6 +97,9 @@ pub enum MobileAuthFileError {
 /// Errors from networking or failure to deserialize internal types.
 #[derive(Error, Debug)]
 pub enum InternalError {
+    #[error("`{0}`")]
+    GeneralFailure(String),
+
     #[error(transparent)]
     HttpError(#[from] reqwest::Error),
 

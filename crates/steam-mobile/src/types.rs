@@ -257,11 +257,12 @@ pub struct FinalizeLoginResponseBase {
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DomainToken {
+    /// One of Steam's domains to ping and receive cookies for.
     pub url: String,
     pub params: DomainTokenData,
 }
 
-/// Contains tokens to authenticate into multiple steam channels.
+/// Contains tokens to authenticate into a Steam domain.
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DomainTokenData {
     pub nonce: String,
