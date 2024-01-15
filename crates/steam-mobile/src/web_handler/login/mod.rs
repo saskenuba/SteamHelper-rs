@@ -1,5 +1,4 @@
 use std::ops::Deref;
-use std::sync::Arc;
 use std::time::Duration;
 
 use base64::Engine;
@@ -11,7 +10,6 @@ use futures_util::TryFutureExt;
 use login_types::BeginAuthSessionViaCredentialsRequest;
 use login_types::BeginAuthSessionViaCredentialsResponseBase;
 use login_types::UpdateAuthSessionWithSteamGuardCodeRequest;
-use parking_lot::RwLock;
 use rand::thread_rng;
 use reqwest::Client;
 use reqwest::Method;
@@ -21,7 +19,6 @@ use rsa::RsaPublicKey;
 use steam_totp::Secret;
 use steam_totp::Time;
 use tracing::debug;
-use tracing::error;
 
 use crate::adapter::SteamCookie;
 use crate::client::MobileClient;
@@ -96,11 +93,7 @@ where
 ///
 /// [login_isteam_user_auth]: #method.login_isteam_user_auth
 #[allow(clippy::too_many_lines)]
-pub(crate) async fn login_and_store_cookies<'a>(
-    client: &MobileClient,
-    user: &User,
-    cached_data: Arc<RwLock<SteamCache>>,
-) -> Result<(), LoginError> {
+pub async fn login_and_store_cookies<'a>(client: &MobileClient, user: &User) -> Result<SteamCache, LoginError> {
     // we request to generate sessionID cookies
     let response = client
         .request(MOBILE_REFERER.to_owned(), Method::GET, None, None::<u8>, None::<u8>)
@@ -149,9 +142,10 @@ pub(crate) async fn login_and_store_cookies<'a>(
         .await?;
 
     if let Some(confirmations) = begin_auth_response.inner.allowed_confirmations.first() {
-        if confirmations.confirmation_type != 3 {
-            return Err(LoginError::Need2FA.into());
-        }
+        // TODO: do something with this info?
+        // if confirmations.confirmation_type != 3 {
+        //     return Err(LoginError::Need2FA.into());
+        // }
     }
 
     Delay::new(Duration::from_millis(STEAM_DELAY_MS)).await;
@@ -202,7 +196,8 @@ pub(crate) async fn login_and_store_cookies<'a>(
     Delay::new(Duration::from_millis(STEAM_DELAY_MS)).await;
 
     let refresh_token = inner.refresh_token.expect("Safe to unwrap");
-    let finalize_payload = FinalizeLoginRequest::new(refresh_token, session_id_cookie);
+    let access_token = inner.access_token.expect("Safe to unwrap");
+    let finalize_payload = FinalizeLoginRequest::new(refresh_token.clone(), session_id_cookie);
 
     let finalize_login_response = client
         .request_and_decode::<_, FinalizeLoginResponseBase, _>(
@@ -216,12 +211,8 @@ pub(crate) async fn login_and_store_cookies<'a>(
 
     let domain_tokens = finalize_login_response.domain_tokens;
     let steam_id = finalize_login_response.steam_id;
-    {
-        cached_data.write().set_steamid(&steam_id)?;
-    }
-    set_cookies_on_steam_domains(client, domain_tokens, steam_id).await;
-
-    Ok(())
+    set_cookies_on_steam_domains(client, domain_tokens, steam_id.clone()).await;
+    Ok(SteamCache::with_login_data(&steam_id, access_token, refresh_token).expect("Safe to unwrap"))
 }
 
 /// Calls multiple Steam Domains and set cookies for them.
@@ -236,12 +227,10 @@ pub async fn set_cookies_on_steam_domains(client: &MobileClient, domain_tokens: 
         })
         .collect::<FuturesUnordered<_>>();
 
-    debug!("Setting tokens..");
+    debug!("Setting tokens for all Steam domains..");
     while let Some(fut) = futures.next().await {
         match fut {
-            Err(err) => {
-                error!("Error happened while setting tokens for all domains.\n{err}");
-            }
+            Err(_) => {}
             Ok(response) => {
                 let host = response.url().host().expect("Safe.").to_string();
                 debug!("Host: {:?}", &host);

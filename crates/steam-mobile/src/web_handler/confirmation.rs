@@ -31,6 +31,15 @@ pub struct Confirmation {
     pub details: Option<ConfirmationDetails>,
 }
 
+impl Confirmation {
+    pub fn has_trade_offer_id(&self, offer_id: i64) -> bool {
+        if self.kind == EConfirmationType::Trade {
+            return self.details.map_or(false, |d| d.trade_offer_id == Some(offer_id));
+        }
+        false
+    }
+}
+
 /// We retrieve [`ConfirmationDetails`] as a json object.
 /// There is also the need to already have a [Confirmation].
 #[derive(Debug, Clone, PartialEq, Eq, Copy)]
@@ -64,82 +73,6 @@ impl FromStr for EConfirmationType {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let number = u32::from_str(s).unwrap();
         Ok(EConfirmationType::from_u32(number).unwrap())
-    }
-}
-
-impl Confirmations {
-    /// Convenience function that filters confirmations based directly on [`EConfirmationType`].
-    ///
-    /// # Example
-    /// ```no_run
-    /// use steam_mobile::ConfirmationMethod;
-    /// use steam_mobile::EConfirmationType;
-    /// use steam_mobile::User;
-    /// # use steam_mobile::SteamAuthenticator;
-    /// # use steam_mobile::Confirmations;
-    ///
-    /// # #[tokio::main]
-    /// # async fn main() {
-    /// # let user = User::new("username".to_string(), "password".to_string());
-    /// # let authenticator = SteamAuthenticator::new(user);
-    ///
-    /// // .. authenticator setup and login above
-    ///
-    /// # let mut confirmations = Confirmations::default();
-    /// confirmations.filter_by_confirmation_type(EConfirmationType::Trade);
-    ///
-    /// authenticator
-    ///     .process_confirmations(ConfirmationMethod::Accept, confirmations)
-    ///     .await
-    ///     .unwrap();
-    /// # }
-    /// ```
-    pub fn filter_by_confirmation_type(
-        &self,
-        confirmation_type: EConfirmationType,
-    ) -> impl Iterator<Item = &Confirmation> {
-        self.0
-            .iter()
-            .filter(move |confirmation| confirmation.kind == confirmation_type)
-    }
-
-    /// Filters [`Confirmations`] based on trade offer ids.
-    ///
-    /// # Example
-    /// ```no_run
-    /// # use steam_mobile::{ConfirmationMethod, EConfirmationType, User};
-    /// # use steam_mobile::SteamAuthenticator;
-    /// # use steam_mobile::Confirmations;
-    ///
-    /// # #[tokio::main]
-    /// # async fn main() {
-    /// // .. authenticator fetch confirmations..
-    /// # let mut confirmations = Confirmations::default();
-    /// let trade_offer_ids = vec![40845647i64, 40844784i64]; // Could be a service or api call
-    /// confirmations.filter_by_trade_offer_ids(&trade_offer_ids);
-    /// # }
-    /// ```
-    pub fn filter_by_trade_offer_ids<'a, 'b, T>(&'a self, trade_offer_ids: T) -> impl Iterator<Item = &'a Confirmation>
-    where
-        T: AsRef<[i64]> + 'a,
-    {
-        self.0.iter().filter(move |c| {
-            c.details.map_or(false, |conf_details| {
-                let trade_offer_id = conf_details
-                    .trade_offer_id
-                    .expect("Confirmation detail comes from a trade and must have a trade_offer_id.");
-                trade_offer_ids.as_ref().iter().any(|&id| id == trade_offer_id)
-            })
-        })
-    }
-
-    /// Checks if any of the `Confirmation` have the `trade_offer_id`.
-    pub fn has_trade_offer_id(&self, trade_offer_id: i64) -> bool {
-        self.0.iter().any(|conf| {
-            conf.details
-                .as_ref()
-                .map_or(false, |details| details.trade_offer_id == Some(trade_offer_id))
-        })
     }
 }
 
@@ -211,46 +144,5 @@ mod tests {
             },
         ];
         Confirmations::from(confirmations)
-    }
-
-    #[test]
-    fn filter_confirmation_type() {
-        let confirmations = get_confirmations();
-        assert_eq!(confirmations.len(), 4);
-
-        let filtered_confirmations: Vec<_> = confirmations
-            .filter_by_confirmation_type(EConfirmationType::Market)
-            .collect();
-        assert_eq!(filtered_confirmations.len(), 1);
-    }
-
-    #[test]
-    fn has_tradeoffer_id() {
-        let confirmations = get_confirmations();
-        assert!(confirmations.has_trade_offer_id(4000980011));
-        assert!(!confirmations.has_trade_offer_id(4000793104));
-    }
-
-    #[test]
-    fn filter_trade_offer_id() {
-        let confirmations = get_confirmations();
-        let first = 4009687284;
-        let second = 4000793103;
-        let third = 33311221; // no existant
-        let tradeoffer_id = vec![first, second, third];
-
-        let details_0 = ConfirmationDetails {
-            trade_offer_id: Some(first),
-        };
-        let details_1 = ConfirmationDetails {
-            trade_offer_id: Some(second),
-        };
-
-        let filtered = confirmations
-            .filter_by_trade_offer_ids(tradeoffer_id)
-            .collect::<Vec<_>>();
-        assert_eq!(filtered.first().unwrap().details, Some(details_0));
-        assert_eq!(filtered.get(1).unwrap().details, Some(details_1));
-        assert_eq!(filtered.get(2), None);
     }
 }

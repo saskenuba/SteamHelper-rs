@@ -1,5 +1,7 @@
-use serde::{Deserialize, Serialize};
-use strum_macros::{Display, IntoStaticStr};
+use serde::Deserialize;
+use serde::Serialize;
+use strum_macros::Display;
+use strum_macros::IntoStaticStr;
 
 use crate::utils::generate_canonical_device_id;
 use crate::web_handler::steam_guard_linker::RemoveAuthenticatorScheme;
@@ -17,13 +19,13 @@ pub enum PhoneAjaxOperation {
     HasPhone,
 }
 
-#[derive(Copy, Clone, Debug, Serialize, Display, IntoStaticStr)]
-/// This is finite state machine.
+/// FSM (finite-state-machine)
 /// We get the future state as a response of the current state.
 ///
 ///
-/// Example: If the current operation 'retry_email_verification' succeds, we will receive
-/// 'get_sms_code' on the state field of the response, indicating that it will be the next operation.
+/// Example: If the current operation `retry_email_verification` succeeds, we will receive
+/// `get_sms_code` on the state field of the response, indicating that it will be the next operation.
+#[derive(Copy, Clone, Debug, Serialize, Display, IntoStaticStr)]
 pub enum StorePhoneAjaxOp {
     #[strum(serialize = "retry_email_verification")]
     RetryEmailVerification,
@@ -224,6 +226,29 @@ struct RemoveAuthenticatorResponse {
     pub revocation_attempts_remaining: i64,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct QueryStatusResponseBase {
+    #[serde(rename = "response")]
+    pub inner: QueryStatusResponse,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct QueryStatusResponse {
+    pub state: i64,
+    pub inactivation_reason: i64,
+    pub authenticator_type: i64,
+    pub authenticator_allowed: bool,
+    pub steamguard_scheme: i64,
+    pub token_gid: String,
+    pub email_validated: bool,
+    pub device_identifier: String,
+    /// Epoch
+    pub time_created: i64,
+    pub revocation_attempts_remaining: i64,
+    pub classified_agent: String,
+    pub version: i64,
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AddAuthenticatorResponseBase {
     #[serde(rename = "response")]
@@ -281,30 +306,6 @@ pub struct FinalizeAddAuthenticatorErrorBase {
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct FinalizeAddAuthenticatorErrorResponse {
     pub status: i64,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize)]
-pub struct StoreFinalizeAuthenticatorRequest {
-    input: String,
-    #[serde(rename = "sessionID")]
-    sessionid: String,
-    confirmed: String,
-    checkfortos: String,
-    bisediting: String,
-    token: String,
-}
-
-impl Default for StoreFinalizeAuthenticatorRequest {
-    fn default() -> Self {
-        Self {
-            input: "".to_string(),
-            sessionid: "".to_string(),
-            confirmed: "1".to_string(),
-            checkfortos: "1".to_string(),
-            bisediting: "0".to_string(),
-            token: "0".to_string(),
-        }
-    }
 }
 
 #[derive(Default, Debug, Clone, PartialEq, serde_derive::Serialize, serde_derive::Deserialize)]
