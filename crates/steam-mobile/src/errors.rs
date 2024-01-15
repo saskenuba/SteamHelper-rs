@@ -32,8 +32,6 @@ pub enum ApiKeyError {
     AccessDenied,
     #[error("Key not yet registered.")]
     NotRegistered,
-    #[error("A method requiring a cached key was used, but this account API KEY could not be cached.")]
-    NotCached,
     #[error(transparent)]
     InternalError(#[from] InternalError),
 }
@@ -43,8 +41,6 @@ pub enum ApiKeyError {
 pub enum LoginError {
     #[error("Message returned: `{0}`")]
     GeneralFailure(String),
-    #[error("Need a SteamID associated with user.")]
-    NeedSteamID,
     #[error("Parental unlock error `{0}`")]
     ParentalUnlock(String),
     #[error("Steam Guard Mobile is not enabled. Email codes are not supported.")]
@@ -54,10 +50,8 @@ pub enum LoginError {
     #[error("Requires a captcha code. If a previous attempt was made, the captcha was probably incorrect. \
     Captcha GUID: `{0}`", .captcha_guid)]
     CaptchaRequired { captcha_guid: String },
-
     #[error(transparent)]
     InternalError(#[from] InternalError),
-
     #[error(transparent)]
     TotpError(#[from] steam_totp::error::TotpError),
 }
@@ -70,15 +64,12 @@ pub enum LinkerError {
     GeneralFailure(String),
     #[error("An authenticator is already linked to this account. Please remove the old one before adding a new one.")]
     AuthenticatorPresent,
-
     #[error("The SMS code you entered is incorrect.")]
     BadSMSCode,
     #[error("We were unable to generate the correct codes. Perhaps something changed?")]
     UnableToGenerateCorrectCodes,
-
     #[error(transparent)]
     InternalError(#[from] InternalError),
-
     #[error(transparent)]
     TotpError(#[from] steam_totp::error::TotpError),
 }

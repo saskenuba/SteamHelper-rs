@@ -1,18 +1,29 @@
 #![cfg(feature = "cli")]
 
 use std::fs::OpenOptions;
-use std::io::{BufWriter, Write};
+use std::io::BufWriter;
+use std::io::Write;
 use std::path::PathBuf;
 use std::str::FromStr;
 
 use anyhow::Result;
-use clap::{Arg, ArgMatches, Command};
-use dialoguer::{Confirm, Input};
+use clap::Arg;
+use clap::ArgMatches;
+use clap::Command;
+use dialoguer::Confirm;
+use dialoguer::Input;
+use futures_util::TryFutureExt;
+use steam_mobile::AddAuthenticatorStep;
+use steam_mobile::Authenticated;
+use steam_mobile::ConfirmationMethod;
+use steam_mobile::MobileAuthFile;
 use steam_mobile::SteamAuthenticator;
-use steam_mobile::errors::{AuthError, LoginError};
-use steam_mobile::{format_captcha_url, AddAuthenticatorStep, ConfirmationMethod, MobileAuthFile, User};
-use steam_totp::{generate_auth_code_async, Secret};
-use strum_macros::{AsRefStr, EnumString, IntoStaticStr};
+use steam_mobile::User;
+use steam_totp::generate_auth_code_async;
+use steam_totp::Secret;
+use strum_macros::AsRefStr;
+use strum_macros::EnumString;
+use strum_macros::IntoStaticStr;
 
 #[derive(EnumString, IntoStaticStr, AsRefStr)]
 enum MainCommands {
@@ -276,33 +287,14 @@ async fn handle_login(
     account: &str,
     password: &str,
     shared_secret: Option<MobileAuthFile>,
-) -> Result<SteamAuthenticator> {
+) -> Result<SteamAuthenticator<Authenticated>> {
     let user = shared_secret.map_or_else(
         || User::new(account.to_string(), password.to_string()),
         |ma_file| User::new(account.to_string(), password.to_string()).ma_file(ma_file),
     );
 
     let authenticator = SteamAuthenticator::new(user);
-    match authenticator.login().await {
-        Ok(_) => (),
-        Err(auth_error) => match auth_error {
-            AuthError::Login(login_error) => match login_error {
-                LoginError::CaptchaRequired { captcha_guid } => {
-                    println!(
-                        "A captcha is required. Open the link to check it: {}",
-                        format_captcha_url(&*captcha_guid)
-                    );
-                    let _captcha: String = Input::new().with_prompt("Please enter the captcha:").interact_text()?;
-                }
-                // other LoginErrors
-                _ => panic!(),
-            },
-            // other AuthErrors
-            _ => panic!(),
-        },
-    }
-    println!("Successfully logged in.");
-    Ok(authenticator)
+    authenticator.login().err_into().await
 }
 
 fn save_file_to_path(mafile: &MobileAuthFile, filename: &str, mut path: PathBuf) -> Result<()> {

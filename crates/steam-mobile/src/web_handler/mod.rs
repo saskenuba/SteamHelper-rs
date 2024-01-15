@@ -1,6 +1,7 @@
 use const_format::concatcp;
 use cookie::Cookie;
 use futures::FutureExt;
+use futures_util::TryFutureExt;
 use reqwest::Method;
 use scraper::Html;
 use steam_language_gen::generated::enums::EResult;
@@ -10,7 +11,6 @@ use tracing::trace;
 use tracing::warn;
 
 use crate::client::MobileClient;
-use crate::client::SteamAuthenticator;
 use crate::errors::ApiKeyError;
 use crate::errors::InternalError;
 use crate::errors::LoginError;
@@ -115,19 +115,10 @@ async fn parental_unlock_by_service(
 
 /// Resolve caching of the user APIKey.
 /// This is done after user logon for the first time in this session.
-pub async fn cache_api_key(authenticator: &SteamAuthenticator) -> Result<(), ApiKeyError> {
-    match api_key_retrieve(&authenticator.client).await? {
-        Some(api_key) => {
-            debug!("{}", &api_key);
-            let mut cached_data = authenticator.cached_data.write();
-            cached_data.set_api_key(api_key);
-        }
-        None => {
-            warn!("API key could not be cached.");
-        }
-    }
-
-    Ok(())
+pub async fn cache_api_key(client: &MobileClient) -> Result<Option<String>, ApiKeyError> {
+    api_key_retrieve(client)
+        .inspect_err(|_e| warn!("API key could not be fetched."))
+        .await
 }
 
 /// Send confirmations to Steam Servers for accepting/denying.
@@ -142,7 +133,7 @@ pub async fn confirmations_send<I>(
     confirmations: I,
 ) -> Result<(), InternalError>
 where
-    I: IntoIterator<Item = Confirmation> + Send + Sync,
+    I: IntoIterator<Item = Confirmation>,
 {
     let url = format!("{STEAM_COMMUNITY_BASE}/mobileconf/multiajaxop");
     let operation = method.value();
@@ -167,7 +158,7 @@ where
     };
 
     client
-        .request_with_session_guard(url, Method::POST, None, Some(request))
+        .request_with_session_guard(url, Method::POST, None, Some(request), None::<&str>)
         .await?
         .json::<BooleanResponse>()
         .await?;
@@ -299,7 +290,13 @@ async fn api_key_register(client: &MobileClient) -> Result<(), ApiKeyError> {
     let register_request = ApiKeyRegisterRequest::default();
 
     let response = client
-        .request_with_session_guard(api_register_url, Method::POST, None, Some(register_request))
+        .request_with_session_guard(
+            api_register_url,
+            Method::POST,
+            None,
+            Some(register_request),
+            None::<&str>,
+        )
         .await?;
     debug!("{:?}", response);
 

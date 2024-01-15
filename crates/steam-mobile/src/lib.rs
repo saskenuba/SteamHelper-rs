@@ -17,9 +17,13 @@ use std::fmt;
 use std::fmt::Debug;
 use std::fmt::Formatter;
 use std::path::PathBuf;
+use std::sync::Arc;
 
+pub use client::Authenticated;
 pub use client::SteamAuthenticator;
+pub use client::Unauthenticated;
 use const_format::concatcp;
+use parking_lot::RwLock;
 pub use reqwest::header::HeaderMap;
 pub use reqwest::Method;
 pub use reqwest::Url;
@@ -98,47 +102,51 @@ pub struct User {
     linked_mafile: Option<MobileAuthFile>,
 }
 
-#[derive(Default, Debug, Clone)]
 /// Information that we cache after the login operation to avoid querying Steam multiple times.
-///
-///
-/// SteamID, API KEY and the login Oauth token are currently cached by `SteamAuthenticator`.
+#[derive(Debug, Clone)]
 struct SteamCache {
-    steamid: Option<SteamID>,
+    steamid: SteamID,
     api_key: Option<String>,
     /// Oauth token recovered at the login.
-    /// Some places call this access_token.
-    oauth_token: Option<String>,
+    oauth_token: String,
+    access_token: String,
 }
 
+pub(crate) type CacheGuard = Arc<RwLock<SteamCache>>;
+
 impl SteamCache {
-    fn set_steamid(&mut self, steamid: &str) -> Result<(), InternalError> {
+    fn query_tokens(&self) -> Vec<(&'static str, String)> {
+        [("access_token", self.access_token.clone())].to_vec()
+    }
+
+    fn with_login_data(steamid: &str, access_token: String, refresh_token: String) -> Result<Self, InternalError> {
         let parsed_steamid = SteamID::parse(steamid).ok_or_else(|| {
             let err_str = format!("Failed to parse {steamid} as SteamID.");
             InternalError::GeneralFailure(err_str)
         })?;
-        self.steamid = Some(parsed_steamid);
-        Ok(())
+
+        Ok(Self {
+            steamid: parsed_steamid,
+            api_key: None,
+            oauth_token: refresh_token,
+            access_token,
+        })
     }
 
-    fn set_oauth_token(&mut self, token: String) {
-        self.oauth_token = Some(token);
-    }
-
-    fn set_api_key(&mut self, api_key: String) {
-        self.api_key = Some(api_key);
+    fn set_api_key(&mut self, api_key: Option<String>) {
+        self.api_key = api_key;
     }
 
     fn api_key(&self) -> Option<&str> {
         self.api_key.as_deref()
     }
 
-    fn steam_id(&self) -> Option<u64> {
-        Some(self.steamid.as_ref()?.to_steam64())
+    fn steam_id(&self) -> u64 {
+        self.steamid.to_steam64()
     }
 
-    fn oauth_token(&self) -> Option<&str> {
-        self.oauth_token.as_deref()
+    fn oauth_token(&self) -> &str {
+        &self.oauth_token
     }
 }
 

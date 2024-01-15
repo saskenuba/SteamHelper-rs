@@ -1,6 +1,7 @@
 //! Types used to login into Steam via web
 
-use serde_derive::{Deserialize, Serialize};
+use serde_derive::Deserialize;
+use serde_derive::Serialize;
 
 #[derive(Debug, Serialize)]
 pub struct PollAuthSessionStatusRequest {
