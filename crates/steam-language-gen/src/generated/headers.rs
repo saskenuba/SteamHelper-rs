@@ -1,10 +1,14 @@
 use derive_new::new;
-use serde::{Deserialize, Serialize};
-
-use crate::{generated::enums::EMsg, DeserializableBytes, HasJobId, MessageHeaderExt, SerializableBytes};
-
+use serde::Deserialize;
+use serde::Serialize;
 use steam_language_gen_derive::MsgHeader;
-use steam_protobuf::steam::steammessages_base::CMsgProtoBufHeader;
+use steam_protobuf::protobufs::steammessages_base::CMsgProtoBufHeader;
+
+use crate::generated::enums::EMsg;
+use crate::DeserializableBytes;
+use crate::HasJobId;
+use crate::MessageHeaderExt;
+use crate::SerializableBytes;
 
 // add protobuf
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -54,11 +58,11 @@ impl HasJobId for CMsgProtoBufHeader {
     }
 
     fn source(&self) -> u64 {
-        self.get_jobid_source()
+        self.jobid_source()
     }
 
     fn target(&self) -> u64 {
-        self.get_jobid_target()
+        self.jobid_target()
     }
 }
 

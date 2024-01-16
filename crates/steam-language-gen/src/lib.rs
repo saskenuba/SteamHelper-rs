@@ -4,11 +4,11 @@
 extern crate steam_language_gen_derive;
 
 use enum_dispatch::enum_dispatch;
-use serde::Serialize;
+use steam_protobuf::protobufs::steammessages_base::CMsgProtoBufHeader;
+use steam_protobuf::ProtobufMessage;
 
-use crate::generated::headers::{ExtendedMessageHeader, StandardMessageHeader};
-use steam_protobuf::steam::steammessages_base::CMsgProtoBufHeader;
-use steam_protobuf::Message;
+use crate::generated::headers::ExtendedMessageHeader;
+use crate::generated::headers::StandardMessageHeader;
 
 pub mod generated;
 #[cfg(feature = "generator")]
@@ -16,9 +16,9 @@ pub mod generator;
 #[cfg(feature = "generator")]
 pub mod parser;
 
-#[enum_dispatch(HasJobId)]
-#[derive(Clone, Debug, PartialEq, Serialize)]
 /// This wraps our headers so we can be generic over them over a Msg type.
+#[enum_dispatch(HasJobId)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum MessageHeaderWrapper {
     Std(StandardMessageHeader),
     Proto(CMsgProtoBufHeader),
@@ -32,7 +32,7 @@ pub trait SerializableBytes: Send {
 
 impl<T> SerializableBytes for T
 where
-    T: Message,
+    T: ProtobufMessage,
 {
     fn to_bytes(&self) -> Vec<u8> {
         self.write_to_bytes().unwrap()
@@ -70,6 +70,7 @@ pub trait MessageHeaderExt {
 }
 
 pub trait MessageBodyExt {
+    /// Returns header on the left, rest on the right
     fn split_from_bytes(data: &[u8]) -> (&[u8], &[u8]);
 }
 
