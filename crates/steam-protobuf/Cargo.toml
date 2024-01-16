@@ -1,25 +1,23 @@
 [package]
 name = "steam-protobuf"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["Martin <martin@hotmail.com.br>"]
 edition = "2018"
 license = "MIT"
 repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-protobuf"
-description = "Generated Steam protobuf definitions"
-build = "build.rs"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "Rust definitions of Steam Protocol Buffers."
 
 [features]
-default = ["with-serde"]
-with-serde = []
+default = []
+regen = ["walkdir", "glob", "protobuf-codegen", "protoc-bin-vendored", "protoc-rust"]
 
-[build-dependencies]
-walkdir = "^2"
-glob = "^0"
-serde = { version = "^1", features = ["derive"] }
+[dependencies]
 protobuf = { version = "^3", features = ["with-bytes"] }
-protobuf-codegen = { version = "3.3.0" }
-protoc-bin-vendored = "^3"
-protoc-rust = "^2"
+protobuf-json-mapping = "^3"
+bytes = "^1"
 
+glob = { version = "^0", optional = true }
+walkdir = { version = "^2", optional = true }
+protobuf-codegen = { version = "3.3.0", optional = true }
+protoc-bin-vendored = { version = "^3", optional = true }
+protoc-rust = { version = "^2", optional = true }

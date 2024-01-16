@@ -1,6 +1,4 @@
-// #[macro_use]
-// extern crate serde;
-//
-// pub use protobuf::Message;
-//
-// pub mod steam;
+pub mod protobufs;
+
+pub use protobuf::Message as ProtobufMessage;
+use protobuf::*;
