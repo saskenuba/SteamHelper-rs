@@ -1,6 +1,6 @@
-[submodule "crates/steam-protobuf/assets/Protobufs"]
-	path = crates/steam-protobuf/assets/Protobufs
-	url = https://github.com/SteamDatabase/Protobufs
 [submodule "crates/steam-language-gen/assets/SteamKit"]
 	path = crates/steam-language-gen/assets/SteamKit
 	url = https://github.com/SteamRE/SteamKit.git
+[submodule "crates/steam-protobuf/assets/protobufs"]
+	path = crates/steam-protobuf/assets/protobufs
+	url = https://github.com/SteamDatabase/Protobufs.git
