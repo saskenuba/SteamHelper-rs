@@ -16,8 +16,8 @@ fn main() {
 
     let protoc_cfg = Customize::default()
         .generate_accessors(true)
-        .tokio_bytes(true)
-        .inside_protobuf(true);
+        .inside_protobuf(true)
+        .tokio_bytes(true);
 
     // Use this in build.rs
     protobuf_codegen::Codegen::new()
