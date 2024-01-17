@@ -1,33 +1,39 @@
-use protobuf::Message;
+use protobuf::MessageDyn;
 use protobuf::MessageFull;
 
 use crate::error::ProtobufError;
 
-pub trait ProtobufSerialize: Message + MessageFull {
+pub trait ProtobufSerialize: MessageDyn {
     fn to_bytes(&self) -> Result<Vec<u8>, ProtobufError>;
     fn to_json(&self) -> Result<String, ProtobufError>;
 }
 
 pub trait ProtobufDeserialize {
-    type M: Message + MessageFull;
+    type Output: MessageFull;
 
-    fn from_json(message: &str) -> Result<Self::M, ProtobufError>;
+    fn from_json(message: &str) -> Result<Self::Output, ProtobufError>;
+
+    fn from_bytes(bytes: impl AsRef<[u8]>) -> Result<Self::Output, ProtobufError>;
 }
 
 impl<M> ProtobufDeserialize for M
 where
-    M: Message + MessageFull,
+    M: MessageFull,
 {
-    type M = Self;
+    type Output = Self;
 
-    fn from_json(message: &str) -> Result<Self::M, ProtobufError> {
-        protobuf_json_mapping::parse_from_str(message).map_err(Into::into)
+    fn from_json(message: &str) -> Result<Self::Output, ProtobufError> {
+        protobuf_json_mapping::parse_from_str(message).map_err(|e| ProtobufError::DecodeError(e.to_string()))
+    }
+
+    fn from_bytes(bytes: impl AsRef<[u8]>) -> Result<Self::Output, ProtobufError> {
+        M::parse_from_bytes(bytes.as_ref()).map_err(|e| ProtobufError::DecodeError(e.to_string()))
     }
 }
 
 impl<T> ProtobufSerialize for T
 where
-    T: Message + MessageFull,
+    T: MessageFull,
 {
     fn to_bytes(&self) -> Result<Vec<u8>, ProtobufError> {
         self.write_to_bytes()
