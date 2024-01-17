@@ -4,6 +4,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use backoff::future::retry;
+use base64::Engine;
 use cookie::Cookie;
 use cookie::CookieJar;
 use futures::TryFutureExt;
@@ -12,13 +13,17 @@ use parking_lot::RwLock;
 use reqwest::header::HeaderMap;
 use reqwest::redirect::Policy;
 use reqwest::Client;
+use reqwest::IntoUrl;
 use reqwest::Method;
 use reqwest::Response;
 use reqwest::Url;
 use scraper::Html;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use steam_protobuf::ProtobufDeserialize;
+use steam_protobuf::ProtobufSerialize;
 use tracing::debug;
+use tracing::error;
 use tracing::info;
 use tracing::warn;
 
@@ -164,6 +169,7 @@ impl SteamAuthenticator<Authenticated> {
         self.inner.cache.as_ref().expect("Safe to unwrap.").clone()
     }
 
+    /// Returns account's API Key, if authenticator managed to cache it.
     pub fn api_key(&self) -> Option<String> {
         self.inner
             .cache
@@ -174,7 +180,8 @@ impl SteamAuthenticator<Authenticated> {
             .map(ToString::to_string)
     }
 
-    pub async fn two_factor_status(&self) -> Result<QueryStatusResponse, AuthError> {
+    /// Returns this account SteamGuard information.
+    pub async fn steam_guard_status(&self) -> Result<QueryStatusResponse, AuthError> {
         twofactor_status(self.client(), self.cache()).await.map_err(Into::into)
     }
 
@@ -294,13 +301,13 @@ impl SteamAuthenticator<Authenticated> {
             .await
     }
 
+    /// Fetches confirmations and process them.
+    ///
+    /// `f` is a function which you can use it to filter confirmations at the moment of the query.
     pub async fn handle_confirmations<'a, 'b, F>(&self, operation: ConfirmationMethod, f: F) -> Result<(), AuthError>
     where
         F: Fn(Confirmations) -> Box<dyn Iterator<Item = Confirmation> + Send> + Send,
     {
-        // TODO: With details? Maybe we need to check if there is a need to gather more details.
-        let steamid = self.cache().read().steam_id();
-
         let confirmations = self.fetch_confirmations().await?;
         if let Some(confirmations) = confirmations {
             self.process_confirmations(operation, f(confirmations)).await
@@ -368,6 +375,53 @@ impl MobileClient {
     }
     pub(crate) fn set_cookie_value(&self, cookie: Cookie<'static>) {
         self.cookie_store.write().add_original(cookie);
+    }
+
+    pub(crate) async fn request_proto<INPUT, OUTPUT>(
+        &self,
+        url: impl IntoUrl + Send,
+        method: Method,
+        proto_message: INPUT,
+        _token: Option<&str>,
+    ) -> Result<OUTPUT, InternalError>
+    where
+        INPUT: ProtobufSerialize,
+        OUTPUT: ProtobufDeserialize<Output = OUTPUT> + Debug,
+    {
+        let url = url.into_url().unwrap();
+        debug!("Request url: {}", url);
+        let request_builder = self.inner_http_client.request(method.clone(), url);
+
+        let req = if method == Method::GET {
+            let encoded = base64::engine::general_purpose::URL_SAFE.encode(proto_message.to_bytes().unwrap());
+            let parameters = &[("input_protobuf_encoded", encoded)];
+            request_builder.query(parameters)
+        } else if method == Method::POST {
+            let encoded = base64::engine::general_purpose::STANDARD.encode(proto_message.to_bytes().unwrap());
+            debug!("Request proto body: {:?}", encoded);
+            let form = reqwest::multipart::Form::new().text("input_protobuf_encoded", encoded);
+            request_builder.multipart(form)
+        } else {
+            return Err(InternalError::GeneralFailure("Unsupported Method".to_string()));
+        };
+
+        let response = req.send().await?;
+        let headers = response.headers();
+        debug!("Response headers {:?}", headers);
+        debug!("Response status {}", response.status());
+        debug!("Response raw bytes {:?}", response);
+
+        let res_bytes = response.bytes().await?;
+        OUTPUT::from_bytes(res_bytes).map_or_else(
+            |_| {
+                error!("Failed deserializing {}", std::any::type_name::<OUTPUT>());
+                Err(InternalError::GeneralFailure("asdfd".to_string()))
+            },
+            |res| {
+                debug!("Response body {:?}", res);
+                Ok(res)
+            },
+        )
     }
 
     /// Wrapper to make requests while preemptively checking if the session is still valid.

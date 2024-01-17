@@ -6,16 +6,20 @@ use const_format::concatcp;
 use futures_timer::Delay;
 use futures_util::stream::FuturesUnordered;
 use futures_util::StreamExt;
-use futures_util::TryFutureExt;
-use login_types::BeginAuthSessionViaCredentialsRequest;
-use login_types::BeginAuthSessionViaCredentialsResponseBase;
-use login_types::UpdateAuthSessionWithSteamGuardCodeRequest;
 use rand::thread_rng;
 use reqwest::Client;
 use reqwest::Method;
 use rsa::BigUint;
 use rsa::Pkcs1v15Encrypt;
 use rsa::RsaPublicKey;
+use steam_protobuf::protobufs::enums::ESessionPersistence;
+use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_BeginAuthSessionViaCredentials_Request;
+use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_BeginAuthSessionViaCredentials_Response;
+use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_PollAuthSessionStatus_Request;
+use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_PollAuthSessionStatus_Response;
+use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request;
+use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response;
+use steam_protobuf::protobufs::steammessages_auth_steamclient::EAuthSessionGuardType;
 use steam_totp::Secret;
 use steam_totp::Time;
 use tracing::debug;
@@ -27,8 +31,6 @@ use crate::types::DomainToken;
 use crate::types::FinalizeLoginRequest;
 use crate::types::FinalizeLoginResponseBase;
 use crate::types::RSAResponseBase;
-use crate::web_handler::login::login_types::PollAuthSessionStatusRequest;
-use crate::web_handler::login::login_types::PollAuthSessionStatusResponseBase;
 use crate::AuthResult;
 use crate::SteamCache;
 use crate::User;
@@ -36,8 +38,6 @@ use crate::MOBILE_REFERER;
 use crate::STEAM_API_BASE;
 use crate::STEAM_DELAY_MS;
 use crate::STEAM_LOGIN_BASE;
-
-mod login_types;
 
 const LOGIN_RSA_ENDPOINT: &str = concatcp!(STEAM_API_BASE, "/IAuthenticationService/GetPasswordRSAPublicKey/v1/");
 const LOGIN_BEGIN_AUTH_ENDPOINT: &str = concatcp!(
@@ -129,74 +129,72 @@ pub async fn login_and_store_cookies<'a>(client: &MobileClient, user: &User) -> 
     let encrypted_pwd_b64 = encrypt_password(user, rsa_response.inner.publickey_mod, rsa_response.inner.publickey_exp);
     let encryption_timestamp = rsa_response.inner.timestamp;
 
-    let payload =
-        BeginAuthSessionViaCredentialsRequest::new(user.username.clone(), encrypted_pwd_b64, encryption_timestamp);
+    let mut payload = CAuthentication_BeginAuthSessionViaCredentials_Request::new();
+    payload.set_account_name(user.username.clone());
+    payload.set_encrypted_password(encrypted_pwd_b64);
+    payload.set_encryption_timestamp(encryption_timestamp.parse().unwrap());
+    payload.set_persistence(ESessionPersistence::k_ESessionPersistence_Persistent);
     let begin_auth_response = client
-        .request_and_decode::<_, BeginAuthSessionViaCredentialsResponseBase, _>(
+        .request_proto::<_, CAuthentication_BeginAuthSessionViaCredentials_Response>(
             LOGIN_BEGIN_AUTH_ENDPOINT.to_owned(),
             Method::POST,
+            payload,
             None,
-            Some(payload),
-            None::<&u8>,
         )
         .await?;
-
-    if let Some(confirmations) = begin_auth_response.inner.allowed_confirmations.first() {
-        // TODO: do something with this info?
-        // if confirmations.confirmation_type != 3 {
-        //     return Err(LoginError::Need2FA.into());
-        // }
-    }
 
     Delay::new(Duration::from_millis(STEAM_DELAY_MS)).await;
 
-    let offset = Time::offset().await?;
-    let time = Time::now(Some(offset)).unwrap();
+    let client_id = begin_auth_response.client_id();
+    let steam_id = begin_auth_response.steamid();
+    let request_id = begin_auth_response.request_id().to_vec();
 
-    // let steam_time_offset = (offset * 1000).to_string();
-    let two_factor_code = user
-        .linked_mafile
-        .as_ref()
-        .map(|f| Secret::from_b64(&f.shared_secret).unwrap())
-        .map_or_else(String::new, |s| steam_totp::generate_auth_code(s, time));
+    // TODO: implement a way for email codes?
+    let mut payload = CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request::new();
+    payload.set_client_id(client_id);
+    payload.set_steamid(steam_id);
+    if let Some(ma_file) = &user.linked_mafile {
+        let offset = Time::offset().await?;
+        let time = Time::now(Some(offset)).unwrap();
+        let two_factor_code = Secret::from_b64(&ma_file.shared_secret)
+            .map_or_else(|_| String::new(), |s| steam_totp::generate_auth_code(s, time));
+        payload.set_code_type(EAuthSessionGuardType::k_EAuthSessionGuardType_DeviceCode);
+        payload.set_code(two_factor_code);
+    } else {
+        payload.set_code_type(EAuthSessionGuardType::k_EAuthSessionGuardType_None);
+    }
 
-    let payload = UpdateAuthSessionWithSteamGuardCodeRequest::from_begin_auth_response(
-        begin_auth_response.clone(),
-        two_factor_code,
-    );
-    client
-        .request(
+    let _updateauth_response = client
+        .request_proto::<_, CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response>(
             LOGIN_UPDATE_STEAM_GUARD_ENDPOINT.to_owned(),
             Method::POST,
+            payload,
             None,
-            Some(payload),
-            None::<u8>,
         )
-        .and_then(|resp| resp.text().err_into())
-        .inspect_ok(|text| debug!("UpdateAuthSession response: {text}"))
         .await?;
 
-    let payload = PollAuthSessionStatusRequest::from_begin_auth_response(begin_auth_response.inner);
-    let poll_status_response = client
-        .request_and_decode::<_, PollAuthSessionStatusResponseBase, _>(
+    let mut payload = CAuthentication_PollAuthSessionStatus_Request::new();
+    payload.set_client_id(client_id);
+    payload.set_request_id(request_id.into());
+
+    let poll_session_response = client
+        .request_proto::<_, CAuthentication_PollAuthSessionStatus_Response>(
             LOGIN_POLL_AUTH_STATUS_ENDPOINT.to_owned(),
             Method::POST,
+            payload,
             None,
-            Some(payload),
-            None::<u8>,
         )
         .await?;
 
-    let inner = poll_status_response.inner;
-    if inner.access_token.is_none() || inner.refresh_token.is_none() {
+    if poll_session_response.access_token.is_none() || poll_session_response.refresh_token.is_none() {
         return Err(LoginError::IncorrectCredentials);
     }
 
     // This next operation will fail if called too fast, we should wait a bit.
     Delay::new(Duration::from_millis(STEAM_DELAY_MS)).await;
 
-    let refresh_token = inner.refresh_token.expect("Safe to unwrap");
-    let access_token = inner.access_token.expect("Safe to unwrap");
+    let refresh_token = poll_session_response.refresh_token.expect("Safe to unwrap");
+    let access_token = poll_session_response.access_token.expect("Safe to unwrap");
     let finalize_payload = FinalizeLoginRequest::new(refresh_token.clone(), session_id_cookie);
 
     let finalize_login_response = client

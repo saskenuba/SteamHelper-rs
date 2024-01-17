@@ -17,14 +17,11 @@ cli = ["clap", "dialoguer", "anyhow", "tokio"]
 
 [dependencies]
 backoff = { version = "0.4", features = ["tokio", "futures"] }
-bytes = "^1.1"
-chrono = "0.4"
 hex = "0.4"
 num-derive = "0.3"
 num-traits = "0.2"
 parking_lot = "^0"
 rsa = "0.9"
-pkcs1 = "0.7.5"
 scraper = "0.18"
 serde_with = { version = "1.5", features = ["json"] }
 thiserror = "1"
@@ -33,6 +30,7 @@ tracing-futures = "0.2"
 uuid = { version = "1", features = ["v4"] }
 
 base64.workspace = true
+bytes.workspace = true
 const_format.workspace = true
 derive_more.workspace = true
 futures-timer.workspace = true
@@ -44,8 +42,6 @@ reqwest.workspace = true
 serde.workspace = true
 serde_derive.workspace = true
 serde_json.workspace = true
-serde_repr.workspace = true
-serde_urlencoded = "0.7.1"
 strum.workspace = true
 strum_macros.workspace = true
 
@@ -54,6 +50,8 @@ clap = { version = "3.1.18", optional = true }
 dialoguer = { version = "0.10", optional = true }
 tokio = { version = "1.0.2", features = ["rt-multi-thread", "macros", "fs"], optional = true }
 
+steam-protobuf.workspace = true
+steam-language-gen.workspace = true
 
 [dependencies.cookie]
 version = "0.16.0-rc.1"
@@ -63,15 +61,10 @@ package = "cookie-hashed-domain"
 version = "^0.2"
 path = "../steam-totp"
 
-[dependencies.steam-language-gen]
-version = "^0.1"
-path = "../steam-language-gen"
-
 [dependencies.steamid-parser]
 version = "^0.2"
 path = "../steamid-parser"
 
-
 [dev-dependencies]
-tokio = { version = "^1.0.2", features = ["rt", "macros"] }
-tracing-subscriber = "0.2"
+tokio = { version = "^1", features = ["rt", "macros"] }
+tracing-subscriber = { version = "^0.3", features = ["env-filter"] }
