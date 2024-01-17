@@ -5,7 +5,7 @@ extern crate steam_language_gen_derive;
 
 use enum_dispatch::enum_dispatch;
 use steam_protobuf::protobufs::steammessages_base::CMsgProtoBufHeader;
-use steam_protobuf::ProtobufMessage;
+use steam_protobuf::ProtobufSerialize;
 
 use crate::generated::headers::ExtendedMessageHeader;
 use crate::generated::headers::StandardMessageHeader;
@@ -32,10 +32,10 @@ pub trait SerializableBytes: Send {
 
 impl<T> SerializableBytes for T
 where
-    T: ProtobufMessage,
+    T: ProtobufSerialize,
 {
     fn to_bytes(&self) -> Vec<u8> {
-        self.write_to_bytes().unwrap()
+        self.to_bytes().unwrap()
     }
 }
 
@@ -45,7 +45,7 @@ impl SerializableBytes for MessageHeaderWrapper {
         match self {
             MessageHeaderWrapper::Std(hdr) => hdr.to_bytes(),
             MessageHeaderWrapper::Ext(hdr) => hdr.to_bytes(),
-            MessageHeaderWrapper::Proto(hdr) => hdr.write_to_bytes().expect("Error writing protobuf"),
+            MessageHeaderWrapper::Proto(hdr) => SerializableBytes::to_bytes(hdr),
         }
     }
 }
