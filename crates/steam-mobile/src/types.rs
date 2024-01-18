@@ -1,8 +1,10 @@
 use std::borrow::Cow;
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use steam_language_gen::generated::enums::EResult;
 
+use crate::web_handler::confirmation::Confirmation;
 use crate::STEAM_COMMUNITY_BASE;
 
 /// Used to login into Steam website if it detects something different on your account.
@@ -61,9 +63,9 @@ impl<'a> Default for ConfirmationMultiAcceptRequest<'a> {
 }
 
 #[derive(Deserialize, Debug, Clone)]
-pub struct ConfirmationDetailsResponse {
+pub struct ConfirmationResponseBase {
     success: bool,
-    pub html: String,
+    pub conf: Vec<Confirmation>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -113,79 +115,6 @@ impl Default for IEconServiceGetTradeOffersRequest {
 pub struct LoginErrorGenericMessage<'a> {
     pub success: bool,
     pub message: Cow<'a, str>,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
-pub struct LoginResponseMobile {
-    pub success: bool,
-    pub requires_twofactor: bool,
-    pub redirect_uri: String,
-    pub login_complete: bool,
-    #[serde(deserialize_with = "serde_with::json::nested::deserialize")]
-    pub oauth: Oauth,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
-pub struct Oauth {
-    pub steamid: String,
-    pub account_name: String,
-    /// This is also known as "access_token", and can be used to refresh sessions.
-    pub oauth_token: String,
-    pub wgtoken: String,
-    pub wgtoken_secure: String,
-}
-
-#[derive(Debug, Serialize)]
-pub struct ApiKeyRegisterRequest<'a> {
-    #[serde(rename = "agreeToTerms")]
-    agree_to_terms: &'a str,
-    domain: &'a str,
-    #[serde(rename = "Submit")]
-    submit: &'a str,
-}
-
-impl<'a> Default for ApiKeyRegisterRequest<'a> {
-    fn default() -> Self {
-        Self {
-            agree_to_terms: "agreed",
-            domain: "localhost",
-            submit: "Register",
-        }
-    }
-}
-
-#[derive(Deserialize)]
-pub struct ISteamUserAuthResponse {
-    token: String,
-    #[serde(rename = "tokensecure")]
-    token_secure: String,
-}
-
-#[derive(Serialize)]
-pub struct ISteamUserAuthRequest {
-    pub steamid: String,
-    #[serde(rename = "sessionkey")]
-    pub session_key: String,
-    pub encrypted_loginkey: String,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ResolveVanityUrlBaseResponse {
-    pub response: ResolveVanityUrlResponse,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ResolveVanityUrlResponse {
-    pub steamid: String,
-    pub success: i64,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ResolveVanityUrlRequest {
-    #[serde(rename = "key")]
-    api_key: String,
-    #[serde(rename = "vanityurl")]
-    vanity_url: String,
 }
 
 #[allow(non_camel_case_types)]
