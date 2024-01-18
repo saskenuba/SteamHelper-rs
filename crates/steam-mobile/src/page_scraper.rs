@@ -2,87 +2,10 @@
 
 use std::str::FromStr;
 
-use scraper::{Html, Selector};
+use scraper::Html;
+use scraper::Selector;
 
 use crate::errors::ApiKeyError;
-use crate::web_handler::confirmation::{Confirmation, ConfirmationDetails, EConfirmationType};
-
-/// Get all confirmations by parsing the document.
-/// Returns all confirmations found.
-pub(crate) fn confirmation_retrieve(confirmation_html: Html) -> Option<Vec<Confirmation>> {
-    let confirmation_nodes_selector = Selector::parse("div.mobileconf_list_entry").unwrap();
-
-    // early return if no confirmations are found
-    let mut entries = confirmation_html.select(&confirmation_nodes_selector).peekable();
-    entries.peek()?;
-
-    let confirmations = entries
-        .map(|element| {
-            let confirmation_type = element
-                .value()
-                .attr("data-type")
-                .map_or(EConfirmationType::Unknown, |s| EConfirmationType::from_str(s).unwrap());
-
-            let tradeoffer_id = if confirmation_type == EConfirmationType::Trade {
-                element.value().attr("data-creator").map(|s| i64::from_str(s).unwrap())
-            } else {
-                None
-            };
-
-            Confirmation {
-                id: element.value().attr("data-confid").unwrap().to_string(),
-                key: element.value().attr("data-key").unwrap().to_string(),
-                kind: confirmation_type,
-                details: tradeoffer_id.map(|id| ConfirmationDetails {
-                    trade_offer_id: Some(id),
-                }),
-            }
-        })
-        .collect::<Vec<Confirmation>>();
-
-    Some(confirmations)
-}
-
-/// Parse a single confirmation details into a [ConfirmationDetails] struct.
-///
-/// Does not need to have error since we already have a confirmation, and it has to have details.
-pub(crate) fn confirmation_details_single(confirmation_details_html: &Html) -> ConfirmationDetails {
-    let trade_selector = Selector::parse("div.mobileconf_trade_area").unwrap();
-    let market_selector = Selector::parse("div.mobileconf_listing_prices").unwrap();
-
-    let tradearea_node = confirmation_details_html.select(&trade_selector).next();
-    if tradearea_node.is_some() {
-        let tradeoffer_node_selector = Selector::parse("div.tradeoffer").unwrap();
-        let id = confirmation_details_html
-            .select(&tradeoffer_node_selector)
-            .next()
-            .unwrap()
-            .value()
-            .attr("id")
-            .unwrap();
-
-        // id is formatted as 'tradeofferid_4000979435', and we are interest only at the digits.
-        let tradeofferid_parsed = id.find('_').map(|a| &id[a + 1..]).unwrap();
-
-        ConfirmationDetails {
-            trade_offer_id: Some(i64::from_str(tradeofferid_parsed).unwrap()),
-        }
-    } else if confirmation_details_html
-        .select(&market_selector)
-        .peekable()
-        .peek()
-        .is_some()
-    {
-        ConfirmationDetails { trade_offer_id: None }
-    } else {
-        unimplemented!()
-        // ConfirmationDetails {
-        //     trade_offer_id: None,
-        // Normally this should be reported, but under some specific
-        // circumstances we might actually receive this one
-        // }
-    }
-}
 
 /// Checks API Key state by parsing the document.
 /// If key is found, returns it, otherwise, it just errors accordingly.
