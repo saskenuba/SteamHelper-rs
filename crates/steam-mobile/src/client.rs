@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 use std::marker::PhantomData;
+use std::ops::Deref;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -25,22 +26,26 @@ use steam_protobuf::ProtobufSerialize;
 use tracing::debug;
 use tracing::error;
 use tracing::info;
+use tracing::trace;
 use tracing::warn;
 
+use crate::adapter::SteamCookie;
 use crate::errors::AuthError;
 use crate::errors::InternalError;
 use crate::errors::LinkerError;
 use crate::retry::login_retry_strategy;
+use crate::user::IsUser;
+use crate::user::PresentMaFile;
+use crate::user::SteamUser;
 use crate::utils::dump_cookies_by_domain;
 use crate::utils::dump_cookies_by_domain_and_name;
 use crate::utils::retrieve_header_location;
 use crate::web_handler::cache_api_key;
 use crate::web_handler::confirmation::Confirmation;
 use crate::web_handler::confirmation::Confirmations;
-use crate::web_handler::confirmations_retrieve_all;
-use crate::web_handler::confirmations_send;
+use crate::web_handler::get_confirmations;
 use crate::web_handler::login::login_and_store_cookies;
-use crate::web_handler::parental_unlock;
+use crate::web_handler::send_confirmations;
 use crate::web_handler::steam_guard_linker::account_has_phone;
 use crate::web_handler::steam_guard_linker::add_authenticator_to_account;
 use crate::web_handler::steam_guard_linker::add_phone_to_account;
@@ -57,7 +62,6 @@ use crate::web_handler::steam_guard_linker::STEAM_ADD_PHONE_CATCHUP_SECS;
 use crate::CacheGuard;
 use crate::ConfirmationMethod;
 use crate::MobileAuthFile;
-use crate::User;
 use crate::STEAM_COMMUNITY_HOST;
 
 /// Main authenticator. We use it to spawn and act as our "mobile" client.
@@ -71,15 +75,15 @@ use crate::STEAM_COMMUNITY_HOST;
 /// use steam_mobile::User;
 /// ```
 #[derive(Debug)]
-pub struct SteamAuthenticator<AuthState> {
-    inner: InnerAuthenticator,
+pub struct SteamAuthenticator<AuthState, MaFileState> {
+    inner: InnerAuthenticator<MaFileState>,
     auth_level: PhantomData<AuthState>,
 }
 
 #[derive(Debug)]
-struct InnerAuthenticator {
+struct InnerAuthenticator<MaFileState> {
     pub(crate) client: MobileClient,
-    pub(crate) user: User,
+    pub(crate) user: SteamUser<MaFileState>,
     pub(crate) cache: Option<CacheGuard>,
 }
 
@@ -91,18 +95,24 @@ pub struct Authenticated;
 #[derive(Clone, Copy, Debug)]
 pub struct Unauthenticated;
 
-impl<AuthState> SteamAuthenticator<AuthState> {
+impl<AuthState, M> SteamAuthenticator<AuthState, M> {
     const fn client(&self) -> &MobileClient {
         &self.inner.client
     }
+    const fn user(&self) -> &SteamUser<M> {
+        &self.inner.user
+    }
 }
 
-impl SteamAuthenticator<Unauthenticated> {
+impl<MaFileState> SteamAuthenticator<Unauthenticated, MaFileState>
+where
+    MaFileState: 'static + Send + Sync + Clone,
+{
     /// Returns current user API Key.
     ///
     /// Will return `None` if you are not logged in.
     #[must_use]
-    pub fn new(user: User) -> Self {
+    pub fn new(user: SteamUser<MaFileState>) -> Self {
         Self {
             inner: InnerAuthenticator {
                 client: MobileClient::default(),
@@ -116,7 +126,7 @@ impl SteamAuthenticator<Unauthenticated> {
     /// Steam community and Steam help domains.
     ///
     /// Automatically unlocks parental control if user uses it, but it need to be included inside
-    /// the [User] builder.
+    /// the [SteamUser] builder.
     ///
     /// The mobile client also has a very simple exponential retry strategy for errors that are *probably*
     /// caused by fast requests, so we retry it. For errors such as bad credentials, or inserting captcha
@@ -125,10 +135,14 @@ impl SteamAuthenticator<Unauthenticated> {
     /// Also caches the API Key, if the user wants to use it for any operation later.
     ///
     /// The cookies are inside the [MobileClient] inner cookie storage.
-    pub async fn login(self) -> Result<SteamAuthenticator<Authenticated>, AuthError> {
+    pub async fn login(self) -> Result<SteamAuthenticator<Authenticated, MaFileState>, AuthError> {
+        let user = self.inner.user;
+        let client = self.inner.client;
+        let user_arc: Arc<dyn IsUser> = Arc::new(user.clone());
+
         // FIXME: Add more permanent errors, such as bad credentials
         let mut cache = retry(login_retry_strategy(), || async {
-            login_and_store_cookies(&self.inner.client, &self.inner.user)
+            login_and_store_cookies(&client, user_arc.clone())
                 .await
                 .map_err(|error| match error {
                     e => {
@@ -139,15 +153,15 @@ impl SteamAuthenticator<Unauthenticated> {
                 })
         })
         .await?;
-
         info!("Login to Steam successfully.");
-        // FIXME: This should work the same as login, because it can sometimes fail for no reason
-        if self.inner.user.parental_code.is_some() {
-            parental_unlock(self.client(), &self.inner.user).await?;
-            info!("Parental unlock successfully.");
-        }
 
-        let api_key = cache_api_key(self.client()).await?;
+        // FIXME: This should work the same as login, because it can sometimes fail for no reason
+        // if user.parental_code.is_some() {
+        //     parental_unlock(client, user).await?;
+        //     info!("Parental unlock successfully.");
+        // }
+
+        let api_key = cache_api_key(&client, user_arc.clone(), cache.steamid.to_steam64()).await;
         if let Some(api_key) = api_key {
             cache.set_api_key(Some(api_key));
             info!("Cached API Key successfully.");
@@ -155,8 +169,8 @@ impl SteamAuthenticator<Unauthenticated> {
 
         Ok(SteamAuthenticator {
             inner: InnerAuthenticator {
-                client: self.inner.client,
-                user: self.inner.user,
+                client,
+                user,
                 cache: Some(Arc::new(RwLock::new(cache))),
             },
             auth_level: PhantomData,
@@ -164,7 +178,7 @@ impl SteamAuthenticator<Unauthenticated> {
     }
 }
 
-impl SteamAuthenticator<Authenticated> {
+impl<M> SteamAuthenticator<Authenticated, M> {
     fn cache(&self) -> CacheGuard {
         self.inner.cache.as_ref().expect("Safe to unwrap.").clone()
     }
@@ -290,51 +304,6 @@ impl SteamAuthenticator<Authenticated> {
         Ok(response)
     }
 
-    /// Fetch all confirmations available with the authenticator.
-    pub async fn fetch_confirmations(&self) -> Result<Option<Confirmations>, AuthError> {
-        // TODO: With details? Maybe we need to check if there is a need to gather more details.
-        let steamid = self.cache().read().steam_id();
-
-        confirmations_retrieve_all(self.client(), &self.inner.user, steamid, false)
-            .map_ok(|confs| confs.map(Confirmations::from))
-            .err_into()
-            .await
-    }
-
-    /// Fetches confirmations and process them.
-    ///
-    /// `f` is a function which you can use it to filter confirmations at the moment of the query.
-    pub async fn handle_confirmations<'a, 'b, F>(&self, operation: ConfirmationMethod, f: F) -> Result<(), AuthError>
-    where
-        F: Fn(Confirmations) -> Box<dyn Iterator<Item = Confirmation> + Send> + Send,
-    {
-        let confirmations = self.fetch_confirmations().await?;
-        if let Some(confirmations) = confirmations {
-            self.process_confirmations(operation, f(confirmations)).await
-        } else {
-            Ok(())
-        }
-    }
-
-    /// Accept or deny confirmations.
-    ///
-    /// # Panics
-    /// Will panic if not logged in with [`SteamAuthenticator`] first.
-    pub async fn process_confirmations<I>(
-        &self,
-        operation: ConfirmationMethod,
-        confirmations: I,
-    ) -> Result<(), AuthError>
-    where
-        I: IntoIterator<Item = Confirmation> + Send,
-    {
-        let steamid = self.cache().read().steam_id();
-
-        confirmations_send(self.client(), &self.inner.user, steamid, operation, confirmations)
-            .await
-            .map_err(Into::into)
-    }
-
     /// You can request custom operations for any Steam operation that requires logging in.
     ///
     /// The authenticator will take care sending session cookies and keeping the session
@@ -360,6 +329,60 @@ impl SteamAuthenticator<Authenticated> {
     }
 }
 
+impl SteamAuthenticator<Authenticated, PresentMaFile> {
+    /// Fetch all confirmations available with the authenticator.
+    pub async fn fetch_confirmations(&self) -> Result<Confirmations, AuthError> {
+        let steamid = self.cache().read().steam_id();
+        let secret = (&self.inner.user).identity_secret();
+        let device_id = (&self.inner.user).device_id();
+
+        get_confirmations(self.client(), secret, device_id, steamid)
+            .err_into()
+            .await
+    }
+
+    /// Fetches confirmations and process them.
+    ///
+    /// `f` is a function which you can use it to filter confirmations at the moment of the query.
+    pub async fn handle_confirmations<'a, 'b, F>(&self, operation: ConfirmationMethod, f: F) -> Result<(), AuthError>
+    where
+        F: Fn(Confirmations) -> Box<dyn Iterator<Item = Confirmation> + Send> + Send,
+    {
+        let confirmations = self.fetch_confirmations().await?;
+        if !confirmations.is_empty() {
+            self.process_confirmations(operation, f(confirmations)).await
+        } else {
+            Ok(())
+        }
+    }
+
+    /// Accept or deny confirmations.
+    ///
+    /// # Panics
+    /// Will panic if not logged in with [`SteamAuthenticator`] first.
+    pub async fn process_confirmations<I>(
+        &self,
+        operation: ConfirmationMethod,
+        confirmations: I,
+    ) -> Result<(), AuthError>
+    where
+        I: IntoIterator<Item = Confirmation> + Send,
+    {
+        let steamid = self.cache().read().steam_id();
+
+        send_confirmations(
+            self.client(),
+            self.user().identity_secret(),
+            self.user().device_id(),
+            steamid,
+            operation,
+            confirmations,
+        )
+        .await
+        .map_err(Into::into)
+    }
+}
+
 #[derive(Debug)]
 pub struct MobileClient {
     /// Standard HTTP Client to make requests.
@@ -371,7 +394,6 @@ pub struct MobileClient {
 impl MobileClient {
     pub(crate) fn get_cookie_value(&self, domain: &str, name: &str) -> Option<String> {
         dump_cookies_by_domain_and_name(&self.cookie_store.read(), domain, name)
-        // self.cookie_store.read().get(name).map(|c| c.value().to_string())
     }
     pub(crate) fn set_cookie_value(&self, cookie: Cookie<'static>) {
         self.cookie_store.write().add_original(cookie);
@@ -425,17 +447,18 @@ impl MobileClient {
     }
 
     /// Wrapper to make requests while preemptively checking if the session is still valid.
-    pub(crate) async fn request_with_session_guard<T, QP>(
+    pub(crate) async fn request_with_session_guard<T, QP, U>(
         &self,
-        url: String,
+        url: U,
         method: Method,
         custom_headers: Option<HeaderMap>,
         data: Option<T>,
         query_params: Option<QP>,
     ) -> Result<Response, InternalError>
     where
-        T: Serialize + Send + Sync,
-        QP: Serialize + Send + Sync,
+        T: Serialize + Send,
+        QP: Serialize + Send,
+        U: IntoUrl + Send,
     {
         // We check preemptively if the session is still working.
         if self.session_is_expired().await? {
@@ -443,7 +466,7 @@ impl MobileClient {
             unimplemented!()
         };
 
-        self.request(url, method, custom_headers, data.as_ref(), query_params)
+        self.request(url, method, custom_headers, data, query_params)
             .err_into()
             .await
     }
@@ -475,19 +498,21 @@ impl MobileClient {
     }
 
     /// Simple wrapper to allow generic requests to be made.
-    pub(crate) async fn request<T, QS>(
+    pub(crate) async fn request<T, QS, U>(
         &self,
-        url: String,
+        url: U,
         method: Method,
         headers: Option<HeaderMap>,
         form_data: Option<T>,
         query_params: QS,
     ) -> Result<Response, InternalError>
     where
-        QS: Serialize + Send + Sync,
-        T: Serialize + Send + Sync,
+        QS: Serialize + Send,
+        T: Serialize + Send,
+        U: IntoUrl + Send,
     {
-        let parsed_url = Url::parse(&url)
+        let parsed_url = url
+            .into_url()
             .map_err(|_| InternalError::GeneralFailure("Couldn't parse passed URL. Insert a valid one.".to_string()))?;
         let mut header_map = headers.unwrap_or_default();
 
@@ -507,7 +532,6 @@ impl MobileClient {
             None => req_builder.build().unwrap(),
             Some(data) => req_builder.form(&data).build().unwrap(),
         };
-
         debug!("{:?}", &request);
 
         let res = self.inner_http_client.execute(request).err_into().await;
@@ -530,9 +554,9 @@ impl MobileClient {
         res
     }
 
-    pub(crate) async fn request_and_decode<T, OUTPUT, QS>(
+    pub(crate) async fn request_and_decode<T, OUTPUT, QS, U>(
         &self,
-        url: String,
+        url: U,
         method: Method,
         headers: Option<HeaderMap>,
         form_data: Option<T>,
@@ -542,6 +566,7 @@ impl MobileClient {
         OUTPUT: DeserializeOwned,
         QS: Serialize + Send + Sync,
         T: Serialize + Send + Sync,
+        U: IntoUrl + Send,
     {
         let req = self.request(url, method, headers, form_data, query_params).await?;
 
@@ -583,15 +608,20 @@ impl MobileClient {
     }
 
     /// Convenience function to retrieve HTML w/ session
-    pub(crate) async fn get_html(&self, url: String) -> Result<Html, InternalError> {
-        let response = self
-            .request_with_session_guard(url, Method::GET, None, None::<&str>, None::<&str>)
-            .await?;
-        let response_text = response.text().await?;
-        let html_document = Html::parse_document(&response_text);
-
-        debug!("{}", &response_text);
-        Ok(html_document)
+    pub(crate) async fn get_html<T, QS>(
+        &self,
+        url: T,
+        headers: Option<HeaderMap>,
+        query: Option<QS>,
+    ) -> Result<Html, InternalError>
+    where
+        T: IntoUrl + Send,
+        QS: Serialize + Send,
+    {
+        self.request_with_session_guard(url, Method::GET, headers, None::<&str>, query)
+            .and_then(|r| r.text().err_into())
+            .await
+            .map(|s| Html::parse_document(&s))
     }
 
     /// Replace current cookie jar with a new one.

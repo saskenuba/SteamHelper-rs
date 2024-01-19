@@ -1,13 +1,18 @@
+use std::borrow::Cow;
+use std::fmt::Write;
+use std::sync::Arc;
+use std::time::Duration;
+
 use const_format::concatcp;
 use cookie::Cookie;
-use futures::FutureExt;
+use futures_timer::Delay;
 use futures_util::TryFutureExt;
 use reqwest::Method;
-use scraper::Html;
 use steam_language_gen::generated::enums::EResult;
+use steam_totp::Secret;
 use steam_totp::Time;
 use tracing::debug;
-use tracing::trace;
+use tracing::error;
 use tracing::warn;
 
 use crate::client::MobileClient;
@@ -15,31 +20,36 @@ use crate::errors::ApiKeyError;
 use crate::errors::InternalError;
 use crate::errors::LoginError;
 use crate::page_scraper::api_key_resolve_status;
-use crate::page_scraper::confirmation_details_single;
-use crate::page_scraper::confirmation_retrieve;
-use crate::types::ApiKeyRegisterRequest;
-use crate::types::BooleanResponse;
-use crate::types::ConfirmationDetailsResponse;
-use crate::types::ConfirmationMultiAcceptRequest;
+use crate::types::ConfirmationResponseBase;
 use crate::types::ParentalUnlockRequest;
 use crate::types::ParentalUnlockResponse;
+use crate::user::IsUser;
+use crate::user::PresentMaFile;
+use crate::user::SteamUser;
 use crate::utils::dump_cookie_from_header;
 use crate::utils::dump_cookies_by_domain_and_name;
+use crate::web_handler::api_key::NewAPIKeyRequest;
+use crate::web_handler::api_key::NewAPIKeyResponse;
 use crate::web_handler::confirmation::Confirmation;
 use crate::web_handler::confirmation::ConfirmationMethod;
-use crate::User;
-use crate::STEAM_API_BASE;
+use crate::web_handler::confirmation::ConfirmationTag;
+use crate::web_handler::login::SESSION_ID_COOKIE;
+use crate::Confirmations;
+use crate::EConfirmationType;
+use crate::Url;
 use crate::STEAM_COMMUNITY_BASE;
 use crate::STEAM_COMMUNITY_HOST;
+use crate::STEAM_DELAY_MS;
 use crate::STEAM_STORE_BASE;
 use crate::STEAM_STORE_HOST;
 
+pub mod api_key;
 pub mod confirmation;
 pub mod login;
 pub mod steam_guard_linker;
 
-/// used to refresh session
-const MOBILE_AUTH_GETWGTOKEN: &str = concatcp!(STEAM_API_BASE, "/IMobileAuthService/GetWGToken/v0001");
+const CONFIRMATIONS_GET_ENDPOINT: &str = concatcp!(STEAM_COMMUNITY_BASE, "/mobileconf/getlist");
+const CONFIRMATIONS_SEND_ENDPOINT: &str = concatcp!(STEAM_COMMUNITY_BASE, "/mobileconf/multiajaxop");
 
 // TODO: Refresh session for long-time running authenticators.
 #[allow(clippy::unused_async)]
@@ -47,9 +57,7 @@ async fn session_refresh() {}
 
 /// Parental unlock operation should be made otherwise any operation will fail and should be
 /// performed immediately after login
-pub async fn parental_unlock(client: &MobileClient, user: &User) -> Result<(), LoginError> {
-    let parental_code = user.parental_code.clone().unwrap();
-
+pub async fn parental_unlock(client: &MobileClient, parental_code: &str) -> Result<(), LoginError> {
     // unlocks parental on steam community
     {
         parental_unlock_by_service(client, &parental_code, STEAM_COMMUNITY_BASE, STEAM_COMMUNITY_HOST).await?;
@@ -115,142 +123,137 @@ async fn parental_unlock_by_service(
 
 /// Resolve caching of the user APIKey.
 /// This is done after user logon for the first time in this session.
-pub async fn cache_api_key(client: &MobileClient) -> Result<Option<String>, ApiKeyError> {
-    api_key_retrieve(client)
-        .inspect_err(|_e| warn!("API key could not be fetched."))
-        .await
+pub async fn cache_api_key(client: &MobileClient, user: Arc<dyn IsUser>, steamid: u64) -> Option<String> {
+    let api_key_res = api_key_retrieve(client)
+        .inspect_err(|e| warn!("API key could not be fetched.\nReason: {}", e))
+        .await;
+
+    match api_key_res {
+        Ok(api) => Some(api),
+
+        Err(ApiKeyError::NotRegistered) => {
+            if let Some(user) = user.as_any().downcast_ref::<SteamUser<PresentMaFile>>() {
+                warn!("API key not registered. Registering a new one.");
+                api_key_register(client, user, steamid)
+                    .await
+                    .expect("TODO: panic message");
+                // recursive cache?
+                return None;
+            }
+            warn!("API key not registered.");
+            None
+        }
+        Err(ApiKeyError::AccessDenied) => {
+            warn!("Access to API key was denied. You need to spend at least 5USD on steam store to unlock it.");
+            None
+        }
+        Err(e) => {
+            warn!("Could not cache API Key. {}", e);
+            None
+        }
+    }
+}
+
+/// Retrieve all confirmations for user, opting between retrieving details or not.
+/// # Panics
+/// This method will panic if the `User` doesn't have a linked `device_id`.
+#[tracing::instrument(skip(client))]
+pub async fn get_confirmations(
+    client: &MobileClient,
+    identity_secret: Secret,
+    device_id: &str,
+    steamid: u64,
+) -> Result<Confirmations, InternalError> {
+    let query_params =
+        generate_confirmation_query_params(identity_secret, device_id, steamid, ConfirmationTag::Confirmation, None)
+            .await;
+
+    let confirmation_url = Url::parse(CONFIRMATIONS_GET_ENDPOINT).expect("Safe to unwrap");
+    let response = client
+        .request_and_decode::<_, ConfirmationResponseBase, _, _>(
+            confirmation_url,
+            Method::GET,
+            None,
+            None::<u8>,
+            query_params,
+        )
+        .await?;
+
+    debug!("Retrieved {} confirmations.", response.conf.len());
+    Ok(Confirmations::from(response.conf))
 }
 
 /// Send confirmations to Steam Servers for accepting/denying.
 ///
 /// # Panics
 /// This method will panic if the `User` doesn't have a linked `device_id`.
-pub async fn confirmations_send<I>(
+#[tracing::instrument(skip(client, confirmations))]
+pub async fn send_confirmations<I>(
     client: &MobileClient,
-    user: &User,
+    identity_secret: Secret,
+    device_id: &str,
     steamid: u64,
     method: ConfirmationMethod,
     confirmations: I,
 ) -> Result<(), InternalError>
 where
-    I: IntoIterator<Item = Confirmation>,
+    I: IntoIterator<Item = Confirmation> + Send,
 {
-    let url = format!("{STEAM_COMMUNITY_BASE}/mobileconf/multiajaxop");
-    let operation = method.value();
-
-    let mut id_vec = vec![];
-    let mut key_vec = vec![];
-    for confirmation in confirmations {
-        id_vec.push(("cid[]", confirmation.id));
-        key_vec.push(("ck[]", confirmation.key));
-    }
-
-    let (time, confirmation_hash, device_id) = generate_confirmation_query_params(user).await;
-    let request = ConfirmationMultiAcceptRequest {
-        steamid: &steamid.to_string(),
-        confirmation_hash,
-        operation,
+    let url = Url::parse(CONFIRMATIONS_SEND_ENDPOINT).expect("Safe to unwrap");
+    let query_params = generate_confirmation_query_params(
+        identity_secret,
         device_id,
-        time: &time.to_string(),
-        confirmation_id: id_vec,
-        confirmation_key: key_vec,
-        ..Default::default()
-    };
+        steamid,
+        ConfirmationTag::Confirmation,
+        Some(method),
+    )
+    .await;
 
-    client
-        .request_with_session_guard(url, Method::POST, None, Some(request), None::<&str>)
-        .await?
-        .json::<BooleanResponse>()
+    let payload = confirmations
+        .into_iter()
+        .fold(String::new(), |mut buf, conf: Confirmation| {
+            let _ = write!(buf, "&cid[]={}&ck[]={}", conf.id, conf.key);
+            buf
+        });
+    let query_params = serde_qs::to_string(&query_params)
+        .map(move |mut s| {
+            s.push_str(&payload);
+            s
+        })
+        .expect("Safe to unwrap");
+
+    let resp = client
+        .request(url, Method::POST, None, Some(query_params), None::<u8>)
+        .and_then(|r| r.text().err_into())
         .await?;
-
-    // FIXME: Error Catching
-    // if response.success {
-    //     Ok(())
-    // }
+    error!("Send resp: {resp}");
 
     Ok(())
 }
 
-/// Retrieve all confirmations for user, opting between retrieving details or not.
-/// # Panics
-/// This method will panic if the `User` doesn't have a linked `device_id`.
-pub(crate) async fn confirmations_retrieve_all(
-    client: &MobileClient,
-    user: &User,
+async fn generate_confirmation_query_params(
+    identity_secret: Secret,
+    device_id: &str,
     steamid: u64,
-    require_details: bool,
-) -> Result<Option<Vec<Confirmation>>, InternalError> {
-    let (time, confirmation_hash, device_id) = generate_confirmation_query_params(user).await;
-
-    let confirmation_all_url = format!(
-        "{STEAM_COMMUNITY_BASE}/mobileconf/conf?a={}&k={}&l=english&m=android&p={}&t={}&tag=conf",
-        steamid, confirmation_hash, device_id, time
-    );
-    trace!("Confirmation url: {}", confirmation_all_url);
-
-    let html = client.get_html(confirmation_all_url).await?;
-    let user_confirmations = confirmation_retrieve(html);
-
-    // There is no need for now for additional details of the confirmation..
-    if !require_details || user_confirmations.is_none() {
-        return Ok(user_confirmations);
-    }
-
-    // FIXME: Is there a need to fetch additional details?
-    // We are not using this for anything yet
-
-    let mut user_confirmations = user_confirmations.unwrap();
-    let conf_details_fut = user_confirmations
-        .iter()
-        .map(|confirmation| {
-            let details_url = format!(
-                "{}/mobileconf/details/{}?a={}&k={}&l=english&m=android&p={}&t={}&tag=conf",
-                STEAM_COMMUNITY_BASE, confirmation.id, steamid, confirmation_hash, device_id, time
-            );
-            client.request(details_url, Method::GET, None, None::<u8>, None::<u8>)
-        })
-        .collect::<Vec<_>>();
-
-    let joined_fut: Vec<Result<reqwest::Response, _>> = futures::future::join_all(conf_details_fut).await;
-    let mut details_vec = Vec::new();
-    for response_res in joined_fut {
-        let response_content = match response_res {
-            Err(err) => {
-                warn!("Failed to fetch details page for confirmation: {}\nSkipping..", err);
-                continue;
-            }
-            Ok(response) => {
-                let deserialized = response.json::<ConfirmationDetailsResponse>().await;
-                if let Err(err) = deserialized {
-                    warn!(
-                        "Failed to deserialize confirmation details response: {}\nSkipping..",
-                        err
-                    );
-                    continue;
-                }
-                deserialized.unwrap()
-            }
-        };
-
-        let html = Html::parse_document(&response_content.html);
-        details_vec.push(confirmation_details_single(&html));
-    }
-
-    for (confirmation, detail) in user_confirmations.iter_mut().zip(details_vec.into_iter()) {
-        confirmation.details = Some(detail);
-    }
-
-    Ok(Some(user_confirmations))
-}
-
-async fn generate_confirmation_query_params(user: &User) -> (Time, String, &str) {
+    tag: ConfirmationTag,
+    op: Option<ConfirmationMethod>,
+) -> Vec<(&'static str, Cow<str>)> {
     let time = Time::with_offset().await.unwrap();
-    let identity_secret = user
-        .identity_secret()
-        .expect("You need to have a linked ma file to recover confirmations");
     let confirmation_hash = steam_totp::generate_confirmation_key(identity_secret, time, Some("conf")).unwrap();
-    let device_id = user.device_id().expect("You need a linked device id");
-    (time, confirmation_hash, device_id)
+
+    let mut params = vec![
+        ("p", device_id.into()),
+        ("a", steamid.to_string().into()),
+        ("k", confirmation_hash.into()),
+        ("t", time.to_string().into()),
+        ("m", "react".into()),
+        ("tag", tag.value().into()),
+    ];
+
+    if let Some(op) = op {
+        params.push(("op", op.value().into()));
+    }
+    params
 }
 
 /// Retrieve this account API KEY.
@@ -258,39 +261,27 @@ async fn generate_confirmation_query_params(user: &User) -> (Time, String, &str)
 ///
 ///
 /// Will error only if an unknown or network error is raised.
-async fn api_key_retrieve(client: &MobileClient) -> Result<Option<String>, ApiKeyError> {
+async fn api_key_retrieve(client: &MobileClient) -> Result<String, ApiKeyError> {
     let api_key_url = format!("{}{}", STEAM_COMMUNITY_BASE, "/dev/apikey?l=english");
-    let doc = client.get_html(api_key_url.clone()).await?;
-    Ok(match api_key_resolve_status(doc) {
-        Ok(api) => Some(api),
-
-        Err(ApiKeyError::NotRegistered) => {
-            warn!("API key not registered. Registering a new one.");
-            api_key_register(client)
-                .then(|_| client.get_html(api_key_url))
-                .await
-                .map(api_key_resolve_status)?
-                .ok()
-        }
-        Err(ApiKeyError::AccessDenied) => {
-            warn!("Access to API key was denied. Maybe you don't have a valid email address?");
-            None
-        }
-        Err(e) => {
-            warn!("Could not cache API Key. {}", e);
-            None
-        }
-    })
+    let doc = client.get_html(api_key_url.clone(), None, None::<u8>).await?;
+    api_key_resolve_status(doc)
 }
 
-/// Request access to an API Key
-/// The account should be validated before.
-async fn api_key_register(client: &MobileClient) -> Result<(), ApiKeyError> {
-    let api_register_url = format!("{}{}", STEAM_COMMUNITY_BASE, "/dev/registerkey");
-    let register_request = ApiKeyRegisterRequest::default();
+/// Sends a request to enable an API Key for the account.
+#[tracing::instrument(skip(client))]
+async fn api_key_register(
+    client: &MobileClient,
+    user: &SteamUser<PresentMaFile>,
+    steamid: u64,
+) -> Result<(), ApiKeyError> {
+    let api_register_url = format!("{}{}", STEAM_COMMUNITY_BASE, "/dev/requestkey");
+    let session_id = client
+        .get_cookie_value(STEAM_COMMUNITY_HOST, SESSION_ID_COOKIE)
+        .unwrap();
+    let register_request = NewAPIKeyRequest::new(session_id.clone());
 
     let response = client
-        .request_with_session_guard(
+        .request_and_decode::<_, NewAPIKeyResponse, _, _>(
             api_register_url,
             Method::POST,
             None,
@@ -298,7 +289,28 @@ async fn api_key_register(client: &MobileClient) -> Result<(), ApiKeyError> {
             None::<&str>,
         )
         .await?;
-    debug!("{:?}", response);
+
+    // Doesn't require mobile confirmation?
+    if response.requires_confirmation < 1 {}
+
+    Delay::new(Duration::from_millis(STEAM_DELAY_MS)).await;
+
+    let identity_secret = user.identity_secret();
+    let device_id = user.device_id();
+    let api_confirmation = get_confirmations(client, identity_secret.clone(), device_id, steamid)
+        .await?
+        .into_iter()
+        .filter(|c| c.kind == EConfirmationType::APIKey);
+
+    send_confirmations(
+        client,
+        identity_secret,
+        device_id,
+        steamid,
+        ConfirmationMethod::Accept,
+        api_confirmation,
+    )
+    .await?;
 
     Ok(())
 }

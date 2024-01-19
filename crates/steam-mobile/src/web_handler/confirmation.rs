@@ -1,12 +1,10 @@
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::iter::FromIterator;
-use std::str::FromStr;
 
 use derive_more::Deref;
 use derive_more::IntoIterator;
 use serde::Deserialize;
-use serde::Serialize;
 use serde_repr::Deserialize_repr;
 use serde_repr::Serialize_repr;
 
@@ -69,6 +67,7 @@ pub struct ConfirmationDetails {
     pub trade_offer_id: Option<i64>,
 }
 
+/// Kinds of mobile confirmations
 #[derive(Debug, Copy, Clone, Serialize_repr, Deserialize_repr, Eq, PartialEq)]
 #[repr(u8)]
 #[non_exhaustive]

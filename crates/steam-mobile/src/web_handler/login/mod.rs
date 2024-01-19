@@ -1,11 +1,11 @@
-use std::ops::Deref;
+use std::sync::Arc;
 use std::time::Duration;
 
 use base64::Engine;
 use const_format::concatcp;
+use downcast_rs::Downcast;
 use futures_timer::Delay;
-use futures_util::stream::FuturesUnordered;
-use futures_util::StreamExt;
+use futures_util::future::try_join_all;
 use rand::thread_rng;
 use reqwest::Client;
 use reqwest::Method;
@@ -20,22 +20,23 @@ use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_P
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::EAuthSessionGuardType;
-use steam_totp::Secret;
 use steam_totp::Time;
 use tracing::debug;
 
-use crate::adapter::SteamCookie;
 use crate::client::MobileClient;
+use crate::errors::InternalError;
 use crate::errors::LoginError;
 use crate::types::DomainToken;
 use crate::types::FinalizeLoginRequest;
 use crate::types::FinalizeLoginResponseBase;
 use crate::types::RSAResponseBase;
+use crate::user::IsUser;
+use crate::user::PresentMaFile;
+use crate::user::SteamUser;
 use crate::AuthResult;
 use crate::SteamCache;
-use crate::User;
-use crate::MOBILE_REFERER;
 use crate::STEAM_API_BASE;
+use crate::STEAM_COMMUNITY_HOST;
 use crate::STEAM_DELAY_MS;
 use crate::STEAM_LOGIN_BASE;
 
@@ -57,22 +58,12 @@ const LOGIN_FINALIZE_LOGIN_ENDPOINT: &str = concatcp!(STEAM_LOGIN_BASE, "/jwt/fi
 pub(crate) const SESSION_ID_COOKIE: &str = "sessionid";
 pub(crate) const STEAM_LOGIN_SECURE_COOKIE: &str = "steamLoginSecure";
 
-/// Logs in Steam through Steam `ISteamAuthUser` interface.
-///
-/// `Webapi_nonce` is received by connecting to the Steam Network.
-///
-/// Currently not possible without the implementation of the [steam-client] crate.
-/// For website that currently works, check [login_and_store_cookies] method.
-async fn login_isteam_user_auth(_client: &Client, _user: User, _webapi_nonce: &[u8]) -> AuthResult<()> {
-    unimplemented!();
-}
-
-fn encrypt_password<MOD, EXP>(user: &User, modulus: MOD, exponent: EXP) -> String
+fn encrypt_password<MOD, EXP>(password: &str, modulus: MOD, exponent: EXP) -> String
 where
     MOD: AsRef<[u8]>,
     EXP: AsRef<[u8]>,
 {
-    let password_bytes = user.password.as_bytes();
+    let password_bytes = password.as_bytes();
     let exponent = BigUint::parse_bytes(exponent.as_ref(), 16).unwrap();
     let modulus = BigUint::parse_bytes(modulus.as_ref(), 16).unwrap();
 
@@ -82,6 +73,16 @@ where
         .expect("Failed to encrypt.");
 
     base64::engine::general_purpose::STANDARD.encode(encrypted)
+}
+
+/// Logs in Steam through Steam `ISteamAuthUser` interface.
+///
+/// `Webapi_nonce` is received by connecting to the Steam Network.
+///
+/// Currently not possible without the implementation of the [steam-client] crate.
+/// For website that currently works, check [login_and_store_cookies] method.
+async fn login_isteam_user_auth<U>(_client: &Client, _user: SteamUser<U>, _webapi_nonce: &[u8]) -> AuthResult<()> {
+    unimplemented!();
 }
 
 /// Logs in through the Steam website, caching the user's SteamID,
@@ -94,27 +95,10 @@ where
 ///
 /// [login_isteam_user_auth]: #method.login_isteam_user_auth
 #[allow(clippy::too_many_lines)]
-pub async fn login_and_store_cookies<'a>(client: &MobileClient, user: &User) -> Result<SteamCache, LoginError> {
-    // we request to generate sessionID cookies
-    let response = client
-        .request(MOBILE_REFERER.to_owned(), Method::GET, None, None::<u8>, None::<u8>)
-        .await?;
-
-    let session_id_cookie = response
-        .headers()
-        .get(reqwest::header::SET_COOKIE)
-        .map(|cookie| cookie.to_str().unwrap())
-        .map(|c| {
-            let index = c.find('=').unwrap();
-            c[index + 1..index + 25].to_string()
-        })
-        .ok_or_else(|| {
-            LoginError::GeneralFailure("Something went wrong while getting sessionid cookie. Please retry.".to_string())
-        })?;
-
-    let rsa_query_params = &[("account_name", &user.username)];
+pub async fn login_and_store_cookies(client: &MobileClient, user: Arc<dyn IsUser>) -> Result<SteamCache, LoginError> {
+    let rsa_query_params = &[("account_name", user.username())];
     let rsa_response = client
-        .request_and_decode::<_, RSAResponseBase, _>(
+        .request_and_decode::<_, RSAResponseBase, _, _>(
             LOGIN_RSA_ENDPOINT.to_string(),
             Method::GET,
             None,
@@ -127,11 +111,15 @@ pub async fn login_and_store_cookies<'a>(client: &MobileClient, user: &User) -> 
     Delay::new(Duration::from_millis(STEAM_DELAY_MS)).await;
 
     // handle encrypting user's password with RSA request from Steam login API
-    let encrypted_pwd_b64 = encrypt_password(user, rsa_response.inner.publickey_mod, rsa_response.inner.publickey_exp);
+    let encrypted_pwd_b64 = encrypt_password(
+        user.password(),
+        rsa_response.inner.publickey_mod,
+        rsa_response.inner.publickey_exp,
+    );
     let encryption_timestamp = rsa_response.inner.timestamp;
 
     let mut payload = CAuthentication_BeginAuthSessionViaCredentials_Request::new();
-    payload.set_account_name(user.username.clone());
+    payload.set_account_name(user.username().to_owned());
     payload.set_encrypted_password(encrypted_pwd_b64);
     payload.set_encryption_timestamp(encryption_timestamp.parse().unwrap());
     payload.set_persistence(ESessionPersistence::k_ESessionPersistence_Persistent);
@@ -154,11 +142,12 @@ pub async fn login_and_store_cookies<'a>(client: &MobileClient, user: &User) -> 
     let mut payload = CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request::new();
     payload.set_client_id(client_id);
     payload.set_steamid(steam_id);
-    if let Some(ma_file) = &user.linked_mafile {
+
+    if let Some(ma_user) = user.as_any().downcast_ref::<SteamUser<PresentMaFile>>() {
         let offset = Time::offset().await?;
         let time = Time::now(Some(offset)).unwrap();
-        let two_factor_code = Secret::from_b64(&ma_file.shared_secret)
-            .map_or_else(|_| String::new(), |s| steam_totp::generate_auth_code(s, time));
+        let two_factor_code = steam_totp::generate_auth_code(ma_user.shared_secret(), time);
+
         payload.set_code_type(EAuthSessionGuardType::k_EAuthSessionGuardType_DeviceCode);
         payload.set_code(two_factor_code);
     } else {
@@ -196,10 +185,15 @@ pub async fn login_and_store_cookies<'a>(client: &MobileClient, user: &User) -> 
 
     let refresh_token = poll_session_response.refresh_token.expect("Safe to unwrap");
     let access_token = poll_session_response.access_token.expect("Safe to unwrap");
-    let finalize_payload = FinalizeLoginRequest::new(refresh_token.clone(), session_id_cookie);
+
+    // We should have the session_id cookie by now
+    let session_id = client
+        .get_cookie_value(STEAM_COMMUNITY_HOST, SESSION_ID_COOKIE)
+        .unwrap();
+    let finalize_payload = FinalizeLoginRequest::new(refresh_token.clone(), session_id);
 
     let finalize_login_response = client
-        .request_and_decode::<_, FinalizeLoginResponseBase, _>(
+        .request_and_decode::<_, FinalizeLoginResponseBase, _, _>(
             LOGIN_FINALIZE_LOGIN_ENDPOINT.to_owned(),
             Method::POST,
             None,
@@ -228,30 +222,8 @@ pub async fn set_cookies_on_steam_domains(
             token_data.steam_id = Some(steam_id.clone());
             client.request(url, Method::POST, None, Some(token_data), None::<u8>)
         })
-        .collect::<FuturesUnordered<_>>();
+        .collect::<Vec<_>>();
 
     debug!("Setting tokens for all Steam domains..");
-    while let Some(fut) = futures.next().await {
-        match fut {
-            Err(_) => {}
-            Ok(response) => {
-                let host = response.url().host().expect("Safe.").to_string();
-                debug!("Host: {:?}", &host);
-
-                let mut cookie_jar = client.cookie_store.write();
-                for cookie in response.cookies() {
-                    let mut our_cookie = SteamCookie::from(cookie);
-                    our_cookie.set_domain(host.clone());
-
-                    debug!(
-                        "domain: {:?}, cookie_name: {}, value: {} ",
-                        our_cookie.domain(),
-                        our_cookie.name(),
-                        our_cookie.value()
-                    );
-                    cookie_jar.add_original(our_cookie.deref().clone());
-                }
-            }
-        }
-    }
+    try_join_all(futures).await.map(|_| ())
 }
