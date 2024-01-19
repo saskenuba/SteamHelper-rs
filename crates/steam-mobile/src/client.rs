@@ -509,7 +509,25 @@ impl MobileClient {
         };
 
         debug!("{:?}", &request);
-        self.inner_http_client.execute(request).err_into().await
+
+        let res = self.inner_http_client.execute(request).err_into().await;
+        if let Ok(ref response) = res {
+            let mut cookie_jar = self.cookie_store.write();
+            for cookie in response.cookies() {
+                let mut our_cookie = SteamCookie::from(cookie);
+                let host = response.url().host().expect("Safe.").to_string();
+                our_cookie.set_domain(host);
+
+                trace!(
+                    "New cookie from: {:?}, name: {}, value: {} ",
+                    our_cookie.domain(),
+                    our_cookie.name(),
+                    our_cookie.value()
+                );
+                cookie_jar.add_original(our_cookie.deref().clone());
+            }
+        }
+        res
     }
 
     pub(crate) async fn request_and_decode<T, OUTPUT, QS>(

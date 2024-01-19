@@ -54,7 +54,8 @@ const LOGIN_POLL_AUTH_STATUS_ENDPOINT: &str =
 
 const LOGIN_FINALIZE_LOGIN_ENDPOINT: &str = concatcp!(STEAM_LOGIN_BASE, "/jwt/finalizelogin");
 
-const SESSION_ID_COOKIE: &str = "sessionid";
+pub(crate) const SESSION_ID_COOKIE: &str = "sessionid";
+pub(crate) const STEAM_LOGIN_SECURE_COOKIE: &str = "steamLoginSecure";
 
 /// Logs in Steam through Steam `ISteamAuthUser` interface.
 ///
@@ -209,13 +210,17 @@ pub async fn login_and_store_cookies<'a>(client: &MobileClient, user: &User) -> 
 
     let domain_tokens = finalize_login_response.domain_tokens;
     let steam_id = finalize_login_response.steam_id;
-    set_cookies_on_steam_domains(client, domain_tokens, steam_id.clone()).await;
+    set_cookies_on_steam_domains(client, domain_tokens, steam_id.clone()).await?;
     Ok(SteamCache::with_login_data(&steam_id, access_token, refresh_token).expect("Safe to unwrap"))
 }
 
 /// Calls multiple Steam Domains and set cookies for them.
-pub async fn set_cookies_on_steam_domains(client: &MobileClient, domain_tokens: Vec<DomainToken>, steam_id: String) {
-    let mut futures = domain_tokens
+pub async fn set_cookies_on_steam_domains(
+    client: &MobileClient,
+    domain_tokens: Vec<DomainToken>,
+    steam_id: String,
+) -> Result<(), InternalError> {
+    let futures = domain_tokens
         .into_iter()
         .map(|c| {
             let url = c.url;
