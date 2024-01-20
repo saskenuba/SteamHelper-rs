@@ -1,7 +1,5 @@
 //! Responsible for parsing HTML documents for various events.
 
-use std::str::FromStr;
-
 use scraper::Html;
 use scraper::Selector;
 

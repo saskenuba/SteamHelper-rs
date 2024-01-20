@@ -60,7 +60,7 @@ const MA_FILE_EXT: &str = ".maFile";
 // HOST SHOULD BE USED FOR COOKIE RETRIEVAL INSIDE COOKIE JAR!!
 
 /// Steam Community Cookie Host
-pub(crate) const STEAM_COMMUNITY_HOST: &str = ".steamcommunity.com";
+pub(crate) const STEAM_COMMUNITY_HOST: &str = "steamcommunity.com";
 /// Steam Help Cookie Host
 pub(crate) const STEAM_HELP_HOST: &str = ".help.steampowered.com";
 /// Steam Store Cookie Host
