@@ -4,6 +4,7 @@ use std::time::Duration;
 use base64::Engine;
 use const_format::concatcp;
 use downcast_rs::Downcast;
+use downcast_rs::DowncastSync;
 use futures_timer::Delay;
 use futures_util::future::try_join_all;
 use rand::thread_rng;
@@ -15,6 +16,8 @@ use rsa::RsaPublicKey;
 use steam_protobuf::protobufs::enums::ESessionPersistence;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_BeginAuthSessionViaCredentials_Request;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_BeginAuthSessionViaCredentials_Response;
+use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_GetPasswordRSAPublicKey_Request;
+use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_GetPasswordRSAPublicKey_Response;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_PollAuthSessionStatus_Request;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_PollAuthSessionStatus_Response;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request;
@@ -22,6 +25,7 @@ use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_U
 use steam_protobuf::protobufs::steammessages_auth_steamclient::EAuthSessionGuardType;
 use steam_totp::Time;
 use tracing::debug;
+use tracing::info;
 
 use crate::client::MobileClient;
 use crate::errors::InternalError;
@@ -96,14 +100,14 @@ async fn login_isteam_user_auth<U>(_client: &Client, _user: SteamUser<U>, _webap
 /// [login_isteam_user_auth]: #method.login_isteam_user_auth
 #[allow(clippy::too_many_lines)]
 pub async fn login_and_store_cookies(client: &MobileClient, user: Arc<dyn IsUser>) -> Result<SteamCache, LoginError> {
-    let rsa_query_params = &[("account_name", user.username())];
+    let mut rsa_payload = CAuthentication_GetPasswordRSAPublicKey_Request::new();
+    rsa_payload.set_account_name(user.username().to_owned());
     let rsa_response = client
-        .request_and_decode::<_, RSAResponseBase, _, _>(
+        .request_proto::<_, CAuthentication_GetPasswordRSAPublicKey_Response>(
             LOGIN_RSA_ENDPOINT.to_string(),
             Method::GET,
+            rsa_payload,
             None,
-            None::<u8>,
-            Some(&rsa_query_params),
         )
         .await?;
 
@@ -113,15 +117,15 @@ pub async fn login_and_store_cookies(client: &MobileClient, user: Arc<dyn IsUser
     // handle encrypting user's password with RSA request from Steam login API
     let encrypted_pwd_b64 = encrypt_password(
         user.password(),
-        rsa_response.inner.publickey_mod,
-        rsa_response.inner.publickey_exp,
+        rsa_response.publickey_mod(),
+        rsa_response.publickey_exp(),
     );
-    let encryption_timestamp = rsa_response.inner.timestamp;
+    let encryption_timestamp = rsa_response.timestamp();
 
     let mut payload = CAuthentication_BeginAuthSessionViaCredentials_Request::new();
     payload.set_account_name(user.username().to_owned());
     payload.set_encrypted_password(encrypted_pwd_b64);
-    payload.set_encryption_timestamp(encryption_timestamp.parse().unwrap());
+    payload.set_encryption_timestamp(encryption_timestamp);
     payload.set_persistence(ESessionPersistence::k_ESessionPersistence_Persistent);
     let begin_auth_response = client
         .request_proto::<_, CAuthentication_BeginAuthSessionViaCredentials_Response>(
@@ -143,7 +147,8 @@ pub async fn login_and_store_cookies(client: &MobileClient, user: Arc<dyn IsUser
     payload.set_client_id(client_id);
     payload.set_steamid(steam_id);
 
-    if let Some(ma_user) = user.as_any().downcast_ref::<SteamUser<PresentMaFile>>() {
+    if let Some(ma_user) = user.into_any_arc().downcast_ref::<SteamUser<PresentMaFile>>() {
+        info!("Using MaFile to generate codes..");
         let offset = Time::offset().await?;
         let time = Time::now(Some(offset)).unwrap();
         let two_factor_code = steam_totp::generate_auth_code(ma_user.shared_secret(), time);
@@ -176,7 +181,7 @@ pub async fn login_and_store_cookies(client: &MobileClient, user: Arc<dyn IsUser
         )
         .await?;
 
-    if poll_session_response.access_token.is_none() || poll_session_response.refresh_token.is_none() {
+    if !poll_session_response.has_access_token() || !poll_session_response.has_refresh_token() {
         return Err(LoginError::IncorrectCredentials);
     }
 
