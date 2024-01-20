@@ -429,9 +429,7 @@ impl MobileClient {
 
         let response = req.send().await?;
         let headers = response.headers();
-        debug!("Response headers {:?}", headers);
-        debug!("Response status {}", response.status());
-        debug!("Response raw bytes {:?}", response);
+        debug!("Response {:?}", response);
 
         let res_bytes = response.bytes().await?;
         OUTPUT::from_bytes(res_bytes).map_or_else(
