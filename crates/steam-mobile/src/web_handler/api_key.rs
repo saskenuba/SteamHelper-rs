@@ -15,11 +15,11 @@ pub struct NewAPIKeyRequest {
 }
 
 impl NewAPIKeyRequest {
-    pub(crate) fn new(session_id: String) -> Self {
+    pub(crate) fn new(request_id: String, session_id: String) -> Self {
         Self {
             agree_to_terms: "true",
             domain: "steam-mobile",
-            request_id: "0".to_string(),
+            request_id,
             session_id,
         }
     }

@@ -3,8 +3,6 @@ use std::time::Duration;
 
 use base64::Engine;
 use const_format::concatcp;
-use downcast_rs::Downcast;
-use downcast_rs::DowncastSync;
 use futures_timer::Delay;
 use futures_util::future::try_join_all;
 use rand::thread_rng;
@@ -33,7 +31,6 @@ use crate::errors::LoginError;
 use crate::types::DomainToken;
 use crate::types::FinalizeLoginRequest;
 use crate::types::FinalizeLoginResponseBase;
-use crate::types::RSAResponseBase;
 use crate::user::IsUser;
 use crate::user::PresentMaFile;
 use crate::user::SteamUser;

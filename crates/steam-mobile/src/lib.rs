@@ -32,7 +32,7 @@ use serde::Serialize;
 use steamid_parser::SteamID;
 pub use utils::format_captcha_url;
 use uuid::Uuid;
-pub use web_handler::confirmation::ConfirmationMethod;
+pub use web_handler::confirmation::ConfirmationAction;
 pub use web_handler::confirmation::Confirmations;
 pub use web_handler::confirmation::EConfirmationType;
 pub use web_handler::steam_guard_linker::AddAuthenticatorStep;

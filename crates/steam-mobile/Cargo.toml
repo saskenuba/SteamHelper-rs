@@ -21,7 +21,8 @@ hex = "0.4"
 parking_lot = "^0"
 rsa = "0.9"
 scraper = "0.18"
-serde_with = { version = "1.5", features = ["json"] }
+serde_with = { version = "^3", features = [] }
+downcast-rs = { version = "^1" }
 thiserror = "1"
 tracing = "0.1"
 tracing-futures = "0.2"
@@ -37,6 +38,7 @@ futures.workspace = true
 rand.workspace = true
 reqwest.workspace = true
 
+serde_urlencoded = "^0"
 serde.workspace = true
 serde_derive.workspace = true
 serde_json.workspace = true

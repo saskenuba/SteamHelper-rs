@@ -2,6 +2,8 @@ use std::borrow::Cow;
 
 use serde::Deserialize;
 use serde::Serialize;
+use serde_with::serde_as;
+use serde_with::Map;
 use steam_language_gen::generated::enums::EResult;
 
 use crate::web_handler::confirmation::Confirmation;
@@ -25,41 +27,34 @@ pub struct LoginCaptcha<'a> {
 }
 
 #[derive(Serialize, Debug, Clone)]
-pub struct ConfirmationMultiAcceptRequest<'a> {
-    #[serde(rename = "a")]
-    pub steamid: &'a str,
-    #[serde(rename = "k")]
-    pub confirmation_hash: String,
-    #[serde(rename = "m")]
-    pub device_kind: &'a str,
-    #[serde(rename = "op")]
-    /// Accept or cancel confirmation
-    pub operation: &'a str,
+pub struct ConfirmationBase<'a> {
     #[serde(rename = "p")]
-    pub device_id: &'a str,
+    pub device_id: Cow<'a, str>,
+    #[serde(rename = "a")]
+    pub steamid: Cow<'a, str>,
+    #[serde(rename = "k")]
+    pub confirmation_hash: Cow<'a, str>,
     #[serde(rename = "t")]
-    pub time: &'a str,
-    pub tag: &'a str,
-    #[serde(flatten, with = "serde_with::rust::tuple_list_as_map")]
-    pub confirmation_id: Vec<(&'a str, String)>,
-    #[serde(flatten, with = "serde_with::rust::tuple_list_as_map")]
-    pub confirmation_key: Vec<(&'a str, String)>,
+    pub time: Cow<'a, str>,
+    #[serde(rename = "m")]
+    pub device_kind: Cow<'a, str>,
+    pub tag: Cow<'a, str>,
+    #[serde(rename = "op")]
+    pub operation: Option<Cow<'a, str>>,
 }
 
-impl<'a> Default for ConfirmationMultiAcceptRequest<'a> {
-    fn default() -> Self {
-        Self {
-            steamid: "",
-            confirmation_hash: String::new(),
-            device_kind: "android",
-            operation: "",
-            device_id: "",
-            time: "",
-            tag: "conf",
-            confirmation_id: vec![],
-            confirmation_key: vec![],
-        }
-    }
+#[serde_as]
+#[derive(Serialize, Debug, Clone)]
+pub struct ConfirmationMultiAcceptRequest<'a> {
+    #[serde(flatten)]
+    pub base: ConfirmationBase<'a>,
+
+    #[serde(flatten)]
+    #[serde_as(as = "Map<_, _>")]
+    pub confirmation_id: Vec<(&'static str, Cow<'a, str>)>,
+    #[serde(flatten)]
+    #[serde_as(as = "Map<_, _>")]
+    pub confirmation_key: Vec<(&'static str, Cow<'a, str>)>,
 }
 
 #[derive(Deserialize, Debug, Clone)]

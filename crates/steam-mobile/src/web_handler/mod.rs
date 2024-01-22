@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-use std::fmt::Write;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -12,7 +10,7 @@ use steam_language_gen::generated::enums::EResult;
 use steam_totp::Secret;
 use steam_totp::Time;
 use tracing::debug;
-use tracing::error;
+use tracing::info;
 use tracing::warn;
 
 use crate::client::MobileClient;
@@ -20,6 +18,9 @@ use crate::errors::ApiKeyError;
 use crate::errors::InternalError;
 use crate::errors::LoginError;
 use crate::page_scraper::api_key_resolve_status;
+use crate::types::BooleanResponse;
+use crate::types::ConfirmationBase;
+use crate::types::ConfirmationMultiAcceptRequest;
 use crate::types::ConfirmationResponseBase;
 use crate::types::ParentalUnlockRequest;
 use crate::types::ParentalUnlockResponse;
@@ -31,8 +32,7 @@ use crate::utils::dump_cookies_by_domain_and_name;
 use crate::web_handler::api_key::NewAPIKeyRequest;
 use crate::web_handler::api_key::NewAPIKeyResponse;
 use crate::web_handler::confirmation::Confirmation;
-use crate::web_handler::confirmation::ConfirmationMethod;
-use crate::web_handler::confirmation::ConfirmationTag;
+use crate::web_handler::confirmation::ConfirmationAction;
 use crate::web_handler::login::SESSION_ID_COOKIE;
 use crate::Confirmations;
 use crate::EConfirmationType;
@@ -134,11 +134,7 @@ pub async fn cache_api_key(client: &MobileClient, user: Arc<dyn IsUser>, steamid
         Err(ApiKeyError::NotRegistered) => {
             if let Some(user) = user.as_any().downcast_ref::<SteamUser<PresentMaFile>>() {
                 warn!("API key not registered. Registering a new one.");
-                api_key_register(client, user, steamid)
-                    .await
-                    .expect("TODO: panic message");
-                // recursive cache?
-                return None;
+                return api_key_register(client, user, steamid).await.ok();
             }
             warn!("API key not registered.");
             None
@@ -157,7 +153,6 @@ pub async fn cache_api_key(client: &MobileClient, user: Arc<dyn IsUser>, steamid
 /// Retrieve all confirmations for user, opting between retrieving details or not.
 /// # Panics
 /// This method will panic if the `User` doesn't have a linked `device_id`.
-#[tracing::instrument(skip(client))]
 pub async fn get_confirmations(
     client: &MobileClient,
     identity_secret: Secret,
@@ -165,8 +160,7 @@ pub async fn get_confirmations(
     steamid: u64,
 ) -> Result<Confirmations, InternalError> {
     let query_params =
-        generate_confirmation_query_params(identity_secret, device_id, steamid, ConfirmationTag::Confirmation, None)
-            .await;
+        generate_confirmation_query_params(identity_secret, device_id, steamid, ConfirmationAction::Retrieve).await;
 
     let confirmation_url = Url::parse(CONFIRMATIONS_GET_ENDPOINT).expect("Safe to unwrap");
     let response = client
@@ -175,7 +169,7 @@ pub async fn get_confirmations(
             Method::GET,
             None,
             None::<u8>,
-            query_params,
+            Some(query_params),
         )
         .await?;
 
@@ -187,73 +181,66 @@ pub async fn get_confirmations(
 ///
 /// # Panics
 /// This method will panic if the `User` doesn't have a linked `device_id`.
-#[tracing::instrument(skip(client, confirmations))]
 pub async fn send_confirmations<I>(
     client: &MobileClient,
     identity_secret: Secret,
     device_id: &str,
     steamid: u64,
-    method: ConfirmationMethod,
+    operation: ConfirmationAction,
     confirmations: I,
 ) -> Result<(), InternalError>
 where
     I: IntoIterator<Item = Confirmation> + Send,
 {
     let url = Url::parse(CONFIRMATIONS_SEND_ENDPOINT).expect("Safe to unwrap");
-    let query_params = generate_confirmation_query_params(
-        identity_secret,
-        device_id,
-        steamid,
-        ConfirmationTag::Confirmation,
-        Some(method),
-    )
-    .await;
+    let query_params = generate_confirmation_query_params(identity_secret, device_id, steamid, operation).await;
 
-    let payload = confirmations
-        .into_iter()
-        .fold(String::new(), |mut buf, conf: Confirmation| {
-            let _ = write!(buf, "&cid[]={}&ck[]={}", conf.id, conf.key);
-            buf
-        });
-    let query_params = serde_qs::to_string(&query_params)
-        .map(move |mut s| {
-            s.push_str(&payload);
-            s
-        })
-        .expect("Safe to unwrap");
+    let (ids, keys) =
+        confirmations
+            .into_iter()
+            .fold((vec![], vec![]), |(mut id_buf, mut key_buf), conf: Confirmation| {
+                id_buf.push(("cid[]", conf.id.into()));
+                key_buf.push(("ck[]", conf.key.into()));
+                (id_buf, key_buf)
+            });
+
+    let payload = ConfirmationMultiAcceptRequest {
+        base: query_params,
+        confirmation_id: ids,
+        confirmation_key: keys,
+    };
 
     let resp = client
-        .request(url, Method::POST, None, Some(query_params), None::<u8>)
-        .and_then(|r| r.text().err_into())
+        .request_and_decode::<_, BooleanResponse, _, _>(url, Method::POST, None, Some(payload), None::<u8>)
         .await?;
-    error!("Send resp: {resp}");
+
+    if !resp.success {
+        return Err(InternalError::GeneralFailure(
+            "Failed to send confirmations.".to_string(),
+        ));
+    }
 
     Ok(())
 }
 
-async fn generate_confirmation_query_params(
+async fn generate_confirmation_query_params<'a>(
     identity_secret: Secret,
-    device_id: &str,
+    device_id: &'a str,
     steamid: u64,
-    tag: ConfirmationTag,
-    op: Option<ConfirmationMethod>,
-) -> Vec<(&'static str, Cow<str>)> {
+    op: ConfirmationAction,
+) -> ConfirmationBase<'a> {
     let time = Time::with_offset().await.unwrap();
-    let confirmation_hash = steam_totp::generate_confirmation_key(identity_secret, time, Some("conf")).unwrap();
+    let confirmation_hash = steam_totp::generate_confirmation_key(identity_secret, time, Some(op.as_tag())).unwrap();
 
-    let mut params = vec![
-        ("p", device_id.into()),
-        ("a", steamid.to_string().into()),
-        ("k", confirmation_hash.into()),
-        ("t", time.to_string().into()),
-        ("m", "react".into()),
-        ("tag", tag.value().into()),
-    ];
-
-    if let Some(op) = op {
-        params.push(("op", op.value().into()));
+    ConfirmationBase {
+        device_id: device_id.into(),
+        steamid: steamid.to_string().into(),
+        confirmation_hash: confirmation_hash.into(),
+        time: time.to_string().into(),
+        device_kind: "react".into(),
+        tag: op.as_tag().into(),
+        operation: op.as_operation().map(Into::into),
     }
-    params
 }
 
 /// Retrieve this account API KEY.
@@ -268,21 +255,20 @@ async fn api_key_retrieve(client: &MobileClient) -> Result<String, ApiKeyError> 
 }
 
 /// Sends a request to enable an API Key for the account.
-#[tracing::instrument(skip(client))]
 async fn api_key_register(
     client: &MobileClient,
     user: &SteamUser<PresentMaFile>,
     steamid: u64,
-) -> Result<(), ApiKeyError> {
+) -> Result<String, ApiKeyError> {
     let api_register_url = format!("{}{}", STEAM_COMMUNITY_BASE, "/dev/requestkey");
     let session_id = client
         .get_cookie_value(STEAM_COMMUNITY_HOST, SESSION_ID_COOKIE)
         .unwrap();
-    let register_request = NewAPIKeyRequest::new(session_id.clone());
 
+    let register_request = NewAPIKeyRequest::new("0".to_string(), session_id.clone());
     let response = client
         .request_and_decode::<_, NewAPIKeyResponse, _, _>(
-            api_register_url,
+            &api_register_url,
             Method::POST,
             None,
             Some(register_request),
@@ -307,12 +293,29 @@ async fn api_key_register(
         identity_secret,
         device_id,
         steamid,
-        ConfirmationMethod::Accept,
+        ConfirmationAction::Accept,
         api_confirmation,
     )
     .await?;
+    Delay::new(Duration::from_millis(STEAM_DELAY_MS)).await;
 
-    Ok(())
+    let second_request = NewAPIKeyRequest::new(response.request_id.unwrap(), session_id.clone());
+    let second_response = client
+        .request_and_decode::<_, NewAPIKeyResponse, _, _>(
+            api_register_url,
+            Method::POST,
+            None,
+            Some(second_request),
+            None::<&str>,
+        )
+        .await?;
+
+    if second_response.success == EResult::OK {
+        info!("Successfully registered an API Key.");
+        return Ok(second_response.api_key.unwrap());
+    }
+
+    Err(ApiKeyError::GeneralError("Failed to register API Key.".to_string()))
 }
 
 #[cfg(test)]

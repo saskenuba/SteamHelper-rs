@@ -12,6 +12,8 @@ use futures::TryFutureExt;
 use futures_timer::Delay;
 use parking_lot::RwLock;
 use reqwest::header::HeaderMap;
+use reqwest::header::HeaderValue;
+use reqwest::header::CONTENT_TYPE;
 use reqwest::redirect::Policy;
 use reqwest::Client;
 use reqwest::IntoUrl;
@@ -60,7 +62,7 @@ use crate::web_handler::steam_guard_linker::QueryStatusResponse;
 use crate::web_handler::steam_guard_linker::RemoveAuthenticatorScheme;
 use crate::web_handler::steam_guard_linker::STEAM_ADD_PHONE_CATCHUP_SECS;
 use crate::CacheGuard;
-use crate::ConfirmationMethod;
+use crate::ConfirmationAction;
 use crate::MobileAuthFile;
 use crate::STEAM_COMMUNITY_HOST;
 
@@ -344,7 +346,7 @@ impl SteamAuthenticator<Authenticated, PresentMaFile> {
     /// Fetches confirmations and process them.
     ///
     /// `f` is a function which you can use it to filter confirmations at the moment of the query.
-    pub async fn handle_confirmations<'a, 'b, F>(&self, operation: ConfirmationMethod, f: F) -> Result<(), AuthError>
+    pub async fn handle_confirmations<'a, 'b, F>(&self, operation: ConfirmationAction, f: F) -> Result<(), AuthError>
     where
         F: Fn(Confirmations) -> Box<dyn Iterator<Item = Confirmation> + Send> + Send,
     {
@@ -362,7 +364,7 @@ impl SteamAuthenticator<Authenticated, PresentMaFile> {
     /// Will panic if not logged in with [`SteamAuthenticator`] first.
     pub async fn process_confirmations<I>(
         &self,
-        operation: ConfirmationMethod,
+        operation: ConfirmationAction,
         confirmations: I,
     ) -> Result<(), AuthError>
     where
@@ -428,7 +430,6 @@ impl MobileClient {
         };
 
         let response = req.send().await?;
-        let headers = response.headers();
         debug!("Response {:?}", response);
 
         let res_bytes = response.bytes().await?;
@@ -528,12 +529,32 @@ impl MobileClient {
 
         let request = match form_data {
             None => req_builder.build().unwrap(),
-            Some(data) => req_builder.form(&data).build().unwrap(),
+            Some(data) => match serde_urlencoded::to_string(data) {
+                Ok(body) => {
+                    debug!("Request body: {}", &body);
+                    req_builder
+                        .header(
+                            CONTENT_TYPE,
+                            HeaderValue::from_static("application/x-www-form-urlencoded; charset=UTF-8"),
+                        )
+                        .body(body)
+                        .build()
+                        .expect("Safe to unwrap.")
+                }
+                Err(err) => {
+                    return Err(InternalError::GeneralFailure(format!(
+                        "Failed to serialize body: {err}"
+                    )))
+                }
+            },
         };
         debug!("{:?}", &request);
 
         let res = self.inner_http_client.execute(request).err_into().await;
         if let Ok(ref response) = res {
+            debug!("Response status: {:?}", response.status());
+            debug!("Response headers: {:?}", response.headers());
+
             let mut cookie_jar = self.cookie_store.write();
             for cookie in response.cookies() {
                 let mut our_cookie = SteamCookie::from(cookie);
@@ -566,12 +587,8 @@ impl MobileClient {
         T: Serialize + Send + Sync,
         U: IntoUrl + Send,
     {
-        let req = self.request(url, method, headers, form_data, query_params).await?;
-
-        // FIXME: error checking
-        let _headers = req.headers();
-
-        let response_body = req
+        let resp = self.request(url, method, headers, form_data, query_params).await?;
+        let response_body = resp
             .text()
             .inspect_ok(|s| {
                 debug!("{} text: {}", std::any::type_name::<OUTPUT>(), s);
