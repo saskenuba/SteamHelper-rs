@@ -13,12 +13,13 @@ use clap::Command;
 use dialoguer::Confirm;
 use dialoguer::Input;
 use futures_util::TryFutureExt;
+use steam_mobile::user::PresentMaFile;
+use steam_mobile::user::SteamUser;
 use steam_mobile::AddAuthenticatorStep;
 use steam_mobile::Authenticated;
-use steam_mobile::ConfirmationMethod;
+use steam_mobile::ConfirmationAction;
 use steam_mobile::MobileAuthFile;
 use steam_mobile::SteamAuthenticator;
-use steam_mobile::User;
 use steam_totp::generate_auth_code_async;
 use steam_totp::Secret;
 use strum_macros::AsRefStr;
@@ -248,36 +249,33 @@ async fn process_confirmations(subcomm_args: &ArgMatches) -> Result<()> {
         .expect("MaFile needs to be exist in order to send confirmations.");
 
     let confirmation_method = match subcomm_args.subcommand() {
-        Some(("accept", _)) => ConfirmationMethod::Accept,
-        Some(("deny", _)) => ConfirmationMethod::Deny,
+        Some(("accept", _)) => ConfirmationAction::Accept,
+        Some(("deny", _)) => ConfirmationAction::Deny,
         _ => unreachable!(),
     };
 
     let authenticator = handle_login(account, password, Some(ma_file)).await?;
 
     println!("Please wait while we fetch your pending confirmations...");
-    let confirmations = authenticator.fetch_confirmations().await;
+    let confirmations = authenticator.fetch_confirmations().await?;
 
-    if let Ok(confirmations) = confirmations {
-        if confirmations.is_none() {
-            println!("Couldn't find any confirmation. If you just received/send it, it may take a while to find it.");
-            return Ok(());
-        }
+    if confirmations.is_empty() {
+        println!(
+            "Couldn't find any confirmations. If you did any operation that requires a confirmation, it may take a \
+             while to receive them."
+        );
+        return Ok(());
+    }
 
-        let confirmations = confirmations.unwrap();
-        let total_confirmations = confirmations.0.len();
+    let total_confirmations = confirmations.len();
+    let process_results = authenticator
+        .process_confirmations(confirmation_method, confirmations)
+        .await;
 
-        let process_results = authenticator
-            .process_confirmations(confirmation_method, confirmations)
-            .await;
-
-        if process_results.is_ok() {
-            println!("Success! {total_confirmations} confirmations were processed.");
-        } else {
-            println!("Error processing {total_confirmations} confirmations.");
-        }
+    if process_results.is_ok() {
+        println!("Success! {total_confirmations} confirmations were processed.");
     } else {
-        panic!("There was an error fetching confirmations. Please try again")
+        println!("Error processing {total_confirmations} confirmations.");
     }
 
     Ok(())
@@ -287,11 +285,10 @@ async fn handle_login(
     account: &str,
     password: &str,
     shared_secret: Option<MobileAuthFile>,
-) -> Result<SteamAuthenticator<Authenticated>> {
-    let user = shared_secret.map_or_else(
-        || User::new(account.to_string(), password.to_string()),
-        |ma_file| User::new(account.to_string(), password.to_string()).ma_file(ma_file),
-    );
+) -> Result<SteamAuthenticator<Authenticated, PresentMaFile>> {
+    let user = shared_secret
+        .map(|ma_file| SteamUser::new(account.to_string(), password.to_string()).with_mafile(ma_file))
+        .expect("Safe.");
 
     let authenticator = SteamAuthenticator::new(user);
     authenticator.login().err_into().await
