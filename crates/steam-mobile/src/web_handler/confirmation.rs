@@ -50,12 +50,15 @@ impl Display for Confirmation {
 }
 
 impl Confirmation {
-    pub fn has_trade_offer_id(&self, offer_id: i64) -> bool {
+    pub fn has_trade_offer_id(&self, offer_id: u64) -> bool {
+        self.kind == EConfirmationType::Trade && offer_id == self.creator_id.parse::<u64>().unwrap()
+    }
+    pub fn trade_offer_id(&self) -> Option<u64> {
         if self.kind == EConfirmationType::Trade {
-            // return self.details.map_or(false, |d| d.trade_offer_id == Some(offer_id));
-            todo!()
+            self.creator_id.parse().ok()
+        } else {
+            None
         }
-        false
     }
 }
 
@@ -97,34 +100,24 @@ impl From<Vec<Confirmation>> for Confirmations {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
-pub enum ConfirmationTag {
-    Confirmation,
-    ConfirmationDetails,
-}
-
-impl ConfirmationTag {
-    pub(crate) const fn value(&self) -> &'static str {
-        match *self {
-            ConfirmationTag::Confirmation => "conf",
-            ConfirmationTag::ConfirmationDetails => "details",
-        }
-    }
-}
-
 #[allow(missing_docs)]
-#[derive(Copy, Clone, Debug)]
-pub enum ConfirmationMethod {
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+pub enum ConfirmationAction {
+    Retrieve,
     Accept,
     Deny,
 }
 
-impl ConfirmationMethod {
-    pub(crate) const fn value(&self) -> &'static str {
-        match *self {
+impl ConfirmationAction {
+    pub(crate) const fn as_operation(self) -> Option<&'static str> {
+        Some(match self {
             Self::Accept => "allow",
             Self::Deny => "cancel",
-        }
+            _ => return None,
+        })
+    }
+    pub(crate) const fn as_tag(self) -> &'static str {
+        "conf"
     }
 }
 
