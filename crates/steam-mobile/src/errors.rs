@@ -25,6 +25,13 @@ pub enum AuthError {
 
 #[allow(missing_docs)]
 #[derive(Error, Debug)]
+pub enum ConfirmationError {
+    #[error("General Failure: `{0}`")]
+    GeneralError(String),
+}
+
+#[allow(missing_docs)]
+#[derive(Error, Debug)]
 pub enum ApiKeyError {
     #[error("General Failure: `{0}`")]
     GeneralError(String),

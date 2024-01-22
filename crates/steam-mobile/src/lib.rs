@@ -29,11 +29,10 @@ pub use reqwest::Method;
 pub use reqwest::Url;
 use serde::Deserialize;
 use serde::Serialize;
-use steam_totp::Secret;
 use steamid_parser::SteamID;
 pub use utils::format_captcha_url;
 use uuid::Uuid;
-pub use web_handler::confirmation::ConfirmationMethod;
+pub use web_handler::confirmation::ConfirmationAction;
 pub use web_handler::confirmation::Confirmations;
 pub use web_handler::confirmation::EConfirmationType;
 pub use web_handler::steam_guard_linker::AddAuthenticatorStep;
@@ -49,6 +48,7 @@ pub mod errors;
 mod page_scraper;
 pub(crate) mod retry;
 mod types;
+pub mod user;
 pub(crate) mod utils;
 mod web_handler;
 
@@ -60,7 +60,7 @@ const MA_FILE_EXT: &str = ".maFile";
 // HOST SHOULD BE USED FOR COOKIE RETRIEVAL INSIDE COOKIE JAR!!
 
 /// Steam Community Cookie Host
-pub(crate) const STEAM_COMMUNITY_HOST: &str = ".steamcommunity.com";
+pub(crate) const STEAM_COMMUNITY_HOST: &str = "steamcommunity.com";
 /// Steam Help Cookie Host
 pub(crate) const STEAM_HELP_HOST: &str = ".help.steampowered.com";
 /// Steam Store Cookie Host
@@ -82,25 +82,6 @@ const MOBILE_REFERER: &str = concatcp!(
 
 #[allow(missing_docs)]
 pub type AuthResult<T> = Result<T, AuthError>;
-
-/// User that is needed for the authenticator to work.
-/// Ideally all fields should be populated before authenticator operations are made.
-///
-/// A simple implementation that has everything required to work properly:
-/// ```no_run
-/// use steam_mobile::User;
-///
-/// User::new("test_username".to_string(), "password".to_string())
-///     .parental_code("1111") // Only needed if the is a parental code, otherwise skip
-///     .ma_file_from_disk("assets/my.maFile");
-/// ```
-#[derive(Debug, Clone)]
-pub struct User {
-    username: String,
-    password: String,
-    parental_code: Option<String>,
-    linked_mafile: Option<MobileAuthFile>,
-}
 
 /// Information that we cache after the login operation to avoid querying Steam multiple times.
 #[derive(Debug, Clone)]
@@ -147,68 +128,6 @@ impl SteamCache {
 
     fn oauth_token(&self) -> &str {
         &self.oauth_token
-    }
-}
-
-impl User {
-    /// Creates a new valid `User` with the bare minimum credentials.
-    #[must_use]
-    pub fn new(username: String, password: String) -> Self {
-        Self {
-            username,
-            password,
-            parental_code: None,
-            linked_mafile: None,
-        }
-    }
-
-    fn shared_secret(&self) -> Option<Secret> {
-        Some(Secret::from_b64(&self.linked_mafile.as_ref()?.shared_secret).unwrap())
-    }
-
-    fn identity_secret(&self) -> Option<Secret> {
-        Some(Secret::from_b64(&self.linked_mafile.as_ref()?.identity_secret).unwrap())
-    }
-
-    fn device_id(&self) -> Option<&str> {
-        Some(self.linked_mafile.as_ref()?.device_id.as_ref()?)
-    }
-
-    /// Sets the account username, mandatory
-    #[must_use]
-    pub fn username<T: ToString>(mut self, username: T) -> Self {
-        self.username = username.to_string();
-        self
-    }
-
-    /// Sets the account password, mandatory
-    #[must_use]
-    pub fn password<T: ToString>(mut self, password: T) -> Self {
-        self.password = password.to_string();
-        self
-    }
-
-    /// Sets the parental code, if any.
-    #[must_use]
-    pub fn parental_code<T: ToString>(mut self, parental_code: T) -> Self {
-        self.parental_code = Some(parental_code.to_string());
-        self
-    }
-
-    /// Convenience function that imports the file from disk
-    pub fn ma_file_from_disk<T>(mut self, path: T) -> Result<Self, AuthError>
-    where
-        T: Into<PathBuf>,
-    {
-        self.linked_mafile = Some(MobileAuthFile::from_disk(path)?);
-        Ok(self)
-    }
-
-    #[allow(missing_docs)]
-    #[must_use]
-    pub fn ma_file(mut self, ma_file: MobileAuthFile) -> Self {
-        self.linked_mafile = Some(ma_file);
-        self
     }
 }
 

@@ -1,12 +1,12 @@
+use std::fmt::Display;
+use std::fmt::Formatter;
 use std::iter::FromIterator;
-use std::str::FromStr;
 
 use derive_more::Deref;
 use derive_more::IntoIterator;
-use num_derive::FromPrimitive;
-use num_traits::FromPrimitive;
 use serde::Deserialize;
-use serde::Serialize;
+use serde_repr::Deserialize_repr;
+use serde_repr::Serialize_repr;
 
 /// A collection of [`Confirmation`]
 #[derive(IntoIterator, Deref, Default, Debug)]
@@ -23,20 +23,42 @@ impl<'a> FromIterator<&'a Confirmation> for Confirmations {
 }
 
 /// A pending Steam confirmation.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Confirmation {
     pub id: String,
+    #[serde(rename = "nonce")]
     pub key: String,
+    #[serde(rename = "type")]
     pub kind: EConfirmationType,
-    pub details: Option<ConfirmationDetails>,
+    pub creation_time: i64,
+    pub creator_id: String,
+    pub type_name: String,
+    // from below here, nothing really useful
+    // pub cancel: String,
+    // pub accept: String,
+    // pub icon: String,
+    // pub multi: bool,
+    // pub headline: String,
+    // pub summary: Vec<String>,
+    // pub warn: Option<String>,
+}
+
+impl Display for Confirmation {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Confirmation {} of {:?}", self.key, self.kind)
+    }
 }
 
 impl Confirmation {
-    pub fn has_trade_offer_id(&self, offer_id: i64) -> bool {
+    pub fn has_trade_offer_id(&self, offer_id: u64) -> bool {
+        self.kind == EConfirmationType::Trade && offer_id == self.creator_id.parse::<u64>().unwrap()
+    }
+    pub fn trade_offer_id(&self) -> Option<u64> {
         if self.kind == EConfirmationType::Trade {
-            return self.details.map_or(false, |d| d.trade_offer_id == Some(offer_id));
+            self.creator_id.parse().ok()
+        } else {
+            None
         }
-        false
     }
 }
 
@@ -48,8 +70,10 @@ pub struct ConfirmationDetails {
     pub trade_offer_id: Option<i64>,
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, Eq, PartialEq, FromPrimitive)]
-/// Kinds of confirmations that exist.
+/// Kinds of mobile confirmations
+#[derive(Debug, Copy, Clone, Serialize_repr, Deserialize_repr, Eq, PartialEq)]
+#[repr(u8)]
+#[non_exhaustive]
 pub enum EConfirmationType {
     /// Unknown confirmation
     Unknown = 0,
@@ -60,41 +84,40 @@ pub enum EConfirmationType {
     /// Confirmation from Steam's Market
     Market = 3,
 
-    // We're missing information about definition of number 4 type
+    /// Unknown
+    FeatureOptOut = 4,
     /// Confirmation for a phone number change
     PhoneNumberChange = 5,
     /// Confirmation for account recovery
     AccountRecovery = 6,
-}
-
-impl FromStr for EConfirmationType {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let number = u32::from_str(s).unwrap();
-        Ok(EConfirmationType::from_u32(number).unwrap())
-    }
+    /// Confirmation for creating a new API Key,
+    APIKey = 9,
 }
 
 impl From<Vec<Confirmation>> for Confirmations {
     fn from(confirmations_vec: Vec<Confirmation>) -> Self {
-        Self { 0: confirmations_vec }
+        Self(confirmations_vec)
     }
 }
 
 #[allow(missing_docs)]
-#[derive(Copy, Clone, Debug)]
-pub enum ConfirmationMethod {
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+pub enum ConfirmationAction {
+    Retrieve,
     Accept,
     Deny,
 }
 
-impl ConfirmationMethod {
-    pub(crate) fn value(&self) -> &'static str {
-        match *self {
+impl ConfirmationAction {
+    pub(crate) const fn as_operation(self) -> Option<&'static str> {
+        Some(match self {
             Self::Accept => "allow",
             Self::Deny => "cancel",
-        }
+            _ => return None,
+        })
+    }
+    pub(crate) const fn as_tag(self) -> &'static str {
+        "conf"
     }
 }
 

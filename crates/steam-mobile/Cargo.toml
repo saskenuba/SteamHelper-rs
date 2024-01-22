@@ -18,12 +18,11 @@ cli = ["clap", "dialoguer", "anyhow", "tokio"]
 [dependencies]
 backoff = { version = "0.4", features = ["tokio", "futures"] }
 hex = "0.4"
-num-derive = "0.3"
-num-traits = "0.2"
 parking_lot = "^0"
 rsa = "0.9"
 scraper = "0.18"
-serde_with = { version = "1.5", features = ["json"] }
+serde_with = { version = "^3", features = [] }
+downcast-rs = { version = "^1" }
 thiserror = "1"
 tracing = "0.1"
 tracing-futures = "0.2"
@@ -39,9 +38,11 @@ futures.workspace = true
 rand.workspace = true
 reqwest.workspace = true
 
+serde_urlencoded = "^0"
 serde.workspace = true
 serde_derive.workspace = true
 serde_json.workspace = true
+serde_repr.workspace = true
 strum.workspace = true
 strum_macros.workspace = true
 
