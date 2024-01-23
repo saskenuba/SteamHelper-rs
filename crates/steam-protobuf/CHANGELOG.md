@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.2.0 (2024-01-23)
 
+<csr-id-db63677f7d216532c0f072b5dbcf34e2925e6b0e/>
+
 ### New Features
 
  - <csr-id-f80d2d96441ae050348d6a76848492fa8c80a479/> added ProtobufSerialize and ProtobufDeserialize to avoid importing
@@ -22,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - <csr-id-db63677f7d216532c0f072b5dbcf34e2925e6b0e/> updated submodule with latest protobufs
 
+### Other
+
+ - <csr-id-136ceb331a479b538ba363b9448fb14542058eea/> added changelog and prepare for release
+
 ### New Features (BREAKING)
 
  - <csr-id-01e22f1e0f8e5a13f6d67e745ac10e4ea25f29da/> regenerated all steam protobufs, new build.rs
@@ -30,9 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 6 calendar days.
+ - 6 commits contributed to the release over the course of 6 calendar days.
  - 615 days passed between releases.
- - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -42,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Added changelog and prepare for release ([`136ceb3`](https://github.com/saskenuba/SteamHelper-rs/commit/136ceb331a479b538ba363b9448fb14542058eea))
     - Changed trait bounds, changed errors ([`4fd14a2`](https://github.com/saskenuba/SteamHelper-rs/commit/4fd14a2055fb51ff9224e88576b5efaea4a61424))
     - Added ProtobufSerialize and ProtobufDeserialize to avoid importing ([`f80d2d9`](https://github.com/saskenuba/SteamHelper-rs/commit/f80d2d96441ae050348d6a76848492fa8c80a479))
     - Adjusted steam-protobuf to generate by main function ([`f9dcd16`](https://github.com/saskenuba/SteamHelper-rs/commit/f9dcd168a793d1b879ee6f1cf184ee59f5dfde8f))

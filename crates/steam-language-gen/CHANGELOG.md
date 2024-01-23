@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.1.3 (2024-01-23)
 
+<csr-id-8e82b3df552648eccad3e3d572c3215bd7e16c86/>
+
 ### Bug Fixes
 
  - <csr-id-cf93aa068e3c8828921d02b44ebe33610ce56600/> adjusted steam-language-gen to protobuf trait rename
@@ -16,13 +18,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - <csr-id-8e82b3df552648eccad3e3d572c3215bd7e16c86/> bumped steamkit submodule
 
+### Other
+
+ - <csr-id-ea700e7d188525b08e1ad3ce8f35f1768ff9e494/> prepared changelog for release
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 11 calendar days.
+ - 5 commits contributed to the release over the course of 12 calendar days.
  - 615 days passed between releases.
- - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -32,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepared changelog for release ([`ea700e7`](https://github.com/saskenuba/SteamHelper-rs/commit/ea700e7d188525b08e1ad3ce8f35f1768ff9e494))
     - Adjusted steam-language-gen to protobuf trait rename ([`cf93aa0`](https://github.com/saskenuba/SteamHelper-rs/commit/cf93aa068e3c8828921d02b44ebe33610ce56600))
     - Adjusted steam-language-gen to new generated protobufs ([`1f04859`](https://github.com/saskenuba/SteamHelper-rs/commit/1f04859fec6328ce5d19af878b98fcb6ac97f053))
     - Merge pull request #15 from saskenuba/steam-mobile-login-revamp ([`d6cf2ef`](https://github.com/saskenuba/SteamHelper-rs/commit/d6cf2ef64b3efbd95dbd7d8de738c2a7d956ff2d))

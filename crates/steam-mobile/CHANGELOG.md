@@ -7,11 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.4.0 (2024-01-23)
 
+<csr-id-154212b00831bebc6ff4b7c351fee7c78dc90aa2/>
+<csr-id-f37078a6c55650561b60faa6e9daac0b04efad41/>
+<csr-id-179492088b413f18b5a6ea83167a2d5c807f58cc/>
+<csr-id-6457ec23fabec9fe7965b93eabea3ca4b850fe33/>
+<csr-id-54af8c01c71bbc511eae6d37e537b465842fe226/>
+<csr-id-af9b9350dcefdf5e74e71fa890a365ac508571c4/>
+
 ### Documentation
 
  - <csr-id-0142d141bebfbe9d641ef98098ee9f9c8acd1757/> fixed wrong docs
 
 ### New Features
+
+<csr-id-9d864866b00e05bcf1cb1b7db389b5a2a4c11557/>
+<csr-id-65121ed55a3eb6d6b3068cc7d6ffe0bf6dc74c06/>
+<csr-id-42998bd67bd0fc0bdae73db9b191ebc3461fb551/>
+<csr-id-8cf954b4d03e29891ea37f219c086b025faab05d/>
+<csr-id-95568ed52550c821212862ad0515e3cf2a69b6f4/>
+<csr-id-897479ea62281f23a222bf735ceda6a22c557046/>
+<csr-id-02f302c9e67aebab3a7c9a892100b12fd5537de0/>
+<csr-id-fb218a3bdb7a047050c307b47c29800e51c59608/>
+<csr-id-cad5810fed6cc3298a9497cb367ca7ebbb113d96/>
+<csr-id-d88d9c3cd338c670db487bda8482ebb33ddb76b6/>
 
  - <csr-id-fe6c19345b15cb4b63f75b05418e0213e8b2b665/> cli is compiling again
  - <csr-id-8fea774279551db86f6b92315a059ab5339ced9b/> adjusted confirmation inner methods
@@ -21,21 +39,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    this allows methods that requires a mafile to not show up on completions
    
    * SteamUser states are SteamUser<PresentMaFile> and SteamUser<AbsentMaFile>;
-   * Confirmation retrieval is now working correctly;
-   * API Key registration is almost working again, only sending confirmations are
+* Confirmation retrieval is now working correctly;
+* API Key registration is almost working again, only sending confirmations are
    needed;
-   * Removed manually adding cookies after pinging steam domains, this is done
+* Removed manually adding cookies after pinging steam domains, this is done
    automatically now by request method;
- - <csr-id-9d864866b00e05bcf1cb1b7db389b5a2a4c11557/> cookies are handled directly by request, no need to manually input them on storage
- - <csr-id-65121ed55a3eb6d6b3068cc7d6ffe0bf6dc74c06/> removed unused confirmations scrapers, confirmations are now a json response
- - <csr-id-42998bd67bd0fc0bdae73db9b191ebc3461fb551/> removed unused types, added new confirmations kinds, adjusted Confirmation
- - <csr-id-8cf954b4d03e29891ea37f219c086b025faab05d/> removed warnings, fixed docs
- - <csr-id-95568ed52550c821212862ad0515e3cf2a69b6f4/> clippy lints, docs, renamed internal functions
- - <csr-id-897479ea62281f23a222bf735ceda6a22c557046/> login and storage of cookies working correctly, cleannup of docs and comments
- - <csr-id-02f302c9e67aebab3a7c9a892100b12fd5537de0/> all improved internal APIs returning only errors from own crate
- - <csr-id-fb218a3bdb7a047050c307b47c29800e51c59608/> new steam login method, removed unused old types
- - <csr-id-cad5810fed6cc3298a9497cb367ca7ebbb113d96/> added remove_authenticator method, clippy lints and fixes
- - <csr-id-d88d9c3cd338c670db487bda8482ebb33ddb76b6/> Remove Rc<RefCell<T>> from cookie jar and mobile client; organized cargo.toml
 
 ### Bug Fixes
 
@@ -54,28 +62,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - <csr-id-54af8c01c71bbc511eae6d37e537b465842fe226/> typos and clippy lints on app cli
  - <csr-id-af9b9350dcefdf5e74e71fa890a365ac508571c4/> moved shared dependencies into workspace, added them to steam-mobile
 
+### Other
+
+ - <csr-id-dd51f9fda6bcdaccb3f6baeff70bf03fd325e3c4/> added changelog and bumped to 0.4.0
+
 ### New Features (BREAKING)
+
+<csr-id-757ff98ce1b619715ea076b4241e3252156e0757/>
 
  - <csr-id-d043dd67293431c9a81ee7c5f5b4e02e955c32e8/> Auth is now typed with SteamAuthenticator<Authenticated> with proper methods;
    * access_token is now working correctly for QueryStatus, for example, but still
    need to adapt all linker related methods;
-   
-   BREAKING CHANGES:
-   * Removed weird wrapper around Confirmations;
-   * Only method available on SteamAuthenticator<Unauthenticated> is login mostly;
- - <csr-id-757ff98ce1b619715ea076b4241e3252156e0757/> changes
-   * BREAKING CHANGE: Added InternalError to return types;
-   * BREAKING CHANGE: renamed MobileAuthFile from_str -> from_json;
-   * Additional request and deserialize functions to avoid duplication;
-   * CachedInfo is now SteamCache
+* Removed weird wrapper around Confirmations;
+* Only method available on SteamAuthenticator<Unauthenticated> is login mostly;
+* BREAKING CHANGE: Added InternalError to return types;
+* BREAKING CHANGE: renamed MobileAuthFile from_str -> from_json;
+* Additional request and deserialize functions to avoid duplication;
+* CachedInfo is now SteamCache
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 34 commits contributed to the release over the course of 17 calendar days.
- - 579 days passed between releases.
- - 29 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 35 commits contributed to the release over the course of 18 calendar days.
+ - 580 days passed between releases.
+ - 30 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -85,6 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Added changelog and bumped to 0.4.0 ([`dd51f9f`](https://github.com/saskenuba/SteamHelper-rs/commit/dd51f9fda6bcdaccb3f6baeff70bf03fd325e3c4))
     - Merge pull request #17 from saskenuba/mobile-confirmations-fix ([`bbec693`](https://github.com/saskenuba/SteamHelper-rs/commit/bbec69346043c586fcd3d8cdf2b04cc732f0b0d5))
     - Cli is compiling again ([`fe6c193`](https://github.com/saskenuba/SteamHelper-rs/commit/fe6c19345b15cb4b63f75b05418e0213e8b2b665))
     - Adjusted confirmation inner methods ([`8fea774`](https://github.com/saskenuba/SteamHelper-rs/commit/8fea774279551db86f6b92315a059ab5339ced9b))
@@ -120,6 +132,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Added remove_authenticator method, clippy lints and fixes ([`cad5810`](https://github.com/saskenuba/SteamHelper-rs/commit/cad5810fed6cc3298a9497cb367ca7ebbb113d96))
     - Remove Rc<RefCell<T>> from cookie jar and mobile client; organized cargo.toml ([`d88d9c3`](https://github.com/saskenuba/SteamHelper-rs/commit/d88d9c3cd338c670db487bda8482ebb33ddb76b6))
 </details>
+
+<csr-unknown>
+ cookies are handled directly by request, no need to manually input them on storage removed unused confirmations scrapers, confirmations are now a json response removed unused types, added new confirmations kinds, adjusted Confirmation removed warnings, fixed docs clippy lints, docs, renamed internal functions login and storage of cookies working correctly, cleannup of docs and comments all improved internal APIs returning only errors from own crate new steam login method, removed unused old types added remove_authenticator method, clippy lints and fixes Remove Rc<RefCell<T>> from cookie jar and mobile client; organized cargo.tomlBREAKING CHANGES: changes<csr-unknown/>
 
 ## 0.3.1 (2022-06-22)
 
