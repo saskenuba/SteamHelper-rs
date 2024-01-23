@@ -13,6 +13,7 @@ regen = ["walkdir", "glob", "protobuf-codegen", "protoc-bin-vendored", "protoc-r
 
 [dependencies]
 bytes = "^1"
+cfg-if = "1"
 thiserror = "^1"
 protobuf = { version = "^3", features = ["with-bytes"] }
 protobuf-json-mapping = "^3"
