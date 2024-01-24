@@ -7,7 +7,11 @@
 //! steam-trading = { version = "*", features = ["time"] }
 //! ```
 
-use chrono::{DateTime, Duration, NaiveDateTime, TimeZone, Utc};
+use chrono::DateTime;
+use chrono::Duration;
+use chrono::NaiveDateTime;
+use chrono::TimeZone;
+use chrono::Utc;
 
 pub const ONE_HOUR_SECONDS: i64 = 3600;
 pub const ONE_WEEK_SECONDS: i64 = ONE_HOUR_SECONDS * 24 * 7;
@@ -18,18 +22,19 @@ const PST_TO_UTC_OFFSET_SECONDS: i64 = ONE_HOUR_SECONDS * 8;
 
 /// Adds the Steam Midnight offset to a completed trade time epoch
 fn trade_time_with_offset(trade_complete_time_epoch: i64) -> DateTime<Utc> {
-    let trade_utc = Utc.timestamp(trade_complete_time_epoch, 0);
+    // safe to unwrap
+    let trade_utc = Utc.timestamp_opt(trade_complete_time_epoch, 0).unwrap();
 
     trade_utc + Duration::seconds(STEAM_MIDNIGHT_OFFSET_UTC_SECONDS)
 }
 
+#[must_use]
 pub fn estimate_tradelock_end(trade_completed_on_epoch: i64, trade_lock_duration_seconds: i64) -> NaiveDateTime {
     let trade_with_offset = trade_time_with_offset(trade_completed_on_epoch);
     let trade_lock_duration = Duration::seconds(trade_lock_duration_seconds);
-
     let end_date = trade_with_offset + trade_lock_duration;
-    let tradelock_end_datetime = end_date.date().and_hms(0, 0, 0) + Duration::seconds(PST_TO_UTC_OFFSET_SECONDS);
-    tradelock_end_datetime.naive_utc()
+
+    end_date.naive_utc() + Duration::seconds(PST_TO_UTC_OFFSET_SECONDS)
 }
 
 #[cfg(test)]
