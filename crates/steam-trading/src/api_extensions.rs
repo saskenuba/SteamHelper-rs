@@ -1,7 +1,10 @@
-use tappet::response_types::{
-    CEcon_Asset, GetTradeHistoryResponse, GetTradeOfferResponse, GetTradeOffersResponse, TradeHistory_Trade,
-    TradeHistory_TradedAsset, TradeOffer_Trade,
-};
+use tappet::response_types::CEcon_Asset;
+use tappet::response_types::GetTradeHistoryResponse;
+use tappet::response_types::GetTradeOfferResponse;
+use tappet::response_types::GetTradeOffersResponse;
+use tappet::response_types::TradeHistory_Trade;
+use tappet::response_types::TradeHistory_TradedAsset;
+use tappet::response_types::TradeOffer_Trade;
 
 pub trait HasAssets {
     type Asset;
@@ -52,7 +55,7 @@ impl FilterBy<TradeHistory_Trade> for GetTradeHistoryResponse {
 
     fn partition_by<T: Fn(&TradeHistory_Trade) -> bool>(
         self,
-        filter_fn: T,
+        _filter_fn: T,
     ) -> (Vec<TradeHistory_Trade>, Vec<TradeHistory_Trade>) {
         unimplemented!()
     }
@@ -83,7 +86,7 @@ impl FilterBy<TradeHistory_TradedAsset> for TradeHistory_Trade {
 
     fn partition_by<T: Fn(&TradeHistory_TradedAsset) -> bool>(
         self,
-        filter_fn: T,
+        _filter_fn: T,
     ) -> (Vec<TradeHistory_TradedAsset>, Vec<TradeHistory_TradedAsset>) {
         unimplemented!()
     }
@@ -122,7 +125,7 @@ impl FilterBy<TradeOffer_Trade> for GetTradeOfferResponse {
 
     fn partition_by<T: Fn(&TradeOffer_Trade) -> bool>(
         self,
-        filter_fn: T,
+        _filter_fn: T,
     ) -> (Vec<TradeOffer_Trade>, Vec<TradeOffer_Trade>) {
         unimplemented!()
     }

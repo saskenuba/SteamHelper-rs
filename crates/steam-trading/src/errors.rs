@@ -1,6 +1,6 @@
+use steam_language_gen::generated::enums::EResult;
 use steam_mobile::errors::AuthError;
 use steam_mobile::HttpError;
-use steam_language_gen::generated::enums::EResult;
 use tappet::errors::SteamAPIError;
 use thiserror::Error;
 
@@ -8,10 +8,7 @@ use thiserror::Error;
 #[non_exhaustive]
 pub enum TradeError {
     #[error("`{0}`")]
-    PayloadError(String),
-
-    #[error(transparent)]
-    ConfirmationError(#[from] ConfirmationError),
+    GeneralError(String),
 
     #[error(transparent)]
     TradeOfferError(#[from] OfferError),
@@ -23,16 +20,25 @@ pub enum TradeError {
     SteamAPIError(#[from] SteamAPIError),
 
     #[error(transparent)]
-    /// request errors
-    HttpError(#[from] HttpError),
+    ConfirmationError(#[from] ConfirmationError),
 
-    /// inner steam authenticator errors
     #[error(transparent)]
     AuthError(#[from] AuthError),
+
+    #[error(transparent)]
+    InternalError(#[from] InternalError),
+}
+
+#[derive(Error, Debug)]
+pub enum InternalError {
+    #[error(transparent)]
+    NetworkError(#[from] HttpError),
+
+    #[error(transparent)]
+    MobileInternalError(#[from] steam_mobile::errors::InternalError),
 }
 
 #[derive(Error, Debug, PartialEq, Copy, Clone)]
-///
 pub enum TradelinkError {
     #[error("The Tradeoffer URL was not valid.")]
     Invalid,
@@ -58,8 +64,8 @@ pub enum OfferError {
     InvalidState,
 
     #[error(
-        "This trade offer id could not be found. It may be already canceled or even accepted.\
-         Are you sure this is the correct id?"
+        "This trade offer id could not be found. It may be already canceled or even accepted.Are you sure this is the \
+         correct id?"
     )]
     NoMatch,
 
@@ -70,8 +76,8 @@ pub enum OfferError {
     Revoked,
 
     #[error(
-        "This suggests that the user receiving the trade offer recently activated his mobile SteamGuard and \
-         is under the 7 day restriction period."
+        "This suggests that the user receiving the trade offer recently activated his mobile SteamGuard and is under \
+         the 7 day restriction period."
     )]
     SteamGuardRecentlyEnabled,
 
@@ -84,10 +90,10 @@ pub enum ConfirmationError {
     #[error("Could not find the requested confirmation.")]
     NotFound,
     #[error("Could not find the requested confirmation, but offer was created. Trade offer id: `{0}`")]
-    NotFoundButTradeCreated(i64),
+    NotFoundButTradeCreated(u64),
 }
 
-pub(crate) fn tradeoffer_error_from_eresult(eresult: EResult) -> OfferError {
+pub fn tradeoffer_error_from_eresult(eresult: EResult) -> OfferError {
     match eresult {
         EResult::Revoked => OfferError::Revoked,
         EResult::InvalidState => OfferError::InvalidState,
@@ -100,7 +106,7 @@ pub(crate) fn tradeoffer_error_from_eresult(eresult: EResult) -> OfferError {
     }
 }
 
-pub(crate) fn error_from_strmessage(message: &str) -> Option<OfferError> {
+pub fn error_from_strmessage(message: &str) -> Option<OfferError> {
     let index_start = message.find(|c: char| c == '(')?;
     let index_end = message.find(|c: char| c == ')')?;
 

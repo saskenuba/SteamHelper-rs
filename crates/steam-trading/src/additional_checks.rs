@@ -1,8 +1,14 @@
-use crate::{OfferError, TradeError, TryFutureExt, TRADEOFFER_BASE};
-use scraper::{Html, Selector};
-use steam_mobile::client::SteamAuthenticator;
+use scraper::Html;
+use scraper::Selector;
 use steam_mobile::Method;
 use steamid_parser::SteamID;
+
+use crate::errors::InternalError;
+use crate::OfferError;
+use crate::SteamCompleteAuthenticator;
+use crate::TradeError;
+use crate::TryFutureExt;
+use crate::TRADEOFFER_BASE;
 
 fn is_steam_guard_error(document: &str) -> bool {
     let doc = Html::parse_document(document);
@@ -23,8 +29,8 @@ fn is_steam_guard_error(document: &str) -> bool {
     false
 }
 
-pub async fn check_steam_guard_error(
-    authenticator: &SteamAuthenticator,
+pub(crate) async fn check_steam_guard_error(
+    authenticator: &SteamCompleteAuthenticator,
     steamid: SteamID,
     token: &str,
 ) -> Result<(), TradeError> {
@@ -37,10 +43,11 @@ pub async fn check_steam_guard_error(
 
     let response = authenticator
         .request_custom_endpoint(endpoint, Method::GET, None, None::<&u8>)
-        .and_then(|x| x.text())
+        .err_into::<InternalError>()
         .await?;
+    let text = response.text().err_into::<InternalError>().await?;
 
-    if is_steam_guard_error(&response) {
+    if is_steam_guard_error(&text) {
         Err(OfferError::SteamGuardRecentlyEnabled.into())
     } else {
         Ok(())

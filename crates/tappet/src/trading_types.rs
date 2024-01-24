@@ -1,12 +1,12 @@
 //! Types returned by Steam trade operations.
 //!
 //! The models described here can be found at:
-//! https://developer.valvesoftware.com/wiki/Steam_Web_API/IEconService
+//! `https://developer.valvesoftware.com/wiki/Steam_Web_API/IEconService`
 
 use serde::Deserialize;
 use serde_repr::Deserialize_repr;
-
-use steam_language_gen::generated::enums::{ETradeOfferConfirmationMethod, ETradeOfferState};
+use steam_language_gen::generated::enums::ETradeOfferConfirmationMethod;
+use steam_language_gen::generated::enums::ETradeOfferState;
 
 /// Tracks the status of a completed trade. I.e. after a trade offer has been accepted.
 /// Received at GetTradeHistory endpoint, on `status` field.
@@ -84,7 +84,7 @@ pub struct CEcon_GetTradeOffers_Response {
 pub struct TradeOffer_Trade {
     /// Unique ID generated when a trade offer is created
     #[serde(with = "serde_with::rust::display_fromstr")]
-    pub tradeofferid: i64,
+    pub tradeofferid: u64,
     /// SteamID3
     pub accountid_other: u64,
     /// Message included by the creator of the trade offer
@@ -182,7 +182,6 @@ pub struct TradeHistory_TradedAsset {
     pub instanceid: i64,
     #[serde(with = "serde_with::rust::display_fromstr")]
     pub amount: i64,
-
     // #[serde(with = "serde_with::rust::display_fromstr")]
     // pub currencyid: Option<i64>,
 }

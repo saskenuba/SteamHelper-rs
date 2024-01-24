@@ -27,37 +27,56 @@
     unused_qualifications
 )]
 
-use std::cell::RefCell;
-use std::rc::Rc;
 use std::str::FromStr;
+use std::sync::Arc;
 use std::time::Duration;
 
 use const_format::concatcp;
-pub use errors::{OfferError, TradeError, TradelinkError};
+pub use errors::ConfirmationError;
+pub use errors::InternalError;
+pub use errors::OfferError;
+pub use errors::TradeError;
+pub use errors::TradelinkError;
 use futures::stream::FuturesOrdered;
-use futures::{StreamExt, TryFutureExt};
+use futures::StreamExt;
+use futures::TryFutureExt;
 use futures_timer::Delay;
 use serde::de::DeserializeOwned;
 use steam_language_gen::generated::enums::ETradeOfferState;
-use steam_mobile::client::SteamAuthenticator;
-use steam_mobile::{ConfirmationMethod, Confirmations, HeaderMap, Method, STEAM_COMMUNITY_HOST};
+use steam_mobile::user::PresentMaFile;
+use steam_mobile::Authenticated;
+use steam_mobile::ConfirmationAction;
+use steam_mobile::HeaderMap;
+use steam_mobile::Method;
+use steam_mobile::SteamAuthenticator;
+use steam_mobile::STEAM_COMMUNITY_HOST;
 use steamid_parser::SteamID;
-use tappet::response_types::{GetTradeHistoryResponse, GetTradeOffersResponse, TradeHistory_Trade, TradeOffer_Trade};
-use tappet::{Executor, ExecutorResponse, SteamAPI};
-use tracing::{debug, info};
+use tappet::response_types::GetTradeHistoryResponse;
+use tappet::response_types::GetTradeOffersResponse;
+use tappet::response_types::TradeHistory_Trade;
+use tappet::response_types::TradeOffer_Trade;
+use tappet::ExecutorResponse;
+use tappet::SteamAPI;
+use tracing::debug;
 pub use types::asset_collection::AssetCollection;
 pub use types::trade_link::Tradelink;
 pub use types::trade_offer::TradeOffer;
 
 use crate::additional_checks::check_steam_guard_error;
-use crate::api_extensions::{FilterBy, HasAssets};
-use crate::errors::TradeError::PayloadError;
-use crate::errors::{error_from_strmessage, tradeoffer_error_from_eresult, ConfirmationError};
+use crate::api_extensions::FilterBy;
+use crate::api_extensions::HasAssets;
+use crate::errors::error_from_strmessage;
+use crate::errors::tradeoffer_error_from_eresult;
+use crate::errors::TradeError::GeneralError;
 use crate::types::sessionid::HasSessionID;
-use crate::types::trade_offer_web::{
-    TradeOfferAcceptRequest, TradeOfferCancelResponse, TradeOfferCommonParameters, TradeOfferCreateRequest,
-    TradeOfferCreateResponse, TradeOfferGenericErrorResponse, TradeOfferGenericRequest, TradeOfferParams,
-};
+use crate::types::trade_offer_web::TradeOfferAcceptRequest;
+use crate::types::trade_offer_web::TradeOfferCancelResponse;
+use crate::types::trade_offer_web::TradeOfferCommonParameters;
+use crate::types::trade_offer_web::TradeOfferCreateRequest;
+use crate::types::trade_offer_web::TradeOfferCreateResponse;
+use crate::types::trade_offer_web::TradeOfferGenericErrorResponse;
+use crate::types::trade_offer_web::TradeOfferGenericRequest;
+use crate::types::trade_offer_web::TradeOfferParams;
 use crate::types::TradeKind;
 
 mod additional_checks;
@@ -87,40 +106,40 @@ const STANDARD_DELAY: u64 = 1000;
 
 const MAX_HISTORICAL_CUTOFF: u32 = u32::MAX;
 
+pub(crate) type SteamCompleteAuthenticator = SteamAuthenticator<Authenticated, PresentMaFile>;
+
 #[derive(Debug)]
 pub struct SteamTradeManager<'a> {
-    authenticator: &'a SteamAuthenticator,
-    api_client: Rc<RefCell<Option<SteamAPI>>>,
+    authenticator: &'a SteamCompleteAuthenticator,
+    api_client: SteamAPI,
 }
 
 impl<'a> SteamTradeManager<'a> {
-    pub fn new(authenticator: &'a SteamAuthenticator) -> SteamTradeManager<'a> {
-        Self {
-            authenticator: &authenticator,
-            api_client: Rc::new(RefCell::new(None)),
-        }
-    }
+    /// Returns a new `[SteamTradeManager]`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if API Key is not cached by `authenticator`.
+    pub fn new(
+        authenticator: &'a SteamAuthenticator<Authenticated, PresentMaFile>,
+    ) -> Result<SteamTradeManager<'a>, TradeError> {
+        let api_key = authenticator
+            .api_key()
+            .ok_or_else(|| GeneralError("Can't build without an API Key cached.".to_string()))?;
 
-    /// SteamAPI only gets created if API methods are needed.
-    /// Returns a reference to the `api_client`.
-    fn lazy_web_api_client<T: ToString>(&self, api_key: T) -> &Rc<RefCell<Option<SteamAPI>>> {
-        {
-            let mut api_client = self.api_client.borrow_mut();
-
-            match *api_client {
-                Some(_) => {}
-                None => *api_client = Some(SteamAPI::new(api_key.to_string())),
-            };
-        }
-
-        &self.api_client
+        Ok(Self {
+            authenticator,
+            api_client: SteamAPI::new(api_key),
+        })
     }
 
     /// Checks whether the user of `tradelink` has recently activated his mobile SteamGuard.
     pub async fn check_steam_guard_recently_activated(&self, tradelink: Tradelink) -> Result<(), TradeError> {
         let Tradelink { partner_id, token, .. } = tradelink;
 
-        check_steam_guard_error(self.authenticator, partner_id, &*token).await
+        check_steam_guard_error(self.authenticator, partner_id, &*token)
+            .err_into()
+            .await
     }
 
     /// Call to GetTradeOffers endpoint.
@@ -132,15 +151,7 @@ impl<'a> SteamTradeManager<'a> {
         received: bool,
         active_only: bool,
     ) -> Result<GetTradeOffersResponse, TradeError> {
-        let api_key = self
-            .authenticator
-            .api_key()
-            .expect("Api should be cached for this method to work.");
-        let api_client = self.lazy_web_api_client(api_key).borrow();
-
-        api_client
-            .as_ref()
-            .unwrap()
+        self.api_client
             .get()
             .IEconService()
             .GetTradeOffers(
@@ -157,25 +168,19 @@ impl<'a> SteamTradeManager<'a> {
             .await
     }
 
-    /// Call to GetTradeHistory endpoint.
-    /// If not set, defaults to a max of 500 trade offers.
+    /// Returns `[GetTradeHistoryResponse]` after a call to `GetTradeHistory` endpoint.
+    /// `max_trades` If not set will default to a maximum of 500 trade offers.
     ///
-    /// Information about completed trades, and recover new asset ids.
+    /// Contains Information about completed trades and recovery of the new asset ids that were generated after the
+    /// trade.
     async fn get_trade_offers_history(
         &self,
         max_trades: Option<u32>,
         include_failed: bool,
     ) -> Result<GetTradeHistoryResponse, TradeError> {
-        let api_key = self
-            .authenticator
-            .api_key()
-            .expect("API key must be cached in order to use this.");
         let max_trades = max_trades.unwrap_or(500);
-        let api_client = self.lazy_web_api_client(api_key).borrow();
 
-        api_client
-            .as_ref()
-            .unwrap()
+        self.api_client
             .get()
             .IEconService()
             .GetTradeHistory(max_trades, include_failed, false, None, None, None, None, None)
@@ -184,13 +189,16 @@ impl<'a> SteamTradeManager<'a> {
             .await
     }
 
-    /// Returns a single raw trade offer by its id.
-    pub async fn get_tradeoffer_by_id(&self, tradeoffer_id: i64) -> Result<Vec<TradeOffer_Trade>, TradeError> {
+    /// Returns a single trade offer.
+    pub async fn get_tradeoffer_by_id(&self, tradeoffer_id: u64) -> Result<Vec<TradeOffer_Trade>, TradeError> {
         self.get_trade_offers(true, true, true)
             .map_ok(|tradeoffers| tradeoffers.filter_by(|offer| offer.tradeofferid == tradeoffer_id))
             .await
     }
 
+    /// Returns the new asset ids for a trade of `tradeid`.
+    ///
+    /// Convenience function that internally calls `get_trade_offers_history` but filters it directly.
     pub async fn get_new_assetids(&self, tradeid: i64) -> Result<Vec<i64>, TradeError> {
         let found_trade: TradeHistory_Trade = self
             .get_trade_offers_history(None, false)
@@ -205,9 +213,9 @@ impl<'a> SteamTradeManager<'a> {
             .collect::<Vec<_>>())
     }
 
-    /// Convenience function to auto decline offers received.
+    /// Convenience function to auto decline *received* offers.
     ///
-    /// This will help keep the trade offers log clean of the total trade offer limit, if there is one.
+    /// Helps to keep the trade offers log clean of the total trade offer limit, if there is one.
     pub async fn decline_received_offers(&self) -> Result<(), TradeError> {
         let mut deny_offers_fut = FuturesOrdered::new();
 
@@ -219,13 +227,11 @@ impl<'a> SteamTradeManager<'a> {
             .await?;
 
         let total = active_received_offers.len();
-        println!("{:#?}", active_received_offers);
-
         active_received_offers
             .into_iter()
             .map(|x| x.tradeofferid)
             .for_each(|x| {
-                deny_offers_fut.push(
+                deny_offers_fut.push_back(
                     self.deny_offer(x)
                         .map_ok(|_| Delay::new(Duration::from_millis(STANDARD_DELAY))),
                 );
@@ -243,104 +249,78 @@ impl<'a> SteamTradeManager<'a> {
         Ok(())
     }
 
-    /// Creates a new trade offer, and confirms it with mobile authenticator.
-    /// Returns the trade offer id on success and if the confirmation was not found but the trade created.
+    /// Creates a new trade offer, and confirms it with the inner [`SteamAuthenticator`].
     ///
-    /// It makes the assumption that the user has set up their ma file correctly.
-    pub async fn create_offer_and_confirm(&self, tradeoffer: TradeOffer) -> Result<i64, TradeError> {
+    /// Returns the `tradeoffer_id` on success and if the confirmation was not found but the trade created.
+    pub async fn create_offer_and_confirm(&self, tradeoffer: TradeOffer) -> Result<u64, TradeError> {
         let tradeoffer_id = self.create_offer(tradeoffer).await?;
-
-        Delay::new(Duration::from_millis(STANDARD_DELAY)).await;
-
-        let confirmations: Option<Confirmations> = self
-            .authenticator
-            .fetch_confirmations()
-            .inspect_ok(|_| debug!("Confirmations fetched successfully."))
-            .await?
-            .map(|mut conf: Confirmations| {
-                conf.filter_by_trade_offer_ids(&[tradeoffer_id]);
-                conf
-            });
-
-        // If for some reason we end up not finding the confirmation, return an error
-        if confirmations.is_none() {
-            return Err(ConfirmationError::NotFoundButTradeCreated(tradeoffer_id).into());
-        }
-
-        self.authenticator
-            .process_confirmations(ConfirmationMethod::Accept, confirmations.unwrap())
-            .err_into()
-            .await
-            .map(|_| tradeoffer_id)
+        Delay::new(Duration::from_millis(STANDARD_DELAY));
+        self.accept_offer(tradeoffer_id).await?;
+        Ok(tradeoffer_id)
     }
 
-    /// Convenience function to create a trade offer.
-    /// Returns the trade offer id.
-    pub async fn create_offer(&self, tradeoffer: TradeOffer) -> Result<i64, TradeError> {
+    /// Creates a new trade offer and return its `tradeoffer_id`.
+    pub async fn create_offer(&self, tradeoffer: TradeOffer) -> Result<u64, TradeError> {
         self.request::<TradeOfferCreateResponse>(TradeKind::Create(tradeoffer), None)
-            .map_ok(|c| c.tradeofferid.map(|x| i64::from_str(&*x).unwrap()).unwrap())
+            .map_ok(|c| {
+                c.tradeofferid
+                    .and_then(|id| u64::from_str(&id).ok())
+                    .expect("Safe to unwrap.")
+            })
             .await
     }
 
-    /// Convenience function to accept a single trade offer that was made to this account.
+    /// Accepts a trade offer made to this account and confirms it with inner [SteamAuthenticator]
     ///
-    /// Note: It will confirm with the mobile authenticator, be extra careful when accepting any request.
-    pub async fn accept_offer(&self, tradeoffer_id: i64) -> Result<(), TradeError> {
+    /// **Note: This is irreversable, be extra careful when accepting any trade offer.**
+    pub async fn accept_offer(&self, tradeoffer_id: u64) -> Result<(), TradeError> {
         let resp: TradeOfferCreateResponse = self.request(TradeKind::Accept, Some(tradeoffer_id)).await?;
 
         if resp.needs_mobile_confirmation.is_none() && !resp.needs_mobile_confirmation.unwrap() {
             return Ok(());
         }
 
-        let confirmations: Option<Confirmations> = self
+        let confirmation = self
             .authenticator
             .fetch_confirmations()
             .inspect_ok(|_| debug!("Confirmations fetched successfully."))
             .await?
-            .map(|mut conf: Confirmations| {
-                debug!("{:#?}", conf);
-                conf.filter_by_trade_offer_ids(&[tradeoffer_id]);
-                conf
-            });
-
-        // If for some reason we end up not finding the confirmation, return an error
-        if confirmations.is_none() {
-            return Err(ConfirmationError::NotFound.into());
-        }
+            .into_iter()
+            .find(|c| c.has_trade_offer_id(tradeoffer_id))
+            .ok_or_else(|| TradeError::from(ConfirmationError::NotFound))?;
 
         self.authenticator
-            .process_confirmations(ConfirmationMethod::Accept, confirmations.unwrap())
+            .process_confirmations(ConfirmationAction::Accept, std::iter::once(confirmation))
             .err_into()
             .await
-            .map(|_| ())
     }
 
-    /// Convenience function to deny a single trade offer that was made to this account.
+    /// Denies a trade offer sent to this account.
     ///
     /// # Errors
     ///
-    /// Will error if couldn't deny the tradeoffer.
-    pub async fn deny_offer(&self, tradeoffer_id: i64) -> Result<(), TradeError> {
+    /// Will error if couldn't deny the trade offer.
+    pub async fn deny_offer(&self, tradeoffer_id: u64) -> Result<(), TradeError> {
         self.request::<TradeOfferCancelResponse>(TradeKind::Decline, Some(tradeoffer_id))
             .await
             .map(|_| ())
     }
 
-    /// Convenience function to cancel a single trade offer that was created by this account.
+    /// Cancel a trade offer sent by this account.
     ///
     /// # Errors
     ///
     /// Will error if couldn't cancel the tradeoffer.
-    pub async fn cancel_offer(&self, tradeoffer_id: i64) -> Result<(), TradeError> {
+    pub async fn cancel_offer(&self, tradeoffer_id: u64) -> Result<(), TradeError> {
         self.request::<TradeOfferCancelResponse>(TradeKind::Cancel, Some(tradeoffer_id))
             .await
             .map(|_| ())
     }
 
     /// Check current session health, injects SessionID cookie, and send the request.
-    async fn request<T>(&self, operation: TradeKind, tradeoffer_id: Option<i64>) -> Result<T, TradeError>
+    async fn request<OUTPUT>(&self, operation: TradeKind, tradeoffer_id: Option<u64>) -> Result<OUTPUT, TradeError>
     where
-        T: DeserializeOwned,
+        OUTPUT: DeserializeOwned + Send + Sync,
     {
         let tradeoffer_endpoint = operation.endpoint(tradeoffer_id);
 
@@ -395,7 +375,7 @@ impl<'a> SteamTradeManager<'a> {
                 Box::new(trade_request_data)
             }
 
-            TradeKind::Cancel | TradeKind::Decline => Box::new(TradeOfferGenericRequest::default()),
+            TradeKind::Cancel | TradeKind::Decline => Box::<TradeOfferGenericRequest>::default(),
             TradeKind::Create(offer) => Box::new(Self::prepare_offer(offer)?),
         };
 
@@ -404,19 +384,20 @@ impl<'a> SteamTradeManager<'a> {
             .authenticator
             .dump_cookie(STEAM_COMMUNITY_HOST, "sessionid")
             .ok_or_else(|| {
-                PayloadError("Somehow you don't have a sessionid cookie. You need to login first.".to_string())
+                GeneralError("Somehow you don't have a sessionid cookie. You need to login first.".to_string())
             })?;
 
         request.set_sessionid(session_id_cookie);
+        let request: Arc<dyn HasSessionID> = Arc::from(request);
 
-        let response_text: String = self
+        let response = self
             .authenticator
             .request_custom_endpoint(tradeoffer_endpoint, Method::POST, header, Some(request))
-            .and_then(|response| response.text())
-            .inspect_ok(|resp_text: &String| debug!("{}", resp_text))
+            .err_into::<InternalError>()
             .await?;
+        let response_text = response.text().err_into::<InternalError>().await?;
 
-        match serde_json::from_str::<T>(&response_text) {
+        match serde_json::from_str::<OUTPUT>(&response_text) {
             Ok(response) => Ok(response),
             Err(_) => {
                 // try to match into a generic message
@@ -429,15 +410,15 @@ impl<'a> SteamTradeManager<'a> {
                         Err(tradeoffer_error_from_eresult(eresult).into())
                     } else {
                         tracing::error!("Unable to understand Steam Response. Please report it as bug.");
-                        Err(OfferError::GeneralFailure(format!("Steam Response: {}", response_text)).into())
+                        Err(OfferError::GeneralFailure(format!(
+                            "Steam Response: {}\nThis is a bug, please report it.",
+                            response_text
+                        ))
+                        .into())
                     }
                 } else {
                     if let Some((steamid, token)) = partner_id_and_token {
-                        let steam_guard_result = check_steam_guard_error(self.authenticator, steamid, &*token).await;
-
-                        if let Err(err) = steam_guard_result {
-                            return Err(err);
-                        }
+                        check_steam_guard_error(self.authenticator, steamid, &token).await?;
                     }
 
                     tracing::error!(
@@ -482,6 +463,7 @@ mod tests {
         "https://steamcommunity.com/tradeoffer/new/?partner=79925588"
     }
 
+    #[allow(clippy::too_many_lines)]
     fn sample_trade_history_response() -> GetTradeHistoryResponse {
         let response = r#"{
   "response": {
@@ -727,7 +709,8 @@ mod tests {
     #[cfg(feature = "time")]
     #[test]
     fn estimate_time() {
-        use crate::time::{estimate_tradelock_end, ONE_WEEK_SECONDS};
+        use crate::time::estimate_tradelock_end;
+        use crate::time::ONE_WEEK_SECONDS;
 
         let raw_response = sample_trade_history_response();
         let filtered_trade = raw_response.filter_by(|x| x.tradeid == 3622543526924228084).remove(0);

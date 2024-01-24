@@ -4,7 +4,8 @@ use tracing::info;
 
 use crate::errors::OfferValidationError;
 use crate::types::asset_collection::AssetCollection;
-use crate::{Tradelink, TRADE_MAX_ITEMS};
+use crate::Tradelink;
+use crate::TRADE_MAX_ITEMS;
 
 #[derive(Debug, PartialEq)]
 pub struct TradeOffer {
@@ -36,7 +37,7 @@ impl TradeOffer {
             their_tradelink,
             my_assets: my_assets.into(),
             their_assets: their_assets.into(),
-            message: message.into().unwrap_or_else(|| "".to_string()),
+            message: message.into().unwrap_or(String::new()),
         })
     }
 

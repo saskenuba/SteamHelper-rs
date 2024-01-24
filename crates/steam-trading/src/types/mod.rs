@@ -1,4 +1,6 @@
-use crate::{TradeOffer, TRADEOFFER_BASE, TRADEOFFER_NEW_URL};
+use crate::TradeOffer;
+use crate::TRADEOFFER_BASE;
+use crate::TRADEOFFER_NEW_URL;
 
 pub mod asset_collection;
 pub mod sessionid;
@@ -15,7 +17,7 @@ pub enum TradeKind {
 }
 
 impl TradeKind {
-    pub fn endpoint(&self, tradeofferid: Option<i64>) -> String {
+    pub fn endpoint(&self, tradeofferid: Option<u64>) -> String {
         if let TradeKind::Create(_) = self {
             return TRADEOFFER_NEW_URL.to_string();
         }

@@ -1,8 +1,11 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use steam_language_gen::generated::enums::EResult;
 
-use crate::types::sessionid::{HasSessionID, SessionID};
-use crate::{AssetCollection, TradeOffer};
+use crate::types::sessionid::HasSessionID;
+use crate::types::sessionid::SessionID;
+use crate::AssetCollection;
+use crate::TradeOffer;
 
 macro_rules! impl_sessionid {
     ($name:ident) => {
@@ -33,9 +36,9 @@ impl<'a> Default for TradeOfferCommonParameters {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 /// Used for decline, and cancelling an offer.
-/// Url: https://steamcommunity.com/tradeoffer/4127395150/accept
+/// Url: `https://steamcommunity.com/tradeoffer/4127395150/accept`
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub(crate) struct TradeOfferGenericRequest {
     #[serde(flatten)]
     pub sessionid: SessionID,
@@ -49,14 +52,14 @@ pub(crate) struct TradeOfferGenericErrorResponse {
     pub error_message: Option<String>,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 /// Url: https://steamcommunity.com/tradeoffer/4127395150/accept
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub(crate) struct TradeOfferAcceptRequest {
     #[serde(flatten)]
     pub sessionid: SessionID,
     #[serde(flatten)]
     pub common: TradeOfferCommonParameters,
-    pub tradeofferid: i64,
+    pub tradeofferid: u64,
 }
 
 /// Response after the creation of a new trade offer.
@@ -78,7 +81,7 @@ pub struct TradeOfferCancelResponse {
     pub tradeofferid: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 /// We create a trade offer from a Steam Trade link the user shares with us.
 /// The "partner" number, is the SteamID3. In order to send the trade offer, first we need to to
 /// convert it to a SteamID64.
@@ -124,17 +127,6 @@ pub(crate) struct TradeOfferParams {
     /// A trade offer link has an unique token that the user can invalidate at any time.
     /// We need to insert this token correct at the request.
     pub trade_offer_access_token: String,
-}
-
-impl Default for TradeOfferCreateRequest {
-    fn default() -> Self {
-        Self {
-            message: "".to_string(),
-            json_tradeoffer: Default::default(),
-            trade_offer_create_params: None,
-            ..Default::default()
-        }
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
