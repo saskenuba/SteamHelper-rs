@@ -18,7 +18,6 @@ cli = ["clap", "dialoguer", "anyhow", "tokio"]
 [dependencies]
 backoff = { version = "0.4", features = ["tokio", "futures"] }
 hex = "0.4"
-parking_lot = "^0"
 rsa = "0.9"
 scraper = "0.18"
 serde_with = { version = "^3", features = [] }
@@ -35,6 +34,7 @@ derive_more.workspace = true
 futures-timer.workspace = true
 futures-util.workspace = true
 futures.workspace = true
+parking_lot.workspace = true
 rand.workspace = true
 reqwest.workspace = true
 
