@@ -25,6 +25,7 @@ pub use client::Unauthenticated;
 use const_format::concatcp;
 use parking_lot::RwLock;
 pub use reqwest::header::HeaderMap;
+pub use reqwest::Error as HttpError;
 pub use reqwest::Method;
 pub use reqwest::Url;
 use serde::Deserialize;
@@ -32,6 +33,7 @@ use serde::Serialize;
 use steamid_parser::SteamID;
 pub use utils::format_captcha_url;
 use uuid::Uuid;
+pub use web_handler::confirmation::Confirmation;
 pub use web_handler::confirmation::ConfirmationAction;
 pub use web_handler::confirmation::Confirmations;
 pub use web_handler::confirmation::EConfirmationType;
@@ -60,11 +62,11 @@ const MA_FILE_EXT: &str = ".maFile";
 // HOST SHOULD BE USED FOR COOKIE RETRIEVAL INSIDE COOKIE JAR!!
 
 /// Steam Community Cookie Host
-pub(crate) const STEAM_COMMUNITY_HOST: &str = "steamcommunity.com";
+pub const STEAM_COMMUNITY_HOST: &str = "steamcommunity.com";
 /// Steam Help Cookie Host
-pub(crate) const STEAM_HELP_HOST: &str = ".help.steampowered.com";
+pub const STEAM_HELP_HOST: &str = ".help.steampowered.com";
 /// Steam Store Cookie Host
-pub(crate) const STEAM_STORE_HOST: &str = ".store.steampowered.com";
+pub const STEAM_STORE_HOST: &str = ".store.steampowered.com";
 
 /// Should not be used for cookie retrieval. Use `STEAM_COMMUNTY_HOST` instead.
 pub(crate) const STEAM_COMMUNITY_BASE: &str = "https://steamcommunity.com";

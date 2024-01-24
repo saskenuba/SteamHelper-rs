@@ -180,7 +180,10 @@ where
     }
 }
 
-impl<M> SteamAuthenticator<Authenticated, M> {
+impl<M> SteamAuthenticator<Authenticated, M>
+where
+    M: Send + Sync,
+{
     fn cache(&self) -> CacheGuard {
         self.inner.cache.as_ref().expect("Safe to unwrap.").clone()
     }
