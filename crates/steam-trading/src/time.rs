@@ -32,9 +32,9 @@ fn trade_time_with_offset(trade_complete_time_epoch: i64) -> DateTime<Utc> {
 pub fn estimate_tradelock_end(trade_completed_on_epoch: i64, trade_lock_duration_seconds: i64) -> NaiveDateTime {
     let trade_with_offset = trade_time_with_offset(trade_completed_on_epoch);
     let trade_lock_duration = Duration::seconds(trade_lock_duration_seconds);
-    let end_date = trade_with_offset + trade_lock_duration;
+    let end_date = (trade_with_offset + trade_lock_duration).naive_utc();
 
-    end_date.naive_utc() + Duration::seconds(PST_TO_UTC_OFFSET_SECONDS)
+    end_date + Duration::seconds(PST_TO_UTC_OFFSET_SECONDS)
 }
 
 #[cfg(test)]

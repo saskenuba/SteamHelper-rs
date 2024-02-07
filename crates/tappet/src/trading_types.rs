@@ -98,12 +98,13 @@ pub struct TradeOffer_Trade {
     items_to_receive: Option<Vec<CEcon_Asset>>,
     /// Indicates the account binded with the api key requested this trade
     pub is_our_offer: bool,
-    time_created: i64,
-    time_updated: i64,
-    /// Tradeid is the historical number of the trade.
-    /// It is used, for example to find the new generated asset ids after the trade is completed.
+    pub time_created: i64,
+    pub time_updated: i64,
+    /// Historical number of the trade.
+    /// Used find the new generated asset ids after the trade is completed.
     ///
-    /// Shows up only after the trade has been completed, and also can be found on the TradeHistory endpoint.
+    /// **Note**: Shows up only after the trade has been completed, and also can be found on the [TradeHistory_Trade]
+    /// from the TradeHistory endpoint.
     pub tradeid: Option<String>,
     from_real_time_trade: bool,
     /// Unix timestamp of when the trade hold period is supposed to be over for this trade offer
