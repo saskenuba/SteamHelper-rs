@@ -4,9 +4,9 @@ resolver = "2"
 
 # local crates
 [workspace.dependencies]
-steam-mobile = { path = "./crates/steam-mobile", version = "0.4.0", default-features = false }
 steam-protobuf = { path = "./crates/steam-protobuf", version = "0.2.0" }
 steam-language-gen = { path = "./crates/steam-language-gen", version = "0.1.4" }
+steam-mobile = { path = "./crates/steam-mobile", version = "0.5.0", default-features = false }
 steamid-parser = { path = "./crates/steamid-parser", version = "0.2.1" }
 tappet = { path = "./crates/tappet", version = "0.6.0" }
 tappet-derive = { path = "./crates/tappet-derive", version = "0.3.2" }
