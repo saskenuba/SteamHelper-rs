@@ -1,6 +1,6 @@
 [package]
 name = "steam-trading"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Martin <martin@hotmail.com.br>"]
 edition = "2018"
 repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-trading/"
