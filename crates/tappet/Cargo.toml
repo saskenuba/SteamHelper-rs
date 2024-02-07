@@ -1,6 +1,6 @@
 [package]
 name = "tappet"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Martin <martin@hotmail.com.br>"]
 license = "MIT"
 edition = "2018"
@@ -34,7 +34,7 @@ serde_with = { version = "^1.4", features = ["json"], optional = true }
 
 [dependencies.tappet-derive]
 path = "../tappet-derive"
-version = "0.3.1"
+version = "0.3.2"
 
 [dependencies.steam-language-gen]
 path = "../steam-language-gen"
