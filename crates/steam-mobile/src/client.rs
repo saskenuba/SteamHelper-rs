@@ -1,81 +1,46 @@
-use std::fmt::Debug;
-use std::marker::PhantomData;
-use std::ops::Deref;
-use std::sync::Arc;
-use std::time::Duration;
+use std::{fmt::Debug, marker::PhantomData, ops::Deref, sync::Arc, time::Duration};
 
 use backoff::future::retry;
 use base64::Engine;
-use cookie::Cookie;
-use cookie::CookieJar;
+use cookie::{Cookie, CookieJar};
 use futures::TryFutureExt;
 use futures_timer::Delay;
 use parking_lot::RwLock;
-use reqwest::header::HeaderMap;
-use reqwest::header::HeaderValue;
-use reqwest::header::CONTENT_TYPE;
-use reqwest::redirect::Policy;
-use reqwest::Client;
-use reqwest::IntoUrl;
-use reqwest::Method;
-use reqwest::Response;
-use reqwest::Url;
+use proxied::{Proxy, ProxifyClient};
+use reqwest::{
+    header::{HeaderMap, HeaderValue, CONTENT_TYPE},
+    redirect::Policy,
+    Client, IntoUrl, Method, Response, Url,
+};
 use scraper::Html;
-use serde::de::DeserializeOwned;
-use serde::Serialize;
-use steam_protobuf::ProtobufDeserialize;
-use steam_protobuf::ProtobufSerialize;
-use tracing::debug;
-use tracing::error;
-use tracing::info;
-use tracing::trace;
-use tracing::warn;
+use serde::{de::DeserializeOwned, Serialize};
+use steam_protobuf::{ProtobufDeserialize, ProtobufSerialize};
+use tracing::{debug, error, info, trace, warn};
 
-use crate::adapter::SteamCookie;
-use crate::errors::AuthError;
-use crate::errors::InternalError;
-use crate::errors::LinkerError;
-use crate::retry::login_retry_strategy;
-use crate::user::IsUser;
-use crate::user::PresentMaFile;
-use crate::user::SteamUser;
-use crate::utils::dump_cookies_by_domain;
-use crate::utils::dump_cookies_by_domain_and_name;
-use crate::utils::retrieve_header_location;
-use crate::web_handler::cache_api_key;
-use crate::web_handler::confirmation::Confirmation;
-use crate::web_handler::confirmation::Confirmations;
-use crate::web_handler::get_confirmations;
-use crate::web_handler::login::login_and_store_cookies;
-use crate::web_handler::send_confirmations;
-use crate::web_handler::steam_guard_linker::account_has_phone;
-use crate::web_handler::steam_guard_linker::add_authenticator_to_account;
-use crate::web_handler::steam_guard_linker::add_phone_to_account;
-use crate::web_handler::steam_guard_linker::check_email_confirmation;
-use crate::web_handler::steam_guard_linker::check_sms;
-use crate::web_handler::steam_guard_linker::finalize;
-use crate::web_handler::steam_guard_linker::remove_authenticator;
-use crate::web_handler::steam_guard_linker::twofactor_status;
-use crate::web_handler::steam_guard_linker::validate_phone_number;
-use crate::web_handler::steam_guard_linker::AddAuthenticatorStep;
-use crate::web_handler::steam_guard_linker::QueryStatusResponse;
-use crate::web_handler::steam_guard_linker::RemoveAuthenticatorScheme;
-use crate::web_handler::steam_guard_linker::STEAM_ADD_PHONE_CATCHUP_SECS;
-use crate::CacheGuard;
-use crate::ConfirmationAction;
-use crate::MobileAuthFile;
-use crate::STEAM_COMMUNITY_HOST;
+use crate::{
+    adapter::SteamCookie,
+    errors::{AuthError, InternalError, LinkerError},
+    retry::login_retry_strategy,
+    user::{IsUser, PresentMaFile, SteamUser},
+    utils::{dump_cookies_by_domain, dump_cookies_by_domain_and_name, retrieve_header_location},
+    web_handler::{
+        cache_api_key,
+        confirmation::{Confirmation, Confirmations},
+        get_confirmations,
+        login::login_and_store_cookies,
+        send_confirmations,
+        steam_guard_linker::{
+            account_has_phone, add_authenticator_to_account, add_phone_to_account, check_email_confirmation, check_sms,
+            finalize, remove_authenticator, twofactor_status, validate_phone_number, AddAuthenticatorStep,
+            QueryStatusResponse, RemoveAuthenticatorScheme, STEAM_ADD_PHONE_CATCHUP_SECS,
+        },
+    },
+    CacheGuard, ConfirmationAction, MobileAuthFile, STEAM_COMMUNITY_HOST,
+};
 
 /// Main authenticator. We use it to spawn and act as our "mobile" client.
 /// Responsible for accepting/denying trades, and some other operations that may or not be related
-/// to mobile operations.
-///
-/// # Example: Fetch mobile notifications
-///
-/// ```rust
-/// use steam_mobile::SteamAuthenticator;
-/// use steam_mobile::User;
-/// ```
+/// to mobile operations.   
 #[derive(Debug)]
 pub struct SteamAuthenticator<AuthState, MaFileState> {
     inner: InnerAuthenticator<MaFileState>,
@@ -114,10 +79,10 @@ where
     ///
     /// Will return `None` if you are not logged in.
     #[must_use]
-    pub fn new(user: SteamUser<MaFileState>) -> Self {
+    pub fn new(user: SteamUser<MaFileState>, proxy: Option<Proxy>) -> Self {
         Self {
             inner: InnerAuthenticator {
-                client: MobileClient::default(),
+                client: MobileClient::new(proxy),
                 user,
                 cache: None,
             },
@@ -672,7 +637,7 @@ impl MobileClient {
     }
 
     /// Initiate mobile client with default headers
-    fn init_mobile_client() -> Client {
+    fn init_mobile_client(proxy: Option<Proxy>) -> Client {
         let user_agent = "Dalvik/2.1.0 (Linux; U; Android 9; Valve Steam App Version/3)";
         let mut default_headers = HeaderMap::new();
         default_headers.insert(
@@ -687,21 +652,29 @@ impl MobileClient {
             "com.valvesoftware.android.steam.community".parse().unwrap(),
         );
 
-        reqwest::Client::builder()
-            .user_agent(user_agent)
-            .cookie_store(true)
-            .redirect(Policy::limited(5))
-            .default_headers(default_headers)
-            .referer(false)
-            .build()
-            .unwrap()
+        proxy.proxify(
+            Client::builder()
+                .user_agent(user_agent)
+                .cookie_store(true)
+                .redirect(Policy::limited(5))
+                .default_headers(default_headers)
+                .referer(false),
+        ).build().unwrap()
     }
+
+    pub fn new(proxy: Option<Proxy>) -> Self {
+        Self {
+            inner_http_client: Self::init_mobile_client(proxy),
+            cookie_store: Arc::new(RwLock::new(Self::init_cookie_jar())),
+        }
+    }
+
 }
 
 impl Default for MobileClient {
     fn default() -> Self {
         Self {
-            inner_http_client: Self::init_mobile_client(),
+            inner_http_client: Self::init_mobile_client(None),
             cookie_store: Arc::new(RwLock::new(Self::init_cookie_jar())),
         }
     }

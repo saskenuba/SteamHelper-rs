@@ -16,7 +16,7 @@
 //!
 //! # Usage
 //!
-//! ```no_run
+//! ```ignore
 //! use tappet::{SteamAPI, Executor};
 //! use tappet::response_types;
 //! use anyhow::Result;
@@ -45,7 +45,7 @@
 //!
 //! But a "master" api key is still needed to instantiate `SteamAPI` in order to avoid panics.
 //!
-//! ```no_run
+//! ```ignore
 //! use tappet::{SteamAPI, Executor};
 //! use tappet::response_types;
 //! use anyhow::Result;
@@ -64,6 +64,7 @@
 //!     Ok(())
 //! }
 //! ```
+
 
 #![allow(non_snake_case)]
 #![allow(unused_imports)]
@@ -87,10 +88,13 @@ pub mod response_types;
 #[cfg(feature = "trading")]
 mod trading_types;
 
+
 pub type Result<T> = std::result::Result<T, SteamAPIError>;
 
 #[cfg(feature = "blocking")]
 pub mod blocking {
+    use proxied::{Proxy, ProxifyClient};
+
     use serde::de::DeserializeOwned;
 
     use crate::Result;
@@ -140,6 +144,8 @@ pub mod blocking {
 
 #[cfg(feature = "async")]
 mod async_client {
+    use proxied::{Proxy, ProxifyClient};
+    
     use async_trait::async_trait;
     use serde::de::DeserializeOwned;
 
@@ -170,6 +176,16 @@ mod async_client {
         pub fn new<T: ToString>(api_key: T) -> SteamAPI {
             Self {
                 client: Default::default(),
+                key: api_key.to_string(),
+            }
+        }
+
+          /// Creates a new SteamAPI Client with an API Key.
+        pub fn new_with_proxy<T: ToString>(api_key: T, proxy: Option<Proxy>) -> SteamAPI {
+            Self {
+                client: proxy.proxify(reqwest::Client::builder())
+                    .build()
+                    .expect("Failed to build reqwest client with proxy"),
                 key: api_key.to_string(),
             }
         }

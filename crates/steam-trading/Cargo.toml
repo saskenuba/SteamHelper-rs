@@ -2,7 +2,7 @@
 name = "steam-trading"
 version = "0.6.0"
 authors = ["Martin <martin@hotmail.com.br>"]
-edition = "2018"
+edition = "2024"
 repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-trading/"
 homepage = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-trading/"
 readme = "README.md"
@@ -22,13 +22,15 @@ const_format = "^0.2"
 erased-serde = "^0.4"
 lazy_static = "^1"
 regex = "^1"
-thiserror = "1"
+thiserror = "2"
 tracing = "^0.1"
 tracing-futures = "^0.2"
 triomphe = "^0"
 
 chrono = { version = "0.4", optional = true }
 scraper = { version = "^0", optional = true }
+
+proxied.workspace = true
 
 futures = "^0.3"
 futures-timer = "^3"
@@ -37,7 +39,7 @@ parking_lot.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_repr.workspace = true
-serde_with = { version = "^1.9", features = ["json"] }
+serde_with = { version = "^3.14", features = ["json"] }
 
 steam-language-gen.workspace = true
 steam-mobile = { workspace = true, default-features = false }

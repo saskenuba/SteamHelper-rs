@@ -79,6 +79,8 @@ use crate::types::trade_offer_web::TradeOfferGenericRequest;
 use crate::types::trade_offer_web::TradeOfferParams;
 use crate::types::TradeKind;
 
+use proxied::{Proxy, ProxifyClient};
+
 mod additional_checks;
 pub mod api_extensions;
 mod errors;
@@ -132,6 +134,26 @@ impl<'a> SteamTradeManager<'a> {
             api_client: SteamAPI::new(api_key),
         })
     }
+
+    /// Returns a new `[SteamTradeManager]` with a proxy.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if API Key is not cached by `authenticator`.
+    pub fn new_with_proxy(
+        authenticator: &'a SteamAuthenticator<Authenticated, PresentMaFile>,
+        proxy: Option<Proxy>,
+    ) -> Result<SteamTradeManager<'a>, TradeError> {
+        let api_key = authenticator
+            .api_key()
+            .ok_or_else(|| GeneralError("Can't build without an API Key cached.".to_string()))?;
+
+        Ok(Self {
+            authenticator,
+            api_client: SteamAPI::new_with_proxy(api_key, proxy),
+        })
+    }
+
 
     /// Checks whether the user of `tradelink` has recently activated his mobile SteamGuard.
     pub async fn check_steam_guard_recently_activated(&self, tradelink: Tradelink) -> Result<(), TradeError> {

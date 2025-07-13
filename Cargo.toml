@@ -1,6 +1,8 @@
 [workspace]
-members = ["crates/*"]
-resolver = "2"
+members = [
+  "crates/*"
+]
+resolver = "3"
 
 # local crates
 [workspace.dependencies]
@@ -11,19 +13,23 @@ steamid-parser = { path = "./crates/steamid-parser", version = "0.2.1" }
 tappet = { path = "./crates/tappet", version = "0.6.0" }
 tappet-derive = { path = "./crates/tappet-derive", version = "0.3.2" }
 
-base64 = "^0.21"
+proxied = { version = "^1", features = ["reqwest"] }
+
+base64 = "^0.22"
 bytes = "^1"
 const_format = "^0.2"
-derive_more = { version = "1.0.0-beta.6", features = ["full"] }
-rand = "^0.8"
-reqwest = { version = "^0.11", features = ["cookies", "multipart"] }
+derive_more = { version = "2.0.1", features = ["full"] }
+rand = "^0.9"
+reqwest = { version = "^0.12", features = ["cookies", "multipart", "json"] }
 regex = "^1"
 futures = "^0.3"
 futures-util = "^0.3"
 futures-timer = "^3"
 parking_lot = "^0.12"
-strum = "0.25"
-strum_macros = "0.25"
+strum = "0.27"
+strum_macros = "0.27"
+
+thiserror = "2.0"
 
 erased-serde = "^0.4"
 serde = { version = "1", features = ["rc"] }

@@ -2,7 +2,7 @@
 name = "steam-language-gen"
 version = "0.1.4"
 authors = ["Martin <martin@hotmail.com.br>"]
-edition = "2018"
+edition = "2024"
 license = "MIT"
 repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-language-gen"
 description = "Generate Rust bindings to Steam enums and messages."
@@ -24,9 +24,9 @@ arrayref = "0.3"
 bincode = "1"
 bitflags = "1"
 derive-new = "0.5"
-enum_dispatch = "0.3.5"
+enum_dispatch = "0.3.13"
 Inflector = { version = "^0.11", default-features = false, optional = true }
-nom = { version = "5.0.1", optional = true }
+nom = { version = "5.1.3", optional = true }
 num-derive = "0.3"
 num-traits = "0.2"
 petgraph = { version = "0.4", optional = true }

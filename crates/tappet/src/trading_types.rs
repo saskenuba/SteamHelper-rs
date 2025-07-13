@@ -5,6 +5,8 @@
 
 use serde::Deserialize;
 use serde_repr::Deserialize_repr;
+use serde_with::serde_as;
+use serde_with::DisplayFromStr;
 use steam_language_gen::generated::enums::ETradeOfferConfirmationMethod;
 use steam_language_gen::generated::enums::ETradeOfferState;
 
@@ -40,12 +42,13 @@ pub enum ETradeStatus {
     EscrowRollback = 11,
 }
 
+#[serde_as]
 #[derive(Deserialize, Debug, Clone)]
 pub struct Descriptions {
     pub appid: u32,
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub classid: i64,
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub instanceid: u32,
     pub marketable: bool,
     pub tradable: bool,
@@ -77,13 +80,14 @@ pub struct CEcon_GetTradeOffers_Response {
     pub trade_offers_received: Option<Vec<TradeOffer_Trade>>,
 }
 
+#[serde_as]
 #[allow(non_camel_case_types)]
 #[derive(Deserialize, Debug, Clone)]
 /// Represents a steam trade offer. CEcon_Trade
 /// Returned by GetTradeOffers (vector) and GetTradeOffer.
 pub struct TradeOffer_Trade {
     /// Unique ID generated when a trade offer is created
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub tradeofferid: u64,
     /// SteamID3
     pub accountid_other: u64,
@@ -112,22 +116,23 @@ pub struct TradeOffer_Trade {
     confirmation_method: ETradeOfferConfirmationMethod,
 }
 
+#[serde_as]
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct CEcon_Asset {
     pub appid: i64,
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub contextid: i64,
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub assetid: i64,
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub classid: i64,
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub instanceid: i64,
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub amount: i64,
     pub missing: bool,
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub est_usd: i64,
 }
 
@@ -145,14 +150,15 @@ pub struct CEcon_GetTradeHistory_Response_Trade_Intermediate {
     pub trades: Vec<TradeHistory_Trade>,
 }
 
-#[allow(non_camel_case_types)]
-#[derive(Debug, Clone, PartialEq, Deserialize)]
 /// A trade returned by GetTradeHistory
 /// Known as CEcon_GetTradeHistory_Response_Trade
+#[allow(non_camel_case_types)]
+#[serde_as]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct TradeHistory_Trade {
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub tradeid: i64,
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub steamid_other: u64,
     /// Unix epoch when the trade offer was completed, and turned into a trade.
     pub time_init: i64,
@@ -162,27 +168,28 @@ pub struct TradeHistory_Trade {
     pub assets_given: Option<Vec<TradeHistory_TradedAsset>>,
 }
 
+#[serde_as]
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 /// A traded item returned by GetTradeHistory
 /// Known as  CEcon_GetTradeHistory_Response_Trade_TradedAsset
 pub struct TradeHistory_TradedAsset {
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub new_assetid: i64,
     pub rollback_new_assetid: Option<String>,
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub new_contextid: u32,
     pub appid: u32,
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub contextid: i64,
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub assetid: i64,
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub classid: i64,
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub instanceid: i64,
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub amount: i64,
-    // #[serde(with = "serde_with::rust::display_fromstr")]
+    // #[serde(with = "DisplayFromStr")]
     // pub currencyid: Option<i64>,
 }

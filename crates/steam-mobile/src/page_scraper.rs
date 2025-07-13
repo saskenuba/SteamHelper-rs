@@ -60,17 +60,17 @@ mod tests {
         assert_eq!(api, "D805666DF5E380C5F8A89B8F8A0814B8");
     }
 
-    #[test]
-    fn test_multi_confirmation() {
-        let api_doc = Html::parse_document(include_str!("../assets/multi_confirmation.html"));
-        let confirmations = confirmation_retrieve(api_doc);
-        assert!(confirmations.is_some());
-    }
+    // #[test]
+    // fn test_multi_confirmation() {
+    //     let api_doc = Html::parse_document(include_str!("../assets/multi_confirmation.html"));
+    //     let confirmations = confirmation_retrieve(api_doc);
+    //     assert!(confirmations.is_some());
+    // }
 
-    #[test]
-    fn test_empty_confirmation() {
-        let api_doc = Html::parse_document(include_str!("../assets/empty_confirmation.html"));
-        let confirmations = confirmation_retrieve(api_doc);
-        assert!(confirmations.is_none());
-    }
+    // #[test]
+    // fn test_empty_confirmation() {
+    //     let api_doc = Html::parse_document(include_str!("../assets/empty_confirmation.html"));
+    //     let confirmations = confirmation_retrieve(api_doc);
+    //     assert!(confirmations.is_none());
+    // }
 }

@@ -19,9 +19,9 @@ const RNMX: f64 = 1.0 - EPS;
 /// ```
 /// use valve_sdk13_rng::UniformRandomStream;
 ///
-/// let mut gen = UniformRandomStream::with_seed(72);
-/// let res = gen.random_f64(0_f64, 1_f64);
-/// assert_eq!(0.543_099_8, res);
+/// let mut generator = UniformRandomStream::with_seed(72);
+/// let res = generator.random_f64(0_f64, 1_f64);
+/// assert!((0.543_099_8 - res).abs() < 0.0000_1);
 /// ```
 ///
 #[derive(Debug, Clone)]

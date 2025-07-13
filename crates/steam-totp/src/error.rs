@@ -2,8 +2,9 @@
 
 use super::steam_api::SteamApiResponse;
 use base64;
+use crypto_mac::InvalidKeyLength;
 use hex;
-use hmac::crypto_mac::InvalidKeyLength;
+use hmac::digest::InvalidLength;
 use reqwest;
 use std::{error, fmt, time::SystemTimeError};
 
@@ -37,74 +38,19 @@ impl error::Error for SteamApiError {
 }
 
 /// The error type for TOTP operations that wraps underlying errors.
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum TotpError {
-    B64(base64::DecodeError),
-    Hex(hex::FromHexError),
-    Hmac(InvalidKeyLength),
-    Req(reqwest::Error),
-    SteamApi(SteamApiError),
-    Time(SystemTimeError),
+    #[error("Base64 decode error: {0}")]
+    B64(#[from] base64::DecodeError),
+    #[error("Hex decode error: {0}")]
+    Hex(#[from] hex::FromHexError),
+    #[error("HMAC error: {0}")]
+    Hmac(#[from] InvalidLength),
+    #[error("Request error: {0}")]
+    Req(#[from] reqwest::Error),
+    #[error("Steam API error: {0}")]
+    SteamApi(#[from] SteamApiError),
+    #[error("System time error: {0}")]
+    Time(#[from] SystemTimeError),
 }
 
-impl fmt::Display for TotpError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            TotpError::B64(ref err) => write!(f, "Base64 decode error: {}", err),
-            TotpError::Hex(ref err) => write!(f, "Hex decode error: {}", err),
-            TotpError::Hmac(ref err) => write!(f, "Hmac error: {}", err),
-            TotpError::Req(ref err) => write!(f, "Request error: {}", err),
-            TotpError::SteamApi(ref err) => write!(f, "API error: {}", err),
-            TotpError::Time(ref err) => write!(f, "System time error: {}", err),
-        }
-    }
-}
-
-impl error::Error for TotpError {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        match *self {
-            TotpError::B64(ref err) => Some(err),
-            TotpError::Hex(ref err) => Some(err),
-            TotpError::Hmac(ref err) => Some(err),
-            TotpError::Req(ref err) => Some(err),
-            TotpError::SteamApi(ref err) => Some(err),
-            TotpError::Time(ref err) => Some(err),
-        }
-    }
-}
-
-impl From<base64::DecodeError> for TotpError {
-    fn from(err: base64::DecodeError) -> TotpError {
-        TotpError::B64(err)
-    }
-}
-
-impl From<hex::FromHexError> for TotpError {
-    fn from(err: hex::FromHexError) -> TotpError {
-        TotpError::Hex(err)
-    }
-}
-
-impl From<InvalidKeyLength> for TotpError {
-    fn from(err: InvalidKeyLength) -> TotpError {
-        TotpError::Hmac(err)
-    }
-}
-
-impl From<reqwest::Error> for TotpError {
-    fn from(err: reqwest::Error) -> TotpError {
-        TotpError::Req(err)
-    }
-}
-
-impl From<SteamApiError> for TotpError {
-    fn from(err: SteamApiError) -> TotpError {
-        TotpError::SteamApi(err)
-    }
-}
-
-impl From<SystemTimeError> for TotpError {
-    fn from(err: SystemTimeError) -> TotpError {
-        TotpError::Time(err)
-    }
-}

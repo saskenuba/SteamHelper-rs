@@ -48,12 +48,12 @@ pub struct SteamID {
     /// ID number of account. Either 0 or 1
     account_id: bool,
     /// Account Number. Z
-    account_number: BitVec<Msb0, u64>,
-    account_instance: BitVec<Msb0, u64>,
+    account_number: BitVec<u64, Msb0>,
+    account_instance: BitVec<u64, Msb0>,
     /// 4 Bits.
-    account_type: BitVec<Msb0, u64>,
+    account_type: BitVec<u64, Msb0>,
     /// Universe. 8 Bits
-    universe: BitVec<Msb0, u64>,
+    universe: BitVec<u64, Msb0>,
 }
 
 /// Reference: https://developer.valvesoftware.com/wiki/SteamID
@@ -71,11 +71,11 @@ impl SteamID {
     }
 
     pub fn to_steam64(&self) -> u64 {
-        let mut vec: BitVec<Msb0> = BitVec::with_capacity(64);
-        vec.extend_from_slice(self.universe.as_bitslice());
-        vec.extend_from_slice(self.account_type.as_bitslice());
-        vec.extend_from_slice(self.account_instance.as_bitslice());
-        vec.extend_from_slice(self.account_number.as_bitslice());
+        let mut vec: BitVec<usize, Msb0> = BitVec::with_capacity(64);
+        vec.extend_from_bitslice(self.universe.as_bitslice());
+        vec.extend_from_bitslice(self.account_type.as_bitslice());
+        vec.extend_from_bitslice(self.account_instance.as_bitslice());
+        vec.extend_from_bitslice(self.account_number.as_bitslice());
         vec.push(self.account_id);
 
         // this should be ..64, we are omitting a initial zero(first bit)
@@ -95,23 +95,23 @@ impl SteamID {
 
         Self {
             account_id: parity_check != 0,
-            account_number: BitVec::from(&account_number.bits()[33..]),
-            account_instance: BitVec::from(&instance.bits()[44..]),
-            account_type: BitVec::from(&account_type.bits()[60..]),
-            universe: BitVec::from(&universe.bits()[56..]),
+            account_number: account_number.view_bits()[33..].to_bitvec(),
+            account_instance: instance.view_bits()[44..].to_bitvec(),
+            account_type: account_type.view_bits()[60..].to_bitvec(),
+            universe: universe.view_bits()[56..].to_bitvec(),
         }
     }
 
     /// Creates a new SteamID from the Steam64 format.
     pub fn from_steam64(steam64: u64) -> Self {
-        let steam_as_bits = steam64.bits::<Msb0>();
+        let steam_as_bits = steam64.view_bits::<Msb0>();
         let steamid_len = steam_as_bits.len() - 1;
 
         let account_id = steam_as_bits[steamid_len];
-        let account_number = steam_as_bits[32..steamid_len].to_vec();
-        let account_instance = steam_as_bits[12..32].to_vec();
-        let account_type = steam_as_bits[8..12].to_vec();
-        let universe = steam_as_bits[0..8].to_vec();
+        let account_number = steam_as_bits[32..steamid_len].to_bitvec();
+        let account_instance = steam_as_bits[12..32].to_bitvec();
+        let account_type = steam_as_bits[8..12].to_bitvec();
+        let universe = steam_as_bits[0..8].to_bitvec();
 
         Self {
             account_id,

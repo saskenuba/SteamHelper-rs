@@ -19,7 +19,7 @@ pub fn steammsg_derive(input: TokenStream) -> TokenStream {
 fn impl_steammsg_macro(ast: &DeriveInput) -> TokenStream {
     let name = &ast.ident;
 
-    let gen = quote! {
+    let generated = quote! {
         impl SerializableBytes for #name {
             fn to_bytes(&self) -> Vec<u8> {
                 bincode::serialize(&self).unwrap()
@@ -37,7 +37,7 @@ fn impl_steammsg_macro(ast: &DeriveInput) -> TokenStream {
             }
         }
     };
-    gen.into()
+    generated.into()
 }
 
 
@@ -54,7 +54,7 @@ pub fn header_derive(input: TokenStream) -> TokenStream {
 
 fn impl_header_macro(ast: &DeriveInput) -> TokenStream {
     let name = &ast.ident;
-    let gen = quote! {
+    let generated = quote! {
 
         impl SerializableBytes for #name {
             fn to_bytes(&self) -> Vec<u8> {
@@ -95,7 +95,7 @@ fn impl_header_macro(ast: &DeriveInput) -> TokenStream {
 
         }
     };
-    gen.into()
+    generated.into()
 }
 
 #[proc_macro_attribute]

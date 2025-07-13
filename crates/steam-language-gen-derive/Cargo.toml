@@ -2,7 +2,7 @@
 name = "steam-language-gen-derive"
 version = "0.1.2"
 authors = ["Martin <martin@hotmail.com.br>"]
-edition = "2018"
+edition = "2024"
 license = "MIT"
 description = "Implementation detail of `steam-language-gen` crate."
 repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-language-gen-derive"

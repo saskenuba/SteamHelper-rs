@@ -17,7 +17,7 @@ impl Secret {
     pub fn new(secret: &[u8]) -> Result<Secret> {
         Ok(Secret {
             value: secret.to_vec(),
-            hmac: HmacSha1::new_varkey(&secret)?,
+            hmac: HmacSha1::new_from_slice(&secret)?,
         })
     }
 
@@ -26,7 +26,7 @@ impl Secret {
         let value = hex::decode(secret)?;
         Ok(Secret {
             value: value.clone(),
-            hmac: HmacSha1::new_varkey(&value)?,
+            hmac: HmacSha1::new_from_slice(&value)?,
         })
     }
 
@@ -35,7 +35,7 @@ impl Secret {
         let value = base64::decode(secret)?;
         Ok(Secret {
             value: value.clone(),
-            hmac: HmacSha1::new_varkey(&value)?,
+            hmac: HmacSha1::new_from_slice(&value)?,
         })
     }
 
@@ -44,11 +44,11 @@ impl Secret {
     }
 
     pub(crate) fn code_as_vec(&self) -> Vec<u8> {
-        self.hmac.clone().result().code().to_vec()
+        self.hmac.clone().finalize().into_bytes().to_vec()
     }
 
     pub(crate) fn hmac_input(&mut self, data: &[u8]) -> &Self {
-        self.hmac.input(data);
+        self.hmac.update(data);
         self
     }
 }
@@ -101,8 +101,8 @@ mod tests {
     #[test]
     fn secret_code() {
         let secret = make_secret();
-        let hmac = HmacSha1::new_varkey(&secret.value).unwrap();
-        let expected = base64::encode(&hmac.result().code());
+        let hmac = HmacSha1::new_from_slice(&secret.value).unwrap();
+        let expected = base64::encode(&hmac.finalize().into_bytes());
 
         assert_eq!(secret.code(), expected);
     }
@@ -110,8 +110,8 @@ mod tests {
     #[test]
     fn secret_code_as_vec() {
         let secret = make_secret();
-        let hmac = HmacSha1::new_varkey(&secret.value).unwrap();
-        let expected = hmac.result().code().to_vec();
+        let hmac = HmacSha1::new_from_slice(&secret.value).unwrap();
+        let expected = hmac.finalize().into_bytes().to_vec();
 
         assert_eq!(secret.code_as_vec(), expected);
     }
@@ -119,11 +119,11 @@ mod tests {
     #[test]
     fn hmac_input() {
         let mut secret = make_secret();
-        let mut hmac = HmacSha1::new_varkey(&secret.value).unwrap();
+        let mut hmac = HmacSha1::new_from_slice(&secret.value).unwrap();
         let data = b"b000";
 
-        hmac.input(&data[..]);
-        let expected = hmac.result().code().to_vec();
+        hmac.update(&data[..]);
+        let expected = hmac.finalize().into_bytes().to_vec();
 
         assert_eq!(secret.hmac_input(data).code_as_vec(), expected);
     }

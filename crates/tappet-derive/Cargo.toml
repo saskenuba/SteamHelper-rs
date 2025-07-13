@@ -2,7 +2,7 @@
 name = "tappet-derive"
 version = "0.3.2"
 authors = ["Martin <martin@hotmail.com.br>"]
-edition = "2018"
+edition = "2024"
 description = "Implementation detail of the `tappet` crate."
 repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/tappet-derive"
 homepage = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/tappet-derive"
@@ -12,6 +12,6 @@ license = "MIT"
 proc-macro = true
 
 [dependencies]
-syn = "1"
+syn = "2"
 quote = "1"
 proc-macro2 = "1"

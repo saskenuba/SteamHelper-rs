@@ -2,7 +2,7 @@
 name = "steamid-parser"
 version = "0.2.1"
 authors = ["Martin <martin@hotmail.com.br>"]
-edition = "2018"
+edition = "2024"
 repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steamid-parser"
 license = "MIT"
 description = "Utility crate for de/serialization of various Steam IDs, such as Steam3, Steam64."
@@ -12,9 +12,9 @@ default = ["serialize"]
 serialize = ["serde"]
 
 [dependencies]
-bitvec = "0.17"
+bitvec = "1.0"
 lazy_static = "1"
-num = "0.2"
+num = "0.4"
 regex = "1"
 serde = { version = "^1", optional = true }
 

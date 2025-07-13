@@ -17,19 +17,15 @@
     unused_qualifications
 )]
 
-extern crate crc32fast;
-#[macro_use]
-extern crate lazy_static;
-#[macro_use]
-extern crate lazy_static_include;
 
 use bytes::{BufMut, Bytes, BytesMut};
 use crc32fast::Hasher;
+use lazy_static_include::lazy_static_include_bytes;
 use openssl::{error::ErrorStack, hash::MessageDigest, rsa::Padding, sign::Verifier};
-use rand::prelude::*;
+use rand::{prelude::*, rng};
 
 mod symm;
-lazy_static_include_bytes!(STEAM_KEY, "assets/steam_public.pem");
+lazy_static_include_bytes!(STEAM_KEY => "assets/steam_public.pem");
 
 #[derive(Debug)]
 /// Used by SteamConnection to encrypt messages.
@@ -63,7 +59,7 @@ pub fn generate_session_key(nonce: Option<&[u8]>) -> Result<SessionKeys, ErrorSt
     let mut random_bytes_array = vec![0u8; 32];
     let mut encrypted_array = vec![0u8; 256];
 
-    thread_rng().fill_bytes(&mut random_bytes_array);
+    rng().fill_bytes(&mut random_bytes_array);
 
     if let Some(nonce) = nonce {
         random_bytes_array.extend(nonce);

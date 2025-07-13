@@ -1,7 +1,7 @@
 pub mod error;
 pub mod protobufs;
 
-use protobuf::*;
+pub use protobuf::*;
 pub use protobuf_json_mapping::ParseError;
 pub use protobuf_json_mapping::PrintError;
 pub use protobuf_message::ProtobufDeserialize;

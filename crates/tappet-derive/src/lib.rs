@@ -169,12 +169,9 @@ fn is_comma_or_indexed(field: &Field) -> VecMethod {
     let is_vec_marked = &field
         .attrs
         .iter()
-        .filter_map(|attribute| attribute.parse_meta().ok())
-        .map(|meta| match meta {
-            Meta::Path(path) => path,
-            _ => unimplemented!(),
-        })
-        .map(|path| path.get_ident().unwrap().to_string())
+        .map(|attribute| attribute.meta.path())
+        .filter_map(|path| path.get_ident())
+        .map(|ident| ident.to_string())
         .collect::<String>();
 
     match is_vec_marked {

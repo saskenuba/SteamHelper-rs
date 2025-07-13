@@ -1,5 +1,6 @@
 use serde::Deserialize;
 use serde::Serialize;
+use serde_with::{serde_as, json::JsonString, DisplayFromStr};
 use steam_language_gen::generated::enums::EResult;
 
 use crate::types::sessionid::HasSessionID;
@@ -81,6 +82,7 @@ pub struct TradeOfferCancelResponse {
     pub tradeofferid: Option<String>,
 }
 
+#[serde_as]
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 /// We create a trade offer from a Steam Trade link the user shares with us.
 /// The "partner" number, is the SteamID3. In order to send the trade offer, first we need to to
@@ -95,9 +97,9 @@ pub(crate) struct TradeOfferCreateRequest {
     /// Message to be sent to trade offer recipient along with the trade.
     /// The message needs to be form url encoded.
     pub message: String,
-    #[serde(serialize_with = "serde_with::json::nested::serialize")]
+    #[serde_as(as = "JsonString")]
     pub json_tradeoffer: JsonTradeOffer,
-    #[serde(serialize_with = "serde_with::json::nested::serialize")]
+    #[serde_as(as = "JsonString")]
     /// If we intend to create a trade offer based on a trade partner link, we need to send the
     /// trade access token with it.
     pub trade_offer_create_params: Option<TradeOfferParams>,
