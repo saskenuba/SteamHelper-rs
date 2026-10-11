@@ -280,6 +280,14 @@ impl SteamID {
         )
     }
 
+    /// Creates a new SteamID for a public individual account from its account id, also known as Steam32: the W in
+    /// Steam3 `[U:1:W]`.
+    ///
+    /// Same as `SteamID::from_steam3(account_id, None, None)`.
+    pub fn from_account_id(account_id: u32) -> Self {
+        Self::from_steam3(account_id, None, None)
+    }
+
     /// Creates a new SteamID from the Steam64 format.
     pub fn from_steam64(steam64: u64) -> Self {
         Self(steam64)
@@ -1088,5 +1096,21 @@ mod tests {
     fn steam2_format_ignores_instance() {
         let steamid = SteamID::from_steam64(steam64_from_parts(1, 1, 4, get_steam3()));
         assert_eq!(steamid.to_steam2(), Some("STEAM_0:1:66138017".to_owned()));
+    }
+
+    #[test]
+    fn from_account_id() {
+        for account_id in [0, 1, 24_569_668, 132_276_035, u32::MAX] {
+            let steamid = SteamID::from_account_id(account_id);
+            assert_eq!(steamid, SteamID::from_steam3(account_id, None, None), "{}", account_id);
+            assert_eq!(steamid.account_id(), account_id);
+            assert_eq!(steamid.instance(), 1);
+            assert_eq!(steamid.account_type(), Some(EAccountType::Individual));
+            assert_eq!(steamid.universe(), Some(EUniverse::Public));
+        }
+        assert_eq!(
+            SteamID::from_account_id(get_steam3() as u32).to_steam64(),
+            get_steam64_odd()
+        );
     }
 }
