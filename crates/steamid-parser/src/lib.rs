@@ -225,14 +225,17 @@ impl SteamID {
     /// Z the remaining bits, so that Steam3 is Z*2+Y.
     ///
     /// The public universe is rendered as 0, its classic Steam2 form. Steam2 only describes individual
-    /// accounts, so the account type and instance are not kept.
-    pub fn to_steam2(self) -> String {
+    /// accounts, so `None` is returned for any other account type. The instance is not kept.
+    pub fn to_steam2(self) -> Option<String> {
+        if self.account_type() != Some(EAccountType::Individual) {
+            return None;
+        }
         let universe = match (self.0 >> UNIVERSE_SHIFT) & UNIVERSE_MASK {
             universe if universe == EUniverse::Public as u64 => 0,
             universe => universe,
         };
         let steam3 = self.to_steam3();
-        format!("STEAM_{}:{}:{}", universe, steam3 & 1, steam3 >> 1)
+        Some(format!("STEAM_{}:{}:{}", universe, steam3 & 1, steam3 >> 1))
     }
 
     pub fn to_steam64(self) -> u64 {
@@ -953,16 +956,19 @@ mod tests {
     fn steam2_format() {
         assert_eq!(
             SteamID::from_steam64(get_steam64_odd()).to_steam2(),
-            "STEAM_0:1:66138017"
+            Some("STEAM_0:1:66138017".to_owned())
         );
         assert_eq!(
             SteamID::from_steam64(get_steam64_even()).to_steam2(),
-            "STEAM_0:0:12284834"
+            Some("STEAM_0:0:12284834".to_owned())
         );
-        assert_eq!(SteamID::from_steam3(0, None, None).to_steam2(), "STEAM_0:0:0");
+        assert_eq!(
+            SteamID::from_steam3(0, None, None).to_steam2(),
+            Some("STEAM_0:0:0".to_owned())
+        );
         assert_eq!(
             SteamID::from_steam3(u32::MAX, None, None).to_steam2(),
-            "STEAM_0:1:2147483647"
+            Some("STEAM_0:1:2147483647".to_owned())
         );
     }
 
@@ -976,7 +982,7 @@ mod tests {
             (EUniverse::Dev, 4),
         ] {
             let steamid = SteamID::from_steam3(get_steam3() as u32, Some(universe), None);
-            assert_eq!(steamid.to_steam2(), format!("STEAM_{}:1:66138017", digit));
+            assert_eq!(steamid.to_steam2(), Some(format!("STEAM_{}:1:66138017", digit)));
         }
     }
 
@@ -984,7 +990,7 @@ mod tests {
     fn steam2_roundtrip() {
         for steam3 in [0, 1, 2, 24_569_668, 132_276_035, u32::MAX] {
             let steamid = SteamID::from_steam3(steam3, None, None);
-            assert_eq!(SteamID::find(&steamid.to_steam2()), Some(steamid), "{}", steam3);
+            assert_eq!(steamid.to_steam2().unwrap().parse(), Ok(steamid), "{}", steam3);
         }
     }
 
@@ -1051,5 +1057,36 @@ mod tests {
         assert_eq!(steamid.instance(), 1);
         assert_eq!(steamid.account_type(), Some(EAccountType::GameServer));
         assert_eq!(steamid.universe(), Some(EUniverse::Beta));
+    }
+
+    #[test]
+    fn steam2_format_only_individual_accounts() {
+        let account_types = [
+            EAccountType::Invalid,
+            EAccountType::Multiseat,
+            EAccountType::GameServer,
+            EAccountType::AnonGameServer,
+            EAccountType::Pending,
+            EAccountType::ContentServer,
+            EAccountType::Clan,
+            EAccountType::Chat,
+            EAccountType::ConsoleUser,
+            EAccountType::AnonUser,
+        ];
+        for account_type in account_types {
+            let steamid = SteamID::from_steam3(42, None, Some(account_type));
+            assert_eq!(steamid.to_steam2(), None, "{:?}", account_type);
+        }
+        assert_eq!(SteamID::from_steam64(103_582_791_429_521_412).to_steam2(), None);
+        assert_eq!(
+            SteamID::from_steam64(steam64_from_parts(1, 11, 1, 42)).to_steam2(),
+            None
+        );
+    }
+
+    #[test]
+    fn steam2_format_ignores_instance() {
+        let steamid = SteamID::from_steam64(steam64_from_parts(1, 1, 4, get_steam3()));
+        assert_eq!(steamid.to_steam2(), Some("STEAM_0:1:66138017".to_owned()));
     }
 }
