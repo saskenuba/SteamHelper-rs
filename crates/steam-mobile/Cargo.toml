@@ -63,7 +63,7 @@ version = "^0.2"
 path = "../steam-totp"
 
 [dependencies.steamid-parser]
-version = "^0.2"
+version = "^1"
 path = "../steamid-parser"
 
 [dev-dependencies]

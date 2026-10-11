@@ -1,6 +1,6 @@
 [package]
 name = "steamid-parser"
-version = "0.2.1"
+version = "1.0.0"
 authors = ["Martin <martin@hotmail.com.br>"]
 edition = "2018"
 repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steamid-parser"

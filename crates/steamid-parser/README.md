@@ -11,7 +11,7 @@ To use it, add this to your Cargo.toml:
 
 ```toml
 [dependencies.steamid-parser]
-version = "^0.2"
+version = "^1"
 ```
 
 ## Usage
