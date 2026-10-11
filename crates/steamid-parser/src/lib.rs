@@ -12,6 +12,10 @@ const ACCOUNT_TYPE_SHIFT: u32 = 52;
 const ACCOUNT_TYPE_MASK: u64 = 0xF;
 const ACCOUNT_INSTANCE_SHIFT: u32 = 32;
 const ACCOUNT_INSTANCE_MASK: u64 = 0xF_FFFF;
+const DESKTOP_INSTANCE: u32 = 1;
+// Chat instance flags, from the highest instance bit down.
+const CHAT_INSTANCE_CLAN_FLAG: u32 = 1 << 19;
+const CHAT_INSTANCE_LOBBY_FLAG: u32 = 1 << 18;
 const UNIVERSE_MASK: u64 = 0xFF;
 const STEAM3_MASK: u64 = 0xFFFF_FFFF;
 // Steam2 account numbers (Z) are 31 bits.
@@ -219,6 +223,45 @@ impl SteamID {
     /// Source: `https://steamcommunity.com/path/[letter:1:W]`
     pub fn to_steam3(self) -> u64 {
         self.0 & STEAM3_MASK
+    }
+
+    /// Formats as Steam3: `[T:U:W]`, where T is the account type letter, U the universe and W the account id.
+    ///
+    /// Chats use `c` for clan chats and `L` for lobbies, and account types without a letter use `i`. The instance is
+    /// added as `[T:U:W:I]` for anonymous game servers, multiseat accounts and individual accounts that are not on the
+    /// desktop instance, the same way Steam renders them.
+    ///
+    /// Named `to_steam3_string` because [`SteamID::to_steam3`] returns the account id.
+    pub fn to_steam3_string(self) -> String {
+        let account_type = self.account_type();
+        let instance = self.instance();
+        let letter = match account_type {
+            Some(EAccountType::Invalid) => 'I',
+            Some(EAccountType::Individual) => 'U',
+            Some(EAccountType::Multiseat) => 'M',
+            Some(EAccountType::GameServer) => 'G',
+            Some(EAccountType::AnonGameServer) => 'A',
+            Some(EAccountType::Pending) => 'P',
+            Some(EAccountType::ContentServer) => 'C',
+            Some(EAccountType::Clan) => 'g',
+            Some(EAccountType::Chat) if instance & CHAT_INSTANCE_CLAN_FLAG != 0 => 'c',
+            Some(EAccountType::Chat) if instance & CHAT_INSTANCE_LOBBY_FLAG != 0 => 'L',
+            Some(EAccountType::Chat) => 'T',
+            Some(EAccountType::AnonUser) => 'a',
+            Some(EAccountType::ConsoleUser) | None => 'i',
+        };
+        let render_instance = match account_type {
+            Some(EAccountType::AnonGameServer) | Some(EAccountType::Multiseat) => true,
+            Some(EAccountType::Individual) => instance != DESKTOP_INSTANCE,
+            _ => false,
+        };
+
+        let universe = (self.0 >> UNIVERSE_SHIFT) & UNIVERSE_MASK;
+        if render_instance {
+            format!("[{}:{}:{}:{}]", letter, universe, self.account_id(), instance)
+        } else {
+            format!("[{}:{}:{}]", letter, universe, self.account_id())
+        }
     }
 
     /// Formats as Steam2: `STEAM_X:Y:Z`, where X is the universe, Y the lowest bit of the account id and
@@ -1112,5 +1155,117 @@ mod tests {
             SteamID::from_account_id(get_steam3() as u32).to_steam64(),
             get_steam64_odd()
         );
+    }
+
+    #[test]
+    fn steam3_string() {
+        assert_eq!(
+            SteamID::from_steam64(get_steam64_odd()).to_steam3_string(),
+            "[U:1:132276035]"
+        );
+        assert_eq!(
+            SteamID::from_steam64(get_steam64_even()).to_steam3_string(),
+            "[U:1:24569668]"
+        );
+        assert_eq!(
+            SteamID::from_steam64(103_582_791_429_521_412).to_steam3_string(),
+            "[g:1:4]"
+        );
+        assert_eq!(SteamID::from_account_id(0).to_steam3_string(), "[U:1:0]");
+        assert_eq!(
+            SteamID::from_account_id(u32::MAX).to_steam3_string(),
+            "[U:1:4294967295]"
+        );
+    }
+
+    #[test]
+    fn steam3_string_account_types() {
+        for (account_type, letter) in [
+            (EAccountType::Invalid, 'I'),
+            (EAccountType::Individual, 'U'),
+            (EAccountType::GameServer, 'G'),
+            (EAccountType::Pending, 'P'),
+            (EAccountType::ContentServer, 'C'),
+            (EAccountType::Clan, 'g'),
+            (EAccountType::Chat, 'T'),
+            (EAccountType::ConsoleUser, 'i'),
+            (EAccountType::AnonUser, 'a'),
+        ] {
+            let steamid = SteamID::from_steam3(42, None, Some(account_type));
+            assert_eq!(
+                steamid.to_steam3_string(),
+                format!("[{}:1:42]", letter),
+                "{:?}",
+                account_type
+            );
+        }
+        assert_eq!(
+            SteamID::from_steam64(steam64_from_parts(1, 11, 1, 42)).to_steam3_string(),
+            "[i:1:42]"
+        );
+    }
+
+    #[test]
+    fn steam3_string_universes() {
+        for universe in [0, 1, 2, 3, 4, 5, 255] {
+            let steamid = SteamID::from_steam64(steam64_from_parts(universe, 1, 1, 42));
+            assert_eq!(steamid.to_steam3_string(), format!("[U:{}:42]", universe));
+        }
+    }
+
+    #[test]
+    fn steam3_string_chat_flags() {
+        let clan_chat = SteamID::from_steam64(steam64_from_parts(1, 8, 1 << 19, 42));
+        assert_eq!(clan_chat.to_steam3_string(), "[c:1:42]");
+
+        let lobby = SteamID::from_steam64(steam64_from_parts(1, 8, 1 << 18, 42));
+        assert_eq!(lobby.to_steam3_string(), "[L:1:42]");
+
+        let chat = SteamID::from_steam64(steam64_from_parts(1, 8, 0, 42));
+        assert_eq!(chat.to_steam3_string(), "[T:1:42]");
+    }
+
+    #[test]
+    fn steam3_string_instance() {
+        let anon_game_server = SteamID::from_steam64(steam64_from_parts(1, 4, 1234, 5678));
+        assert_eq!(anon_game_server.to_steam3_string(), "[A:1:5678:1234]");
+
+        let multiseat = SteamID::from_steam64(steam64_from_parts(1, 2, 1, 42));
+        assert_eq!(multiseat.to_steam3_string(), "[M:1:42:1]");
+
+        let individual_console = SteamID::from_steam64(steam64_from_parts(1, 1, 2, 42));
+        assert_eq!(individual_console.to_steam3_string(), "[U:1:42:2]");
+
+        let game_server = SteamID::from_steam64(steam64_from_parts(1, 3, 1234, 42));
+        assert_eq!(game_server.to_steam3_string(), "[G:1:42]");
+    }
+
+    #[test]
+    fn steam3_string_roundtrip() {
+        let account_types = [
+            EAccountType::Invalid,
+            EAccountType::Individual,
+            EAccountType::GameServer,
+            EAccountType::Pending,
+            EAccountType::ContentServer,
+            EAccountType::Clan,
+            EAccountType::Chat,
+            EAccountType::AnonUser,
+        ];
+        let universes = [
+            EUniverse::Invalid,
+            EUniverse::Public,
+            EUniverse::Beta,
+            EUniverse::Internal,
+            EUniverse::Dev,
+        ];
+        for account_type in account_types {
+            for universe in universes {
+                for account_id in [0, 42, u32::MAX] {
+                    let steamid = SteamID::from_steam3(account_id, Some(universe), Some(account_type));
+                    assert_eq!(steamid.to_steam3_string().parse(), Ok(steamid), "{:?}", steamid);
+                }
+            }
+        }
     }
 }
