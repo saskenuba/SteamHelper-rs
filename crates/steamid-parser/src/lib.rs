@@ -262,4 +262,293 @@ mod tests {
         assert_eq!(steamid, unserialized);
         assert_eq!(steamid.to_steam3(), unserialized.to_steam3());
     }
+
+    /// Builds a Steam64 ID from its parts, independently of the implementation.
+    fn steam64_from_parts(universe: u64, account_type: u64, instance: u64, steam3: u64) -> u64 {
+        universe << 56 | account_type << 52 | instance << 32 | steam3
+    }
+
+    #[test]
+    fn steam64_roundtrip() {
+        let ids = [
+            0,
+            1,
+            get_steam64_odd(),
+            get_steam64_even(),
+            // clan
+            103_582_791_429_521_412,
+            // anonymous game server
+            steam64_from_parts(1, 4, 1234, 5678),
+            (1 << 63) - 1,
+        ];
+        for id in ids {
+            assert_eq!(SteamID::from_steam64(id).to_steam64(), id, "{}", id);
+        }
+    }
+
+    #[test]
+    fn steam64_highest_bit_is_dropped() {
+        assert_eq!(SteamID::from_steam64(1 << 63).to_steam64(), 0);
+        assert_eq!(SteamID::from_steam64(u64::MAX).to_steam64(), u64::MAX >> 1);
+    }
+
+    #[test]
+    fn steam64_highest_bit_is_kept_for_equality() {
+        assert_ne!(SteamID::from_steam64(1 << 63), SteamID::from_steam64(0));
+    }
+
+    #[test]
+    fn steam64_to_steam3_ignores_upper_bits() {
+        let id = steam64_from_parts(4, 7, 0xF_FFFF, 0xFFFF_FFFF);
+        assert_eq!(SteamID::from_steam64(id).to_steam3(), 0xFFFF_FFFF);
+        assert_eq!(SteamID::from_steam64(103_582_791_429_521_412).to_steam3(), 4);
+    }
+
+    #[test]
+    fn steam3_roundtrip() {
+        for steam3 in [0, 1, 2, 3, 24_569_668, 132_276_035, 1 << 31, u32::MAX - 1, u32::MAX] {
+            let steamid = SteamID::from_steam3(steam3, None, None);
+            assert_eq!(steamid.to_steam3(), steam3 as u64, "{}", steam3);
+            assert_eq!(
+                steamid.to_steam64(),
+                steam64_from_parts(1, 1, 1, steam3 as u64),
+                "{}",
+                steam3
+            );
+        }
+    }
+
+    #[test]
+    fn steam3_defaults_to_public_individual() {
+        assert_eq!(
+            SteamID::from_steam3(132_276_035, None, None),
+            SteamID::from_steam3(132_276_035, Some(EUniverse::Public), Some(EAccountType::Individual))
+        );
+    }
+
+    #[test]
+    fn steam3_with_universe_and_account_type() {
+        let universes = [
+            EUniverse::Invalid,
+            EUniverse::Public,
+            EUniverse::Beta,
+            EUniverse::Internal,
+            EUniverse::Dev,
+        ];
+        let account_types = [
+            EAccountType::Invalid,
+            EAccountType::Individual,
+            EAccountType::Multiseat,
+            EAccountType::GameServer,
+            EAccountType::AnonGameServer,
+            EAccountType::Pending,
+            EAccountType::ContentServer,
+            EAccountType::Clan,
+            EAccountType::Chat,
+            EAccountType::ConsoleUser,
+            EAccountType::AnonUser,
+        ];
+        for universe in universes {
+            for account_type in account_types {
+                let steamid = SteamID::from_steam3(77, Some(universe), Some(account_type));
+                let expected = steam64_from_parts(universe as u64, account_type as u64, 1, 77);
+                assert_eq!(steamid.to_steam64(), expected, "{:?} {:?}", universe, account_type);
+            }
+        }
+    }
+
+    #[test]
+    fn steam3_always_uses_instance_one() {
+        let steamid = SteamID::from_steam3(4, None, Some(EAccountType::Clan));
+        assert_eq!(steamid.to_steam64(), steam64_from_parts(1, 7, 1, 4));
+    }
+
+    #[test]
+    fn steam3_and_steam64_are_equal() {
+        assert_eq!(
+            SteamID::from_steam3(get_steam3() as u32, None, None),
+            SteamID::from_steam64(get_steam64_odd())
+        );
+        assert_ne!(
+            SteamID::from_steam3(get_steam3() as u32 + 1, None, None),
+            SteamID::from_steam64(get_steam64_odd())
+        );
+    }
+
+    #[test]
+    fn parse_exact() {
+        assert_eq!(
+            SteamID::parse("76561198092541763").unwrap().to_steam64(),
+            get_steam64_odd()
+        );
+        assert_eq!(
+            SteamID::parse("[U:1:132276035]").unwrap().to_steam64(),
+            get_steam64_odd()
+        );
+    }
+
+    #[test]
+    fn parse_from_url() {
+        let steamid = SteamID::parse("https://steamcommunity.com/profiles/76561198092541763/").unwrap();
+        assert_eq!(steamid.to_steam64(), get_steam64_odd());
+
+        let steamid = SteamID::parse("https://steamcommunity.com/profiles/[U:1:132276035]").unwrap();
+        assert_eq!(steamid.to_steam64(), get_steam64_odd());
+    }
+
+    #[test]
+    fn parse_steam3_account_types() {
+        let cases = [
+            ('A', EAccountType::AnonGameServer),
+            ('G', EAccountType::GameServer),
+            ('M', EAccountType::Multiseat),
+            ('P', EAccountType::Pending),
+            ('C', EAccountType::ContentServer),
+            ('g', EAccountType::Clan),
+            ('T', EAccountType::Chat),
+            ('I', EAccountType::Invalid),
+            ('U', EAccountType::Individual),
+            ('a', EAccountType::AnonUser),
+        ];
+        for (letter, account_type) in cases {
+            let steamid = SteamID::parse(&format!("[{}:1:42]", letter)).unwrap();
+            assert_eq!(
+                steamid.to_steam64(),
+                steam64_from_parts(1, account_type as u64, 1, 42),
+                "{}",
+                letter
+            );
+        }
+    }
+
+    #[test]
+    fn parse_steam3_universes() {
+        for universe in 0..=4 {
+            let steamid = SteamID::parse(&format!("[U:{}:42]", universe)).unwrap();
+            assert_eq!(steamid.to_steam64(), steam64_from_parts(universe, 1, 1, 42));
+        }
+    }
+
+    #[test]
+    fn parse_steam3_edges() {
+        assert_eq!(SteamID::parse("[U:1:0]").unwrap().to_steam3(), 0);
+        assert_eq!(SteamID::parse("[U:1:0000132276035]").unwrap().to_steam3(), get_steam3());
+        assert_eq!(SteamID::parse("[U:1:4294967295]").unwrap().to_steam3(), u32::MAX as u64);
+    }
+
+    #[test]
+    fn parse_prefers_steam3_over_steam64() {
+        let steamid = SteamID::parse("76561198092541763 [U:1:24569668]").unwrap();
+        assert_eq!(steamid.to_steam64(), get_steam64_even());
+    }
+
+    #[test]
+    fn parse_takes_first_match() {
+        let steamid = SteamID::parse("[U:1:24569668] [U:1:132276035]").unwrap();
+        assert_eq!(steamid.to_steam64(), get_steam64_even());
+
+        let steamid = SteamID::parse("76561197984835396 76561198092541763").unwrap();
+        assert_eq!(steamid.to_steam64(), get_steam64_even());
+    }
+
+    #[test]
+    fn parse_steam64_inside_longer_number() {
+        // there are no boundaries around the match, the first 7 followed by 16 digits is used
+        let steamid = SteamID::parse("176561198092541763999").unwrap();
+        assert_eq!(steamid.to_steam64(), get_steam64_odd());
+    }
+
+    #[test]
+    fn parse_malformed_steam3_falls_back_to_steam64() {
+        for input in [
+            "[U:1:132276035 76561198092541763",
+            "[U:5:132276035] 76561198092541763",
+            "[U:1:] 76561198092541763",
+            "[X:1:132276035] 76561198092541763",
+            "[U:1:13227a035] 76561198092541763",
+            "[U-1-132276035] 76561198092541763",
+        ] {
+            let steamid = SteamID::parse(input).unwrap();
+            assert_eq!(steamid.to_steam64(), get_steam64_odd(), "{}", input);
+        }
+    }
+
+    #[test]
+    fn parse_invalid() {
+        for input in [
+            "",
+            "steam",
+            "[U:1:]",
+            "[U:5:132276035]",
+            "U:1:132276035",
+            "[U:1:132276035",
+            // steam2 is not supported
+            "STEAM_0:1:66138017",
+            // too short
+            "7656119809254176",
+            // doesn't start with 7
+            "86561198092541763",
+            // clans start with 1
+            "103582791429521412",
+            // non-ascii digits
+            "٧٦٥٦١١٩٨٠٩٢٥٤١٧٦٣",
+        ] {
+            assert_eq!(SteamID::parse(input), None, "{}", input);
+        }
+    }
+
+    // The following inputs are matched but can't be converted, which currently panics.
+
+    #[test]
+    #[should_panic]
+    fn parse_steam3_unsupported_account_type_c() {
+        SteamID::parse("[c:1:42]");
+    }
+
+    #[test]
+    #[should_panic]
+    fn parse_steam3_unsupported_account_type_l() {
+        SteamID::parse("[L:1:42]");
+    }
+
+    #[test]
+    #[should_panic]
+    fn parse_steam3_unsupported_account_type_i() {
+        SteamID::parse("[i:1:42]");
+    }
+
+    #[test]
+    #[should_panic]
+    fn parse_steam3_account_overflow() {
+        SteamID::parse("[U:1:4294967296]");
+    }
+
+    #[test]
+    fn clone_is_equal() {
+        let steamid = SteamID::from_steam64(get_steam64_odd());
+        assert_eq!(steamid.clone(), steamid);
+    }
+
+    #[cfg(feature = "serialize")]
+    #[test]
+    fn serde_as_number() {
+        let steamid = SteamID::from_steam64(get_steam64_odd());
+        assert_eq!(serde_json::to_string(&steamid).unwrap(), "76561198092541763");
+
+        let steamid: SteamID = serde_json::from_str("76561198092541763").unwrap();
+        assert_eq!(steamid.to_steam64(), get_steam64_odd());
+    }
+
+    #[cfg(feature = "serialize")]
+    #[test]
+    fn serde_rejects_string() {
+        assert!(serde_json::from_str::<SteamID>("\"76561198092541763\"").is_err());
+    }
+
+    #[cfg(feature = "serialize")]
+    #[test]
+    fn serde_drops_highest_bit() {
+        let steamid = SteamID::from_steam64(u64::MAX);
+        assert_eq!(serde_json::to_string(&steamid).unwrap(), (u64::MAX >> 1).to_string());
+    }
 }
