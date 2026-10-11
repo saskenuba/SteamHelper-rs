@@ -11,7 +11,10 @@ const UNIVERSE_SHIFT: u32 = 56;
 const ACCOUNT_TYPE_SHIFT: u32 = 52;
 const ACCOUNT_TYPE_MASK: u64 = 0xF;
 const ACCOUNT_INSTANCE_SHIFT: u32 = 32;
+const UNIVERSE_MASK: u64 = 0xFF;
 const STEAM3_MASK: u64 = 0xFFFF_FFFF;
+// Steam2 account numbers (Z) are 31 bits.
+const STEAM2_ACCOUNT_NUMBER_MAX: u32 = 0x7FFF_FFFF;
 // The highest universe bit is not kept when converting back to Steam64. No real universe sets it.
 const STEAM64_MASK: u64 = !(1 << 63);
 
@@ -70,6 +73,25 @@ fn find_steam3(input: &[u8]) -> Option<(u8, u8, &str)> {
     })
 }
 
+/// Finds the first Steam2 ID in the format `STEAM_X:Y:Z`, returning the universe digit and
+/// the Steam3 account id (Z*2+Y).
+///
+/// X is a digit from 0 to 4, Y is either 0 or 1 and Z is a 31 bit number.
+fn find_steam2(input: &[u8]) -> Option<(u8, u32)> {
+    (0..input.len()).find_map(|start| match &input[start..] {
+        [b'S', b'T', b'E', b'A', b'M', b'_', universe @ b'0'..=b'4', b':', y @ b'0'..=b'1', b':', account @ ..] => {
+            let digits = account.iter().take_while(|c| c.is_ascii_digit()).count();
+            // only ascii digits were matched, so this is valid utf8
+            let z: u32 = std::str::from_utf8(&account[..digits]).unwrap().parse().ok()?;
+            if z > STEAM2_ACCOUNT_NUMBER_MAX {
+                return None;
+            }
+            Some((*universe, z * 2 + (y - b'0') as u32))
+        }
+        _ => None,
+    })
+}
+
 /// Finds the first Steam64 ID: the digit 7 followed by 16 digits.
 fn find_steam64(input: &[u8]) -> Option<&str> {
     input
@@ -89,6 +111,20 @@ impl SteamID {
     /// Source: https://steamcommunity.com/path/[letter:1:W]
     pub fn to_steam3(&self) -> u64 {
         self.0 & STEAM3_MASK
+    }
+
+    /// Formats as Steam2: `STEAM_X:Y:Z`, where X is the universe, Y the lowest bit of the account id and
+    /// Z the remaining bits, so that Steam3 is Z*2+Y.
+    ///
+    /// The public universe is rendered as 0, its classic Steam2 form. Steam2 only describes individual
+    /// accounts, so the account type and instance are not kept.
+    pub fn to_steam2(&self) -> String {
+        let universe = match (self.0 >> UNIVERSE_SHIFT) & UNIVERSE_MASK {
+            universe if universe == EUniverse::Public as u64 => 0,
+            universe => universe,
+        };
+        let steam3 = self.to_steam3();
+        format!("STEAM_{}:{}:{}", universe, steam3 & 1, steam3 >> 1)
     }
 
     pub fn to_steam64(&self) -> u64 {
@@ -120,6 +156,11 @@ impl SteamID {
     /// Steam64: digit 7 + 16 digits
     ///
     /// Steam3: [T:U:D] where T: The account type, U: The account universe, D: Account number,
+    ///
+    /// Steam2: STEAM_X:Y:Z where X: The account universe, with 0 meaning public, Y: Lowest bit of the account number,
+    /// Z: Remaining bits of the account number. Always an individual account.
+    ///
+    /// When more than one format is present, Steam3 is preferred, then Steam64, then Steam2.
     pub fn parse(steamid: &str) -> Option<Self> {
         if let Some((account_type, account_universe, account_number)) = find_steam3(steamid.as_bytes()) {
             // TODO - match instance
@@ -132,6 +173,12 @@ impl SteamID {
             ));
         } else if let Some(number) = find_steam64(steamid.as_bytes()) {
             return Some(Self::from_steam64(number.parse().unwrap()));
+        } else if let Some((account_universe, steam3)) = find_steam2(steamid.as_bytes()) {
+            let universe = match account_universe {
+                b'0' => EUniverse::Public,
+                digit => universe_from_digit(digit).unwrap(),
+            };
+            return Some(Self::from_steam3(steam3, Some(universe), None));
         }
         None
     }
@@ -466,8 +513,15 @@ mod tests {
             "[U:5:132276035]",
             "U:1:132276035",
             "[U:1:132276035",
-            // steam2 is not supported
-            "STEAM_0:1:66138017",
+            // steam2 universe out of range
+            "STEAM_5:1:66138017",
+            // steam2 y must be 0 or 1
+            "STEAM_0:2:66138017",
+            // steam2 z must fit in 31 bits
+            "STEAM_0:1:2147483648",
+            "STEAM_0:1:99999999999",
+            "STEAM_0:1:",
+            "steam_0:1:66138017",
             // too short
             "7656119809254176",
             // doesn't start with 7
@@ -534,5 +588,102 @@ mod tests {
     fn serde_drops_highest_bit() {
         let steamid = SteamID::from_steam64(u64::MAX);
         assert_eq!(serde_json::to_string(&steamid).unwrap(), (u64::MAX >> 1).to_string());
+    }
+
+    #[test]
+    fn steam2_parse() {
+        let steamid = SteamID::parse("STEAM_0:1:66138017").unwrap();
+        assert_eq!(steamid.to_steam64(), get_steam64_odd());
+
+        let steamid = SteamID::parse("STEAM_0:0:12284834").unwrap();
+        assert_eq!(steamid.to_steam64(), get_steam64_even());
+    }
+
+    #[test]
+    fn steam2_parse_universe_one_is_public() {
+        let steamid = SteamID::parse("STEAM_1:1:66138017").unwrap();
+        assert_eq!(steamid.to_steam64(), get_steam64_odd());
+    }
+
+    #[test]
+    fn steam2_parse_universes() {
+        for universe in 2..=4 {
+            let steamid = SteamID::parse(&format!("STEAM_{}:1:66138017", universe)).unwrap();
+            assert_eq!(steamid.to_steam64(), steam64_from_parts(universe, 1, 1, get_steam3()));
+        }
+    }
+
+    #[test]
+    fn steam2_parse_edges() {
+        assert_eq!(SteamID::parse("STEAM_0:0:0").unwrap().to_steam3(), 0);
+        assert_eq!(SteamID::parse("STEAM_0:1:0").unwrap().to_steam3(), 1);
+        assert_eq!(
+            SteamID::parse("STEAM_0:1:2147483647").unwrap().to_steam3(),
+            u32::MAX as u64
+        );
+        assert_eq!(
+            SteamID::parse("STEAM_0:1:0066138017").unwrap().to_steam64(),
+            get_steam64_odd()
+        );
+    }
+
+    #[test]
+    fn steam2_parse_from_text() {
+        let steamid = SteamID::parse("player STEAM_0:1:66138017 joined").unwrap();
+        assert_eq!(steamid.to_steam64(), get_steam64_odd());
+    }
+
+    #[test]
+    fn steam2_parse_skips_invalid_match() {
+        let steamid = SteamID::parse("STEAM_0:1:2147483648 STEAM_0:0:12284834").unwrap();
+        assert_eq!(steamid.to_steam64(), get_steam64_even());
+    }
+
+    #[test]
+    fn steam2_parse_has_lowest_priority() {
+        let steamid = SteamID::parse("STEAM_0:0:12284834 [U:1:132276035]").unwrap();
+        assert_eq!(steamid.to_steam64(), get_steam64_odd());
+
+        let steamid = SteamID::parse("STEAM_0:0:12284834 76561198092541763").unwrap();
+        assert_eq!(steamid.to_steam64(), get_steam64_odd());
+    }
+
+    #[test]
+    fn steam2_format() {
+        assert_eq!(
+            SteamID::from_steam64(get_steam64_odd()).to_steam2(),
+            "STEAM_0:1:66138017"
+        );
+        assert_eq!(
+            SteamID::from_steam64(get_steam64_even()).to_steam2(),
+            "STEAM_0:0:12284834"
+        );
+        assert_eq!(SteamID::from_steam3(0, None, None).to_steam2(), "STEAM_0:0:0");
+        assert_eq!(
+            SteamID::from_steam3(u32::MAX, None, None).to_steam2(),
+            "STEAM_0:1:2147483647"
+        );
+    }
+
+    #[test]
+    fn steam2_format_universes() {
+        for (universe, digit) in [
+            (EUniverse::Invalid, 0),
+            (EUniverse::Public, 0),
+            (EUniverse::Beta, 2),
+            (EUniverse::Internal, 3),
+            (EUniverse::Dev, 4),
+        ] {
+            let steamid = SteamID::from_steam3(get_steam3() as u32, Some(universe), None);
+            assert_eq!(steamid.to_steam2(), format!("STEAM_{}:1:66138017", digit));
+        }
+    }
+
+    #[test]
+    fn steam2_roundtrip() {
+        for steam3 in [0, 1, 2, 24_569_668, 132_276_035, u32::MAX] {
+            let steamid = SteamID::from_steam3(steam3, None, None);
+            assert_eq!(SteamID::parse(&steamid.to_steam2()), Some(steamid), "{}", steam3);
+        }
     }
 }
