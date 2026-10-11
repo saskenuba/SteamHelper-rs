@@ -5,6 +5,103 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.3.0 (2026-10-11)
+
+### New Features (BREAKING)
+
+ - <csr-id-cd7631af6c19be5790615e75a5953192d201549f/> regenerate with lite runtime, one feature per proto
+   Updates the protobuf generator and regenerates every Steam protobuf:
+   
+   - protobuf, protobuf-codegen 3.7.2 and protoc-bin-vendored 3.3
+     (protoc 36.2); drops the unused protoc-rust and walkdir
+   - SteamDatabase/Protobufs submodule moved to the latest upstream, which
+     adds 21 protos and drops clientserver_ufs, deviceauth_steamclient and
+     star_steamclient
+   - each proto is a module behind a cargo feature of the same name, which
+     enables the protos it imports; `full` enables all of them. regen
+     writes both mod.rs and the features block in Cargo.toml, and clears
+     stale output first
+   - generated with lite_runtime, without descriptors or reflection. A full
+     build goes from ~52s to ~21s, and a crate using only the auth protos
+     builds steam-protobuf in ~1s
+   - generated code refers to ::protobuf instead of relying on the
+     crate-root glob from inside_protobuf; the runtime is re-exported as
+     steam_protobuf::protobuf
+   - edition 2021, thiserror 2, and a .gitattributes marking the generated
+     protos as linguist-generated
+   
+   steam-mobile, steam-language (messages) and steam-client now name the
+   features they use.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 977 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Regenerate with lite runtime, one feature per proto ([`cd7631a`](https://github.com/saskenuba/SteamHelper-rs/commit/cd7631af6c19be5790615e75a5953192d201549f))
+</details>
+
+## 0.2.1 (2024-02-07)
+
+### New Features
+
+ - <csr-id-f80d2d96441ae050348d6a76848492fa8c80a479/> added ProtobufSerialize and ProtobufDeserialize to avoid importing
+   external functions for serialization;
+
+### Bug Fixes
+
+ - <csr-id-3bfd5d1b313f1499bdacad03645693e8758f3a23/> fixed steam-protobuf main.rs better under feature-flag
+ - <csr-id-4fd14a2055fb51ff9224e88576b5efaea4a61424/> changed trait bounds, changed errors
+ - <csr-id-f9dcd168a793d1b879ee6f1cf184ee59f5dfde8f/> adjusted steam-protobuf to generate by main function
+   later we can create a little script to ease the process
+
+### Other
+
+ - <csr-id-136ceb331a479b538ba363b9448fb14542058eea/> added changelog and prepare for release
+ - <csr-id-db63677f7d216532c0f072b5dbcf34e2925e6b0e/> updated submodule with latest protobufs
+
+### New Features (BREAKING)
+
+ - <csr-id-01e22f1e0f8e5a13f6d67e745ac10e4ea25f29da/> regenerated all steam protobufs, new build.rs
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 9 commits contributed to the release over the course of 21 calendar days.
+ - 631 days passed between releases.
+ - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release steam-protobuf v0.2.1 ([`08e8974`](https://github.com/saskenuba/SteamHelper-rs/commit/08e8974e855426d7c92c4955dcc6b9545c6a2e0b))
+    - Release steam-protobuf v0.2.0, steam-language-gen v0.1.3, steam-mobile v0.4.0 ([`89c10fa`](https://github.com/saskenuba/SteamHelper-rs/commit/89c10fa25974961bb4e90ad2167d94e95c3a8cf8))
+    - Fixed steam-protobuf main.rs better under feature-flag ([`3bfd5d1`](https://github.com/saskenuba/SteamHelper-rs/commit/3bfd5d1b313f1499bdacad03645693e8758f3a23))
+    - Added changelog and prepare for release ([`136ceb3`](https://github.com/saskenuba/SteamHelper-rs/commit/136ceb331a479b538ba363b9448fb14542058eea))
+    - Changed trait bounds, changed errors ([`4fd14a2`](https://github.com/saskenuba/SteamHelper-rs/commit/4fd14a2055fb51ff9224e88576b5efaea4a61424))
+    - Added ProtobufSerialize and ProtobufDeserialize to avoid importing ([`f80d2d9`](https://github.com/saskenuba/SteamHelper-rs/commit/f80d2d96441ae050348d6a76848492fa8c80a479))
+    - Adjusted steam-protobuf to generate by main function ([`f9dcd16`](https://github.com/saskenuba/SteamHelper-rs/commit/f9dcd168a793d1b879ee6f1cf184ee59f5dfde8f))
+    - Regenerated all steam protobufs, new build.rs ([`01e22f1`](https://github.com/saskenuba/SteamHelper-rs/commit/01e22f1e0f8e5a13f6d67e745ac10e4ea25f29da))
+    - Updated submodule with latest protobufs ([`db63677`](https://github.com/saskenuba/SteamHelper-rs/commit/db63677f7d216532c0f072b5dbcf34e2925e6b0e))
+</details>
+
 ## 0.2.0 (2024-01-23)
 
 <csr-id-db63677f7d216532c0f072b5dbcf34e2925e6b0e/>
@@ -32,41 +129,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - <csr-id-01e22f1e0f8e5a13f6d67e745ac10e4ea25f29da/> regenerated all steam protobufs, new build.rs
 
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 6 commits contributed to the release over the course of 6 calendar days.
- - 615 days passed between releases.
- - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' were seen in commit messages
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - Added changelog and prepare for release ([`136ceb3`](https://github.com/saskenuba/SteamHelper-rs/commit/136ceb331a479b538ba363b9448fb14542058eea))
-    - Changed trait bounds, changed errors ([`4fd14a2`](https://github.com/saskenuba/SteamHelper-rs/commit/4fd14a2055fb51ff9224e88576b5efaea4a61424))
-    - Added ProtobufSerialize and ProtobufDeserialize to avoid importing ([`f80d2d9`](https://github.com/saskenuba/SteamHelper-rs/commit/f80d2d96441ae050348d6a76848492fa8c80a479))
-    - Adjusted steam-protobuf to generate by main function ([`f9dcd16`](https://github.com/saskenuba/SteamHelper-rs/commit/f9dcd168a793d1b879ee6f1cf184ee59f5dfde8f))
-    - Regenerated all steam protobufs, new build.rs ([`01e22f1`](https://github.com/saskenuba/SteamHelper-rs/commit/01e22f1e0f8e5a13f6d67e745ac10e4ea25f29da))
-    - Updated submodule with latest protobufs ([`db63677`](https://github.com/saskenuba/SteamHelper-rs/commit/db63677f7d216532c0f072b5dbcf34e2925e6b0e))
-</details>
-
 ## 0.1.2 (2022-05-17)
 
 <csr-id-690b0d1df9400aa7e23cd613046c6f88f93cb7a9/>
 
-### Other
-
- - <csr-id-690b0d1df9400aa7e23cd613046c6f88f93cb7a9/> submodules
-
 ### Documentation
 
- - <csr-id-60e3691a305ec8cd3f32fdf5ed68f6b28185b42d/> added CHANGELOG.md, prepare smart-release
  - <csr-id-fb87360214c2f6d1319f467b82b27706ae157111/> added CHANGELOG.md, modified manifest versions
    We are now using cargo-smart-release to organize releases among with
    conventional commits;
