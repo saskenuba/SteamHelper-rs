@@ -76,19 +76,13 @@ pub fn retrieve_header_location(response: &Response) -> Option<&str> {
 }
 
 /// Convenience function that imports the file from disk
-///
-/// # Panic
-/// Will panic if file is not found.
-pub fn read_from_disk<T>(path: T) -> String
+pub fn read_from_disk<T>(path: T) -> std::io::Result<String>
 where
     T: Into<PathBuf>,
 {
-    let mut file = OpenOptions::new()
-        .read(true)
-        .open(path.into())
-        .expect("Failed to read file from disk. Is it there?");
+    let mut file = OpenOptions::new().read(true).open(path.into())?;
     let mut buffer = String::new();
 
-    file.read_to_string(&mut buffer).unwrap();
-    buffer
+    file.read_to_string(&mut buffer)?;
+    Ok(buffer)
 }

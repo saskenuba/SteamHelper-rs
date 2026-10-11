@@ -45,32 +45,10 @@ pub(crate) fn api_key_resolve_status(api_key_html: Html) -> Result<String, ApiKe
 mod tests {
     use super::*;
 
-    const fn sample_multi_confirmation() -> &'static str {
-        include_str!("../assets/multi_confirmation.html")
-    }
-
-    const fn sample_empty_confirmation() -> &'static str {
-        include_str!("../assets/empty_confirmation.html")
-    }
-
     #[test]
     fn test_resolve_api_key_status() {
         let api_doc = Html::parse_document(include_str!("../assets/api_ok.html"));
         let api = api_key_resolve_status(api_doc).unwrap();
         assert_eq!(api, "D805666DF5E380C5F8A89B8F8A0814B8");
-    }
-
-    #[test]
-    fn test_multi_confirmation() {
-        let api_doc = Html::parse_document(include_str!("../assets/multi_confirmation.html"));
-        let confirmations = confirmation_retrieve(api_doc);
-        assert!(confirmations.is_some());
-    }
-
-    #[test]
-    fn test_empty_confirmation() {
-        let api_doc = Html::parse_document(include_str!("../assets/empty_confirmation.html"));
-        let confirmations = confirmation_retrieve(api_doc);
-        assert!(confirmations.is_none());
     }
 }

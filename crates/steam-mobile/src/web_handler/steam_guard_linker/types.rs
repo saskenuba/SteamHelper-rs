@@ -117,7 +117,8 @@ pub(super) struct GenericSuccessResponse {
     pub success: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize)]
+/// No `Debug`: holds the revocation code and access token.
+#[derive(Clone, PartialEq, Serialize)]
 pub struct RemoveAuthenticatorRequest<'a> {
     pub steamid: String,
     pub revocation_code: &'a str,
@@ -156,7 +157,8 @@ impl<'a> Default for RemoveAuthenticatorRequest<'a> {
     }
 }
 
-#[derive(Default, Debug, Serialize)]
+/// No `Debug`: holds the access token.
+#[derive(Default, Serialize)]
 pub(super) struct FinalizeAddAuthenticatorRequest<'a> {
     pub steamid: &'a str,
     #[serde(rename = "access_token")]
@@ -176,7 +178,8 @@ impl<'a> FinalizeAddAuthenticatorRequest<'a> {
     }
 }
 
-#[derive(Debug, Serialize)]
+/// No `Debug`: holds the access token.
+#[derive(Serialize)]
 pub(super) struct AddAuthenticatorRequest<'a> {
     #[serde(rename = "access_token")]
     /// Oauth recovered from login
@@ -217,11 +220,11 @@ impl<'a> Default for AddAuthenticatorRequest<'a> {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct RemoveAuthenticatorResponseBase {
     #[serde(rename = "response")]
-    steam_guard_details: RemoveAuthenticatorResponse,
+    pub(super) steam_guard_details: RemoveAuthenticatorResponse,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-struct RemoveAuthenticatorResponse {
+pub(super) struct RemoveAuthenticatorResponse {
     pub success: bool,
     pub revocation_attempts_remaining: i64,
 }

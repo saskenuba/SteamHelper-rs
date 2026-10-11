@@ -39,6 +39,8 @@ pub enum ApiKeyError {
     AccessDenied,
     #[error("Key not yet registered.")]
     NotRegistered,
+    #[error("Could not find the mobile confirmation for this API key request.")]
+    ConfirmationNotFound,
     #[error(transparent)]
     InternalError(#[from] InternalError),
 }
@@ -75,6 +77,12 @@ pub enum LinkerError {
     BadSMSCode,
     #[error("We were unable to generate the correct codes. Perhaps something changed?")]
     UnableToGenerateCorrectCodes,
+    #[error("Steam rejected the phone number.")]
+    PhoneNumberRejected,
+    #[error("The email sent by Steam to allow adding a phone number was not confirmed yet.")]
+    EmailNotConfirmed,
+    #[error("Failed to remove the authenticator. Revocation attempts remaining: {attempts_remaining}")]
+    RemoveAuthenticatorFailed { attempts_remaining: i64 },
     #[error(transparent)]
     InternalError(#[from] InternalError),
     #[error(transparent)]

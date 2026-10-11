@@ -1,4 +1,6 @@
+use std::fmt;
 use std::fmt::Debug;
+use std::fmt::Formatter;
 use std::marker::PhantomData;
 use std::ops::Deref;
 use std::sync::Arc;
@@ -42,6 +44,7 @@ use crate::user::SteamUser;
 use crate::utils::dump_cookies_by_domain;
 use crate::utils::dump_cookies_by_domain_and_name;
 use crate::utils::retrieve_header_location;
+use crate::web_handler::api_key_register;
 use crate::web_handler::cache_api_key;
 use crate::web_handler::confirmation::Confirmation;
 use crate::web_handler::confirmation::Confirmations;
@@ -61,9 +64,9 @@ use crate::web_handler::steam_guard_linker::AddAuthenticatorStep;
 use crate::web_handler::steam_guard_linker::QueryStatusResponse;
 use crate::web_handler::steam_guard_linker::RemoveAuthenticatorScheme;
 use crate::web_handler::steam_guard_linker::STEAM_ADD_PHONE_CATCHUP_SECS;
-use crate::CacheGuard;
 use crate::ConfirmationAction;
 use crate::MobileAuthFile;
+use crate::SteamCache;
 use crate::STEAM_COMMUNITY_HOST;
 
 /// Main authenticator. We use it to spawn and act as our "mobile" client.
@@ -74,7 +77,7 @@ use crate::STEAM_COMMUNITY_HOST;
 ///
 /// ```rust
 /// use steam_mobile::SteamAuthenticator;
-/// use steam_mobile::User;
+/// use steam_mobile::user::SteamUser;
 /// ```
 #[derive(Debug)]
 pub struct SteamAuthenticator<AuthState, MaFileState> {
@@ -86,7 +89,8 @@ pub struct SteamAuthenticator<AuthState, MaFileState> {
 struct InnerAuthenticator<MaFileState> {
     pub(crate) client: MobileClient,
     pub(crate) user: SteamUser<MaFileState>,
-    pub(crate) cache: Option<CacheGuard>,
+    /// Always `Some` once [`Authenticated`]. Never mutated through a shared reference, so it needs no lock.
+    pub(crate) cache: Option<SteamCache>,
 }
 
 /// A successfully logged-in state. Many assumptions are made on this state.
@@ -163,7 +167,7 @@ where
         //     info!("Parental unlock successfully.");
         // }
 
-        let api_key = cache_api_key(&client, user_arc.clone(), cache.steamid.to_steam64()).await;
+        let api_key = cache_api_key(&client).await;
         if let Some(api_key) = api_key {
             cache.set_api_key(Some(api_key));
             info!("Cached API Key successfully.");
@@ -173,7 +177,7 @@ where
             inner: InnerAuthenticator {
                 client,
                 user,
-                cache: Some(Arc::new(RwLock::new(cache))),
+                cache: Some(cache),
             },
             auth_level: PhantomData,
         })
@@ -184,19 +188,16 @@ impl<M> SteamAuthenticator<Authenticated, M>
 where
     M: Send + Sync,
 {
-    fn cache(&self) -> CacheGuard {
-        self.inner.cache.as_ref().expect("Safe to unwrap.").clone()
+    fn cache(&self) -> &SteamCache {
+        self.inner
+            .cache
+            .as_ref()
+            .expect("Cache is always set in the Authenticated state.")
     }
 
     /// Returns account's API Key, if authenticator managed to cache it.
     pub fn api_key(&self) -> Option<String> {
-        self.inner
-            .cache
-            .as_ref()
-            .expect("Safe to unwrap")
-            .read()
-            .api_key()
-            .map(ToString::to_string)
+        self.cache().api_key().map(ToString::to_string)
     }
 
     /// Returns this account SteamGuard information.
@@ -228,8 +229,8 @@ where
         debug!("Has phone registered? {:?}", user_has_phone_registered);
 
         if !user_has_phone_registered && current_step == AddAuthenticatorStep::InitialStep {
-            let phone_registration_result = self.add_phone_number(phone_number).await?;
-            debug!("User add phone result: {:?}", phone_registration_result);
+            self.add_phone_number(phone_number).await?;
+            debug!("Phone number added to account.");
 
             return Ok(AddAuthenticatorStep::EmailConfirmation);
         }
@@ -237,11 +238,13 @@ where
         // Signal steam that user confirmed email
         // If user already has a phone, calling email confirmation will result in a error finalizing the auth process.
         if !user_has_phone_registered {
-            check_email_confirmation(self.client()).await?;
+            if !check_email_confirmation(self.client()).await? {
+                return Err(LinkerError::EmailNotConfirmed.into());
+            }
             debug!("Email confirmation signal sent.");
         }
 
-        add_authenticator_to_account(self.client(), self.cache().read())
+        add_authenticator_to_account(self.client(), self.cache())
             .await
             .map(AddAuthenticatorStep::MobileAuth)
             .map_err(Into::into)
@@ -255,19 +258,21 @@ where
     /// Call this method **ONLY** after saving your maFile, because otherwise you WILL lose access to your
     /// account.
     pub async fn finalize_authenticator(&self, mafile: &MobileAuthFile, sms_code: &str) -> Result<(), AuthError> {
-        // The delay is that Steam need some seconds to catch up with the new phone number associated.
-        let account_has_phone_now: bool = check_sms(self.client(), sms_code)
-            .map_ok(|_| Delay::new(Duration::from_secs(STEAM_ADD_PHONE_CATCHUP_SECS)))
-            .and_then(|_| account_has_phone(self.client()))
-            .await?;
+        if !check_sms(self.client(), sms_code).await? {
+            return Err(LinkerError::BadSMSCode.into());
+        }
 
+        // Steam needs some seconds to catch up with the new phone number associated.
+        Delay::new(Duration::from_secs(STEAM_ADD_PHONE_CATCHUP_SECS)).await;
+
+        let account_has_phone_now = account_has_phone(self.client()).await?;
         if !account_has_phone_now {
             return Err(LinkerError::GeneralFailure("This should not happen.".to_string()).into());
         }
 
         info!("Successfully confirmed SMS code.");
 
-        finalize(self.client(), self.cache().read(), mafile, sms_code)
+        finalize(self.client(), self.cache(), mafile, sms_code)
             .await
             .map_err(Into::into)
     }
@@ -282,16 +287,16 @@ where
     ) -> Result<(), AuthError> {
         remove_authenticator(
             self.client(),
-            self.cache().read(),
+            self.cache(),
             revocation_code,
             remove_authenticator_scheme,
         )
         .await
+        .map_err(Into::into)
     }
 
-    /// Add a phone number into the account, and then checks it to make sure it has been added.
-    /// Returns true if number was successfully added.
-    async fn add_phone_number(&self, phone_number: &str) -> Result<bool, AuthError> {
+    /// Add a phone number into the account, erroring if Steam rejects it.
+    async fn add_phone_number(&self, phone_number: &str) -> Result<(), AuthError> {
         if !validate_phone_number(phone_number) {
             return Err(LinkerError::GeneralFailure(
                 "Invalid phone number. Should be in format of: +(CountryCode)(AreaCode)(PhoneNumber). E.g \
@@ -303,10 +308,12 @@ where
 
         // Add the phone number to user account
         // The delay is that Steam need some seconds to catch up.
-        let response = add_phone_to_account(self.client(), phone_number).await?;
+        if !add_phone_to_account(self.client(), phone_number).await? {
+            return Err(LinkerError::PhoneNumberRejected.into());
+        }
         Delay::new(Duration::from_secs(STEAM_ADD_PHONE_CATCHUP_SECS)).await;
 
-        Ok(response)
+        Ok(())
     }
 
     /// You can request custom operations for any Steam operation that requires logging in.
@@ -335,9 +342,32 @@ where
 }
 
 impl SteamAuthenticator<Authenticated, PresentMaFile> {
+    /// Registers a new Steam Web API key for this account, and caches it.
+    ///
+    /// Steam requires a mobile confirmation for this. Only the confirmation tied to this registration request is
+    /// accepted; any other pending API key confirmation is left untouched, since it may have been requested by
+    /// someone else.
+    ///
+    /// Returns the cached key without registering if one is already known.
+    pub async fn register_api_key(&mut self) -> Result<String, AuthError> {
+        if let Some(api_key) = self.api_key() {
+            return Ok(api_key);
+        }
+
+        let steamid = self.cache().steam_id();
+        let api_key = api_key_register(self.client(), self.user(), steamid).await?;
+        self.inner
+            .cache
+            .as_mut()
+            .expect("Cache is always set in the Authenticated state.")
+            .set_api_key(Some(api_key.clone()));
+
+        Ok(api_key)
+    }
+
     /// Fetch all confirmations available with the authenticator.
     pub async fn fetch_confirmations(&self) -> Result<Confirmations, AuthError> {
-        let steamid = self.cache().read().steam_id();
+        let steamid = self.cache().steam_id();
         let secret = (&self.inner.user).identity_secret();
         let device_id = (&self.inner.user).device_id();
 
@@ -373,7 +403,7 @@ impl SteamAuthenticator<Authenticated, PresentMaFile> {
     where
         I: IntoIterator<Item = Confirmation> + Send,
     {
-        let steamid = self.cache().read().steam_id();
+        let steamid = self.cache().steam_id();
 
         send_confirmations(
             self.client(),
@@ -388,12 +418,25 @@ impl SteamAuthenticator<Authenticated, PresentMaFile> {
     }
 }
 
-#[derive(Debug)]
 pub struct MobileClient {
     /// Standard HTTP Client to make requests.
     pub inner_http_client: Client,
     /// Cookie jar that manually handle cookies, because reqwest doesn't let us handle its cookies.
     pub cookie_store: Arc<RwLock<CookieJar>>,
+}
+
+impl Debug for MobileClient {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        // Cookies hold session tokens, so they are left out.
+        f.debug_struct("MobileClient").finish_non_exhaustive()
+    }
+}
+
+/// Strips the query string, which may carry tokens or confirmation hashes, so the URL is safe to log.
+fn loggable_url(url: &Url) -> String {
+    let mut url = url.clone();
+    url.set_query(None);
+    url.to_string()
 }
 
 impl MobileClient {
@@ -425,7 +468,6 @@ impl MobileClient {
             request_builder.query(parameters)
         } else if method == Method::POST {
             let encoded = base64::engine::general_purpose::STANDARD.encode(proto_message.to_bytes().unwrap());
-            debug!("Request proto body: {:?}", encoded);
             let form = reqwest::multipart::Form::new().text("input_protobuf_encoded", encoded);
             request_builder.multipart(form)
         } else {
@@ -433,7 +475,7 @@ impl MobileClient {
         };
 
         let response = req.send().await?;
-        debug!("Response {:?}", response);
+        debug!("Response status: {}", response.status());
 
         let res_bytes = response.bytes().await?;
         OUTPUT::from_bytes(res_bytes).map_or_else(
@@ -442,7 +484,7 @@ impl MobileClient {
                 Err(InternalError::GeneralFailure("asdfd".to_string()))
             },
             |res| {
-                debug!("Response body {:?}", res);
+                debug!("Decoded {}", std::any::type_name::<OUTPUT>());
                 Ok(res)
             },
         )
@@ -492,7 +534,7 @@ impl MobileClient {
         let response_body = req
             .text()
             .inspect_ok(|s| {
-                debug!("{} text: {}", std::any::type_name::<OUTPUT>(), s);
+                debug!("{} response: {} bytes", std::any::type_name::<OUTPUT>(), s.len());
             })
             .await?;
 
@@ -534,7 +576,7 @@ impl MobileClient {
             None => req_builder.build().unwrap(),
             Some(data) => match serde_urlencoded::to_string(data) {
                 Ok(body) => {
-                    debug!("Request body: {}", &body);
+                    debug!("Request body: {} bytes", body.len());
                     req_builder
                         .header(
                             CONTENT_TYPE,
@@ -551,12 +593,11 @@ impl MobileClient {
                 }
             },
         };
-        debug!("{:?}", &request);
+        debug!("{} {}", request.method(), loggable_url(request.url()));
 
         let res = self.inner_http_client.execute(request).err_into().await;
         if let Ok(ref response) = res {
             debug!("Response status: {:?}", response.status());
-            debug!("Response headers: {:?}", response.headers());
 
             let mut cookie_jar = self.cookie_store.write();
             for cookie in response.cookies() {
@@ -565,10 +606,9 @@ impl MobileClient {
                 our_cookie.set_domain(host);
 
                 trace!(
-                    "New cookie from: {:?}, name: {}, value: {} ",
+                    "New cookie from: {:?}, name: {}",
                     our_cookie.domain(),
-                    our_cookie.name(),
-                    our_cookie.value()
+                    our_cookie.name()
                 );
                 cookie_jar.add_original(our_cookie.deref().clone());
             }
@@ -594,7 +634,7 @@ impl MobileClient {
         let response_body = resp
             .text()
             .inspect_ok(|s| {
-                debug!("{} text: {}", std::any::type_name::<OUTPUT>(), s);
+                debug!("{} response: {} bytes", std::any::type_name::<OUTPUT>(), s.len());
             })
             .await?;
 
@@ -687,7 +727,7 @@ impl MobileClient {
             "com.valvesoftware.android.steam.community".parse().unwrap(),
         );
 
-        reqwest::Client::builder()
+        Client::builder()
             .user_agent(user_agent)
             .cookie_store(true)
             .redirect(Policy::limited(5))
@@ -705,4 +745,25 @@ impl Default for MobileClient {
             cookie_store: Arc::new(RwLock::new(Self::init_cookie_jar())),
         }
     }
+}
+
+/// Compile-time check that the public futures can be spawned on a multi-threaded runtime.
+#[cfg(test)]
+#[allow(dead_code, unused_must_use, clippy::let_underscore_future)]
+fn assert_public_futures_are_send(
+    authenticator: &mut SteamAuthenticator<Authenticated, PresentMaFile>,
+    unauthenticated: SteamAuthenticator<Unauthenticated, PresentMaFile>,
+    mafile: &MobileAuthFile,
+) {
+    fn is_send<T: Send>(_: T) {}
+
+    is_send(unauthenticated.login());
+    is_send(authenticator.steam_guard_status());
+    is_send(authenticator.add_authenticator(AddAuthenticatorStep::InitialStep, ""));
+    is_send(authenticator.finalize_authenticator(mafile, ""));
+    is_send(authenticator.remove_authenticator("", RemoveAuthenticatorScheme::ReturnToEmailCodes));
+    is_send(authenticator.fetch_confirmations());
+    is_send(authenticator.process_confirmations(ConfirmationAction::Accept, Vec::new()));
+    is_send(authenticator.request_custom_endpoint(String::new(), Method::GET, None, None::<u8>));
+    is_send(authenticator.register_api_key());
 }

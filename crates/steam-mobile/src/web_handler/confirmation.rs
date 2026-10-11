@@ -51,7 +51,7 @@ impl Display for Confirmation {
 
 impl Confirmation {
     pub fn has_trade_offer_id(&self, offer_id: u64) -> bool {
-        self.kind == EConfirmationType::Trade && offer_id == self.creator_id.parse::<u64>().unwrap()
+        self.trade_offer_id() == Some(offer_id)
     }
     pub fn trade_offer_id(&self) -> Option<u64> {
         if self.kind == EConfirmationType::Trade {
@@ -133,39 +133,25 @@ enum EInventoryPrivacy {
 mod tests {
     use super::*;
 
-    fn get_confirmations() -> Confirmations {
-        let confirmations = vec![
-            Confirmation {
-                id: "7676451136".to_string(),
-                key: "18064583892738866189".to_string(),
-                kind: EConfirmationType::Trade,
-                details: Some(ConfirmationDetails {
-                    trade_offer_id: Some(4009687284),
-                }),
-            },
-            Confirmation {
-                id: "7652515663".to_string(),
-                key: "10704556181383316145".to_string(),
-                kind: EConfirmationType::Trade,
-                details: Some(ConfirmationDetails {
-                    trade_offer_id: Some(4000980011),
-                }),
-            },
-            Confirmation {
-                id: "7652555421".to_string(),
-                key: "10704556181383323456".to_string(),
-                kind: EConfirmationType::Trade,
-                details: Some(ConfirmationDetails {
-                    trade_offer_id: Some(4000793103),
-                }),
-            },
-            Confirmation {
-                id: "7652515663".to_string(),
-                key: "20845677815483316145".to_string(),
-                kind: EConfirmationType::Market,
-                details: None,
-            },
-        ];
-        Confirmations::from(confirmations)
+    fn confirmation(id: &str, kind: EConfirmationType, creator_id: &str) -> Confirmation {
+        Confirmation {
+            id: id.to_string(),
+            key: "18064583892738866189".to_string(),
+            kind,
+            creation_time: 0,
+            creator_id: creator_id.to_string(),
+            type_name: String::new(),
+        }
+    }
+
+    #[test]
+    fn trade_offer_id_only_for_trades() {
+        let trade = confirmation("7676451136", EConfirmationType::Trade, "4009687284");
+        let market = confirmation("7652515663", EConfirmationType::Market, "4000980011");
+
+        assert_eq!(trade.trade_offer_id(), Some(4009687284));
+        assert!(trade.has_trade_offer_id(4009687284));
+        assert_eq!(market.trade_offer_id(), None);
+        assert!(!market.has_trade_offer_id(4000980011));
     }
 }

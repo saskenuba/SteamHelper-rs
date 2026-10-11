@@ -1,10 +1,8 @@
-use std::sync::Arc;
 use std::time::Duration;
 
 use const_format::concatcp;
 use cookie::Cookie;
 use futures_timer::Delay;
-use futures_util::TryFutureExt;
 use reqwest::Method;
 use steam_language::enums::EResult;
 use steam_totp::Secret;
@@ -24,7 +22,6 @@ use crate::types::ConfirmationMultiAcceptRequest;
 use crate::types::ConfirmationResponseBase;
 use crate::types::ParentalUnlockRequest;
 use crate::types::ParentalUnlockResponse;
-use crate::user::IsUser;
 use crate::user::PresentMaFile;
 use crate::user::SteamUser;
 use crate::utils::dump_cookie_from_header;
@@ -123,20 +120,14 @@ async fn parental_unlock_by_service(
 
 /// Resolve caching of the user APIKey.
 /// This is done after user logon for the first time in this session.
-pub async fn cache_api_key(client: &MobileClient, user: Arc<dyn IsUser>, steamid: u64) -> Option<String> {
-    let api_key_res = api_key_retrieve(client)
-        .inspect_err(|e| warn!("API key could not be fetched.\nReason: {}", e))
-        .await;
-
-    match api_key_res {
+///
+/// Never registers a new key: that requires accepting a mobile confirmation, so it is left to an explicit
+/// [`crate::SteamAuthenticator::register_api_key`] call.
+pub async fn cache_api_key(client: &MobileClient) -> Option<String> {
+    match api_key_retrieve(client).await {
         Ok(api) => Some(api),
-
         Err(ApiKeyError::NotRegistered) => {
-            if let Some(user) = user.as_any().downcast_ref::<SteamUser<PresentMaFile>>() {
-                warn!("API key not registered. Registering a new one.");
-                return api_key_register(client, user, steamid).await.ok();
-            }
-            warn!("API key not registered.");
+            warn!("API key not registered. Call `register_api_key` to register one.");
             None
         }
         Err(ApiKeyError::AccessDenied) => {
@@ -254,8 +245,8 @@ async fn api_key_retrieve(client: &MobileClient) -> Result<String, ApiKeyError> 
     api_key_resolve_status(doc)
 }
 
-/// Sends a request to enable an API Key for the account.
-async fn api_key_register(
+/// Sends a request to enable an API Key for the account, accepting only the mobile confirmation tied to it.
+pub(crate) async fn api_key_register(
     client: &MobileClient,
     user: &SteamUser<PresentMaFile>,
     steamid: u64,
@@ -263,7 +254,7 @@ async fn api_key_register(
     let api_register_url = format!("{}{}", STEAM_COMMUNITY_BASE, "/dev/requestkey");
     let session_id = client
         .get_cookie_value(STEAM_COMMUNITY_HOST, SESSION_ID_COOKIE)
-        .unwrap();
+        .ok_or_else(|| ApiKeyError::GeneralError("Missing sessionid cookie.".to_string()))?;
 
     let register_request = NewAPIKeyRequest::new("0".to_string(), session_id.clone());
     let response = client
@@ -276,17 +267,33 @@ async fn api_key_register(
         )
         .await?;
 
-    // Doesn't require mobile confirmation?
-    if response.requires_confirmation < 1 {}
+    if response.requires_confirmation < 1 {
+        if response.success == EResult::OK {
+            if let Some(api_key) = response.api_key {
+                info!("Successfully registered an API Key.");
+                return Ok(api_key);
+            }
+        }
+        return Err(ApiKeyError::GeneralError(format!(
+            "Failed to register API Key. EResult: {:?}",
+            response.success
+        )));
+    }
+
+    let request_id = response
+        .request_id
+        .ok_or_else(|| ApiKeyError::GeneralError("Steam did not return a request id.".to_string()))?;
 
     Delay::new(Duration::from_millis(STEAM_DELAY_MS)).await;
 
     let identity_secret = user.identity_secret();
     let device_id = user.device_id();
-    let api_confirmation = get_confirmations(client, identity_secret.clone(), device_id, steamid)
+    // The confirmation's creator is the registration request, so we only accept the one we created.
+    let own_confirmation = get_confirmations(client, identity_secret.clone(), device_id, steamid)
         .await?
         .into_iter()
-        .filter(|c| c.kind == EConfirmationType::APIKey);
+        .find(|c| c.kind == EConfirmationType::APIKey && c.creator_id == request_id)
+        .ok_or(ApiKeyError::ConfirmationNotFound)?;
 
     send_confirmations(
         client,
@@ -294,12 +301,12 @@ async fn api_key_register(
         device_id,
         steamid,
         ConfirmationAction::Accept,
-        api_confirmation,
+        std::iter::once(own_confirmation),
     )
     .await?;
     Delay::new(Duration::from_millis(STEAM_DELAY_MS)).await;
 
-    let second_request = NewAPIKeyRequest::new(response.request_id.unwrap(), session_id.clone());
+    let second_request = NewAPIKeyRequest::new(request_id, session_id);
     let second_response = client
         .request_and_decode::<_, NewAPIKeyResponse, _, _>(
             api_register_url,
@@ -310,12 +317,16 @@ async fn api_key_register(
         )
         .await?;
 
-    if second_response.success == EResult::OK {
-        info!("Successfully registered an API Key.");
-        return Ok(second_response.api_key.unwrap());
+    match second_response.api_key {
+        Some(api_key) if second_response.success == EResult::OK => {
+            info!("Successfully registered an API Key.");
+            Ok(api_key)
+        }
+        _ => Err(ApiKeyError::GeneralError(format!(
+            "Failed to register API Key. EResult: {:?}",
+            second_response.success
+        ))),
     }
-
-    Err(ApiKeyError::GeneralError("Failed to register API Key.".to_string()))
 }
 
 #[cfg(test)]

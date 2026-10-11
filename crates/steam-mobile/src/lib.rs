@@ -3,12 +3,12 @@
 
 #![allow(dead_code, clippy::missing_errors_doc)]
 #![warn(missing_docs, missing_doc_code_examples)]
-#![deny(
+#![deny(unsafe_code)]
+#![warn(
     missing_debug_implementations,
     missing_copy_implementations,
     trivial_casts,
     trivial_numeric_casts,
-    unsafe_code,
     unused_import_braces,
     unused_qualifications
 )]
@@ -17,13 +17,11 @@ use std::fmt;
 use std::fmt::Debug;
 use std::fmt::Formatter;
 use std::path::PathBuf;
-use std::sync::Arc;
 
 pub use client::Authenticated;
 pub use client::SteamAuthenticator;
 pub use client::Unauthenticated;
 use const_format::concatcp;
-use parking_lot::RwLock;
 pub use reqwest::header::HeaderMap;
 pub use reqwest::Error as HttpError;
 pub use reqwest::Method;
@@ -38,6 +36,8 @@ pub use web_handler::confirmation::ConfirmationAction;
 pub use web_handler::confirmation::Confirmations;
 pub use web_handler::confirmation::EConfirmationType;
 pub use web_handler::steam_guard_linker::AddAuthenticatorStep;
+pub use web_handler::steam_guard_linker::QueryStatusResponse;
+pub use web_handler::steam_guard_linker::RemoveAuthenticatorScheme;
 
 use crate::errors::AuthError;
 use crate::errors::InternalError;
@@ -86,7 +86,7 @@ const MOBILE_REFERER: &str = concatcp!(
 pub type AuthResult<T> = Result<T, AuthError>;
 
 /// Information that we cache after the login operation to avoid querying Steam multiple times.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 struct SteamCache {
     steamid: SteamID,
     api_key: Option<String>,
@@ -95,7 +95,14 @@ struct SteamCache {
     access_token: String,
 }
 
-pub(crate) type CacheGuard = Arc<RwLock<SteamCache>>;
+impl Debug for SteamCache {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SteamCache")
+            .field("steamid", &self.steamid)
+            .field("api_key", &self.api_key.as_ref().map(|_| "<redacted>"))
+            .finish_non_exhaustive()
+    }
+}
 
 impl SteamCache {
     fn query_tokens(&self) -> Vec<(&'static str, String)> {
@@ -200,14 +207,13 @@ impl MobileAuthFile {
     }
 
     /// Convenience function that imports the file from disk
-    ///
-    /// # Panic
-    /// Will panic if file is not found.
     pub fn from_disk<T>(path: T) -> Result<Self, MobileAuthFileError>
     where
         T: Into<PathBuf>,
     {
-        let buffer = read_from_disk(path);
+        let path = path.into();
+        let buffer = read_from_disk(&path)
+            .map_err(|e| MobileAuthFileError::GeneralFailure(format!("Failed to read {}: {e}", path.display())))?;
         Self::from_json(&buffer)
     }
 }

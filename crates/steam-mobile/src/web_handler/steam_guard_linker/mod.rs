@@ -3,13 +3,11 @@ use std::time::Duration;
 use const_format::concatcp;
 use futures::TryFutureExt;
 use futures_timer::Delay;
-use parking_lot::lock_api::RwLockReadGuard;
-use parking_lot::RawRwLock;
 use reqwest::Method;
 use tracing::debug;
 
 use crate::client::MobileClient;
-use crate::errors::AuthError;
+use crate::errors::InternalError;
 use crate::errors::LinkerError;
 use crate::utils::dump_cookies_by_domain_and_name;
 use crate::utils::generate_canonical_device_id;
@@ -25,7 +23,6 @@ use crate::web_handler::steam_guard_linker::types::PhoneAjaxRequest;
 use crate::web_handler::steam_guard_linker::types::QueryStatusResponseBase;
 use crate::web_handler::steam_guard_linker::types::RemoveAuthenticatorRequest;
 use crate::web_handler::steam_guard_linker::types::RemoveAuthenticatorResponseBase;
-use crate::CacheGuard;
 use crate::MobileAuthFile;
 use crate::SteamCache;
 use crate::STEAM_API_BASE;
@@ -38,6 +35,12 @@ pub use types::QueryStatusResponse;
 
 const PHONEAJAX_URL: &str = concatcp!(STEAM_COMMUNITY_BASE, "/steamguard/phoneajax");
 pub const STEAM_ADD_PHONE_CATCHUP_SECS: u64 = 5;
+/// How many codes we send to `FinalizeAddAuthenticator` before giving up.
+const FINALIZE_MAX_TRIES: usize = 30;
+/// Status returned when the authenticator code we sent is not the one Steam expected.
+const STATUS_TWO_FACTOR_CODE_MISMATCH: i64 = 88;
+/// Status returned when the SMS activation code is wrong.
+const STATUS_TWO_FACTOR_ACTIVATION_CODE_MISMATCH: i64 = 89;
 
 type LinkerResult<T> = Result<T, LinkerError>;
 
@@ -65,8 +68,7 @@ pub enum AddAuthenticatorStep {
 const QUERY_STATUS_ENDPOINT: &str = concatcp!(STEAM_API_BASE, "/ITwoFactorService/QueryStatus/v1/");
 
 /// Queries Steam API to check SteamGuard Status.
-pub async fn twofactor_status(client: &MobileClient, cache: CacheGuard) -> LinkerResult<QueryStatusResponse> {
-    let cache = cache.read();
+pub(crate) async fn twofactor_status(client: &MobileClient, cache: &SteamCache) -> LinkerResult<QueryStatusResponse> {
     let steamid = &[("steamid", cache.steamid.to_steam64())];
     let query = cache.query_tokens();
 
@@ -169,7 +171,7 @@ pub fn validate_phone_number(phone_number: &str) -> bool {
 /// Last step to add a new authenticator.
 pub(crate) async fn finalize(
     client: &MobileClient,
-    cached_data: RwLockReadGuard<'_, RawRwLock, SteamCache>,
+    cached_data: &SteamCache,
     mafile: &MobileAuthFile,
     sms_code: &str,
 ) -> LinkerResult<()> {
@@ -188,10 +190,9 @@ pub(crate) async fn finalize(
         ..Default::default()
     };
 
-    let account_secret = steam_totp::Secret::from_b64(&mafile.shared_secret).unwrap();
+    let account_secret = steam_totp::Secret::from_b64(&mafile.shared_secret)?;
 
-    let mut tries: usize = 0;
-    while tries <= 30 {
+    for _ in 0..FINALIZE_MAX_TRIES {
         let (code, mut time) = steam_totp::generate_auth_code_with_time_async(account_secret.clone()).await?;
         time.0 += 1;
         initial_payload.swap_codes(code, time.0);
@@ -209,36 +210,36 @@ pub(crate) async fn finalize(
 
         debug!("FinalizeAuthenticator raw response: {:#}", response_text);
 
-        let response = match serde_json::from_str::<FinalizeAddAuthenticatorBase>(&*response_text) {
-            Ok(resp) => resp.response,
-            Err(_err) => {
-                let error_resp = serde_json::from_str::<FinalizeAddAuthenticatorErrorBase>(&*response_text).unwrap();
-                return match error_resp.response.status {
-                    89 => Err(LinkerError::BadSMSCode),
-                    88 => {
-                        if tries == 30 {
-                            return Err(LinkerError::UnableToGenerateCorrectCodes);
-                        }
-                        continue;
-                    }
-                    _ => Err(LinkerError::GeneralFailure("Something went wrong".to_string())),
-                };
+        let (success, status, want_more) = match serde_json::from_str::<FinalizeAddAuthenticatorBase>(&response_text) {
+            Ok(resp) => (resp.response.success, resp.response.status, resp.response.want_more),
+            Err(_) => {
+                let error_resp = serde_json::from_str::<FinalizeAddAuthenticatorErrorBase>(&response_text)
+                    .map_err(InternalError::from)?;
+                (false, error_resp.response.status, false)
             }
         };
 
-        // Steam want more codes, delay a bit and send all again.
-        if response.want_more {
+        if success {
+            if !want_more {
+                return Ok(());
+            }
+            // Steam wants more codes to make sure our generator works, delay a bit and send another.
             Delay::new(Duration::from_secs(1)).await;
-            tries += 1;
             continue;
         }
 
-        return Ok(());
+        match status {
+            STATUS_TWO_FACTOR_ACTIVATION_CODE_MISMATCH => return Err(LinkerError::BadSMSCode),
+            STATUS_TWO_FACTOR_CODE_MISMATCH => Delay::new(Duration::from_secs(1)).await,
+            status => {
+                return Err(LinkerError::GeneralFailure(format!(
+                    "FinalizeAddAuthenticator failed with status {status}."
+                )))
+            }
+        }
     }
 
-    Err(LinkerError::GeneralFailure(
-        "Maximum tries achieved. Something went wrong.".to_string(),
-    ))
+    Err(LinkerError::UnableToGenerateCorrectCodes)
 }
 
 /// Add a new authenticator to this steam account.
@@ -249,7 +250,7 @@ pub(crate) async fn finalize(
 /// otherwise the user is on risk of losing the account, since the `revocation_code` will also be lost.
 pub(crate) async fn add_authenticator_to_account(
     client: &MobileClient,
-    cached_data: RwLockReadGuard<'_, RawRwLock, SteamCache>,
+    cached_data: &SteamCache,
 ) -> Result<MobileAuthFile, LinkerError> {
     let add_auth_url = format!("{}{}", STEAM_API_BASE, "/ITwoFactorService/AddAuthenticator/v0001");
     let oauth_token = cached_data.oauth_token();
@@ -263,13 +264,15 @@ pub(crate) async fn add_authenticator_to_account(
         .and_then(|resp| resp.text().err_into())
         .await?;
 
-    debug!("Steam addauth raw response: {:?}", response_text);
+    // The response carries the account secrets, so only its size is logged.
+    debug!("Steam addauth response: {} bytes", response_text.len());
 
     let mut mafile = match serde_json::from_str::<AddAuthenticatorResponseBase>(&response_text) {
         Ok(resp) => resp.steam_guard_success_details.mobile_auth,
         Err(err) => {
-            eprintln!("Error found deserializing add auth response: {:#?}", err);
-            let error_resp = serde_json::from_str::<AddAuthenticatorErrorResponseBase>(&response_text).unwrap();
+            debug!("AddAuthenticator response is not a success response: {err}");
+            let error_resp = serde_json::from_str::<AddAuthenticatorErrorResponseBase>(&response_text)
+                .map_err(InternalError::from)?;
             return match error_resp.response.status {
                 29 => Err(LinkerError::AuthenticatorPresent),
                 2 => Err(LinkerError::GeneralFailure(
@@ -285,9 +288,12 @@ pub(crate) async fn add_authenticator_to_account(
     Ok(mafile)
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+/// What the account falls back to after its authenticator is removed.
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum RemoveAuthenticatorScheme {
+    /// Keep SteamGuard, receiving codes by email.
     ReturnToEmailCodes,
+    /// Disable SteamGuard entirely.
     RemoveSteamGuard,
 }
 
@@ -303,29 +309,32 @@ impl RemoveAuthenticatorScheme {
 /// Remove authenticator from account.
 pub(crate) async fn remove_authenticator(
     client: &MobileClient,
-    cached_data: RwLockReadGuard<'_, RawRwLock, SteamCache>,
+    cached_data: &SteamCache,
     revocation_token: &str,
     remove_authenticator_scheme: RemoveAuthenticatorScheme,
-) -> Result<(), AuthError> {
-    let _url = format!(
-        "{}{}",
-        STEAM_API_BASE, "/ITwoFactorService/RemoveAuthenticator/v1?access_token="
-    );
+) -> LinkerResult<()> {
+    let url = format!("{}{}", STEAM_API_BASE, "/ITwoFactorService/RemoveAuthenticator/v1");
 
     let steamid = cached_data.steam_id().to_string();
     let oauth_token = cached_data.oauth_token();
     let payload = RemoveAuthenticatorRequest::new(oauth_token, steamid, revocation_token, remove_authenticator_scheme);
 
-    // FIXME: add error handling and error variants
-    client
+    let response = client
         .request_with_session_guard_and_decode::<_, _, RemoveAuthenticatorResponseBase>(
-            _url,
+            url,
             Method::POST,
             None,
             Some(payload),
-            None::<&str>,
+            Some(cached_data.query_tokens()),
         )
-        .await
-        .map(|_| ())
-        .map_err(Into::into)
+        .await?
+        .steam_guard_details;
+
+    if !response.success {
+        return Err(LinkerError::RemoveAuthenticatorFailed {
+            attempts_remaining: response.revocation_attempts_remaining,
+        });
+    }
+
+    Ok(())
 }

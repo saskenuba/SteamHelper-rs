@@ -15,6 +15,11 @@ default = ["cli"]
 # This feature is used only if we want a CLI.
 cli = ["clap", "dialoguer", "anyhow", "tokio"]
 
+[[bin]]
+name = "main"
+path = "src/bin/main.rs"
+required-features = ["cli"]
+
 [dependencies]
 backoff = { version = "0.4", features = ["tokio", "futures"] }
 hex = "0.4"

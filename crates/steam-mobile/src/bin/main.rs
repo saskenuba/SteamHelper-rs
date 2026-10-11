@@ -1,22 +1,27 @@
 #![cfg(feature = "cli")]
 
 use std::fs::OpenOptions;
-use std::io::BufWriter;
 use std::io::Write;
+use std::path::Path;
 use std::path::PathBuf;
 use std::str::FromStr;
 
+use anyhow::bail;
+use anyhow::Context;
 use anyhow::Result;
 use clap::Arg;
 use clap::ArgMatches;
 use clap::Command;
 use dialoguer::Confirm;
 use dialoguer::Input;
+use dialoguer::Password;
 use futures_util::TryFutureExt;
-use steam_mobile::user::PresentMaFile;
+use steam_mobile::errors::AuthError;
+use steam_mobile::errors::LinkerError;
 use steam_mobile::user::SteamUser;
 use steam_mobile::AddAuthenticatorStep;
 use steam_mobile::Authenticated;
+use steam_mobile::Confirmation;
 use steam_mobile::ConfirmationAction;
 use steam_mobile::MobileAuthFile;
 use steam_mobile::SteamAuthenticator;
@@ -25,6 +30,11 @@ use steam_totp::Secret;
 use strum_macros::AsRefStr;
 use strum_macros::EnumString;
 use strum_macros::IntoStaticStr;
+
+/// Environment variable read for the account password. If unset, the password is prompted for.
+///
+/// The password is never taken as an argument, since arguments end up in the shell history and the process list.
+const PASSWORD_ENV: &str = "STEAM_PASSWORD";
 
 #[derive(EnumString, IntoStaticStr, AsRefStr)]
 enum MainCommands {
@@ -55,6 +65,8 @@ fn cli() -> Command<'static> {
             .takes_value(true),
     ];
     Command::new("steam-mobile")
+        .subcommand_required(true)
+        .arg_required_else_help(true)
         .version("0.1")
         .author("Martin Mariano <contato@martinmariano.com>")
         .subcommand(
@@ -68,10 +80,6 @@ fn cli() -> Command<'static> {
                 .args(&[
                     Arg::new("account")
                         .help("Steam account name.")
-                        .required(true)
-                        .takes_value(true),
-                    Arg::new("password")
-                        .help("Steam account password.")
                         .required(true)
                         .takes_value(true),
                     Arg::new("ma_file_path")
@@ -108,8 +116,9 @@ fn cli() -> Command<'static> {
                                 .takes_value(true),
                             Arg::new("save_path")
                                 .help(
-                                    "Recommended. Path where your Mobile Auth(MA) file will be saved. If none is \
-                                     provided, file will be printed on stdout.",
+                                    "Recommended. Directory where your Mobile Auth(MA) file will be saved, as \
+                                     <account>.maFile. An existing file is never overwritten. If none is provided, \
+                                     the file will be printed on stdout.",
                                 )
                                 .short('p')
                                 .long("path")
@@ -121,10 +130,6 @@ fn cli() -> Command<'static> {
                 .args(&[
                     Arg::new("account")
                         .help("Steam account name.")
-                        .required(true)
-                        .takes_value(true),
-                    Arg::new("password")
-                        .help("Steam account password.")
                         .required(true)
                         .takes_value(true),
                     Arg::new("parental_code")
@@ -160,55 +165,17 @@ async fn main() -> Result<()> {
 
         Some((MainCommands::Authenticator, matches)) => {
             let account = matches.value_of("account").unwrap();
-            let password = matches.value_of("password").unwrap();
             let _parental_code = matches.value_of("parental_code");
 
             if let Some(add_subcommand) = matches.subcommand_matches("add") {
                 let phone_number = add_subcommand.value_of("phone_number").unwrap();
-                let save_path = add_subcommand.value_of("save_path").as_deref().map(PathBuf::from);
+                let save_path = add_subcommand.value_of("save_path").map(PathBuf::from);
 
-                let authenticator = handle_login(account, password, None).await?;
+                let password = read_password(account)?;
+                let authenticator = login(SteamUser::new(account.to_string(), password)).await?;
 
-                let mut auth_step = AddAuthenticatorStep::InitialStep;
-                let mobile_auth_file;
-                loop {
-                    match authenticator.add_authenticator(auth_step.clone(), phone_number).await {
-                        Ok(AddAuthenticatorStep::EmailConfirmation) => {
-                            println!(
-                                "Phone number was added successfully, A Steam email was sent to your registered inbox \
-                                 to allow a phone\nnumber to be registered. Please confirm it now.\n"
-                            );
-                            Confirm::new()
-                                .with_prompt("Have you confirmed your email?")
-                                .wait_for_newline(true)
-                                .interact()?;
-                            auth_step = AddAuthenticatorStep::EmailConfirmation;
-                        }
-                        Ok(AddAuthenticatorStep::MobileAuth(mafile)) => {
-                            println!("--- OUTPUT ----");
-                            println!("\nThis is your MobileAuth file. Save it!\n");
-                            println!("{}", serde_json::to_string_pretty(&mafile).unwrap());
-                            println!("\n--- END OF OUTPUT ----\n");
-
-                            if save_path.is_some() {
-                                let filename = mafile
-                                    .account_name
-                                    .as_ref()
-                                    .cloned()
-                                    .unwrap_or_else(|| account.to_string());
-
-                                mobile_auth_file = mafile.clone();
-                                tokio::task::spawn_blocking(move || {
-                                    save_file_to_path(&mafile, &*filename, save_path.unwrap()).unwrap();
-                                })
-                                .await?;
-                                break;
-                            }
-                        }
-                        Err(e) => eprintln!("{:?}", e),
-                        _ => println!("wat"),
-                    }
-                }
+                let mobile_auth_file = add_authenticator(&authenticator, phone_number).await?;
+                persist_mafile(&mobile_auth_file, account, save_path).await?;
 
                 let sms_code: String = Input::new()
                     .with_prompt("Please write the SMS code you have received on your mobile phone")
@@ -237,24 +204,104 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-// TODO: Respect --all flag
-// TODO: Respect -i flag to process only desired tradeoffer_id
+/// Drives the add authenticator steps until Steam hands us the maFile.
+async fn add_authenticator<M>(
+    authenticator: &SteamAuthenticator<Authenticated, M>,
+    phone_number: &str,
+) -> Result<MobileAuthFile>
+where
+    M: Send + Sync,
+{
+    let mut auth_step = AddAuthenticatorStep::InitialStep;
+    loop {
+        match authenticator.add_authenticator(auth_step.clone(), phone_number).await {
+            Ok(AddAuthenticatorStep::EmailConfirmation) => {
+                println!(
+                    "Phone number was added successfully, A Steam email was sent to your registered inbox to allow a \
+                     phone\nnumber to be registered. Please confirm it now.\n"
+                );
+                wait_for_email_confirmation()?;
+                auth_step = AddAuthenticatorStep::EmailConfirmation;
+            }
+            Ok(AddAuthenticatorStep::MobileAuth(mafile)) => return Ok(mafile),
+            Ok(AddAuthenticatorStep::InitialStep) => bail!("Unexpected step returned while adding the authenticator."),
+            Err(AuthError::AuthenticatorError(LinkerError::EmailNotConfirmed)) => {
+                println!("Steam reports the email was not confirmed yet.");
+                wait_for_email_confirmation()?;
+            }
+            Err(e) => return Err(e.into()),
+        }
+    }
+}
+
+fn wait_for_email_confirmation() -> Result<()> {
+    let confirmed = Confirm::new()
+        .with_prompt("Have you confirmed your email?")
+        .wait_for_newline(true)
+        .interact()?;
+    if !confirmed {
+        bail!("Email was not confirmed. Aborting.");
+    }
+    Ok(())
+}
+
+/// Saves the maFile to `save_dir` or prints it, making sure the user has it before the authenticator is finalized.
+async fn persist_mafile(mafile: &MobileAuthFile, account: &str, save_dir: Option<PathBuf>) -> Result<()> {
+    if let Some(save_dir) = save_dir {
+        let filename = mafile.account_name.clone().unwrap_or_else(|| account.to_string());
+        let to_save = mafile.clone();
+        let saved = tokio::task::spawn_blocking(move || save_file_to_path(&to_save, &filename, &save_dir)).await?;
+
+        match saved {
+            Ok(path) => {
+                println!("Your MobileAuth file was saved to {}", path.display());
+                return Ok(());
+            }
+            // The secrets cannot be fetched again, so they are printed instead of being lost.
+            Err(e) => eprintln!("Failed to save your MobileAuth file: {e:#}"),
+        }
+    }
+
+    println!("--- OUTPUT ----");
+    println!("\nThis is your MobileAuth file. Save it!\n");
+    println!("{}", serde_json::to_string_pretty(mafile)?);
+    println!("\n--- END OF OUTPUT ----\n");
+
+    let saved = Confirm::new()
+        .with_prompt("Have you saved your MobileAuth file? Without it you WILL lose access to your account")
+        .wait_for_newline(true)
+        .interact()?;
+    if !saved {
+        bail!("MobileAuth file was not saved. The authenticator will not be finalized.");
+    }
+    Ok(())
+}
+
 async fn process_confirmations(subcomm_args: &ArgMatches) -> Result<()> {
     let account = subcomm_args.value_of("account").unwrap();
-    let password = subcomm_args.value_of("password").unwrap();
-    let ma_file = subcomm_args
-        .value_of("ma_file_path")
-        .map(MobileAuthFile::from_disk)
-        .and_then(Result::ok)
-        .expect("MaFile needs to be exist in order to send confirmations.");
+    let ma_file_path = subcomm_args.value_of("ma_file_path").unwrap();
+    let ma_file = MobileAuthFile::from_disk(ma_file_path)
+        .with_context(|| format!("Failed to read the MaFile at {ma_file_path}"))?;
 
-    let confirmation_method = match subcomm_args.subcommand() {
-        Some(("accept", _)) => ConfirmationAction::Accept,
-        Some(("deny", _)) => ConfirmationAction::Deny,
-        _ => unreachable!(),
+    let (confirmation_method, action_args) = match subcomm_args.subcommand() {
+        Some(("accept", args)) => (ConfirmationAction::Accept, args),
+        Some(("deny", args)) => (ConfirmationAction::Deny, args),
+        _ => bail!("Choose to either `accept` or `deny` confirmations."),
     };
 
-    let authenticator = handle_login(account, password, Some(ma_file)).await?;
+    let trade_offer_id = if action_args.is_present("all") {
+        None
+    } else {
+        let id = action_args.value_of("tradeoffer_id").unwrap();
+        Some(
+            id.parse::<u64>()
+                .with_context(|| format!("Invalid trade offer id: {id}"))?,
+        )
+    };
+
+    let password = read_password(account)?;
+    let user = SteamUser::new(account.to_string(), password).with_mafile(ma_file);
+    let authenticator = login(user).await?;
 
     println!("Please wait while we fetch your pending confirmations...");
     let confirmations = authenticator.fetch_confirmations().await?;
@@ -267,42 +314,61 @@ async fn process_confirmations(subcomm_args: &ArgMatches) -> Result<()> {
         return Ok(());
     }
 
-    let total_confirmations = confirmations.len();
-    let process_results = authenticator
-        .process_confirmations(confirmation_method, confirmations)
-        .await;
+    let selected: Vec<Confirmation> = match trade_offer_id {
+        None => confirmations.into_iter().collect(),
+        Some(id) => confirmations.into_iter().filter(|c| c.has_trade_offer_id(id)).collect(),
+    };
 
-    if process_results.is_ok() {
-        println!("Success! {total_confirmations} confirmations were processed.");
-    } else {
-        println!("Error processing {total_confirmations} confirmations.");
+    if let (Some(id), true) = (trade_offer_id, selected.is_empty()) {
+        bail!("Couldn't find a pending confirmation for trade offer {id}.");
     }
 
+    let total_confirmations = selected.len();
+    authenticator
+        .process_confirmations(confirmation_method, selected)
+        .await
+        .with_context(|| format!("Error processing {total_confirmations} confirmations."))?;
+
+    println!("Success! {total_confirmations} confirmations were processed.");
     Ok(())
 }
 
-async fn handle_login(
-    account: &str,
-    password: &str,
-    shared_secret: Option<MobileAuthFile>,
-) -> Result<SteamAuthenticator<Authenticated, PresentMaFile>> {
-    let user = shared_secret
-        .map(|ma_file| SteamUser::new(account.to_string(), password.to_string()).with_mafile(ma_file))
-        .expect("Safe.");
-
-    let authenticator = SteamAuthenticator::new(user);
-    authenticator.login().err_into().await
+fn read_password(account: &str) -> Result<String> {
+    if let Ok(password) = std::env::var(PASSWORD_ENV) {
+        return Ok(password);
+    }
+    Password::new()
+        .with_prompt(format!("Steam password for {account}"))
+        .interact()
+        .map_err(Into::into)
 }
 
-fn save_file_to_path(mafile: &MobileAuthFile, filename: &str, mut path: PathBuf) -> Result<()> {
-    path.set_file_name(filename.to_owned() + ".maFile");
+async fn login<M>(user: SteamUser<M>) -> Result<SteamAuthenticator<Authenticated, M>>
+where
+    M: 'static + Send + Sync + Clone,
+{
+    SteamAuthenticator::new(user).login().err_into().await
+}
 
-    println!("Saving maFile to {:?}\n", &path);
+/// Writes the maFile as `<filename>.maFile` inside `dir`, readable only by the owner.
+///
+/// Never overwrites an existing file, since it may hold the secrets of another authenticator.
+fn save_file_to_path(mafile: &MobileAuthFile, filename: &str, dir: &Path) -> Result<PathBuf> {
+    let path = dir.join(format!("{filename}.maFile"));
 
-    let file = OpenOptions::new().append(false).write(true).create(true).open(path)?;
+    let mut options = OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
 
-    let mut buf_reader = BufWriter::new(file);
-    buf_reader
-        .write_all(&*serde_json::to_vec_pretty(mafile).unwrap())
-        .map_err(|e| e.into())
+    let mut file = options
+        .open(&path)
+        .with_context(|| format!("Failed to create {}", path.display()))?;
+    file.write_all(&serde_json::to_vec_pretty(mafile)?)?;
+    file.sync_all()?;
+
+    Ok(path)
 }

@@ -75,7 +75,8 @@ pub struct BooleanResponse {
     pub success: bool,
 }
 
-#[derive(Serialize, Debug, Clone)]
+/// No `Debug`: holds the parental PIN.
+#[derive(Serialize, Clone)]
 pub struct ParentalUnlockRequest<'a> {
     /// Parental Unlock Code
     pub pin: &'a str,
@@ -152,7 +153,8 @@ struct SetTokenResponse {
     response: i32, // 1 if ok
 }
 
-#[derive(Debug, Serialize)]
+/// No `Debug`: `nonce` is the refresh token.
+#[derive(Serialize)]
 pub struct FinalizeLoginRequest {
     nonce: String,
     #[serde(rename = "sessionid")]
@@ -187,10 +189,18 @@ pub struct DomainToken {
 }
 
 /// Contains tokens to authenticate into a Steam domain.
-#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DomainTokenData {
     pub nonce: String,
     pub auth: String,
     #[serde(rename = "steamID")]
     pub steam_id: Option<String>,
+}
+
+impl std::fmt::Debug for DomainTokenData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DomainTokenData")
+            .field("steam_id", &self.steam_id)
+            .finish_non_exhaustive()
+    }
 }
