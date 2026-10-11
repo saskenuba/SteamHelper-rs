@@ -7,6 +7,7 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EMsg {
     Invalid = 0,
     Multi = 1,
@@ -407,6 +408,7 @@ impl EMsg {
 }
 
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum EMsgError {
     MessageNotLongEnough(&'static str),
     ValueNotFound(&'static str),

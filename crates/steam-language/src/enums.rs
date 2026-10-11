@@ -5,6 +5,7 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EUniverse {
     Invalid = 0,
     Public = 1,
@@ -15,6 +16,7 @@ pub enum EUniverse {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EChatEntryType {
     Invalid = 0,
     ChatMsg = 1,
@@ -33,6 +35,7 @@ pub enum EChatEntryType {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EPersonaState {
     Offline = 0,
     Online = 1,
@@ -46,6 +49,7 @@ pub enum EPersonaState {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EAccountType {
     Invalid = 0,
     Individual = 1,
@@ -62,6 +66,7 @@ pub enum EAccountType {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EFriendRelationship {
     None = 0,
     Blocked = 1,
@@ -209,6 +214,7 @@ bitflags! {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EAppUsageEvent {
     GameLaunch = 1,
     GameLaunchTrial = 2,
@@ -241,6 +247,7 @@ bitflags! {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum ELicenseType {
     NoLicense = 0,
     SinglePurchase = 1,
@@ -254,6 +261,7 @@ pub enum ELicenseType {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EPaymentMethod {
     None = 0,
     ActivationCode = 1,
@@ -345,6 +353,7 @@ pub enum EPaymentMethod {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EPurchaseResultDetail {
     NoDetail = 0,
     AVSFailure = 1,
@@ -434,6 +443,7 @@ pub enum EPurchaseResultDetail {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EIntroducerRouting {
     P2PVoiceChat = 1,
     P2PNetworking = 2,
@@ -454,6 +464,7 @@ bitflags! {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EDenyReason {
     InvalidVersion = 1,
     Generic = 2,
@@ -474,6 +485,7 @@ pub enum EDenyReason {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EClanRank {
     None = 0,
     Owner = 1,
@@ -484,6 +496,7 @@ pub enum EClanRank {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EClanRelationship {
     None = 0,
     Blocked = 1,
@@ -497,6 +510,7 @@ pub enum EClanRelationship {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EAuthSessionResponse {
     OK = 0,
     UserNotConnectedToSteam = 1,
@@ -512,6 +526,7 @@ pub enum EAuthSessionResponse {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EChatRoomEnterResponse {
     Success = 1,
     DoesntExist = 2,
@@ -528,6 +543,7 @@ pub enum EChatRoomEnterResponse {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EChatRoomType {
     Friend = 1,
     MUC = 2,
@@ -536,6 +552,7 @@ pub enum EChatRoomType {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EChatInfoType {
     StateChange = 1,
     InfoUpdate = 2,
@@ -544,6 +561,7 @@ pub enum EChatInfoType {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EChatAction {
     InviteChat = 1,
     Kick = 2,
@@ -565,6 +583,7 @@ pub enum EChatAction {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EChatActionResult {
     Success = 1,
     Error = 2,
@@ -580,6 +599,7 @@ pub enum EChatActionResult {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EAppInfoSection {
     Unknown = 0,
     All = 1,
@@ -603,6 +623,7 @@ pub enum EAppInfoSection {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EContentDownloadSourceType {
     Invalid = 0,
     CS = 1,
@@ -617,6 +638,7 @@ pub enum EContentDownloadSourceType {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EPlatformType {
     Unknown = 0,
     Win32 = 1,
@@ -629,6 +651,7 @@ pub enum EPlatformType {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EOSType {
     Web = -700,
     IOSUnknown = -600,
@@ -725,6 +748,7 @@ pub enum EOSType {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EServerType {
     Util = -2,
     Client = -3,
@@ -843,6 +867,7 @@ pub enum EServerType {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EBillingType {
     NoCost = 0,
     BillOnceOnly = 1,
@@ -865,6 +890,7 @@ pub enum EBillingType {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(u32)]
+#[non_exhaustive]
 pub enum EActivationCodeClass {
     WonCDKey = 0,
     ValveCDKey = 1,
@@ -890,6 +916,7 @@ bitflags! {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(u8)]
+#[non_exhaustive]
 pub enum ERegionCode {
     USEast = 0x00,
     USWest = 0x01,
@@ -904,6 +931,7 @@ pub enum ERegionCode {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum ECurrencyCode {
     Invalid = 0,
     USD = 1,
@@ -966,6 +994,7 @@ bitflags! {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EWorkshopEnumerationType {
     RankedByVote = 0,
     Recent = 1,
@@ -978,6 +1007,7 @@ pub enum EWorkshopEnumerationType {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EPublishedFileVisibility {
     Public = 0,
     FriendsOnly = 1,
@@ -986,6 +1016,7 @@ pub enum EPublishedFileVisibility {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EWorkshopFileType {
     Community = 0,
     Microtransaction = 1,
@@ -1007,6 +1038,7 @@ pub enum EWorkshopFileType {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EWorkshopFileAction {
     Played = 0,
     Completed = 1,
@@ -1014,6 +1046,7 @@ pub enum EWorkshopFileAction {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EEconTradeResponse {
     Accepted = 0,
     Declined = 1,
@@ -1065,6 +1098,7 @@ bitflags! {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum ENewsUpdateType {
     AppNews = 0,
     SteamAds = 1,
@@ -1075,6 +1109,7 @@ pub enum ENewsUpdateType {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum ESystemIMType {
     RawText = 0,
     InvalidCard = 1,
@@ -1130,6 +1165,7 @@ bitflags! {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EDRMBlobDownloadErrorDetail {
     None = 0,
     DownloadFailed = 1,
@@ -1158,6 +1194,7 @@ pub enum EDRMBlobDownloadErrorDetail {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EClientStat {
     P2PConnectionsUDP = 0,
     P2PConnectionsRelay = 1,
@@ -1168,6 +1205,7 @@ pub enum EClientStat {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EClientStatAggregateMethod {
     LatestOnly = 0,
     Sum = 1,
@@ -1177,6 +1215,7 @@ pub enum EClientStatAggregateMethod {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum ELeaderboardDataRequest {
     Global = 0,
     GlobalAroundUser = 1,
@@ -1186,6 +1225,7 @@ pub enum ELeaderboardDataRequest {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum ELeaderboardSortMethod {
     None = 0,
     Ascending = 1,
@@ -1194,6 +1234,7 @@ pub enum ELeaderboardSortMethod {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum ELeaderboardDisplayType {
     None = 0,
     Numeric = 1,
@@ -1203,6 +1244,7 @@ pub enum ELeaderboardDisplayType {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum ELeaderboardUploadScoreMethod {
     None = 0,
     KeepBest = 1,
@@ -1222,6 +1264,7 @@ bitflags! {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EPublishedFileQueryType {
     RankedByVote = 0,
     RankedByPublicationDate = 1,
@@ -1247,6 +1290,7 @@ pub enum EPublishedFileQueryType {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EPublishedFileInappropriateProvider {
     Invalid = 0,
     Google = 1,
@@ -1255,6 +1299,7 @@ pub enum EPublishedFileInappropriateProvider {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EPublishedFileInappropriateResult {
     NotScanned = 0,
     VeryUnlikely = 1,
@@ -1266,6 +1311,7 @@ pub enum EPublishedFileInappropriateResult {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EDisplayStatus {
     Invalid = 0,
     Launching = 1,
@@ -1329,6 +1375,7 @@ bitflags! {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EChatRoomGroupType {
     Default = 0,
     Unmoderated = 1,
@@ -1336,6 +1383,7 @@ pub enum EChatRoomGroupType {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EChatroomNotificationLevel {
     Invalid = 0,
     None = 1,
@@ -1346,6 +1394,7 @@ pub enum EChatroomNotificationLevel {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EChatRoomMemberStateChange {
     Invalid = 0,
     Joined = 1,
@@ -1361,6 +1410,7 @@ pub enum EChatRoomMemberStateChange {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EChatRoomServerMsg {
     Invalid = 0,
     RenameChatRoom = 1,
@@ -1376,6 +1426,7 @@ pub enum EChatRoomServerMsg {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EChatRoomGroupRank {
     Default = 0,
     Viewer = 10,
@@ -1400,6 +1451,7 @@ bitflags! {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EChatRoomGroupAction {
     Default = 0,
     CreateRenameDeleteChannel = 1,
@@ -1417,6 +1469,7 @@ pub enum EChatRoomGroupAction {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EChatRoomJoinState {
     Default = 0,
     None = 1,
@@ -1425,6 +1478,7 @@ pub enum EChatRoomJoinState {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EVoiceCallState {
     None = 0,
     ScheduledInitiate = 1,
@@ -1440,6 +1494,7 @@ pub enum EVoiceCallState {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum ETradeOfferState {
     Invalid = 1,
     Active = 2,
@@ -1456,6 +1511,7 @@ pub enum ETradeOfferState {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum ETradeOfferConfirmationMethod {
     Invalid = 0,
     Email = 1,
@@ -1464,6 +1520,7 @@ pub enum ETradeOfferConfirmationMethod {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum ELobbyType {
     Private = 0,
     FriendsOnly = 1,
@@ -1474,6 +1531,7 @@ pub enum ELobbyType {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum ELobbyFilterType {
     String = 0,
     Numerical = 1,
@@ -1484,6 +1542,7 @@ pub enum ELobbyFilterType {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum ELobbyComparison {
     EqualToOrLessThan = -2,
     LessThan = -1,
@@ -1495,6 +1554,7 @@ pub enum ELobbyComparison {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum ELobbyDistanceFilter {
     Close = 0,
     Default = 1,
@@ -1504,6 +1564,7 @@ pub enum ELobbyDistanceFilter {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum ESteamIPv6ConnectivityProtocol {
     Invalid = 0,
     Http = 1,
@@ -1512,6 +1573,7 @@ pub enum ESteamIPv6ConnectivityProtocol {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum ESteamIPv6ConnectivityState {
     Unknown = 0,
     Good = 1,
@@ -1520,6 +1582,7 @@ pub enum ESteamIPv6ConnectivityState {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum ESteamRealm {
     Unknown = 0,
     SteamGlobal = 1,
@@ -1528,6 +1591,7 @@ pub enum ESteamRealm {
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr)]
 #[repr(i32)]
+#[non_exhaustive]
 pub enum EResult {
     Invalid = 0,
     OK = 1,

@@ -251,7 +251,8 @@ impl SteamID {
             Some(EAccountType::Chat) if instance & CHAT_INSTANCE_LOBBY_FLAG != 0 => 'L',
             Some(EAccountType::Chat) => 'T',
             Some(EAccountType::AnonUser) => 'a',
-            Some(EAccountType::ConsoleUser) | None => 'i',
+            // console users and account types without a letter, including ones added later
+            _ => 'i',
         };
         let render_instance = match account_type {
             Some(EAccountType::AnonGameServer) | Some(EAccountType::Multiseat) => true,
