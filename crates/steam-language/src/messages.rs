@@ -1,7 +1,10 @@
 use derive_new::new;
 use serde::{Deserialize, Serialize};
 
-use crate::generated::enums::*;
+use steam_language_gen_derive::{linked_emsg, SteamMsg};
+
+use crate::emsg::EMsg;
+use crate::enums::*;
 use crate::{DeserializableBytes, MessageBodyExt, SerializableBytes};
 
 pub trait HasEMsg {

@@ -1,0 +1,37 @@
+[package]
+name = "steam-language"
+version = "1.0.0"
+authors = ["Martin <martin@hotmail.com.br>"]
+edition = "2018"
+license = "MIT"
+repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-language"
+description = "Steam enums, message ids and messages, such as EResult, EUniverse and EMsg, generated from SteamKit."
+keywords = ["steam", "enums", "eresult", "emsg"]
+
+[features]
+default = []
+# EMsg message ids, and helpers to read them from packets.
+emsg = ["arrayref"]
+# Message headers and Msg* structs. Unstable: not covered by semver.
+messages = ["emsg", "bincode", "derive-new", "enum_dispatch", "steam-language-gen-derive", "steam-protobuf"]
+
+[dependencies]
+bitflags = "1"
+num-derive = "0.4"
+num-traits = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde_repr = "0.1"
+
+arrayref = { version = "0.3", optional = true }
+bincode = { version = "1", optional = true }
+derive-new = { version = "0.5", optional = true }
+enum_dispatch = { version = "0.3.5", optional = true }
+steam-protobuf = { workspace = true, optional = true }
+
+[dependencies.steam-language-gen-derive]
+path = "../steam-language-gen-derive"
+version = "^0.1"
+optional = true
+
+[package.metadata.docs.rs]
+all-features = true

@@ -20,22 +20,9 @@ default = []
 generator = ["petgraph", "regex", "nom", "Inflector"]
 
 [dependencies]
-arrayref = "0.3"
-bincode = "1"
-bitflags = "1"
-derive-new = "0.5"
-enum_dispatch = "0.3.5"
 Inflector = { version = "^0.11", default-features = false, optional = true }
 nom = { version = "5.0.1", optional = true }
-num-derive = "0.3"
-num-traits = "0.2"
 petgraph = { version = "0.4", optional = true }
 regex = { version = "1", optional = true }
-serde = { version = "1", features = ["derive"] }
-serde_repr = "0.1"
 
-steam-protobuf.workspace = true
-
-[dependencies.steam-language-gen-derive]
-path = "../steam-language-gen-derive"
-version = "^0.1"
+steam-language = { workspace = true, features = ["messages"] }

@@ -4,6 +4,7 @@ resolver = "2"
 
 # local crates
 [workspace.dependencies]
+steam-language = { path = "./crates/steam-language", version = "1.0.0" }
 steam-language-gen = { path = "./crates/steam-language-gen", version = "0.1.4" }
 steam-mobile = { path = "./crates/steam-mobile", version = "0.5.0", default-features = false }
 steam-protobuf = { path = "./crates/steam-protobuf", version = "0.2.1" }
