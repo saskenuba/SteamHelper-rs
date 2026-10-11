@@ -4,7 +4,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use serde_with::serde_as;
 use serde_with::Map;
-use steam_language_gen::generated::enums::EResult;
+use steam_language::enums::EResult;
 
 use crate::web_handler::confirmation::Confirmation;
 use crate::STEAM_COMMUNITY_BASE;

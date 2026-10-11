@@ -6,7 +6,7 @@ use cookie::Cookie;
 use futures_timer::Delay;
 use futures_util::TryFutureExt;
 use reqwest::Method;
-use steam_language_gen::generated::enums::EResult;
+use steam_language::enums::EResult;
 use steam_totp::Secret;
 use steam_totp::Time;
 use tracing::debug;

@@ -39,7 +39,7 @@ serde_json.workspace = true
 serde_repr.workspace = true
 serde_with = { version = "^1.9", features = ["json"] }
 
-steam-language-gen.workspace = true
+steam-language.workspace = true
 steam-mobile = { workspace = true, default-features = false }
 steamid-parser.workspace = true
 tappet.workspace = true

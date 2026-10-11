@@ -52,7 +52,7 @@ dialoguer = { version = "0.10", optional = true }
 tokio = { version = "1.0.2", features = ["rt-multi-thread", "macros", "fs"], optional = true }
 
 steam-protobuf.workspace = true
-steam-language-gen.workspace = true
+steam-language.workspace = true
 
 [dependencies.cookie]
 version = "0.16.0-rc.1"

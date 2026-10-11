@@ -1,4 +1,4 @@
-use steam_language_gen::generated::enums::EResult;
+use steam_language::enums::EResult;
 use steam_mobile::errors::AuthError;
 use steam_mobile::HttpError;
 use tappet::errors::SteamAPIError;

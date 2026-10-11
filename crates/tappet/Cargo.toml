@@ -36,9 +36,9 @@ serde_with = { version = "^1.4", features = ["json"], optional = true }
 path = "../tappet-derive"
 version = "0.3.2"
 
-[dependencies.steam-language-gen]
-path = "../steam-language-gen"
-version = "0.1.0"
+[dependencies.steam-language]
+path = "../steam-language"
+version = "1"
 
 [dev-dependencies]
 anyhow = "1"

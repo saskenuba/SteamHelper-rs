@@ -1,7 +1,7 @@
 use reqwest::header::{HeaderMap, HeaderValue};
 use thiserror::Error;
 
-use steam_language_gen::generated::enums::EResult;
+use steam_language::enums::EResult;
 
 #[derive(Debug, Error)]
 pub enum SteamAPIError {

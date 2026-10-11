@@ -7,7 +7,7 @@ cfg_if::cfg_if! {
     if #[cfg(feature = "trading")] {
         pub use crate::trading_types::*;
         /// Trade offer state from the `GetTradeOffer` or `GetTradeOffers` endpoint.
-        pub use steam_language_gen::generated::enums::ETradeOfferState;
+        pub use steam_language::enums::ETradeOfferState;
     }
 }
 

@@ -1,6 +1,6 @@
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
-use steam_language_gen::generated::enums::EResult;
+use steam_language::enums::EResult;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NewAPIKeyRequest {

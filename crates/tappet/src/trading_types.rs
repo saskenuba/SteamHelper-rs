@@ -5,8 +5,8 @@
 
 use serde::Deserialize;
 use serde_repr::Deserialize_repr;
-use steam_language_gen::generated::enums::ETradeOfferConfirmationMethod;
-use steam_language_gen::generated::enums::ETradeOfferState;
+use steam_language::enums::ETradeOfferConfirmationMethod;
+use steam_language::enums::ETradeOfferState;
 
 /// Tracks the status of a completed trade. I.e. after a trade offer has been accepted.
 /// Received at GetTradeHistory endpoint, on `status` field.

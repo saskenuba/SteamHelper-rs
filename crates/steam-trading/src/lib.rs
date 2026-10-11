@@ -42,7 +42,7 @@ use futures::StreamExt;
 use futures::TryFutureExt;
 use futures_timer::Delay;
 use serde::de::DeserializeOwned;
-use steam_language_gen::generated::enums::ETradeOfferState;
+use steam_language::enums::ETradeOfferState;
 use steam_mobile::user::PresentMaFile;
 use steam_mobile::Authenticated;
 use steam_mobile::ConfirmationAction;
