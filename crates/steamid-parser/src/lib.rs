@@ -1,3 +1,4 @@
+use std::fmt;
 use std::str::FromStr;
 
 #[cfg(feature = "serialize")]
@@ -381,6 +382,27 @@ impl FromStr for SteamID {
             .find_map(|matcher| matcher(input).filter(|(_, len)| *len == input.len()))
             .ok_or(ParseSteamIDError::UnknownFormat)?;
         candidate.into_steamid()
+    }
+}
+
+/// Formats as Steam64, the same value as [`SteamID::to_steam64`].
+impl fmt::Display for SteamID {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_steam64())
+    }
+}
+
+/// Same as [`SteamID::from_steam64`].
+impl From<u64> for SteamID {
+    fn from(steam64: u64) -> Self {
+        Self::from_steam64(steam64)
+    }
+}
+
+/// Same as [`SteamID::to_steam64`].
+impl From<SteamID> for u64 {
+    fn from(steamid: SteamID) -> Self {
+        steamid.to_steam64()
     }
 }
 
@@ -1267,5 +1289,41 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn display() {
+        assert_eq!(
+            SteamID::from_steam64(get_steam64_odd()).to_string(),
+            "76561198092541763"
+        );
+        assert_eq!(
+            format!("profiles/{}", SteamID::from_account_id(get_steam3_even() as u32)),
+            "profiles/76561197984835396"
+        );
+        assert_eq!(
+            SteamID::from_steam64(103_582_791_429_521_412).to_string(),
+            "103582791429521412"
+        );
+        assert_eq!(SteamID::from_steam64(u64::MAX).to_string(), (u64::MAX >> 1).to_string());
+    }
+
+    #[test]
+    fn display_roundtrip() {
+        for account_id in [0, 1, 24_569_668, 132_276_035, u32::MAX] {
+            let steamid = SteamID::from_account_id(account_id);
+            assert_eq!(steamid.to_string().parse(), Ok(steamid), "{}", account_id);
+        }
+    }
+
+    #[test]
+    fn u64_conversions() {
+        let steamid: SteamID = get_steam64_odd().into();
+        assert_eq!(steamid, SteamID::from_steam64(get_steam64_odd()));
+
+        let steam64: u64 = steamid.into();
+        assert_eq!(steam64, get_steam64_odd());
+
+        assert_eq!(u64::from(SteamID::from(u64::MAX)), u64::MAX >> 1);
     }
 }
