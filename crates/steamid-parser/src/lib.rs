@@ -11,6 +11,7 @@ const UNIVERSE_SHIFT: u32 = 56;
 const ACCOUNT_TYPE_SHIFT: u32 = 52;
 const ACCOUNT_TYPE_MASK: u64 = 0xF;
 const ACCOUNT_INSTANCE_SHIFT: u32 = 32;
+const ACCOUNT_INSTANCE_MASK: u64 = 0xF_FFFF;
 const UNIVERSE_MASK: u64 = 0xFF;
 const STEAM3_MASK: u64 = 0xFFFF_FFFF;
 // Steam2 account numbers (Z) are 31 bits.
@@ -54,16 +55,38 @@ impl AccountType {
     }
 }
 
-fn universe_from_digit(digit: u8) -> Option<EUniverse> {
-    let universe = match digit {
-        b'0' => EUniverse::Invalid,
-        b'1' => EUniverse::Public,
-        b'2' => EUniverse::Beta,
-        b'3' => EUniverse::Internal,
-        b'4' => EUniverse::Dev,
+fn universe_from_value(value: u64) -> Option<EUniverse> {
+    let universe = match value {
+        0 => EUniverse::Invalid,
+        1 => EUniverse::Public,
+        2 => EUniverse::Beta,
+        3 => EUniverse::Internal,
+        4 => EUniverse::Dev,
         _ => return None,
     };
     Some(universe)
+}
+
+fn universe_from_digit(digit: u8) -> Option<EUniverse> {
+    universe_from_value(digit.checked_sub(b'0')? as u64)
+}
+
+fn account_type_from_value(value: u64) -> Option<EAccountType> {
+    let account_type = match value {
+        0 => EAccountType::Invalid,
+        1 => EAccountType::Individual,
+        2 => EAccountType::Multiseat,
+        3 => EAccountType::GameServer,
+        4 => EAccountType::AnonGameServer,
+        5 => EAccountType::Pending,
+        6 => EAccountType::ContentServer,
+        7 => EAccountType::Clan,
+        8 => EAccountType::Chat,
+        9 => EAccountType::ConsoleUser,
+        10 => EAccountType::AnonUser,
+        _ => return None,
+    };
+    Some(account_type)
 }
 
 /// A SteamID matched in a string, before its values are checked.
@@ -214,6 +237,28 @@ impl SteamID {
 
     pub fn to_steam64(self) -> u64 {
         self.0 & STEAM64_MASK
+    }
+
+    /// Returns the account id, also known as Steam32: the W in Steam3 `[U:1:W]`.
+    ///
+    /// Same value as [`SteamID::to_steam3`], as a `u32`.
+    pub fn account_id(self) -> u32 {
+        (self.0 & STEAM3_MASK) as u32
+    }
+
+    /// Returns the account instance. Desktop users have instance 1.
+    pub fn instance(self) -> u32 {
+        ((self.0 >> ACCOUNT_INSTANCE_SHIFT) & ACCOUNT_INSTANCE_MASK) as u32
+    }
+
+    /// Returns the account type, or `None` if it's not a known account type.
+    pub fn account_type(self) -> Option<EAccountType> {
+        account_type_from_value((self.0 >> ACCOUNT_TYPE_SHIFT) & ACCOUNT_TYPE_MASK)
+    }
+
+    /// Returns the universe, or `None` if it's not a known universe.
+    pub fn universe(self) -> Option<EUniverse> {
+        universe_from_value((self.0 >> UNIVERSE_SHIFT) & UNIVERSE_MASK)
     }
 
     /// Creates a new SteamID from the Steam3 format.
@@ -941,5 +986,70 @@ mod tests {
             let steamid = SteamID::from_steam3(steam3, None, None);
             assert_eq!(SteamID::find(&steamid.to_steam2()), Some(steamid), "{}", steam3);
         }
+    }
+
+    #[test]
+    fn getters() {
+        let steamid = SteamID::from_steam64(get_steam64_odd());
+        assert_eq!(steamid.account_id(), get_steam3() as u32);
+        assert_eq!(steamid.instance(), 1);
+        assert_eq!(steamid.account_type(), Some(EAccountType::Individual));
+        assert_eq!(steamid.universe(), Some(EUniverse::Public));
+
+        // clan
+        let steamid = SteamID::from_steam64(103_582_791_429_521_412);
+        assert_eq!(steamid.account_id(), 4);
+        assert_eq!(steamid.instance(), 0);
+        assert_eq!(steamid.account_type(), Some(EAccountType::Clan));
+        assert_eq!(steamid.universe(), Some(EUniverse::Public));
+    }
+
+    #[test]
+    fn getters_extremes() {
+        let steamid = SteamID::from_steam64(steam64_from_parts(4, 10, 0xF_FFFF, 0xFFFF_FFFF));
+        assert_eq!(steamid.account_id(), u32::MAX);
+        assert_eq!(steamid.instance(), 0xF_FFFF);
+        assert_eq!(steamid.account_type(), Some(EAccountType::AnonUser));
+        assert_eq!(steamid.universe(), Some(EUniverse::Dev));
+
+        let steamid = SteamID::from_steam64(0);
+        assert_eq!(steamid.account_id(), 0);
+        assert_eq!(steamid.instance(), 0);
+        assert_eq!(steamid.account_type(), Some(EAccountType::Invalid));
+        assert_eq!(steamid.universe(), Some(EUniverse::Invalid));
+    }
+
+    #[test]
+    fn getters_unknown_values() {
+        let steamid = SteamID::from_steam64(steam64_from_parts(5, 11, 1, 42));
+        assert_eq!(steamid.account_type(), None);
+        assert_eq!(steamid.universe(), None);
+
+        let steamid = SteamID::from_steam64(u64::MAX);
+        assert_eq!(steamid.account_type(), None);
+        assert_eq!(steamid.universe(), None);
+    }
+
+    #[test]
+    fn account_id_is_to_steam3() {
+        for steam64 in [
+            0,
+            get_steam64_odd(),
+            get_steam64_even(),
+            103_582_791_429_521_412,
+            u64::MAX,
+        ] {
+            let steamid = SteamID::from_steam64(steam64);
+            assert_eq!(steamid.account_id() as u64, steamid.to_steam3(), "{}", steam64);
+        }
+    }
+
+    #[test]
+    fn getters_match_from_steam3() {
+        let steamid = SteamID::from_steam3(42, Some(EUniverse::Beta), Some(EAccountType::GameServer));
+        assert_eq!(steamid.account_id(), 42);
+        assert_eq!(steamid.instance(), 1);
+        assert_eq!(steamid.account_type(), Some(EAccountType::GameServer));
+        assert_eq!(steamid.universe(), Some(EUniverse::Beta));
     }
 }
