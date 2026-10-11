@@ -1,9 +1,9 @@
+use std::str::FromStr;
+
 #[cfg(feature = "serialize")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use steam_language_gen::generated::enums::{EAccountType, EUniverse};
-
-// TODO - Error catching
 
 // Bit layout of a Steam64 ID, from most to least significant:
 // universe (8) | account type (4) | account instance (20) | account number (31) | account id (1)
@@ -17,6 +17,21 @@ const STEAM3_MASK: u64 = 0xFFFF_FFFF;
 const STEAM2_ACCOUNT_NUMBER_MAX: u32 = 0x7FFF_FFFF;
 // The highest universe bit is not kept when converting back to Steam64. No real universe sets it.
 const STEAM64_MASK: u64 = !(1 << 63);
+
+/// Error returned when a string can't be parsed as a [`SteamID`].
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+#[non_exhaustive]
+pub enum ParseSteamIDError {
+    /// The string is not exactly one Steam64, Steam3 or Steam2 ID.
+    #[error("not a Steam64, Steam3 or Steam2 id")]
+    UnknownFormat,
+    /// The Steam3 account type letter is not supported.
+    #[error("unsupported Steam3 account type `{0}`")]
+    UnsupportedAccountType(char),
+    /// The account doesn't fit in a SteamID.
+    #[error("account `{0}` is out of range")]
+    AccountOutOfRange(String),
+}
 
 struct AccountType(EAccountType);
 
@@ -51,64 +66,134 @@ fn universe_from_digit(digit: u8) -> Option<EUniverse> {
     Some(universe)
 }
 
-/// Finds the first Steam3 ID in the format `[T:U:D]`, returning the account type letter,
-/// universe digit and account number digits.
-///
-/// T is one of `AGMPCgcLTIUai`, U is a digit from 0 to 4 and D is one or more digits.
-fn find_steam3(input: &[u8]) -> Option<(u8, u8, &str)> {
-    (0..input.len()).find_map(|start| {
-        let rest = &input[start..];
-        match rest {
-            [b'[', kind, b':', universe @ b'0'..=b'4', b':', account @ ..] if b"AGMPCgcLTIUai".contains(kind) => {
-                let digits = account.iter().take_while(|c| c.is_ascii_digit()).count();
-                if digits == 0 || account.get(digits) != Some(&b']') {
-                    return None;
-                }
-                // only ascii digits were matched, so this is valid utf8
-                let account = std::str::from_utf8(&account[..digits]).unwrap();
-                Some((*kind, *universe, account))
-            }
-            _ => None,
-        }
-    })
+/// A SteamID matched in a string, before its values are checked.
+enum Candidate<'a> {
+    /// `[T:U:D]`: account type letter, universe digit and account digits.
+    Steam3 {
+        account_type: u8,
+        universe: u8,
+        account: &'a str,
+    },
+    /// `STEAM_X:Y:Z`: universe digit, Y digit and Z digits.
+    Steam2 { universe: u8, y: u8, z: &'a str },
+    /// The digit 7 followed by 16 digits.
+    Steam64(&'a str),
 }
 
-/// Finds the first Steam2 ID in the format `STEAM_X:Y:Z`, returning the universe digit and
-/// the Steam3 account id (Z*2+Y).
-///
-/// X is a digit from 0 to 4, Y is either 0 or 1 and Z is a 31 bit number.
-fn find_steam2(input: &[u8]) -> Option<(u8, u32)> {
-    (0..input.len()).find_map(|start| match &input[start..] {
-        [b'S', b'T', b'E', b'A', b'M', b'_', universe @ b'0'..=b'4', b':', y @ b'0'..=b'1', b':', account @ ..] => {
-            let digits = account.iter().take_while(|c| c.is_ascii_digit()).count();
-            // only ascii digits were matched, so this is valid utf8
-            let z: u32 = std::str::from_utf8(&account[..digits]).unwrap().parse().ok()?;
-            if z > STEAM2_ACCOUNT_NUMBER_MAX {
+impl Candidate<'_> {
+    fn into_steamid(self) -> Result<SteamID, ParseSteamIDError> {
+        match self {
+            Candidate::Steam3 {
+                account_type,
+                universe,
+                account,
+            } => {
+                // TODO - match instance
+                let account_type = AccountType::new(account_type)
+                    .ok_or(ParseSteamIDError::UnsupportedAccountType(account_type as char))?;
+                let steam3 = account
+                    .parse()
+                    .map_err(|_| ParseSteamIDError::AccountOutOfRange(account.to_owned()))?;
+                Ok(SteamID::from_steam3(
+                    steam3,
+                    // the matcher only accepts universes from 0 to 4
+                    Some(universe_from_digit(universe).unwrap()),
+                    Some(account_type.0),
+                ))
+            }
+            Candidate::Steam2 { universe, y, z } => {
+                let z = z
+                    .parse::<u32>()
+                    .ok()
+                    .filter(|z| *z <= STEAM2_ACCOUNT_NUMBER_MAX)
+                    .ok_or_else(|| ParseSteamIDError::AccountOutOfRange(z.to_owned()))?;
+                let universe = match universe {
+                    b'0' => EUniverse::Public,
+                    // the matcher only accepts universes from 0 to 4
+                    digit => universe_from_digit(digit).unwrap(),
+                };
+                Ok(SteamID::from_steam3(z * 2 + (y - b'0') as u32, Some(universe), None))
+            }
+            // 17 digits always fit in a u64
+            Candidate::Steam64(steam64) => Ok(SteamID::from_steam64(steam64.parse().unwrap())),
+        }
+    }
+}
+
+/// Matches a format at the start of the input, returning the candidate and its length.
+type Matcher = fn(&[u8]) -> Option<(Candidate<'_>, usize)>;
+
+/// Formats in order of preference.
+const MATCHERS: [Matcher; 3] = [match_steam3, match_steam64, match_steam2];
+
+/// Returns the ascii digits at the start of the input.
+fn leading_digits(input: &[u8]) -> &str {
+    let len = input.iter().take_while(|c| c.is_ascii_digit()).count();
+    // only ascii digits were taken, so this is valid utf8
+    std::str::from_utf8(&input[..len]).unwrap()
+}
+
+/// Matches a Steam3 ID: `[T:U:D]`, where T is one of `AGMPCgcLTIUai`, U is a digit from 0 to 4 and
+/// D is one or more digits.
+fn match_steam3(input: &[u8]) -> Option<(Candidate<'_>, usize)> {
+    match input {
+        [b'[', account_type, b':', universe @ b'0'..=b'4', b':', rest @ ..]
+            if b"AGMPCgcLTIUai".contains(account_type) =>
+        {
+            let account = leading_digits(rest);
+            if account.is_empty() || rest.get(account.len()) != Some(&b']') {
                 return None;
             }
-            Some((*universe, z * 2 + (y - b'0') as u32))
+            let candidate = Candidate::Steam3 {
+                account_type: *account_type,
+                universe: *universe,
+                account,
+            };
+            Some((candidate, 6 + account.len()))
         }
         _ => None,
-    })
+    }
 }
 
-/// Finds the first Steam64 ID: the digit 7 followed by 16 digits.
-fn find_steam64(input: &[u8]) -> Option<&str> {
-    input
-        .windows(17)
-        .find(|window| window[0] == b'7' && window.iter().all(u8::is_ascii_digit))
-        // only ascii digits were matched, so this is valid utf8
-        .map(|window| std::str::from_utf8(window).unwrap())
+/// Matches a Steam2 ID: `STEAM_X:Y:Z`, where X is a digit from 0 to 4, Y is either 0 or 1 and Z is
+/// one or more digits.
+fn match_steam2(input: &[u8]) -> Option<(Candidate<'_>, usize)> {
+    match input {
+        [b'S', b'T', b'E', b'A', b'M', b'_', universe @ b'0'..=b'4', b':', y @ b'0'..=b'1', b':', rest @ ..] => {
+            let z = leading_digits(rest);
+            if z.is_empty() {
+                return None;
+            }
+            let candidate = Candidate::Steam2 {
+                universe: *universe,
+                y: *y,
+                z,
+            };
+            Some((candidate, 10 + z.len()))
+        }
+        _ => None,
+    }
+}
+
+/// Matches a Steam64 ID: the digit 7 followed by 16 digits.
+fn match_steam64(input: &[u8]) -> Option<(Candidate<'_>, usize)> {
+    let steam64 = input.get(..17)?;
+    if steam64[0] != b'7' || !steam64.iter().all(u8::is_ascii_digit) {
+        return None;
+    }
+    // only ascii digits were matched, so this is valid utf8
+    let steam64 = std::str::from_utf8(steam64).unwrap();
+    Some((Candidate::Steam64(steam64), 17))
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 /// Let X, Y and Z constants be defined by the SteamID: STEAM_X:Y:Z.
 pub struct SteamID(u64);
 
-/// Reference: https://developer.valvesoftware.com/wiki/SteamID
+/// Reference: <https://developer.valvesoftware.com/wiki/SteamID>
 impl SteamID {
     /// Using the formula W=Z*2+Y, a SteamID can be converted to Steam3.
-    /// Source: https://steamcommunity.com/path/[letter:1:W]
+    /// Source: `https://steamcommunity.com/path/[letter:1:W]`
     pub fn to_steam3(self) -> u64 {
         self.0 & STEAM3_MASK
     }
@@ -152,35 +237,51 @@ impl SteamID {
         Self(steam64)
     }
 
-    /// Parses the following formats:
+    /// Finds the first SteamID in a text, such as a profile url or a chat message.
+    ///
+    /// The following formats are found:
+    ///
     /// Steam64: digit 7 + 16 digits
     ///
-    /// Steam3: [T:U:D] where T: The account type, U: The account universe, D: Account number,
+    /// Steam3: `[T:U:D]` where T: The account type, U: The account universe, D: Account number,
     ///
-    /// Steam2: STEAM_X:Y:Z where X: The account universe, with 0 meaning public, Y: Lowest bit of the account number,
+    /// Steam2: `STEAM_X:Y:Z` where X: The account universe, with 0 meaning public, Y: Lowest bit of the account number,
     /// Z: Remaining bits of the account number. Always an individual account.
     ///
-    /// When more than one format is present, Steam3 is preferred, then Steam64, then Steam2.
-    pub fn parse(steamid: &str) -> Option<Self> {
-        if let Some((account_type, account_universe, account_number)) = find_steam3(steamid.as_bytes()) {
-            // TODO - match instance
-            // let account_instance = captures.name("instance");
+    /// When more than one format is present, Steam3 is preferred, then Steam64, then Steam2. Matches that can't be
+    /// converted, such as an account that is out of range, are skipped.
+    ///
+    /// To parse a string that must be exactly one SteamID, use [`str::parse`] instead.
+    pub fn find(text: &str) -> Option<Self> {
+        let input = text.as_bytes();
+        MATCHERS.iter().find_map(|matcher| {
+            (0..input.len())
+                .find_map(|start| matcher(&input[start..]).and_then(|(candidate, _)| candidate.into_steamid().ok()))
+        })
+    }
 
-            return Some(Self::from_steam3(
-                account_number.parse().unwrap(),
-                Some(universe_from_digit(account_universe).unwrap()),
-                Some(AccountType::new(account_type).unwrap().0),
-            ));
-        } else if let Some(number) = find_steam64(steamid.as_bytes()) {
-            return Some(Self::from_steam64(number.parse().unwrap()));
-        } else if let Some((account_universe, steam3)) = find_steam2(steamid.as_bytes()) {
-            let universe = match account_universe {
-                b'0' => EUniverse::Public,
-                digit => universe_from_digit(digit).unwrap(),
-            };
-            return Some(Self::from_steam3(steam3, Some(universe), None));
-        }
-        None
+    /// Finds the first SteamID in a text.
+    #[deprecated(
+        since = "0.3.0",
+        note = "use `SteamID::find`, or `str::parse` for a string that must be exactly one SteamID"
+    )]
+    pub fn parse(steamid: &str) -> Option<Self> {
+        Self::find(steamid)
+    }
+}
+
+/// Parses a string that is exactly one Steam64, Steam3 or Steam2 ID, in the formats described in
+/// [`SteamID::find`].
+impl FromStr for SteamID {
+    type Err = ParseSteamIDError;
+
+    fn from_str(steamid: &str) -> Result<Self, Self::Err> {
+        let input = steamid.as_bytes();
+        let (candidate, _) = MATCHERS
+            .iter()
+            .find_map(|matcher| matcher(input).filter(|(_, len)| *len == input.len()))
+            .ok_or(ParseSteamIDError::UnknownFormat)?;
+        candidate.into_steamid()
     }
 }
 
@@ -269,16 +370,16 @@ mod tests {
     }
 
     #[test]
-    fn steam64_parse() {
+    fn steam64_find() {
         let formatted_steamid = format!("text {} xxaasssddff", get_steam64_odd());
-        let steamid = SteamID::parse(&formatted_steamid).unwrap();
+        let steamid = SteamID::find(&formatted_steamid).unwrap();
         assert_eq!(steamid.to_steam64(), get_steam64_odd());
     }
 
     #[test]
-    fn steam3_parse() {
+    fn steam3_find() {
         let formatted_steamid = format!("text {} xxaasssddff", get_steam3_unformatted());
-        let steamid = SteamID::parse(&formatted_steamid).unwrap();
+        let steamid = SteamID::find(&formatted_steamid).unwrap();
         assert_eq!(steamid.to_steam64(), get_steam64_odd());
     }
 
@@ -407,28 +508,28 @@ mod tests {
     }
 
     #[test]
-    fn parse_exact() {
+    fn find_exact() {
         assert_eq!(
-            SteamID::parse("76561198092541763").unwrap().to_steam64(),
+            SteamID::find("76561198092541763").unwrap().to_steam64(),
             get_steam64_odd()
         );
         assert_eq!(
-            SteamID::parse("[U:1:132276035]").unwrap().to_steam64(),
+            SteamID::find("[U:1:132276035]").unwrap().to_steam64(),
             get_steam64_odd()
         );
     }
 
     #[test]
-    fn parse_from_url() {
-        let steamid = SteamID::parse("https://steamcommunity.com/profiles/76561198092541763/").unwrap();
+    fn find_from_url() {
+        let steamid = SteamID::find("https://steamcommunity.com/profiles/76561198092541763/").unwrap();
         assert_eq!(steamid.to_steam64(), get_steam64_odd());
 
-        let steamid = SteamID::parse("https://steamcommunity.com/profiles/[U:1:132276035]").unwrap();
+        let steamid = SteamID::find("https://steamcommunity.com/profiles/[U:1:132276035]").unwrap();
         assert_eq!(steamid.to_steam64(), get_steam64_odd());
     }
 
     #[test]
-    fn parse_steam3_account_types() {
+    fn find_steam3_account_types() {
         let cases = [
             ('A', EAccountType::AnonGameServer),
             ('G', EAccountType::GameServer),
@@ -442,7 +543,7 @@ mod tests {
             ('a', EAccountType::AnonUser),
         ];
         for (letter, account_type) in cases {
-            let steamid = SteamID::parse(&format!("[{}:1:42]", letter)).unwrap();
+            let steamid = SteamID::find(&format!("[{}:1:42]", letter)).unwrap();
             assert_eq!(
                 steamid.to_steam64(),
                 steam64_from_parts(1, account_type as u64, 1, 42),
@@ -453,44 +554,44 @@ mod tests {
     }
 
     #[test]
-    fn parse_steam3_universes() {
+    fn find_steam3_universes() {
         for universe in 0..=4 {
-            let steamid = SteamID::parse(&format!("[U:{}:42]", universe)).unwrap();
+            let steamid = SteamID::find(&format!("[U:{}:42]", universe)).unwrap();
             assert_eq!(steamid.to_steam64(), steam64_from_parts(universe, 1, 1, 42));
         }
     }
 
     #[test]
-    fn parse_steam3_edges() {
-        assert_eq!(SteamID::parse("[U:1:0]").unwrap().to_steam3(), 0);
-        assert_eq!(SteamID::parse("[U:1:0000132276035]").unwrap().to_steam3(), get_steam3());
-        assert_eq!(SteamID::parse("[U:1:4294967295]").unwrap().to_steam3(), u32::MAX as u64);
+    fn find_steam3_edges() {
+        assert_eq!(SteamID::find("[U:1:0]").unwrap().to_steam3(), 0);
+        assert_eq!(SteamID::find("[U:1:0000132276035]").unwrap().to_steam3(), get_steam3());
+        assert_eq!(SteamID::find("[U:1:4294967295]").unwrap().to_steam3(), u32::MAX as u64);
     }
 
     #[test]
-    fn parse_prefers_steam3_over_steam64() {
-        let steamid = SteamID::parse("76561198092541763 [U:1:24569668]").unwrap();
+    fn find_prefers_steam3_over_steam64() {
+        let steamid = SteamID::find("76561198092541763 [U:1:24569668]").unwrap();
         assert_eq!(steamid.to_steam64(), get_steam64_even());
     }
 
     #[test]
-    fn parse_takes_first_match() {
-        let steamid = SteamID::parse("[U:1:24569668] [U:1:132276035]").unwrap();
+    fn find_takes_first_match() {
+        let steamid = SteamID::find("[U:1:24569668] [U:1:132276035]").unwrap();
         assert_eq!(steamid.to_steam64(), get_steam64_even());
 
-        let steamid = SteamID::parse("76561197984835396 76561198092541763").unwrap();
+        let steamid = SteamID::find("76561197984835396 76561198092541763").unwrap();
         assert_eq!(steamid.to_steam64(), get_steam64_even());
     }
 
     #[test]
-    fn parse_steam64_inside_longer_number() {
+    fn find_steam64_inside_longer_number() {
         // there are no boundaries around the match, the first 7 followed by 16 digits is used
-        let steamid = SteamID::parse("176561198092541763999").unwrap();
+        let steamid = SteamID::find("176561198092541763999").unwrap();
         assert_eq!(steamid.to_steam64(), get_steam64_odd());
     }
 
     #[test]
-    fn parse_malformed_steam3_falls_back_to_steam64() {
+    fn find_malformed_steam3_falls_back_to_steam64() {
         for input in [
             "[U:1:132276035 76561198092541763",
             "[U:5:132276035] 76561198092541763",
@@ -499,13 +600,13 @@ mod tests {
             "[U:1:13227a035] 76561198092541763",
             "[U-1-132276035] 76561198092541763",
         ] {
-            let steamid = SteamID::parse(input).unwrap();
+            let steamid = SteamID::find(input).unwrap();
             assert_eq!(steamid.to_steam64(), get_steam64_odd(), "{}", input);
         }
     }
 
     #[test]
-    fn parse_invalid() {
+    fn find_invalid() {
         for input in [
             "",
             "steam",
@@ -531,34 +632,160 @@ mod tests {
             // non-ascii digits
             "٧٦٥٦١١٩٨٠٩٢٥٤١٧٦٣",
         ] {
-            assert_eq!(SteamID::parse(input), None, "{}", input);
+            assert_eq!(SteamID::find(input), None, "{}", input);
         }
     }
 
-    // The following inputs are matched but can't be converted, which currently panics.
-
     #[test]
-    #[should_panic]
-    fn parse_steam3_unsupported_account_type_c() {
-        SteamID::parse("[c:1:42]");
+    fn find_skips_matches_that_cant_be_converted() {
+        for input in [
+            "[c:1:42]",
+            "[L:1:42]",
+            "[i:1:42]",
+            "[U:1:4294967296]",
+            "STEAM_0:1:2147483648",
+        ] {
+            assert_eq!(SteamID::find(input), None, "{}", input);
+        }
+
+        let steamid = SteamID::find("[c:1:42] [U:1:132276035]").unwrap();
+        assert_eq!(steamid.to_steam64(), get_steam64_odd());
+
+        let steamid = SteamID::find("[U:1:4294967296] 76561198092541763").unwrap();
+        assert_eq!(steamid.to_steam64(), get_steam64_odd());
     }
 
     #[test]
-    #[should_panic]
-    fn parse_steam3_unsupported_account_type_l() {
-        SteamID::parse("[L:1:42]");
+    #[allow(deprecated)]
+    fn parse_is_find() {
+        for input in [
+            "76561198092541763",
+            "x [U:1:132276035] y",
+            "STEAM_0:1:66138017",
+            "[c:1:42]",
+            "steam",
+        ] {
+            assert_eq!(SteamID::parse(input), SteamID::find(input), "{}", input);
+        }
     }
 
     #[test]
-    #[should_panic]
-    fn parse_steam3_unsupported_account_type_i() {
-        SteamID::parse("[i:1:42]");
+    fn from_str() {
+        for input in [
+            "76561198092541763",
+            "[U:1:132276035]",
+            "STEAM_0:1:66138017",
+            "STEAM_1:1:66138017",
+        ] {
+            let steamid: SteamID = input.parse().unwrap();
+            assert_eq!(steamid.to_steam64(), get_steam64_odd(), "{}", input);
+        }
     }
 
     #[test]
-    #[should_panic]
-    fn parse_steam3_account_overflow() {
-        SteamID::parse("[U:1:4294967296]");
+    fn from_str_matches_find() {
+        let inputs = [
+            "[U:1:0]",
+            "[g:1:4]",
+            "[A:4:42]",
+            "[U:1:0000132276035]",
+            "[U:1:4294967295]",
+            "STEAM_0:0:0",
+            "STEAM_4:0:12284834",
+            "STEAM_0:1:2147483647",
+            "76561197960265728",
+            "79999999999999999",
+        ];
+        for input in inputs {
+            assert_eq!(input.parse::<SteamID>().ok(), SteamID::find(input), "{}", input);
+        }
+    }
+
+    #[test]
+    fn from_str_unknown_format() {
+        for input in [
+            "",
+            " ",
+            "steam",
+            " 76561198092541763",
+            "76561198092541763 ",
+            "76561198092541763\n",
+            "176561198092541763",
+            "765611980925417630",
+            "7656119809254176",
+            "103582791429521412",
+            "https://steamcommunity.com/profiles/76561198092541763",
+            "[U:1:132276035] ",
+            "[U:1:132276035]]",
+            "[U:1:132276035",
+            "[U:5:132276035]",
+            "[X:1:132276035]",
+            "[U:1:]",
+            "[U:1:-1]",
+            "STEAM_0:1:66138017 ",
+            "STEAM_0:1:",
+            "STEAM_0:2:66138017",
+            "STEAM_5:1:66138017",
+            "steam_0:1:66138017",
+            "STEAM_0:1:66138017[U:1:1]",
+            "٧٦٥٦١١٩٨٠٩٢٥٤١٧٦٣",
+        ] {
+            assert_eq!(
+                input.parse::<SteamID>(),
+                Err(ParseSteamIDError::UnknownFormat),
+                "{:?}",
+                input
+            );
+        }
+    }
+
+    #[test]
+    fn from_str_unsupported_account_type() {
+        for letter in ['c', 'L', 'i'] {
+            assert_eq!(
+                format!("[{}:1:42]", letter).parse::<SteamID>(),
+                Err(ParseSteamIDError::UnsupportedAccountType(letter))
+            );
+        }
+    }
+
+    #[test]
+    fn from_str_account_out_of_range() {
+        for (input, account) in [
+            ("[U:1:4294967296]", "4294967296"),
+            ("[U:1:99999999999999999999999]", "99999999999999999999999"),
+            ("STEAM_0:1:2147483648", "2147483648"),
+            ("STEAM_0:1:4294967296", "4294967296"),
+        ] {
+            assert_eq!(
+                input.parse::<SteamID>(),
+                Err(ParseSteamIDError::AccountOutOfRange(account.to_owned())),
+                "{}",
+                input
+            );
+        }
+    }
+
+    #[test]
+    fn error_messages() {
+        assert_eq!(
+            ParseSteamIDError::UnknownFormat.to_string(),
+            "not a Steam64, Steam3 or Steam2 id"
+        );
+        assert_eq!(
+            ParseSteamIDError::UnsupportedAccountType('c').to_string(),
+            "unsupported Steam3 account type `c`"
+        );
+        assert_eq!(
+            ParseSteamIDError::AccountOutOfRange("4294967296".to_owned()).to_string(),
+            "account `4294967296` is out of range"
+        );
+    }
+
+    #[test]
+    fn error_is_std_error() {
+        let error: Box<dyn std::error::Error> = Box::new(ParseSteamIDError::UnknownFormat);
+        assert_eq!(error.to_string(), "not a Steam64, Steam3 or Steam2 id");
     }
 
     #[test]
@@ -620,60 +847,60 @@ mod tests {
     }
 
     #[test]
-    fn steam2_parse() {
-        let steamid = SteamID::parse("STEAM_0:1:66138017").unwrap();
+    fn steam2_find() {
+        let steamid = SteamID::find("STEAM_0:1:66138017").unwrap();
         assert_eq!(steamid.to_steam64(), get_steam64_odd());
 
-        let steamid = SteamID::parse("STEAM_0:0:12284834").unwrap();
+        let steamid = SteamID::find("STEAM_0:0:12284834").unwrap();
         assert_eq!(steamid.to_steam64(), get_steam64_even());
     }
 
     #[test]
-    fn steam2_parse_universe_one_is_public() {
-        let steamid = SteamID::parse("STEAM_1:1:66138017").unwrap();
+    fn steam2_find_universe_one_is_public() {
+        let steamid = SteamID::find("STEAM_1:1:66138017").unwrap();
         assert_eq!(steamid.to_steam64(), get_steam64_odd());
     }
 
     #[test]
-    fn steam2_parse_universes() {
+    fn steam2_find_universes() {
         for universe in 2..=4 {
-            let steamid = SteamID::parse(&format!("STEAM_{}:1:66138017", universe)).unwrap();
+            let steamid = SteamID::find(&format!("STEAM_{}:1:66138017", universe)).unwrap();
             assert_eq!(steamid.to_steam64(), steam64_from_parts(universe, 1, 1, get_steam3()));
         }
     }
 
     #[test]
-    fn steam2_parse_edges() {
-        assert_eq!(SteamID::parse("STEAM_0:0:0").unwrap().to_steam3(), 0);
-        assert_eq!(SteamID::parse("STEAM_0:1:0").unwrap().to_steam3(), 1);
+    fn steam2_find_edges() {
+        assert_eq!(SteamID::find("STEAM_0:0:0").unwrap().to_steam3(), 0);
+        assert_eq!(SteamID::find("STEAM_0:1:0").unwrap().to_steam3(), 1);
         assert_eq!(
-            SteamID::parse("STEAM_0:1:2147483647").unwrap().to_steam3(),
+            SteamID::find("STEAM_0:1:2147483647").unwrap().to_steam3(),
             u32::MAX as u64
         );
         assert_eq!(
-            SteamID::parse("STEAM_0:1:0066138017").unwrap().to_steam64(),
+            SteamID::find("STEAM_0:1:0066138017").unwrap().to_steam64(),
             get_steam64_odd()
         );
     }
 
     #[test]
-    fn steam2_parse_from_text() {
-        let steamid = SteamID::parse("player STEAM_0:1:66138017 joined").unwrap();
+    fn steam2_find_from_text() {
+        let steamid = SteamID::find("player STEAM_0:1:66138017 joined").unwrap();
         assert_eq!(steamid.to_steam64(), get_steam64_odd());
     }
 
     #[test]
-    fn steam2_parse_skips_invalid_match() {
-        let steamid = SteamID::parse("STEAM_0:1:2147483648 STEAM_0:0:12284834").unwrap();
+    fn steam2_find_skips_invalid_match() {
+        let steamid = SteamID::find("STEAM_0:1:2147483648 STEAM_0:0:12284834").unwrap();
         assert_eq!(steamid.to_steam64(), get_steam64_even());
     }
 
     #[test]
-    fn steam2_parse_has_lowest_priority() {
-        let steamid = SteamID::parse("STEAM_0:0:12284834 [U:1:132276035]").unwrap();
+    fn steam2_find_has_lowest_priority() {
+        let steamid = SteamID::find("STEAM_0:0:12284834 [U:1:132276035]").unwrap();
         assert_eq!(steamid.to_steam64(), get_steam64_odd());
 
-        let steamid = SteamID::parse("STEAM_0:0:12284834 76561198092541763").unwrap();
+        let steamid = SteamID::find("STEAM_0:0:12284834 76561198092541763").unwrap();
         assert_eq!(steamid.to_steam64(), get_steam64_odd());
     }
 
@@ -712,7 +939,7 @@ mod tests {
     fn steam2_roundtrip() {
         for steam3 in [0, 1, 2, 24_569_668, 132_276_035, u32::MAX] {
             let steamid = SteamID::from_steam3(steam3, None, None);
-            assert_eq!(SteamID::parse(&steamid.to_steam2()), Some(steamid), "{}", steam3);
+            assert_eq!(SteamID::find(&steamid.to_steam2()), Some(steamid), "{}", steam3);
         }
     }
 }
