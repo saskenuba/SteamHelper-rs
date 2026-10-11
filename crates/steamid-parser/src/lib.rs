@@ -101,7 +101,7 @@ fn find_steam64(input: &[u8]) -> Option<&str> {
         .map(|window| std::str::from_utf8(window).unwrap())
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 /// Let X, Y and Z constants be defined by the SteamID: STEAM_X:Y:Z.
 pub struct SteamID(u64);
 
@@ -109,7 +109,7 @@ pub struct SteamID(u64);
 impl SteamID {
     /// Using the formula W=Z*2+Y, a SteamID can be converted to Steam3.
     /// Source: https://steamcommunity.com/path/[letter:1:W]
-    pub fn to_steam3(&self) -> u64 {
+    pub fn to_steam3(self) -> u64 {
         self.0 & STEAM3_MASK
     }
 
@@ -118,7 +118,7 @@ impl SteamID {
     ///
     /// The public universe is rendered as 0, its classic Steam2 form. Steam2 only describes individual
     /// accounts, so the account type and instance are not kept.
-    pub fn to_steam2(&self) -> String {
+    pub fn to_steam2(self) -> String {
         let universe = match (self.0 >> UNIVERSE_SHIFT) & UNIVERSE_MASK {
             universe if universe == EUniverse::Public as u64 => 0,
             universe => universe,
@@ -127,7 +127,7 @@ impl SteamID {
         format!("STEAM_{}:{}:{}", universe, steam3 & 1, steam3 >> 1)
     }
 
-    pub fn to_steam64(&self) -> u64 {
+    pub fn to_steam64(self) -> u64 {
         self.0 & STEAM64_MASK
     }
 
@@ -562,9 +562,38 @@ mod tests {
     }
 
     #[test]
-    fn clone_is_equal() {
+    fn copy_is_equal() {
         let steamid = SteamID::from_steam64(get_steam64_odd());
-        assert_eq!(steamid.clone(), steamid);
+        let copy = steamid;
+        assert_eq!(copy, steamid);
+    }
+
+    #[test]
+    fn hash_set() {
+        let set: std::collections::HashSet<SteamID> = [
+            SteamID::from_steam64(get_steam64_odd()),
+            SteamID::from_steam3(get_steam3() as u32, None, None),
+            SteamID::from_steam64(get_steam64_even()),
+        ]
+        .iter()
+        .copied()
+        .collect();
+        assert_eq!(set.len(), 2);
+        assert!(set.contains(&SteamID::from_steam64(get_steam64_even())));
+    }
+
+    #[test]
+    fn ordered_by_steam64() {
+        let mut ids = [
+            SteamID::from_steam64(get_steam64_odd()),
+            SteamID::from_steam64(103_582_791_429_521_412),
+            SteamID::from_steam64(get_steam64_even()),
+        ];
+        ids.sort();
+        assert_eq!(
+            ids.map(SteamID::to_steam64),
+            [get_steam64_even(), get_steam64_odd(), 103_582_791_429_521_412]
+        );
     }
 
     #[cfg(feature = "serialize")]
