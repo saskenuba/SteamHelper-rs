@@ -15,9 +15,9 @@ serialize = ["serde"]
 serde = { version = "^1", optional = true }
 thiserror = "1"
 
-[dependencies.steam-language-gen]
-version = "0.1"
-path = "../steam-language-gen"
+[dependencies.steam-language]
+version = "1"
+path = "../steam-language"
 
 [dev-dependencies]
 bincode = "1"

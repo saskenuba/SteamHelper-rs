@@ -6,7 +6,7 @@ use std::str::FromStr;
 #[cfg(feature = "serialize")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use steam_language_gen::generated::enums::{EAccountType, EUniverse};
+use steam_language::enums::{EAccountType, EUniverse};
 
 // Bit layout of a Steam64 ID, from most to least significant:
 // universe (8) | account type (4) | account instance (20) | account number (31) | account id (1)
