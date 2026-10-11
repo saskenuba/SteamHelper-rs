@@ -1,3 +1,5 @@
+#[cfg(feature = "serialize")]
+use std::convert::TryFrom;
 use std::fmt;
 use std::str::FromStr;
 
@@ -416,14 +418,49 @@ impl Serialize for SteamID {
     }
 }
 
+/// Deserializes from a Steam64 number. Human readable formats, such as JSON, also accept a string with a Steam64
+/// number, like the Steam Web API returns, or any SteamID format accepted by [`str::parse`].
 #[cfg(feature = "serialize")]
 impl<'de> Deserialize<'de> for SteamID {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let steamid = u64::deserialize(deserializer)?;
-        Ok(SteamID::from_steam64(steamid))
+        if deserializer.is_human_readable() {
+            deserializer.deserialize_any(SteamIDVisitor)
+        } else {
+            let steamid = u64::deserialize(deserializer)?;
+            Ok(SteamID::from_steam64(steamid))
+        }
+    }
+}
+
+#[cfg(feature = "serialize")]
+struct SteamIDVisitor;
+
+#[cfg(feature = "serialize")]
+impl<'de> serde::de::Visitor<'de> for SteamIDVisitor {
+    type Value = SteamID;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("a Steam64 number or a SteamID string")
+    }
+
+    fn visit_u64<E: serde::de::Error>(self, steam64: u64) -> Result<Self::Value, E> {
+        Ok(SteamID::from_steam64(steam64))
+    }
+
+    fn visit_i64<E: serde::de::Error>(self, steam64: i64) -> Result<Self::Value, E> {
+        u64::try_from(steam64)
+            .map(SteamID::from_steam64)
+            .map_err(|_| E::invalid_value(serde::de::Unexpected::Signed(steam64), &self))
+    }
+
+    fn visit_str<E: serde::de::Error>(self, steamid: &str) -> Result<Self::Value, E> {
+        if let Ok(steam64) = steamid.parse::<u64>() {
+            return Ok(SteamID::from_steam64(steam64));
+        }
+        steamid.parse().map_err(E::custom)
     }
 }
 
@@ -956,12 +993,6 @@ mod tests {
 
     #[cfg(feature = "serialize")]
     #[test]
-    fn serde_rejects_string() {
-        assert!(serde_json::from_str::<SteamID>("\"76561198092541763\"").is_err());
-    }
-
-    #[cfg(feature = "serialize")]
-    #[test]
     fn serde_drops_highest_bit() {
         let steamid = SteamID::from_steam64(u64::MAX);
         assert_eq!(serde_json::to_string(&steamid).unwrap(), (u64::MAX >> 1).to_string());
@@ -1325,5 +1356,82 @@ mod tests {
         assert_eq!(steam64, get_steam64_odd());
 
         assert_eq!(u64::from(SteamID::from(u64::MAX)), u64::MAX >> 1);
+    }
+
+    #[cfg(feature = "serialize")]
+    #[test]
+    fn serde_from_string() {
+        for input in ["\"76561198092541763\"", "\"[U:1:132276035]\"", "\"STEAM_0:1:66138017\""] {
+            let steamid: SteamID = serde_json::from_str(input).unwrap();
+            assert_eq!(steamid.to_steam64(), get_steam64_odd(), "{}", input);
+        }
+
+        // any Steam64 number, not only individual accounts
+        let steamid: SteamID = serde_json::from_str("\"103582791429521412\"").unwrap();
+        assert_eq!(steamid.to_steam64(), 103_582_791_429_521_412);
+    }
+
+    #[cfg(feature = "serialize")]
+    #[test]
+    fn serde_web_api_response() {
+        #[derive(serde::Deserialize)]
+        struct Player {
+            steamid: SteamID,
+        }
+        let player: Player = serde_json::from_str(r#"{"steamid":"76561198092541763"}"#).unwrap();
+        assert_eq!(player.steamid.to_steam64(), get_steam64_odd());
+
+        let player: Player = serde_json::from_str(r#"{"steamid":76561198092541763}"#).unwrap();
+        assert_eq!(player.steamid.to_steam64(), get_steam64_odd());
+    }
+
+    #[cfg(feature = "serialize")]
+    #[test]
+    fn serde_rejects_invalid() {
+        for input in [
+            "\"\"",
+            "\"steam\"",
+            "\" 76561198092541763\"",
+            "\"[c:1:42]\"",
+            "\"18446744073709551616\"",
+            "-1",
+            "1.5",
+            "null",
+            "true",
+            "[]",
+        ] {
+            assert!(serde_json::from_str::<SteamID>(input).is_err(), "{}", input);
+        }
+    }
+
+    #[cfg(feature = "serialize")]
+    #[test]
+    fn serde_error_messages() {
+        let error = serde_json::from_str::<SteamID>("\"[c:1:42]\"").unwrap_err();
+        assert!(
+            error.to_string().starts_with("unsupported Steam3 account type `c`"),
+            "{}",
+            error
+        );
+
+        let error = serde_json::from_str::<SteamID>("true").unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("expected a Steam64 number or a SteamID string"),
+            "{}",
+            error
+        );
+    }
+
+    #[cfg(feature = "serialize")]
+    #[test]
+    fn serde_non_human_readable_is_u64() {
+        let steamid = SteamID::from_steam64(get_steam64_odd());
+        let bytes = bincode::serialize(&steamid).unwrap();
+        assert_eq!(bytes, get_steam64_odd().to_le_bytes());
+
+        let deserialized: SteamID = bincode::deserialize(&bytes).unwrap();
+        assert_eq!(deserialized, steamid);
     }
 }
