@@ -51,7 +51,7 @@ clap = { version = "3.1.18", optional = true }
 dialoguer = { version = "0.10", optional = true }
 tokio = { version = "1.0.2", features = ["rt-multi-thread", "macros", "fs"], optional = true }
 
-steam-protobuf.workspace = true
+steam-protobuf = { workspace = true, features = ["enums", "steammessages_auth_steamclient"] }
 steam-language.workspace = true
 
 [dependencies.cookie]
