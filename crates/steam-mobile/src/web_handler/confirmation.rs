@@ -70,12 +70,14 @@ pub struct ConfirmationDetails {
     pub trade_offer_id: Option<i64>,
 }
 
-/// Kinds of mobile confirmations
+/// Kinds of mobile confirmations, mirroring Steam's `EMobileConfirmationType`.
 #[derive(Debug, Copy, Clone, Serialize_repr, Deserialize_repr, Eq, PartialEq)]
 #[repr(u8)]
 #[non_exhaustive]
 pub enum EConfirmationType {
-    /// Unknown confirmation
+    /// Unknown confirmation. Kinds Steam adds later also land here, instead of failing the whole fetch; the
+    /// confirmation's `type_name` still says what it is.
+    #[serde(other)]
     Unknown = 0,
     /// Under rare circumstances this might pop up
     Generic = 1,
@@ -90,8 +92,20 @@ pub enum EConfirmationType {
     PhoneNumberChange = 5,
     /// Confirmation for account recovery
     AccountRecovery = 6,
+    /// Unknown
+    BuildChangeRequest = 7,
+    /// Unknown
+    AddUser = 8,
     /// Confirmation for creating a new API Key,
     APIKey = 9,
+    /// Confirmation for inviting someone to your Steam Family group
+    InviteToFamilyGroup = 10,
+    /// Confirmation for joining a Steam Family group
+    JoinFamilyGroup = 11,
+    /// Confirmation for buying from Steam's Market
+    MarketPurchase = 12,
+    /// Confirmation for a refund request
+    RequestRefund = 13,
 }
 
 impl From<Vec<Confirmation>> for Confirmations {
@@ -153,5 +167,18 @@ mod tests {
         assert!(trade.has_trade_offer_id(4009687284));
         assert_eq!(market.trade_offer_id(), None);
         assert!(!market.has_trade_offer_id(4000980011));
+    }
+
+    #[test]
+    fn unmapped_kinds_do_not_fail_parsing() {
+        let json = r#"[
+            {"id":"1","nonce":"2","type":11,"creation_time":0,"creator_id":"3","type_name":"Join Steam Family"},
+            {"id":"4","nonce":"5","type":200,"creation_time":0,"creator_id":"6","type_name":"Something new"}
+        ]"#;
+        let confirmations: Vec<Confirmation> = serde_json::from_str(json).unwrap();
+
+        assert_eq!(confirmations[0].kind, EConfirmationType::JoinFamilyGroup);
+        assert_eq!(confirmations[1].kind, EConfirmationType::Unknown);
+        assert_eq!(confirmations[1].type_name, "Something new");
     }
 }
