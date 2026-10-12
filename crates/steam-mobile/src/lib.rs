@@ -28,6 +28,7 @@ pub use reqwest::Method;
 pub use reqwest::Url;
 use serde::Deserialize;
 use serde::Serialize;
+use steam_totp::Secret;
 use steamid_parser::SteamID;
 pub use utils::format_captcha_url;
 use uuid::Uuid;
@@ -215,6 +216,15 @@ impl MobileAuthFile {
         let buffer = read_from_disk(&path)
             .map_err(|e| MobileAuthFileError::GeneralFailure(format!("Failed to read {}: {e}", path.display())))?;
         Self::from_json(&buffer)
+    }
+
+    /// Generates the current Steam Guard login code from this file's shared secret.
+    pub async fn auth_code(&self) -> Result<String, MobileAuthFileError> {
+        let secret = Secret::from_b64(&self.shared_secret)
+            .map_err(|e| MobileAuthFileError::GeneralFailure(format!("Invalid shared secret: {e}")))?;
+        steam_totp::generate_auth_code_async(secret)
+            .await
+            .map_err(|e| MobileAuthFileError::GeneralFailure(format!("Failed to generate the code: {e}")))
     }
 }
 

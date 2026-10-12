@@ -4,204 +4,331 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
-use std::str::FromStr;
+use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
 
 use anyhow::bail;
 use anyhow::Context;
 use anyhow::Result;
-use clap::Arg;
-use clap::ArgMatches;
-use clap::Command;
+use clap::Args;
+use clap::Parser;
+use clap::Subcommand;
+use clap::ValueEnum;
 use dialoguer::Confirm;
 use dialoguer::Input;
 use dialoguer::Password;
 use futures_util::TryFutureExt;
 use steam_mobile::errors::AuthError;
 use steam_mobile::errors::LinkerError;
+use steam_mobile::user::PresentMaFile;
 use steam_mobile::user::SteamUser;
 use steam_mobile::AddAuthenticatorStep;
 use steam_mobile::Authenticated;
 use steam_mobile::Confirmation;
 use steam_mobile::ConfirmationAction;
+use steam_mobile::EConfirmationType;
 use steam_mobile::MobileAuthFile;
 use steam_mobile::SteamAuthenticator;
-use steam_totp::generate_auth_code_async;
-use steam_totp::Secret;
-use strum_macros::AsRefStr;
-use strum_macros::EnumString;
-use strum_macros::IntoStaticStr;
 
 /// Environment variable read for the account password. If unset, the password is prompted for.
 ///
 /// The password is never taken as an argument, since arguments end up in the shell history and the process list.
 const PASSWORD_ENV: &str = "STEAM_PASSWORD";
 
-#[derive(EnumString, IntoStaticStr, AsRefStr)]
-enum MainCommands {
-    #[strum(serialize = "confirmation")]
-    Confirmations,
-    #[strum(serialize = "2fa")]
-    GenCodes,
-    #[strum(serialize = "auth")]
-    Authenticator,
+/// Steam Guard from the command line: login codes, mobile confirmations and authenticators.
+#[derive(Parser)]
+#[command(name = "steam-mobile", version)]
+struct Cli {
+    /// Path to the account's maFile (MobileAuth file).
+    #[arg(long, global = true, env = "STEAM_MAFILE", value_name = "PATH")]
+    mafile: Option<PathBuf>,
+
+    /// Steam account name. Defaults to the one stored in the maFile.
+    #[arg(long, global = true, env = "STEAM_ACCOUNT", value_name = "NAME")]
+    account: Option<String>,
+
+    #[command(subcommand)]
+    command: Command,
 }
 
-fn cli() -> Command<'static> {
-    let shared_secret_arg = Arg::new("shared_secret")
-        .short('s')
-        .long("secret")
-        .required(true)
-        .takes_value(true);
+#[derive(Subcommand)]
+enum Command {
+    /// Print the current Steam Guard login code.
+    Code,
+    /// List, accept or deny mobile confirmations.
+    #[command(subcommand)]
+    Confirmations(ConfirmationsCommand),
+    /// Manage the account's Steam Guard authenticator.
+    #[command(subcommand)]
+    Authenticator(AuthenticatorCommand),
+}
 
-    let trading_args = &[
-        Arg::new("all")
-            .short('a')
-            .help("Act on all trade requests. Be careful with this!"),
-        Arg::new("tradeoffer_id")
-            .short('i')
-            .help("Act on a single tradeoffer_id")
-            .required_unless_present("all")
-            .conflicts_with("all")
-            .takes_value(true),
-    ];
-    Command::new("steam-mobile")
-        .subcommand_required(true)
-        .arg_required_else_help(true)
-        .version("0.1")
-        .author("Martin Mariano <contato@martinmariano.com>")
-        .subcommand(
-            Command::new(MainCommands::GenCodes.as_ref())
-                .about("Generates 2fa codes from shared secrets.")
-                .arg(shared_secret_arg.clone()),
-        )
-        .subcommand(
-            Command::new(MainCommands::Confirmations.as_ref())
-                .about("Accept and deny trade requests.")
-                .args(&[
-                    Arg::new("account")
-                        .help("Steam account name.")
-                        .required(true)
-                        .takes_value(true),
-                    Arg::new("ma_file_path")
-                        .help("Path to MaFile (MobileAuth File)")
-                        .required(true)
-                        .takes_value(true),
-                    Arg::new("parental_code")
-                        .help("Steam account parental code if any.")
-                        .required(false)
-                        .takes_value(true),
-                ])
-                .subcommands(vec![
-                    Command::new("accept").args(trading_args.clone()),
-                    Command::new("deny").args(trading_args),
-                ]),
-        )
-        .subcommand(
-            Command::new(MainCommands::Authenticator.as_ref())
-                .about("Authenticator related operations.")
-                .subcommand(
-                    Command::new("add")
-                        .long_about(
-                            "Adds an authenticator to the account.\n\nDuring the execution of this program, you will \
-                             be asked to perform some other operations interactively, such as confirming your email, \
-                             or retrieving your SMS code from the number you have provided.",
-                        )
-                        .about("Add an authenticator to the account.")
-                        .args(&[
-                            Arg::new("phone_number")
-                                .help("Phone number in E.164 format. E.g: +551112345678")
-                                .short('n')
-                                .long("number")
-                                .required(true)
-                                .takes_value(true),
-                            Arg::new("save_path")
-                                .help(
-                                    "Recommended. Directory where your Mobile Auth(MA) file will be saved, as \
-                                     <account>.maFile. An existing file is never overwritten. If none is provided, \
-                                     the file will be printed on stdout.",
-                                )
-                                .short('p')
-                                .long("path")
-                                .required(false)
-                                .takes_value(true),
-                        ]),
-                )
-                .subcommand(Command::new("remove").about("Remove an authenticator from the account."))
-                .args(&[
-                    Arg::new("account")
-                        .help("Steam account name.")
-                        .required(true)
-                        .takes_value(true),
-                    Arg::new("parental_code")
-                        .help("Steam account parental code if any.")
-                        .required(false)
-                        .takes_value(true),
-                ]),
-        )
+#[derive(Subcommand)]
+enum ConfirmationsCommand {
+    /// List pending confirmations.
+    List,
+    /// Accept pending confirmations.
+    Accept(Selector),
+    /// Deny pending confirmations.
+    Deny(Selector),
+}
+
+/// Which pending confirmations to act on. Exactly one way of selecting them must be given.
+#[derive(Args)]
+#[group(required = true, multiple = false)]
+struct Selector {
+    /// Confirmation ids, as shown by `confirmations list`.
+    ids: Vec<String>,
+
+    /// The confirmation for this trade offer.
+    #[arg(long, value_name = "ID")]
+    trade_offer: Option<u64>,
+
+    /// Every confirmation of this kind. Can be repeated.
+    #[arg(long, value_enum)]
+    kind: Vec<Kind>,
+
+    /// Every pending confirmation, of every kind. Be careful with this!
+    #[arg(long)]
+    all: bool,
+}
+
+#[derive(Subcommand)]
+enum AuthenticatorCommand {
+    /// Add an authenticator to the account.
+    ///
+    /// You will be asked to do some steps interactively along the way, such as confirming your email and entering
+    /// the SMS code sent to your phone.
+    Add {
+        /// Phone number in E.164 format. E.g: +551112345678
+        #[arg(long)]
+        phone: String,
+
+        /// Recommended. Directory where your maFile will be saved, as <account>.maFile. An existing file is never
+        /// overwritten. If none is provided, the file is printed on stdout.
+        #[arg(long, value_name = "DIR")]
+        out: Option<PathBuf>,
+    },
+}
+
+/// Confirmation kinds, as named on the command line.
+#[derive(ValueEnum, Clone, Copy, PartialEq, Eq)]
+enum Kind {
+    Trade,
+    MarketListing,
+    MarketPurchase,
+    /// Both family-invite and family-join.
+    Family,
+    FamilyInvite,
+    FamilyJoin,
+    AddUser,
+    ApiKey,
+    PhoneChange,
+    AccountRecovery,
+    FeatureOptOut,
+    Refund,
+}
+
+impl Kind {
+    fn types(self) -> &'static [EConfirmationType] {
+        match self {
+            Self::Trade => &[EConfirmationType::Trade],
+            Self::MarketListing => &[EConfirmationType::Market],
+            Self::MarketPurchase => &[EConfirmationType::MarketPurchase],
+            Self::Family => &[
+                EConfirmationType::InviteToFamilyGroup,
+                EConfirmationType::JoinFamilyGroup,
+            ],
+            Self::FamilyInvite => &[EConfirmationType::InviteToFamilyGroup],
+            Self::FamilyJoin => &[EConfirmationType::JoinFamilyGroup],
+            Self::AddUser => &[EConfirmationType::AddUser],
+            Self::ApiKey => &[EConfirmationType::APIKey],
+            Self::PhoneChange => &[EConfirmationType::PhoneNumberChange],
+            Self::AccountRecovery => &[EConfirmationType::AccountRecovery],
+            Self::FeatureOptOut => &[EConfirmationType::FeatureOptOut],
+            Self::Refund => &[EConfirmationType::RequestRefund],
+        }
+    }
+
+    /// The command line name of `kind`, as accepted by `--kind`.
+    fn name_of(kind: EConfirmationType) -> String {
+        Self::value_variants()
+            .iter()
+            .find(|k| k.types() == [kind])
+            .and_then(|k| k.to_possible_value())
+            .map_or_else(|| "unknown".to_string(), |v| v.get_name().to_string())
+    }
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let matches = cli().get_matches();
+    let cli = Cli::parse();
 
-    let subcommand = matches
-        .subcommand()
-        .map(|(subcommand, tail)| (MainCommands::from_str(subcommand).unwrap(), tail));
-
-    match subcommand {
-        Some((MainCommands::GenCodes, matches)) => {
-            let shared_secret = matches.value_of("shared_secret").unwrap();
-            let secret = Secret::from_b64(shared_secret).unwrap();
-
-            let auth_code = generate_auth_code_async(secret).await.unwrap();
-            println!("{}", auth_code);
-
-            return Ok(());
+    match cli.command {
+        Command::Code => {
+            let mafile = read_mafile(cli.mafile.as_deref())?;
+            println!("{}", mafile.auth_code().await?);
         }
-
-        Some((MainCommands::Confirmations, matches)) => {
-            process_confirmations(matches).await?;
+        Command::Confirmations(command) => {
+            let mafile = read_mafile(cli.mafile.as_deref())?;
+            let account = account_name(cli.account, &mafile)?;
+            run_confirmations(command, account, mafile).await?;
         }
+        Command::Authenticator(AuthenticatorCommand::Add { phone, out }) => {
+            let account = cli
+                .account
+                .context("Pass the account to add the authenticator to with --account or STEAM_ACCOUNT.")?;
 
-        Some((MainCommands::Authenticator, matches)) => {
-            let account = matches.value_of("account").unwrap();
-            let _parental_code = matches.value_of("parental_code");
+            let password = read_password(&account)?;
+            let authenticator = login(SteamUser::new(account.clone(), password)).await?;
 
-            if let Some(add_subcommand) = matches.subcommand_matches("add") {
-                let phone_number = add_subcommand.value_of("phone_number").unwrap();
-                let save_path = add_subcommand.value_of("save_path").map(PathBuf::from);
+            let mobile_auth_file = add_authenticator(&authenticator, &phone).await?;
+            persist_mafile(&mobile_auth_file, &account, out).await?;
 
-                let password = read_password(account)?;
-                let authenticator = login(SteamUser::new(account.to_string(), password)).await?;
+            let sms_code: String = Input::new()
+                .with_prompt("Please write the SMS code you have received on your mobile phone")
+                .interact_text()?;
 
-                let mobile_auth_file = add_authenticator(&authenticator, phone_number).await?;
-                persist_mafile(&mobile_auth_file, account, save_path).await?;
+            authenticator
+                .finalize_authenticator(&mobile_auth_file, &sms_code)
+                .await?;
 
-                let sms_code: String = Input::new()
-                    .with_prompt("Please write the SMS code you have received on your mobile phone")
-                    .interact_text()?;
-                println!("sms code entered: {}", sms_code);
-
-                authenticator
-                    .finalize_authenticator(&mobile_auth_file, &*sms_code)
-                    .await?;
-
-                println!(
-                    "\nSuccess! Your account has now SteamGuard enabled, on number: {}",
-                    phone_number
-                );
-
-                return Ok(());
-            }
-
-            if let Some(_remove_subcommand) = matches.subcommand_matches("remove") {
-                return Ok(());
-            }
+            println!("\nSuccess! Your account has now SteamGuard enabled, on number: {phone}");
         }
-        _ => unreachable!(),
     }
 
     Ok(())
+}
+
+fn read_mafile(path: Option<&Path>) -> Result<MobileAuthFile> {
+    let path = path.context("Pass the maFile with --mafile or STEAM_MAFILE.")?;
+    MobileAuthFile::from_disk(path).with_context(|| format!("Failed to read the maFile at {}", path.display()))
+}
+
+fn account_name(account: Option<String>, mafile: &MobileAuthFile) -> Result<String> {
+    account
+        .or_else(|| mafile.account_name.clone())
+        .context("The maFile doesn't name its account. Pass it with --account or STEAM_ACCOUNT.")
+}
+
+async fn run_confirmations(command: ConfirmationsCommand, account: String, mafile: MobileAuthFile) -> Result<()> {
+    let password = read_password(&account)?;
+    let authenticator = login(SteamUser::new(account, password).with_mafile(mafile)).await?;
+
+    println!("Fetching pending confirmations...");
+    let confirmations: Vec<Confirmation> = authenticator.fetch_confirmations().await?.into_iter().collect();
+
+    let (action, selector) = match command {
+        ConfirmationsCommand::List => {
+            print_confirmations(&confirmations);
+            return Ok(());
+        }
+        ConfirmationsCommand::Accept(selector) => (ConfirmationAction::Accept, selector),
+        ConfirmationsCommand::Deny(selector) => (ConfirmationAction::Deny, selector),
+    };
+
+    let selected = select(confirmations, &selector)?;
+    if selected.is_empty() {
+        println!("No pending confirmation matches.");
+        return Ok(());
+    }
+
+    print_confirmations(&selected);
+    process(&authenticator, action, selected).await
+}
+
+/// Picks the confirmations `selector` asks for, failing if any explicitly requested one isn't pending.
+fn select(confirmations: Vec<Confirmation>, selector: &Selector) -> Result<Vec<Confirmation>> {
+    if let Some(offer_id) = selector.trade_offer {
+        let selected: Vec<_> = confirmations
+            .into_iter()
+            .filter(|c| c.has_trade_offer_id(offer_id))
+            .collect();
+        if selected.is_empty() {
+            bail!("Couldn't find a pending confirmation for trade offer {offer_id}.");
+        }
+        return Ok(selected);
+    }
+
+    if !selector.ids.is_empty() {
+        let missing: Vec<&str> = selector
+            .ids
+            .iter()
+            .filter(|id| !confirmations.iter().any(|c| &c.id == *id))
+            .map(String::as_str)
+            .collect();
+        if !missing.is_empty() {
+            bail!("No pending confirmation with id {}.", missing.join(", "));
+        }
+        return Ok(confirmations
+            .into_iter()
+            .filter(|c| selector.ids.contains(&c.id))
+            .collect());
+    }
+
+    if !selector.kind.is_empty() {
+        return Ok(confirmations
+            .into_iter()
+            .filter(|c| selector.kind.iter().any(|k| k.types().contains(&c.kind)))
+            .collect());
+    }
+
+    Ok(confirmations)
+}
+
+async fn process(
+    authenticator: &SteamAuthenticator<Authenticated, PresentMaFile>,
+    action: ConfirmationAction,
+    confirmations: Vec<Confirmation>,
+) -> Result<()> {
+    let total = confirmations.len();
+    authenticator
+        .process_confirmations(action, confirmations)
+        .await
+        .with_context(|| format!("Error processing {total} confirmations."))?;
+
+    let verb = if action == ConfirmationAction::Accept {
+        "Accepted"
+    } else {
+        "Denied"
+    };
+    println!("{verb} {total} confirmations.");
+    Ok(())
+}
+
+fn print_confirmations(confirmations: &[Confirmation]) {
+    if confirmations.is_empty() {
+        println!("No pending confirmations. If you just did something that needs one, it may take a while to show up.");
+        return;
+    }
+
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs() as i64);
+
+    println!(
+        "{:<12} {:<17} {:<12} {:>8}  DESCRIPTION",
+        "ID", "KIND", "CREATOR", "AGE"
+    );
+    for c in confirmations {
+        println!(
+            "{:<12} {:<17} {:<12} {:>8}  {}",
+            c.id,
+            Kind::name_of(c.kind),
+            c.creator_id,
+            format_age(now - c.creation_time),
+            c.type_name
+        );
+    }
+}
+
+fn format_age(seconds: i64) -> String {
+    match seconds.max(0) {
+        s if s < 60 => format!("{s}s"),
+        s if s < 3600 => format!("{}m", s / 60),
+        s if s < 86400 => format!("{}h", s / 3600),
+        s => format!("{}d", s / 86400),
+    }
 }
 
 /// Drives the add authenticator steps until Steam hands us the maFile.
@@ -277,62 +404,6 @@ async fn persist_mafile(mafile: &MobileAuthFile, account: &str, save_dir: Option
     Ok(())
 }
 
-async fn process_confirmations(subcomm_args: &ArgMatches) -> Result<()> {
-    let account = subcomm_args.value_of("account").unwrap();
-    let ma_file_path = subcomm_args.value_of("ma_file_path").unwrap();
-    let ma_file = MobileAuthFile::from_disk(ma_file_path)
-        .with_context(|| format!("Failed to read the MaFile at {ma_file_path}"))?;
-
-    let (confirmation_method, action_args) = match subcomm_args.subcommand() {
-        Some(("accept", args)) => (ConfirmationAction::Accept, args),
-        Some(("deny", args)) => (ConfirmationAction::Deny, args),
-        _ => bail!("Choose to either `accept` or `deny` confirmations."),
-    };
-
-    let trade_offer_id = if action_args.is_present("all") {
-        None
-    } else {
-        let id = action_args.value_of("tradeoffer_id").unwrap();
-        Some(
-            id.parse::<u64>()
-                .with_context(|| format!("Invalid trade offer id: {id}"))?,
-        )
-    };
-
-    let password = read_password(account)?;
-    let user = SteamUser::new(account.to_string(), password).with_mafile(ma_file);
-    let authenticator = login(user).await?;
-
-    println!("Please wait while we fetch your pending confirmations...");
-    let confirmations = authenticator.fetch_confirmations().await?;
-
-    if confirmations.is_empty() {
-        println!(
-            "Couldn't find any confirmations. If you did any operation that requires a confirmation, it may take a \
-             while to receive them."
-        );
-        return Ok(());
-    }
-
-    let selected: Vec<Confirmation> = match trade_offer_id {
-        None => confirmations.into_iter().collect(),
-        Some(id) => confirmations.into_iter().filter(|c| c.has_trade_offer_id(id)).collect(),
-    };
-
-    if let (Some(id), true) = (trade_offer_id, selected.is_empty()) {
-        bail!("Couldn't find a pending confirmation for trade offer {id}.");
-    }
-
-    let total_confirmations = selected.len();
-    authenticator
-        .process_confirmations(confirmation_method, selected)
-        .await
-        .with_context(|| format!("Error processing {total_confirmations} confirmations."))?;
-
-    println!("Success! {total_confirmations} confirmations were processed.");
-    Ok(())
-}
-
 fn read_password(account: &str) -> Result<String> {
     if let Ok(password) = std::env::var(PASSWORD_ENV) {
         return Ok(password);
@@ -371,4 +442,83 @@ fn save_file_to_path(mafile: &MobileAuthFile, filename: &str, dir: &Path) -> Res
     file.sync_all()?;
 
     Ok(path)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn confirmation(id: &str, kind: EConfirmationType, creator_id: &str) -> Confirmation {
+        Confirmation {
+            id: id.to_string(),
+            key: String::new(),
+            kind,
+            creation_time: 0,
+            creator_id: creator_id.to_string(),
+            type_name: String::new(),
+        }
+    }
+
+    fn pending() -> Vec<Confirmation> {
+        vec![
+            confirmation("1", EConfirmationType::Trade, "100"),
+            confirmation("2", EConfirmationType::JoinFamilyGroup, "200"),
+            confirmation("3", EConfirmationType::InviteToFamilyGroup, "300"),
+            confirmation("4", EConfirmationType::AccountRecovery, "400"),
+        ]
+    }
+
+    fn selector(args: &[&str]) -> Selector {
+        let mut argv = vec!["steam-mobile", "confirmations", "accept"];
+        argv.extend_from_slice(args);
+        match Cli::try_parse_from(argv).unwrap().command {
+            Command::Confirmations(ConfirmationsCommand::Accept(selector)) => selector,
+            _ => unreachable!(),
+        }
+    }
+
+    fn ids(confirmations: Vec<Confirmation>) -> Vec<String> {
+        confirmations.into_iter().map(|c| c.id).collect()
+    }
+
+    #[test]
+    fn selects_by_kind() {
+        assert_eq!(
+            ids(select(pending(), &selector(&["--kind", "family"])).unwrap()),
+            ["2", "3"]
+        );
+        assert_eq!(
+            ids(select(pending(), &selector(&["--kind", "family-join", "--kind", "trade"])).unwrap()),
+            ["1", "2"]
+        );
+    }
+
+    #[test]
+    fn selects_by_id_and_rejects_unknown_ids() {
+        assert_eq!(ids(select(pending(), &selector(&["4", "1"])).unwrap()), ["1", "4"]);
+        assert!(select(pending(), &selector(&["1", "9"])).is_err());
+    }
+
+    #[test]
+    fn selects_by_trade_offer_only_for_trades() {
+        assert_eq!(
+            ids(select(pending(), &selector(&["--trade-offer", "100"])).unwrap()),
+            ["1"]
+        );
+        assert!(select(pending(), &selector(&["--trade-offer", "200"])).is_err());
+    }
+
+    #[test]
+    fn all_selects_everything() {
+        assert_eq!(
+            ids(select(pending(), &selector(&["--all"])).unwrap()),
+            ["1", "2", "3", "4"]
+        );
+    }
+
+    #[test]
+    fn kind_names_round_trip() {
+        assert_eq!(Kind::name_of(EConfirmationType::JoinFamilyGroup), "family-join");
+        assert_eq!(Kind::name_of(EConfirmationType::Unknown), "unknown");
+    }
 }

@@ -16,7 +16,7 @@ default = ["cli"]
 cli = ["clap", "dialoguer", "anyhow", "tokio"]
 
 [[bin]]
-name = "main"
+name = "steam-mobile"
 path = "src/bin/main.rs"
 required-features = ["cli"]
 
@@ -52,7 +52,7 @@ strum.workspace = true
 strum_macros.workspace = true
 
 anyhow = { version = "1", optional = true }
-clap = { version = "3.1.18", optional = true }
+clap = { version = "4.5", features = ["derive", "env"], optional = true }
 dialoguer = { version = "0.10", optional = true }
 tokio = { version = "1.0.2", features = ["rt-multi-thread", "macros", "fs"], optional = true }
 
