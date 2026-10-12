@@ -45,6 +45,7 @@ use crate::utils::dump_cookies_by_domain;
 use crate::utils::dump_cookies_by_domain_and_name;
 use crate::utils::retrieve_header_location;
 use crate::web_handler::api_key_register;
+use crate::web_handler::api_key_revoke;
 use crate::web_handler::cache_api_key;
 use crate::web_handler::confirmation::Confirmation;
 use crate::web_handler::confirmation::Confirmations;
@@ -363,6 +364,23 @@ impl SteamAuthenticator<Authenticated, PresentMaFile> {
             .set_api_key(Some(api_key.clone()));
 
         Ok(api_key)
+    }
+
+    /// Revokes the account's current Steam Web API key and clears it from the cache.
+    ///
+    /// After this, [`Self::api_key`] returns `None` and [`Self::register_api_key`] will register a fresh key,
+    /// accepting the mobile confirmation Steam requires.
+    ///
+    /// Revoking succeeds even if no key was registered, since Steam treats that as a no-op.
+    pub async fn revoke_api_key(&mut self) -> Result<(), AuthError> {
+        api_key_revoke(self.client()).await?;
+        self.inner
+            .cache
+            .as_mut()
+            .expect("Cache is always set in the Authenticated state.")
+            .set_api_key(None);
+
+        Ok(())
     }
 
     /// Fetch all confirmations available with the authenticator.

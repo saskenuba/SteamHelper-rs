@@ -28,6 +28,7 @@ use crate::utils::dump_cookie_from_header;
 use crate::utils::dump_cookies_by_domain_and_name;
 use crate::web_handler::api_key::NewAPIKeyRequest;
 use crate::web_handler::api_key::NewAPIKeyResponse;
+use crate::web_handler::api_key::RevokeAPIKeyRequest;
 use crate::web_handler::confirmation::Confirmation;
 use crate::web_handler::confirmation::ConfirmationAction;
 use crate::web_handler::login::SESSION_ID_COOKIE;
@@ -243,6 +244,35 @@ async fn api_key_retrieve(client: &MobileClient) -> Result<String, ApiKeyError> 
     let api_key_url = format!("{}{}", STEAM_COMMUNITY_BASE, "/dev/apikey?l=english");
     let doc = client.get_html(api_key_url.clone(), None, None::<u8>).await?;
     api_key_resolve_status(doc)
+}
+
+/// Revokes the account's current Steam Web API key.
+///
+/// Steam does not confirm the revocation in the response body, so it is verified by re-fetching the key page and
+/// making sure no key is registered anymore. Revoking when no key exists is a no-op on Steam's side and succeeds here
+/// too.
+pub(crate) async fn api_key_revoke(client: &MobileClient) -> Result<(), ApiKeyError> {
+    let revoke_url = format!("{}{}", STEAM_COMMUNITY_BASE, "/dev/revokekey");
+    let session_id = client
+        .get_cookie_value(STEAM_COMMUNITY_HOST, SESSION_ID_COOKIE)
+        .ok_or_else(|| ApiKeyError::GeneralError("Missing sessionid cookie.".to_string()))?;
+
+    let revoke_request = RevokeAPIKeyRequest::new(session_id);
+    client
+        .request(revoke_url, Method::POST, None, Some(revoke_request), None::<&str>)
+        .await?;
+
+    match api_key_retrieve(client).await {
+        // The key page still reports a registered key, so the revocation did not take effect.
+        Ok(_) => Err(ApiKeyError::GeneralError(
+            "Steam still reports a registered API key after the revoke request.".to_string(),
+        )),
+        Err(ApiKeyError::NotRegistered) => {
+            info!("Successfully revoked the API Key.");
+            Ok(())
+        }
+        Err(e) => Err(e),
+    }
 }
 
 /// Sends a request to enable an API Key for the account, accepting only the mobile confirmation tied to it.
