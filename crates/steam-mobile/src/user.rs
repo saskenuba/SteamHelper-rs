@@ -39,18 +39,64 @@ pub struct PresentMaFile(MobileAuthFile);
 #[derive(Debug, Copy, Clone)]
 pub struct AbsentMaFile;
 
+/// State where the user has the MaFile of an authenticator that was added, but not finalized yet.
+///
+/// The authenticator isn't active until finalized, so logging in doesn't use it.
+#[derive(Debug, Clone)]
+pub struct PendingMaFile(MobileAuthFile);
+
 mod sealed {
     pub trait Sealed {}
     impl Sealed for super::AbsentMaFile {}
+    impl Sealed for super::PendingMaFile {}
     impl Sealed for super::PresentMaFile {}
 }
 
-/// The MaFile states a [`SteamUser`] can be in: [`AbsentMaFile`] or [`PresentMaFile`].
+/// The MaFile states a [`SteamUser`] can be in: [`AbsentMaFile`], [`PendingMaFile`] or [`PresentMaFile`].
 ///
 /// Sealed, so it can't be implemented outside this crate.
+///
+/// Each state only offers what makes sense in it. An account without a MaFile can begin adding an authenticator,
+/// which moves it to [`PendingMaFile`], and finalizing moves it to [`PresentMaFile`]:
+///
+/// ```no_run
+/// # use steam_mobile::{Authenticated, SteamAuthenticator, user::AbsentMaFile};
+/// # async fn f(authenticator: SteamAuthenticator<Authenticated, AbsentMaFile>) {
+/// let (pending, _code_delivery) = authenticator.begin_add_authenticator().await.unwrap();
+/// let present = pending.finalize_pending("ABC12").await.map_err(|(_, e)| e).unwrap();
+/// present.fetch_confirmations().await.unwrap();
+/// # }
+/// ```
+///
+/// An account that already has a MaFile can't begin adding another authenticator:
+///
+/// ```compile_fail
+/// # use steam_mobile::{Authenticated, SteamAuthenticator, user::PresentMaFile};
+/// # async fn f(authenticator: SteamAuthenticator<Authenticated, PresentMaFile>) {
+/// authenticator.begin_add_authenticator().await;
+/// # }
+/// ```
+///
+/// A pending authenticator can't fetch confirmations before it is finalized:
+///
+/// ```compile_fail
+/// # use steam_mobile::{Authenticated, SteamAuthenticator, user::PendingMaFile};
+/// # async fn f(pending: SteamAuthenticator<Authenticated, PendingMaFile>) {
+/// pending.fetch_confirmations().await;
+/// # }
+/// ```
+///
+/// And only a pending authenticator can be finalized:
+///
+/// ```compile_fail
+/// # use steam_mobile::{Authenticated, SteamAuthenticator, user::AbsentMaFile};
+/// # async fn f(authenticator: SteamAuthenticator<Authenticated, AbsentMaFile>) {
+/// authenticator.finalize_pending("ABC12").await;
+/// # }
+/// ```
 pub trait MaFileState: sealed::Sealed + 'static + Send + Sync + Clone {
     /// The MaFile of the account's active authenticator, which login uses for its codes and must complete with the
-    /// device ID confirmations need.
+    /// device ID confirmations need. A pending MaFile isn't active yet.
     #[doc(hidden)]
     fn active_mafile(&self) -> Option<&MobileAuthFile> {
         None
@@ -63,6 +109,8 @@ pub trait MaFileState: sealed::Sealed + 'static + Send + Sync + Clone {
 }
 
 impl MaFileState for AbsentMaFile {}
+
+impl MaFileState for PendingMaFile {}
 
 impl MaFileState for PresentMaFile {
     fn active_mafile(&self) -> Option<&MobileAuthFile> {
@@ -151,6 +199,13 @@ impl SteamUser<AbsentMaFile> {
     pub fn with_mafile(self, ma_file: MobileAuthFile) -> SteamUser<PresentMaFile> {
         self.with_mafile_state(PresentMaFile(ma_file))
     }
+
+    /// Uses the MaFile of an authenticator that was added but not finalized yet, such as one saved by an interrupted
+    /// run, so it can be finalized.
+    #[must_use]
+    pub fn with_pending_mafile(self, ma_file: MobileAuthFile) -> SteamUser<PendingMaFile> {
+        self.with_mafile_state(PendingMaFile(ma_file))
+    }
 }
 
 impl<M> SteamUser<M> {
@@ -171,6 +226,22 @@ impl<M: MaFileState> SteamUser<M> {
 
     pub(crate) fn active_mafile_mut(&mut self) -> Option<&mut MobileAuthFile> {
         self.mafile.active_mafile_mut()
+    }
+}
+
+impl SteamUser<PendingMaFile> {
+    pub(crate) fn mafile(&self) -> &MobileAuthFile {
+        &self.mafile.0
+    }
+
+    /// The authenticator was finalized, so its MaFile is now the account's.
+    pub(crate) fn into_present(self) -> SteamUser<PresentMaFile> {
+        SteamUser {
+            username: self.username,
+            password: self.password,
+            parental_code: self.parental_code,
+            mafile: PresentMaFile(self.mafile.0),
+        }
     }
 }
 

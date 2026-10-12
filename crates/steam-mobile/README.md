@@ -33,7 +33,7 @@ steam-mobile confirmations accept 13385072611
 steam-mobile confirmations accept --trade-offer 4009687284
 steam-mobile confirmations accept --kind family
 steam-mobile confirmations deny --all
-steam-mobile --account myaccount authenticator add --phone +551112345678 --out ~/steam
+steam-mobile --account myaccount authenticator add --out ~/steam
 steam-mobile authenticator status
 ```
 
@@ -41,6 +41,13 @@ Confirmations can be picked by their id (as shown by `list`), by trade offer,
 by kind, such as `family` for Steam Family invites and joins, or all at once.
 Be careful with `--all`, since it also acts on account recovery and phone
 number changes!
+
+When adding an authenticator, Steam sends you an activation code by SMS if your
+account has a phone, or by email if it doesn't, so a phone number is optional.
+With `--out`, your maFile is saved as `<account>.maFile.pending` before
+anything is finalized, and renamed to `<account>.maFile` once it is. If
+something goes wrong in between, you can finish it later with
+`steam-mobile --mafile <account>.maFile.pending authenticator finalize`.
 
 If your maFile is missing its device ID, which some tools leave out,
 `authenticator status` recovers it from Steam and offers to save it.
@@ -74,7 +81,7 @@ Below, you can find a list of implemented and planned features:
 
 ### CLI ###
   * Generate login codes from your maFile;
-  * Add SteamGuard authenticator, saving maFile(secrets);
+  * Add SteamGuard authenticator, with or without a phone number, saving maFile(secrets);
   * Show SteamGuard status, and recover a maFile's missing device ID;
   * List, accept and deny mobile confirmations, by id, trade offer or kind;
 

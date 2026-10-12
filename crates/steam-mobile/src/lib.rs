@@ -36,6 +36,7 @@ pub use web_handler::confirmation::Confirmation;
 pub use web_handler::confirmation::ConfirmationAction;
 pub use web_handler::confirmation::Confirmations;
 pub use web_handler::confirmation::EConfirmationType;
+pub use web_handler::steam_guard_linker::ActivationCodeDelivery;
 pub use web_handler::steam_guard_linker::AddAuthenticatorStep;
 pub use web_handler::steam_guard_linker::QueryStatusResponse;
 pub use web_handler::steam_guard_linker::RemoveAuthenticatorScheme;

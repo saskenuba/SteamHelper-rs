@@ -39,7 +39,9 @@ use crate::errors::InternalError;
 use crate::errors::LinkerError;
 use crate::errors::MobileAuthFileError;
 use crate::retry::login_retry_strategy;
+use crate::user::AbsentMaFile;
 use crate::user::MaFileState;
+use crate::user::PendingMaFile;
 use crate::user::PresentMaFile;
 use crate::user::SteamUser;
 use crate::utils::dump_cookies_by_domain;
@@ -62,7 +64,9 @@ use crate::web_handler::steam_guard_linker::finalize;
 use crate::web_handler::steam_guard_linker::remove_authenticator;
 use crate::web_handler::steam_guard_linker::twofactor_status;
 use crate::web_handler::steam_guard_linker::validate_phone_number;
+use crate::web_handler::steam_guard_linker::ActivationCodeDelivery;
 use crate::web_handler::steam_guard_linker::AddAuthenticatorStep;
+use crate::web_handler::steam_guard_linker::PendingAuthenticator;
 use crate::web_handler::steam_guard_linker::QueryStatusResponse;
 use crate::web_handler::steam_guard_linker::RemoveAuthenticatorScheme;
 use crate::web_handler::steam_guard_linker::STEAM_ADD_PHONE_CATCHUP_SECS;
@@ -109,6 +113,18 @@ impl<AuthState, M> SteamAuthenticator<AuthState, M> {
     }
     const fn user(&self) -> &SteamUser<M> {
         &self.inner.user
+    }
+
+    /// Moves to another MaFile state, keeping the session.
+    fn map_user<N>(self, f: impl FnOnce(SteamUser<M>) -> SteamUser<N>) -> SteamAuthenticator<AuthState, N> {
+        SteamAuthenticator {
+            inner: InnerAuthenticator {
+                client: self.inner.client,
+                user: f(self.inner.user),
+                cache: self.inner.cache,
+            },
+            auth_level: PhantomData,
+        }
     }
 }
 
@@ -263,7 +279,7 @@ where
 
         add_authenticator_to_account(self.client(), self.cache())
             .await
-            .map(AddAuthenticatorStep::MobileAuth)
+            .map(|pending| AddAuthenticatorStep::MobileAuth(pending.mafile))
             .map_err(Into::into)
     }
 
@@ -355,6 +371,49 @@ where
     #[allow(missing_docs)]
     pub fn dump_cookie(&self, steam_domain_host: &str, steam_cookie_name: &str) -> Option<String> {
         dump_cookies_by_domain_and_name(&self.client().cookie_store.read(), steam_domain_host, steam_cookie_name)
+    }
+}
+
+impl SteamAuthenticator<Authenticated, AbsentMaFile> {
+    /// Adds an authenticator to the account, without adding a phone number to it.
+    ///
+    /// Steam sends an activation code by SMS if the account already has a phone, or by email otherwise; the returned
+    /// [`ActivationCodeDelivery`] says which. The authenticator moves to the [`PendingMaFile`] state, where
+    /// [`SteamAuthenticator::finalize_pending`] takes that code.
+    ///
+    /// * EXTREMELY IMPORTANT *
+    ///
+    /// Save the pending [`SteamAuthenticator::mafile`] before finalizing, because otherwise you WILL lose access to
+    /// your account.
+    pub async fn begin_add_authenticator(
+        self,
+    ) -> Result<(SteamAuthenticator<Authenticated, PendingMaFile>, ActivationCodeDelivery), AuthError> {
+        let PendingAuthenticator { mafile, code_delivery } =
+            add_authenticator_to_account(self.client(), self.cache()).await?;
+        let authenticator = self.map_user(|user| user.with_pending_mafile(mafile));
+        Ok((authenticator, code_delivery))
+    }
+}
+
+impl SteamAuthenticator<Authenticated, PendingMaFile> {
+    /// The MaFile of the authenticator being added. Save it before finalizing.
+    pub fn mafile(&self) -> &MobileAuthFile {
+        self.user().mafile()
+    }
+
+    /// Finalizes the authenticator with the activation code Steam sent by SMS or email, enabling `SteamGuard` for the
+    /// account.
+    ///
+    /// On success, the authenticator moves to the [`PresentMaFile`] state, ready for confirmations. On failure, such as
+    /// a wrong code, it is handed back with the error, so you can try again.
+    pub async fn finalize_pending(
+        self,
+        activation_code: &str,
+    ) -> Result<SteamAuthenticator<Authenticated, PresentMaFile>, (Self, AuthError)> {
+        match finalize(self.client(), self.cache(), self.user().mafile(), activation_code).await {
+            Ok(()) => Ok(self.map_user(SteamUser::into_present)),
+            Err(e) => Err((self, e.into())),
+        }
     }
 }
 
@@ -795,6 +854,8 @@ impl Default for MobileClient {
 fn assert_public_futures_are_send(
     authenticator: &mut SteamAuthenticator<Authenticated, PresentMaFile>,
     unauthenticated: SteamAuthenticator<Unauthenticated, PresentMaFile>,
+    without_mafile: SteamAuthenticator<Authenticated, AbsentMaFile>,
+    pending: SteamAuthenticator<Authenticated, PendingMaFile>,
     mafile: &MobileAuthFile,
 ) {
     fn is_send<T: Send>(_: T) {}
@@ -803,6 +864,8 @@ fn assert_public_futures_are_send(
     is_send(authenticator.steam_guard_status());
     is_send(authenticator.add_authenticator(AddAuthenticatorStep::InitialStep, ""));
     is_send(authenticator.finalize_authenticator(mafile, ""));
+    is_send(without_mafile.begin_add_authenticator());
+    is_send(pending.finalize_pending(""));
     is_send(authenticator.remove_authenticator("", RemoveAuthenticatorScheme::ReturnToEmailCodes));
     is_send(authenticator.fetch_confirmations());
     is_send(authenticator.process_confirmations(ConfirmationAction::Accept, Vec::new()));

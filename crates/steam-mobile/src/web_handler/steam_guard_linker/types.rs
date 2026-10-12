@@ -264,6 +264,12 @@ pub struct AddAuthenticatorResponse {
     pub mobile_auth: MobileAuthFile,
 
     pub status: i64,
+    /// The end of the phone number the activation code was sent to, if it went by SMS.
+    #[serde(default)]
+    pub phone_number_hint: Option<String>,
+    /// How the activation code was sent: 1 is SMS, 3 is email.
+    #[serde(default)]
+    pub confirm_type: Option<i64>,
     // pub shared_secret: String,
     // pub revocation_code: String,
     // pub identity_secret: String,

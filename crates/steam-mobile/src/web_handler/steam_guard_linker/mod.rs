@@ -65,6 +65,39 @@ pub enum AddAuthenticatorStep {
     MobileAuth(MobileAuthFile),
 }
 
+/// An authenticator that was added to the account, but not finalized yet.
+pub(crate) struct PendingAuthenticator {
+    pub mafile: MobileAuthFile,
+    pub code_delivery: ActivationCodeDelivery,
+}
+
+/// Where Steam sent the activation code for a new authenticator.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum ActivationCodeDelivery {
+    /// By SMS, to the account's phone. The hint is the end of the phone number, if Steam gave it.
+    Sms {
+        /// The end of the phone number.
+        phone_hint: Option<String>,
+    },
+    /// By email, to the account's address.
+    Email,
+    /// Steam answered with a delivery kind we don't know.
+    Unknown(i64),
+}
+
+impl ActivationCodeDelivery {
+    fn from_confirm_type(confirm_type: Option<i64>, phone_hint: Option<String>) -> Self {
+        match confirm_type {
+            Some(1) => Self::Sms {
+                phone_hint: phone_hint.filter(|hint| !hint.is_empty()),
+            },
+            Some(3) => Self::Email,
+            other => Self::Unknown(other.unwrap_or_default()),
+        }
+    }
+}
+
 const QUERY_STATUS_ENDPOINT: &str = concatcp!(STEAM_API_BASE, "/ITwoFactorService/QueryStatus/v1/");
 
 /// Queries Steam API to check SteamGuard Status.
@@ -244,14 +277,13 @@ pub(crate) async fn finalize(
 
 /// Add a new authenticator to this steam account.
 ///
-///
-/// User will receive a SMS message, with the code required to finalize registering the new authenticator.
-/// Returns the VERY important `SteamGuardAccount`, that must be saved before the next step(finalize auth) is completed,
+/// Steam sends the code required to finalize it by SMS if the account has a phone, or by email otherwise.
+/// Returns the VERY important maFile, that must be saved before the next step(finalize auth) is completed,
 /// otherwise the user is on risk of losing the account, since the `revocation_code` will also be lost.
 pub(crate) async fn add_authenticator_to_account(
     client: &MobileClient,
     cached_data: &SteamCache,
-) -> Result<MobileAuthFile, LinkerError> {
+) -> Result<PendingAuthenticator, LinkerError> {
     let add_auth_url = format!("{}{}", STEAM_API_BASE, "/ITwoFactorService/AddAuthenticator/v0001");
     let oauth_token = cached_data.oauth_token();
     let steamid = cached_data.steam_id().to_string();
@@ -267,25 +299,35 @@ pub(crate) async fn add_authenticator_to_account(
     // The response carries the account secrets, so only its size is logged.
     debug!("Steam addauth response: {} bytes", response_text.len());
 
-    let mut mafile = match serde_json::from_str::<AddAuthenticatorResponseBase>(&response_text) {
-        Ok(resp) => resp.steam_guard_success_details.mobile_auth,
+    let response = match serde_json::from_str::<AddAuthenticatorResponseBase>(&response_text) {
+        Ok(resp) => resp.steam_guard_success_details,
         Err(err) => {
             debug!("AddAuthenticator response is not a success response: {err}");
             let error_resp = serde_json::from_str::<AddAuthenticatorErrorResponseBase>(&response_text)
                 .map_err(InternalError::from)?;
             return match error_resp.response.status {
                 29 => Err(LinkerError::AuthenticatorPresent),
+                84 => Err(LinkerError::GeneralFailure(
+                    "Steam is rate limiting us. Wait a couple of hours and try again.".to_string(),
+                )),
                 2 => Err(LinkerError::GeneralFailure(
-                    "After too many failed attempts, this may be a lock on the phone number or account. Going to test \
-                     this tomorrow."
+                    "Steam refused to add the authenticator without saying why. The account may need a phone number, \
+                     or this may be a temporary lock after too many attempts."
                         .to_string(),
                 )),
-                _ => Err(LinkerError::GeneralFailure("Something went wrong".to_string())),
+                status => Err(LinkerError::GeneralFailure(format!(
+                    "AddAuthenticator failed with status {status}."
+                ))),
             };
         }
     };
+
+    let mut mafile = response.mobile_auth;
     mafile.set_device_id(generate_canonical_device_id(&steamid));
-    Ok(mafile)
+    Ok(PendingAuthenticator {
+        mafile,
+        code_delivery: ActivationCodeDelivery::from_confirm_type(response.confirm_type, response.phone_number_hint),
+    })
 }
 
 /// What the account falls back to after its authenticator is removed.
@@ -337,4 +379,31 @@ pub(crate) async fn remove_authenticator(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn code_delivery_from_confirm_type() {
+        assert_eq!(
+            ActivationCodeDelivery::from_confirm_type(Some(1), Some("12".to_string())),
+            ActivationCodeDelivery::Sms {
+                phone_hint: Some("12".to_string())
+            }
+        );
+        assert_eq!(
+            ActivationCodeDelivery::from_confirm_type(Some(1), Some(String::new())),
+            ActivationCodeDelivery::Sms { phone_hint: None }
+        );
+        assert_eq!(
+            ActivationCodeDelivery::from_confirm_type(Some(3), None),
+            ActivationCodeDelivery::Email
+        );
+        assert_eq!(
+            ActivationCodeDelivery::from_confirm_type(None, None),
+            ActivationCodeDelivery::Unknown(0)
+        );
+    }
 }

@@ -21,8 +21,10 @@ use futures_util::TryFutureExt;
 use steam_mobile::errors::AuthError;
 use steam_mobile::errors::LinkerError;
 use steam_mobile::user::MaFileState;
+use steam_mobile::user::PendingMaFile;
 use steam_mobile::user::PresentMaFile;
 use steam_mobile::user::SteamUser;
+use steam_mobile::ActivationCodeDelivery;
 use steam_mobile::AddAuthenticatorStep;
 use steam_mobile::Authenticated;
 use steam_mobile::Confirmation;
@@ -98,17 +100,24 @@ struct Selector {
 enum AuthenticatorCommand {
     /// Add an authenticator to the account.
     ///
-    /// You will be asked to do some steps interactively along the way, such as confirming your email and entering
-    /// the SMS code sent to your phone.
+    /// Steam sends an activation code by SMS if the account has a phone, or by email otherwise, and you will be asked
+    /// for it. With --out, the secrets are saved as <account>.maFile.pending before anything is finalized, and renamed
+    /// to <account>.maFile once it is. If the run is interrupted, finish it with `authenticator finalize`.
     Add {
-        /// Phone number in E.164 format. E.g: +551112345678
+        /// Also add this phone number to the account first, in E.164 format. E.g: +551112345678. You will be asked to
+        /// confirm an email Steam sends about it.
         #[arg(long)]
-        phone: String,
+        phone: Option<String>,
 
-        /// Recommended. Directory where your maFile will be saved, as <account>.maFile. An existing file is never
-        /// overwritten. If none is provided, the file is printed on stdout.
+        /// Recommended. Directory where your maFile will be saved. An existing file is never overwritten. If none is
+        /// provided, the file is printed on stdout.
         #[arg(long, value_name = "DIR")]
         out: Option<PathBuf>,
+    },
+    /// Finish adding an authenticator, from the pending maFile given with --mafile.
+    Finalize {
+        /// The activation code Steam sent by SMS or email. Asked for if not given.
+        code: Option<String>,
     },
     /// Show the account's Steam Guard status, and recover the maFile's device ID if it is missing.
     Status,
@@ -181,22 +190,13 @@ async fn main() -> Result<()> {
             let account = cli
                 .account
                 .context("Pass the account to add the authenticator to with --account or STEAM_ACCOUNT.")?;
-
-            let password = read_password(&account)?;
-            let authenticator = login(SteamUser::new(account.clone(), password)).await?;
-
-            let mobile_auth_file = add_authenticator(&authenticator, &phone).await?;
-            persist_mafile(&mobile_auth_file, &account, out).await?;
-
-            let sms_code: String = Input::new()
-                .with_prompt("Please write the SMS code you have received on your mobile phone")
-                .interact_text()?;
-
-            authenticator
-                .finalize_authenticator(&mobile_auth_file, &sms_code)
-                .await?;
-
-            println!("\nSuccess! Your account has now SteamGuard enabled, on number: {phone}");
+            run_add_authenticator(account, phone, out).await?;
+        }
+        Command::Authenticator(AuthenticatorCommand::Finalize { code }) => {
+            let path = cli
+                .mafile
+                .context("Pass the pending maFile with --mafile or STEAM_MAFILE.")?;
+            run_finalize_authenticator(&path, cli.account, code).await?;
         }
         Command::Authenticator(AuthenticatorCommand::Status) => {
             let path = cli.mafile.context("Pass the maFile with --mafile or STEAM_MAFILE.")?;
@@ -342,6 +342,83 @@ fn format_age(seconds: i64) -> String {
     }
 }
 
+async fn run_add_authenticator(account: String, phone: Option<String>, out: Option<PathBuf>) -> Result<()> {
+    let password = read_password(&account)?;
+    let authenticator = login(SteamUser::new(account.clone(), password)).await?;
+
+    let (pending_path, finalized) = match phone {
+        Some(phone) => {
+            let mafile = add_authenticator(&authenticator, &phone).await?;
+            let pending_path = persist_mafile(&mafile, &account, out).await?;
+            let code = ask_activation_code(None)?;
+            let finalized = authenticator
+                .finalize_authenticator(&mafile, &code)
+                .await
+                .map_err(Into::into);
+            (pending_path, finalized)
+        }
+        None => {
+            let (pending, code_delivery) = authenticator.begin_add_authenticator().await?;
+            let pending_path = persist_mafile(pending.mafile(), &account, out).await?;
+            let finalized = finalize_pending(pending, Some(&code_delivery), None).await;
+            (pending_path, finalized)
+        }
+    };
+
+    if let Err(mut error) = finalized {
+        if let Some(path) = &pending_path {
+            error = error.context(format!(
+                "Your pending maFile is kept at {0}. To retry, run: steam-mobile --mafile {0} authenticator finalize",
+                path.display()
+            ));
+        }
+        return Err(error);
+    }
+
+    println!("\nSuccess! Your account has now SteamGuard enabled.");
+    if let Some(path) = pending_path {
+        promote_pending(&path)?;
+    }
+    Ok(())
+}
+
+async fn run_finalize_authenticator(path: &Path, account: Option<String>, code: Option<String>) -> Result<()> {
+    let mafile = read_mafile(Some(path))?;
+    let account = account_name(account, &mafile)?;
+    let password = read_password(&account)?;
+    let pending = login(SteamUser::new(account, password).with_pending_mafile(mafile)).await?;
+
+    finalize_pending(pending, None, code).await?;
+
+    println!("Success! Your account has now SteamGuard enabled.");
+    if path.extension().is_some_and(|ext| ext == "pending") {
+        promote_pending(path)?;
+    }
+    Ok(())
+}
+
+/// Finalizes the pending authenticator, asking for the activation code again for as long as Steam says it is wrong.
+async fn finalize_pending(
+    mut pending: SteamAuthenticator<Authenticated, PendingMaFile>,
+    code_delivery: Option<&ActivationCodeDelivery>,
+    mut code: Option<String>,
+) -> Result<()> {
+    loop {
+        let attempt = match code.take() {
+            Some(code) => code,
+            None => ask_activation_code(code_delivery)?,
+        };
+        match pending.finalize_pending(&attempt).await {
+            Ok(_) => return Ok(()),
+            Err((authenticator, AuthError::AuthenticatorError(LinkerError::BadSMSCode))) => {
+                println!("Steam says that code is wrong. Try again, or press Ctrl-C to stop.");
+                pending = authenticator;
+            }
+            Err((_, e)) => return Err(anyhow::Error::from(e).context("Failed to finalize the authenticator.")),
+        }
+    }
+}
+
 async fn run_authenticator_status(path: &Path, account: Option<String>) -> Result<()> {
     let mafile = read_mafile(Some(path))?;
     let account = account_name(account, &mafile)?;
@@ -377,6 +454,20 @@ async fn run_authenticator_status(path: &Path, account: Option<String>) -> Resul
         _ => {}
     }
     Ok(())
+}
+
+fn ask_activation_code(delivery: Option<&ActivationCodeDelivery>) -> Result<String> {
+    let prompt = match delivery {
+        Some(ActivationCodeDelivery::Sms { phone_hint: Some(hint) }) => {
+            format!("Enter the activation code Steam sent by SMS to the number ending in {hint}")
+        }
+        Some(ActivationCodeDelivery::Sms { phone_hint: None }) => {
+            "Enter the activation code Steam sent by SMS".to_string()
+        }
+        Some(ActivationCodeDelivery::Email) => "Enter the activation code Steam sent to your email".to_string(),
+        _ => "Enter the activation code Steam sent you, by SMS or email".to_string(),
+    };
+    Input::new().with_prompt(prompt).interact_text().map_err(Into::into)
 }
 
 /// Drives the add authenticator steps until Steam hands us the maFile.
@@ -420,17 +511,19 @@ fn wait_for_email_confirmation() -> Result<()> {
     Ok(())
 }
 
-/// Saves the maFile to `save_dir` or prints it, making sure the user has it before the authenticator is finalized.
-async fn persist_mafile(mafile: &MobileAuthFile, account: &str, save_dir: Option<PathBuf>) -> Result<()> {
+/// Saves the maFile to `save_dir` as `<account>.maFile.pending`, or prints it, making sure the user has it before the
+/// authenticator is finalized. Returns where it was saved, if it was.
+async fn persist_mafile(mafile: &MobileAuthFile, account: &str, save_dir: Option<PathBuf>) -> Result<Option<PathBuf>> {
     if let Some(save_dir) = save_dir {
         let filename = mafile.account_name.clone().unwrap_or_else(|| account.to_string());
+        let path = save_dir.join(format!("{filename}.maFile.pending"));
         let to_save = mafile.clone();
-        let saved = tokio::task::spawn_blocking(move || save_file_to_path(&to_save, &filename, &save_dir)).await?;
+        let saved = tokio::task::spawn_blocking(move || create_mafile(&to_save, &path).map(|()| path)).await?;
 
         match saved {
             Ok(path) => {
                 println!("Your MobileAuth file was saved to {}", path.display());
-                return Ok(());
+                return Ok(Some(path));
             }
             // The secrets cannot be fetched again, so they are printed instead of being lost.
             Err(e) => eprintln!("Failed to save your MobileAuth file: {e:#}"),
@@ -449,7 +542,7 @@ async fn persist_mafile(mafile: &MobileAuthFile, account: &str, save_dir: Option
     if !saved {
         bail!("MobileAuth file was not saved. The authenticator will not be finalized.");
     }
-    Ok(())
+    Ok(None)
 }
 
 fn read_password(account: &str) -> Result<String> {
@@ -466,11 +559,22 @@ async fn login<M: MaFileState>(user: SteamUser<M>) -> Result<SteamAuthenticator<
     SteamAuthenticator::new(user).login().err_into().await
 }
 
-/// Writes the maFile as `<filename>.maFile` inside `dir`.
-fn save_file_to_path(mafile: &MobileAuthFile, filename: &str, dir: &Path) -> Result<PathBuf> {
-    let path = dir.join(format!("{filename}.maFile"));
-    create_mafile(mafile, &path)?;
-    Ok(path)
+/// Renames a finalized `<account>.maFile.pending` to `<account>.maFile`, never overwriting an existing file.
+fn promote_pending(pending: &Path) -> Result<()> {
+    let target = pending.with_extension("");
+    // A hard link fails if the target exists, unlike a rename.
+    std::fs::hard_link(pending, &target)
+        .and_then(|()| std::fs::remove_file(pending))
+        .with_context(|| {
+            format!(
+                "The authenticator is active, but its maFile couldn't be renamed to {}. It is complete at {}; rename \
+                 it yourself.",
+                target.display(),
+                pending.display()
+            )
+        })?;
+    println!("Your MobileAuth file is now at {}", target.display());
+    Ok(())
 }
 
 /// Overwrites the maFile at `path`, going through a temporary file so it is never left half written.
@@ -590,6 +694,28 @@ mod tests {
             "c2hhcmVk".to_string(),
             device_id.map(ToString::to_string),
         )
+    }
+
+    #[test]
+    fn promote_pending_renames_without_overwriting() {
+        let dir = temp_dir("promote");
+        let pending = dir.join("acc.maFile.pending");
+        create_mafile(&mafile(Some("a")), &pending).unwrap();
+
+        promote_pending(&pending).unwrap();
+        assert!(!pending.exists());
+        assert_eq!(
+            read_mafile(Some(&dir.join("acc.maFile"))).unwrap().device_id(),
+            Some("a")
+        );
+
+        create_mafile(&mafile(Some("b")), &pending).unwrap();
+        assert!(promote_pending(&pending).is_err());
+        assert!(pending.exists(), "the pending file must survive a failed rename");
+        assert_eq!(
+            read_mafile(Some(&dir.join("acc.maFile"))).unwrap().device_id(),
+            Some("a")
+        );
     }
 
     #[test]
