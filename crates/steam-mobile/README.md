@@ -34,12 +34,16 @@ steam-mobile confirmations accept --trade-offer 4009687284
 steam-mobile confirmations accept --kind family
 steam-mobile confirmations deny --all
 steam-mobile --account myaccount authenticator add --phone +551112345678 --out ~/steam
+steam-mobile authenticator status
 ```
 
 Confirmations can be picked by their id (as shown by `list`), by trade offer,
 by kind, such as `family` for Steam Family invites and joins, or all at once.
 Be careful with `--all`, since it also acts on account recovery and phone
 number changes!
+
+If your maFile is missing its device ID, which some tools leave out,
+`authenticator status` recovers it from Steam and offers to save it.
 
 If you don't want to use the CLI, and are only interested in the library for
 automation, you disable it by adding this to your Cargo.toml:
@@ -71,6 +75,7 @@ Below, you can find a list of implemented and planned features:
 ### CLI ###
   * Generate login codes from your maFile;
   * Add SteamGuard authenticator, saving maFile(secrets);
+  * Show SteamGuard status, and recover a maFile's missing device ID;
   * List, accept and deny mobile confirmations, by id, trade offer or kind;
 
 ## Planned

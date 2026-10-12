@@ -26,7 +26,6 @@ hex = "0.4"
 rsa = "0.9"
 scraper = "0.18"
 serde_with = { version = "^3", features = [] }
-downcast-rs = { version = "^1" }
 thiserror = "1"
 tracing = "0.1"
 tracing-futures = "0.2"

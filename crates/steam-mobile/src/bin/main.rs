@@ -20,6 +20,7 @@ use dialoguer::Password;
 use futures_util::TryFutureExt;
 use steam_mobile::errors::AuthError;
 use steam_mobile::errors::LinkerError;
+use steam_mobile::user::MaFileState;
 use steam_mobile::user::PresentMaFile;
 use steam_mobile::user::SteamUser;
 use steam_mobile::AddAuthenticatorStep;
@@ -109,6 +110,8 @@ enum AuthenticatorCommand {
         #[arg(long, value_name = "DIR")]
         out: Option<PathBuf>,
     },
+    /// Show the account's Steam Guard status, and recover the maFile's device ID if it is missing.
+    Status,
 }
 
 /// Confirmation kinds, as named on the command line.
@@ -194,6 +197,10 @@ async fn main() -> Result<()> {
                 .await?;
 
             println!("\nSuccess! Your account has now SteamGuard enabled, on number: {phone}");
+        }
+        Command::Authenticator(AuthenticatorCommand::Status) => {
+            let path = cli.mafile.context("Pass the maFile with --mafile or STEAM_MAFILE.")?;
+            run_authenticator_status(&path, cli.account).await?;
         }
     }
 
@@ -302,9 +309,7 @@ fn print_confirmations(confirmations: &[Confirmation]) {
         return;
     }
 
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_or(0, |d| d.as_secs() as i64);
+    let now = unix_now();
 
     println!(
         "{:<12} {:<17} {:<12} {:>8}  DESCRIPTION",
@@ -322,6 +327,12 @@ fn print_confirmations(confirmations: &[Confirmation]) {
     }
 }
 
+fn unix_now() -> i64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs() as i64)
+}
+
 fn format_age(seconds: i64) -> String {
     match seconds.max(0) {
         s if s < 60 => format!("{s}s"),
@@ -329,6 +340,43 @@ fn format_age(seconds: i64) -> String {
         s if s < 86400 => format!("{}h", s / 3600),
         s => format!("{}d", s / 86400),
     }
+}
+
+async fn run_authenticator_status(path: &Path, account: Option<String>) -> Result<()> {
+    let mafile = read_mafile(Some(path))?;
+    let account = account_name(account, &mafile)?;
+    let password = read_password(&account)?;
+    let authenticator = login(SteamUser::new(account, password).with_mafile(mafile.clone())).await?;
+    let status = authenticator.steam_guard_status().await?;
+
+    println!("State:                   {}", status.state);
+    println!("Steam Guard scheme:      {}", status.steamguard_scheme);
+    println!("Authenticator type:      {}", status.authenticator_type);
+    println!(
+        "Created:                 {} ago",
+        format_age(unix_now() - status.time_created)
+    );
+    println!("Email validated:         {}", status.email_validated);
+    println!("Revocation attempts:     {} left", status.revocation_attempts_remaining);
+    println!("Device ID on Steam:      {}", status.device_identifier);
+    println!("Device ID in the maFile: {}", mafile.device_id().unwrap_or("<missing>"));
+
+    match (mafile.device_id(), authenticator.mafile().device_id()) {
+        (None, Some(recovered)) => {
+            let save = Confirm::new()
+                .with_prompt(format!("Save the device ID {recovered} into {}?", path.display()))
+                .interact()?;
+            if save {
+                replace_mafile(path, authenticator.mafile())?;
+                println!("Saved.");
+            }
+        }
+        (Some(own), _) if !status.device_identifier.is_empty() && own != status.device_identifier => {
+            println!("\nWarning: the maFile's device ID differs from the one Steam has for this authenticator.");
+        }
+        _ => {}
+    }
+    Ok(())
 }
 
 /// Drives the add authenticator steps until Steam hands us the maFile.
@@ -414,19 +462,31 @@ fn read_password(account: &str) -> Result<String> {
         .map_err(Into::into)
 }
 
-async fn login<M>(user: SteamUser<M>) -> Result<SteamAuthenticator<Authenticated, M>>
-where
-    M: 'static + Send + Sync + Clone,
-{
+async fn login<M: MaFileState>(user: SteamUser<M>) -> Result<SteamAuthenticator<Authenticated, M>> {
     SteamAuthenticator::new(user).login().err_into().await
 }
 
-/// Writes the maFile as `<filename>.maFile` inside `dir`, readable only by the owner.
-///
-/// Never overwrites an existing file, since it may hold the secrets of another authenticator.
+/// Writes the maFile as `<filename>.maFile` inside `dir`.
 fn save_file_to_path(mafile: &MobileAuthFile, filename: &str, dir: &Path) -> Result<PathBuf> {
     let path = dir.join(format!("{filename}.maFile"));
+    create_mafile(mafile, &path)?;
+    Ok(path)
+}
 
+/// Overwrites the maFile at `path`, going through a temporary file so it is never left half written.
+fn replace_mafile(path: &Path, mafile: &MobileAuthFile) -> Result<()> {
+    let mut tmp = path.as_os_str().to_owned();
+    tmp.push(".tmp");
+    let tmp = PathBuf::from(tmp);
+
+    create_mafile(mafile, &tmp)?;
+    std::fs::rename(&tmp, path).with_context(|| format!("Failed to replace {}", path.display()))
+}
+
+/// Writes the maFile to `path`, readable only by the owner.
+///
+/// Never overwrites an existing file, since it may hold the secrets of another authenticator.
+fn create_mafile(mafile: &MobileAuthFile, path: &Path) -> Result<()> {
     let mut options = OpenOptions::new();
     options.write(true).create_new(true);
     #[cfg(unix)]
@@ -436,12 +496,12 @@ fn save_file_to_path(mafile: &MobileAuthFile, filename: &str, dir: &Path) -> Res
     }
 
     let mut file = options
-        .open(&path)
+        .open(path)
         .with_context(|| format!("Failed to create {}", path.display()))?;
     file.write_all(&serde_json::to_vec_pretty(mafile)?)?;
     file.sync_all()?;
 
-    Ok(path)
+    Ok(())
 }
 
 #[cfg(test)]
@@ -513,6 +573,37 @@ mod tests {
         assert_eq!(
             ids(select(pending(), &selector(&["--all"])).unwrap()),
             ["1", "2", "3", "4"]
+        );
+    }
+
+    /// A fresh, empty directory for one test.
+    fn temp_dir(name: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("steam-mobile-{name}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    fn mafile(device_id: Option<&str>) -> MobileAuthFile {
+        MobileAuthFile::new(
+            "aWRlbnRpdHk=".to_string(),
+            "c2hhcmVk".to_string(),
+            device_id.map(ToString::to_string),
+        )
+    }
+
+    #[test]
+    fn replace_mafile_overwrites_in_place() {
+        let dir = temp_dir("replace");
+        let path = dir.join("acc.maFile");
+        create_mafile(&mafile(None), &path).unwrap();
+
+        replace_mafile(&path, &mafile(Some("android:x"))).unwrap();
+        assert_eq!(read_mafile(Some(&path)).unwrap().device_id(), Some("android:x"));
+        assert_eq!(
+            std::fs::read_dir(&dir).unwrap().count(),
+            1,
+            "no temporary file is left behind"
         );
     }
 

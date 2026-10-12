@@ -183,8 +183,15 @@ impl Debug for MobileAuthFile {
 }
 
 impl MobileAuthFile {
-    fn set_device_id(&mut self, device_id: String) {
+    pub(crate) fn set_device_id(&mut self, device_id: String) {
         self.device_id = Some(device_id);
+    }
+
+    /// The device ID confirmations are tied to, if the file has one.
+    ///
+    /// Files without it still work: [`SteamAuthenticator::login`] fetches it from Steam.
+    pub fn device_id(&self) -> Option<&str> {
+        self.device_id.as_deref()
     }
 
     /// Creates a new `MobileAuthFile`

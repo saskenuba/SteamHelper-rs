@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use std::time::Duration;
 
 use base64::Engine;
@@ -21,6 +20,7 @@ use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_P
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::EAuthSessionGuardType;
+use steam_totp::Secret;
 use steam_totp::Time;
 use tracing::debug;
 use tracing::info;
@@ -31,8 +31,7 @@ use crate::errors::LoginError;
 use crate::types::DomainToken;
 use crate::types::FinalizeLoginRequest;
 use crate::types::FinalizeLoginResponseBase;
-use crate::user::IsUser;
-use crate::user::PresentMaFile;
+use crate::user::MaFileState;
 use crate::user::SteamUser;
 use crate::AuthResult;
 use crate::SteamCache;
@@ -96,9 +95,12 @@ async fn login_isteam_user_auth<U>(_client: &Client, _user: SteamUser<U>, _webap
 ///
 /// [login_isteam_user_auth]: #method.login_isteam_user_auth
 #[allow(clippy::too_many_lines)]
-pub async fn login_and_store_cookies(client: &MobileClient, user: Arc<dyn IsUser>) -> Result<SteamCache, LoginError> {
+pub async fn login_and_store_cookies<M: MaFileState>(
+    client: &MobileClient,
+    user: &SteamUser<M>,
+) -> Result<SteamCache, LoginError> {
     let mut rsa_payload = CAuthentication_GetPasswordRSAPublicKey_Request::new();
-    rsa_payload.set_account_name(user.username().to_owned());
+    rsa_payload.set_account_name(user.username.clone());
     let rsa_response = client
         .request_proto::<_, CAuthentication_GetPasswordRSAPublicKey_Response>(
             LOGIN_RSA_ENDPOINT.to_string(),
@@ -113,14 +115,14 @@ pub async fn login_and_store_cookies(client: &MobileClient, user: Arc<dyn IsUser
 
     // handle encrypting user's password with RSA request from Steam login API
     let encrypted_pwd_b64 = encrypt_password(
-        user.password(),
+        &user.password,
         rsa_response.publickey_mod(),
         rsa_response.publickey_exp(),
     );
     let encryption_timestamp = rsa_response.timestamp();
 
     let mut payload = CAuthentication_BeginAuthSessionViaCredentials_Request::new();
-    payload.set_account_name(user.username().to_owned());
+    payload.set_account_name(user.username.clone());
     payload.set_encrypted_password(encrypted_pwd_b64);
     payload.set_encryption_timestamp(encryption_timestamp);
     payload.set_persistence(ESessionPersistence::k_ESessionPersistence_Persistent);
@@ -144,11 +146,12 @@ pub async fn login_and_store_cookies(client: &MobileClient, user: Arc<dyn IsUser
     payload.set_client_id(client_id);
     payload.set_steamid(steam_id);
 
-    if let Some(ma_user) = user.into_any_arc().downcast_ref::<SteamUser<PresentMaFile>>() {
+    if let Some(mafile) = user.active_mafile() {
         info!("Using MaFile to generate codes..");
+        let shared_secret = Secret::from_b64(&mafile.shared_secret)?;
         let offset = Time::offset().await?;
         let time = Time::now(Some(offset)).unwrap();
-        let two_factor_code = steam_totp::generate_auth_code(ma_user.shared_secret(), time);
+        let two_factor_code = steam_totp::generate_auth_code(shared_secret, time);
 
         payload.set_code_type(EAuthSessionGuardType::k_EAuthSessionGuardType_DeviceCode);
         payload.set_code(two_factor_code);

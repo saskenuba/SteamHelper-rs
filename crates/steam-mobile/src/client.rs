@@ -37,8 +37,9 @@ use crate::adapter::SteamCookie;
 use crate::errors::AuthError;
 use crate::errors::InternalError;
 use crate::errors::LinkerError;
+use crate::errors::MobileAuthFileError;
 use crate::retry::login_retry_strategy;
-use crate::user::IsUser;
+use crate::user::MaFileState;
 use crate::user::PresentMaFile;
 use crate::user::SteamUser;
 use crate::utils::dump_cookies_by_domain;
@@ -111,15 +112,12 @@ impl<AuthState, M> SteamAuthenticator<AuthState, M> {
     }
 }
 
-impl<MaFileState> SteamAuthenticator<Unauthenticated, MaFileState>
-where
-    MaFileState: 'static + Send + Sync + Clone,
-{
+impl<M: MaFileState> SteamAuthenticator<Unauthenticated, M> {
     /// Returns current user API Key.
     ///
     /// Will return `None` if you are not logged in.
     #[must_use]
-    pub fn new(user: SteamUser<MaFileState>) -> Self {
+    pub fn new(user: SteamUser<M>) -> Self {
         Self {
             inner: InnerAuthenticator {
                 client: MobileClient::default(),
@@ -142,14 +140,16 @@ where
     /// Also caches the API Key, if the user wants to use it for any operation later.
     ///
     /// The cookies are inside the [MobileClient] inner cookie storage.
-    pub async fn login(self) -> Result<SteamAuthenticator<Authenticated, MaFileState>, AuthError> {
-        let user = self.inner.user;
+    ///
+    /// If the MaFile lacks the device ID that confirmations need, it is fetched from Steam, and login fails if Steam
+    /// has none.
+    pub async fn login(self) -> Result<SteamAuthenticator<Authenticated, M>, AuthError> {
+        let mut user = self.inner.user;
         let client = self.inner.client;
-        let user_arc: Arc<dyn IsUser> = Arc::new(user.clone());
 
         // FIXME: Add more permanent errors, such as bad credentials
         let mut cache = retry(login_retry_strategy(), || async {
-            login_and_store_cookies(&client, user_arc.clone())
+            login_and_store_cookies(&client, &user)
                 .await
                 .map_err(|error| match error {
                     e => {
@@ -167,6 +167,22 @@ where
         //     parental_unlock(client, user).await?;
         //     info!("Parental unlock successfully.");
         // }
+
+        // Some maFiles lack the device ID that confirmations need, but Steam remembers the one the authenticator was
+        // added with.
+        if user.active_mafile().is_some_and(|mafile| mafile.device_id().is_none()) {
+            let status = twofactor_status(&client, &cache).await?;
+            if status.device_identifier.is_empty() {
+                return Err(MobileAuthFileError::GeneralFailure(
+                    "The maFile has no device ID, and Steam has none for this account's authenticator.".to_string(),
+                )
+                .into());
+            }
+            if let Some(mafile) = user.active_mafile_mut() {
+                mafile.set_device_id(status.device_identifier);
+                info!("Recovered the maFile's missing device ID from Steam.");
+            }
+        }
 
         let api_key = cache_api_key(&client).await;
         if let Some(api_key) = api_key {
@@ -383,11 +399,19 @@ impl SteamAuthenticator<Authenticated, PresentMaFile> {
         Ok(())
     }
 
+    /// The maFile this authenticator was logged in with.
+    ///
+    /// If the file lacked a device ID, this one has the device ID recovered from Steam at login, so it can be saved
+    /// back.
+    pub fn mafile(&self) -> &MobileAuthFile {
+        self.user().mafile()
+    }
+
     /// Fetch all confirmations available with the authenticator.
     pub async fn fetch_confirmations(&self) -> Result<Confirmations, AuthError> {
         let steamid = self.cache().steam_id();
         let secret = (&self.inner.user).identity_secret();
-        let device_id = (&self.inner.user).device_id();
+        let device_id = self.user().device_id();
 
         get_confirmations(self.client(), secret, device_id, steamid)
             .err_into()

@@ -7,7 +7,6 @@ use std::fmt::Formatter;
 use std::path::PathBuf;
 
 use derive_more::Deref;
-use downcast_rs::DowncastSync;
 use steam_totp::Secret;
 
 use crate::errors::AuthError;
@@ -32,38 +31,6 @@ pub struct SteamUser<MaFileState> {
     mafile: MaFileState,
 }
 
-pub(crate) trait IsUser: DowncastSync {
-    fn username(&self) -> &str;
-    fn password(&self) -> &str;
-}
-downcast_rs::impl_downcast!(sync IsUser);
-
-impl<T> IsUser for SteamUser<T>
-where
-    T: 'static + Send + Sync,
-{
-    fn username(&self) -> &str {
-        &self.username
-    }
-
-    fn password(&self) -> &str {
-        &self.password
-    }
-}
-
-impl<'a: 'static, T> IsUser for &'a SteamUser<T>
-where
-    T: 'static + Send + Sync,
-{
-    fn username(&self) -> &str {
-        &self.username
-    }
-
-    fn password(&self) -> &str {
-        &self.password
-    }
-}
-
 /// State where the user has a MaFile.
 #[derive(Debug, Clone, Deref)]
 pub struct PresentMaFile(MobileAuthFile);
@@ -71,6 +38,41 @@ pub struct PresentMaFile(MobileAuthFile);
 /// State where the user doesn't has a MaFile.
 #[derive(Debug, Copy, Clone)]
 pub struct AbsentMaFile;
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::AbsentMaFile {}
+    impl Sealed for super::PresentMaFile {}
+}
+
+/// The MaFile states a [`SteamUser`] can be in: [`AbsentMaFile`] or [`PresentMaFile`].
+///
+/// Sealed, so it can't be implemented outside this crate.
+pub trait MaFileState: sealed::Sealed + 'static + Send + Sync + Clone {
+    /// The MaFile of the account's active authenticator, which login uses for its codes and must complete with the
+    /// device ID confirmations need.
+    #[doc(hidden)]
+    fn active_mafile(&self) -> Option<&MobileAuthFile> {
+        None
+    }
+
+    #[doc(hidden)]
+    fn active_mafile_mut(&mut self) -> Option<&mut MobileAuthFile> {
+        None
+    }
+}
+
+impl MaFileState for AbsentMaFile {}
+
+impl MaFileState for PresentMaFile {
+    fn active_mafile(&self) -> Option<&MobileAuthFile> {
+        Some(&self.0)
+    }
+
+    fn active_mafile_mut(&mut self) -> Option<&mut MobileAuthFile> {
+        Some(&mut self.0)
+    }
+}
 
 impl<T> Display for SteamUser<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
@@ -147,25 +149,44 @@ impl SteamUser<AbsentMaFile> {
     #[allow(missing_docs)]
     #[must_use]
     pub fn with_mafile(self, ma_file: MobileAuthFile) -> SteamUser<PresentMaFile> {
+        self.with_mafile_state(PresentMaFile(ma_file))
+    }
+}
+
+impl<M> SteamUser<M> {
+    fn with_mafile_state<N>(self, mafile: N) -> SteamUser<N> {
         SteamUser {
             username: self.username,
             password: self.password,
             parental_code: self.parental_code,
-            mafile: PresentMaFile(ma_file),
+            mafile,
         }
     }
 }
 
-impl SteamUser<PresentMaFile> {
-    pub(crate) fn shared_secret(&self) -> Secret {
-        Secret::from_b64(&self.mafile.shared_secret).unwrap()
+impl<M: MaFileState> SteamUser<M> {
+    pub(crate) fn active_mafile(&self) -> Option<&MobileAuthFile> {
+        self.mafile.active_mafile()
     }
 
+    pub(crate) fn active_mafile_mut(&mut self) -> Option<&mut MobileAuthFile> {
+        self.mafile.active_mafile_mut()
+    }
+}
+
+impl SteamUser<PresentMaFile> {
     pub(crate) fn identity_secret(&self) -> Secret {
         Secret::from_b64(&self.mafile.identity_secret).unwrap()
     }
 
+    /// Only called once authenticated: login fetches a missing device ID from Steam, and fails if it can't.
     pub(crate) fn device_id(&self) -> &str {
-        self.mafile.device_id.as_deref().clone().unwrap()
+        self.mafile
+            .device_id()
+            .expect("Login recovers the device ID, so an authenticated MaFile always has one.")
+    }
+
+    pub(crate) fn mafile(&self) -> &MobileAuthFile {
+        &self.mafile
     }
 }
