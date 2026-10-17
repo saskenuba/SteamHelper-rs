@@ -2,10 +2,10 @@
 
 This is a direct translation to Rust of the original Source 2013 SDK Uniform
 Random Number Generator from Valve, ported to golang by
-[@Step7750](https://github.com/Step7750/UniformRandom "UniformRandom repo")
+[@Step7750](https://github.com/Step7750/UniformRandom "UniformRandom repo").
 
-Thanks Step7750 for taking the time to reverse engineer it, and taking the time
-of how skins work outside of the game.
+Thanks to Step7750 for taking the time to reverse engineer it, and to explain
+how skins work outside of the game.
 
 
 ## Usage

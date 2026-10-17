@@ -12,13 +12,13 @@ albeit useful endpoints of the Steam Web API.
 This library was heavily inspired by [Rust Github API
 Wrapper](https://github.com/github-rs/github-rs).
 
-Internally, Steam-Web-API uses a reqwest client for simplicity's sake, but this
+Internally, tappet uses a reqwest client for simplicity's sake, but this
 may change in the future.
 
-## Missing IDE Auto Completion for endpoints
+## Missing IDE autocompletion for endpoints
 
 Since this library makes heavy use of procedural macros to generate the strongly
-typed bindings, you may not get auto completion for endpoints if your IDE
+typed bindings, you may not get autocompletion for endpoints if your IDE
 doesn't support proc-macro completion.
 
 ## Lacking features
@@ -28,18 +28,18 @@ doesn't support proc-macro completion.
   * Responses for all endpoints;
 
 ## Getting Started
-Add the following to your `Cargo.toml`
+Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tappet = "^0.4"
+tappet = "^0.6"
 
 ```
 
 Or if you want the blocking client:
 
 ```toml
-tappet = { version = "^0.4", default-features = false, features = ["blocking"] }
+tappet = { version = "^0.6", default-features = false, features = ["blocking"] }
 ```
 
 Then in your `lib.rs` or `main.rs` file add:
@@ -61,7 +61,7 @@ use tappet::{Executor, SteamAPI};
 async fn main() -> Result<()> {
     let client = SteamAPI::new(std::env!("STEAM_API"));
 
-    // You choose between the already structured response
+    // You can choose between the already structured response
     let response: tappet::response_types::GetPlayerBansBase = client
         .get()
         .ISteamUser()
@@ -71,7 +71,7 @@ async fn main() -> Result<()> {
 
     // or the raw response from reqwest
     let response: reqwest::Response = client
-         .get()
+        .get()
         .ISteamUser()
         .GetPlayerSummaries(vec!["76561197984835396".to_string()])
         .execute()
@@ -83,8 +83,8 @@ async fn main() -> Result<()> {
 ## Reuse with different bots
 ```rust
 
-// the bot you want to recover pending trade offers
-let bot_api_key: &str = "..."
+// the bot you want to recover pending trade offers from
+let bot_api_key: &str = "...";
 
 let response: GetTradeOffersResponse = api_client
     .get()

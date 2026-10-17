@@ -6,19 +6,19 @@
 
 
 This library provides vital Steam Mobile Authenticator functionality, especially
-useful for building Steam trading bots, but not limited to, managing your Steam
-Account outside of the mobile app, which certainly is bad for accepting
-market/trade confirmations.
+useful for building Steam trading bots, but not limited to them, such as
+managing your Steam Account outside of the mobile app, which is certainly bad at
+accepting market/trade confirmations.
 
-This library aims to be robust across various errors that can happen with Steam
-Network. At this moment, steam-auth implements some retry strategies to log in
-and parental control to make the experience more consistent, while passing up
+This library aims to be robust across various errors that can happen with the Steam
+Network. At this moment, steam-mobile implements some retry strategies for
+logging in and parental control to make the experience more consistent, while passing up
 the chain errors that can't be retried.
 
 ## Usage
 
 You can use the CLI (enabled by default) to generate TOTP codes, add
-Authenticators, and at a later moment list, accept or deny confirmations.
+authenticators, and at a later moment list, accept or deny confirmations.
 
 Most commands need your maFile, which you can pass with `--mafile` or the
 `STEAM_MAFILE` environment variable. The account name is read from the maFile,
@@ -53,18 +53,18 @@ If your maFile is missing its device ID, which some tools leave out,
 `authenticator status` recovers it from Steam and offers to save it.
 
 If you don't want to use the CLI, and are only interested in the library for
-automation, you disable it by adding this to your Cargo.toml:
+automation, you can disable it by adding this to your Cargo.toml:
 
 
 ```toml
 [dependencies.steam-mobile]
-version = "0.2.4"
+version = "^0.6"
 default-features = false
 ```
 
 ## Documentation
 
-Still todo. You can find something if you generate the docs, but they are quite
+Still to do. You can find something if you generate the docs, but they are quite
 outdated at the moment.
 
 # Features
@@ -75,16 +75,20 @@ Below, you can find a list of implemented and planned features:
 
 ### Library ###
 
- * Login to a user account with SteamGuard enabled, captchas, parental control;
- * Generate secrets
+ * Log in to a user account with SteamGuard enabled, captchas and parental control;
+ * Log in with a web session made elsewhere, such as by steam-client, and renew it;
+ * Add, finalize and remove SteamGuard authenticators, with or without a phone number;
+ * Generate secrets;
+ * Recover a maFile's missing device ID;
+ * Register and revoke the Web API key;
  * Accept, deny and fetch mobile confirmations;
 
 ### CLI ###
   * Generate login codes from your maFile;
-  * Add SteamGuard authenticator, with or without a phone number, saving maFile(secrets);
+  * Add a SteamGuard authenticator, with or without a phone number, saving the maFile (secrets);
   * Show SteamGuard status, and recover a maFile's missing device ID;
   * List, accept and deny mobile confirmations, by id, trade offer or kind;
 
 ## Planned
-* Remove SteamGuard from account;
+* Remove SteamGuard from an account through the CLI;
 * Interactive picker for confirmations, and JSON output for scripting;
