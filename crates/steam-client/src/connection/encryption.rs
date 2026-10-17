@@ -1,85 +1,118 @@
-use bytes::{BufMut, BytesMut};
-use steam_crypto::generate_encrypt_request_handshake;
-use steam_language_gen::generated::enums::EMsg;
-use steam_language_gen::generated::messages::{
-    MsgChannelEncryptRequest, MsgChannelEncryptResponse, MsgChannelEncryptResult,
-};
-use steam_language_gen::{HasJobId, SerializableBytes};
+//! Channel encryption handshake.
+//!
+//! Steam sends a `ChannelEncryptRequest` with a random nonce. We answer with a `ChannelEncryptResponse` carrying a new
+//! session key, encrypted with the universe's public key. Steam confirms with a `ChannelEncryptResult`, and every
+//! later message is encrypted with the session key.
+//!
+//! Reference: https://github.com/SteamRE/SteamKit/blob/master/SteamKit2/SteamKit2/Networking/Steam3/EnvelopeEncryptedConnection.cs
 
-use crate::connection::{BytesTx, EncryptionState};
-use crate::errors::PacketError;
+use steam_crypto::generate_encrypt_request_handshake;
+use steam_crypto::SessionKey;
+use steam_language_gen::generated::enums::EResult;
+use steam_language_gen::generated::enums::EUniverse;
+use steam_language_gen::generated::messages::MsgChannelEncryptRequest;
+use steam_language_gen::generated::messages::MsgChannelEncryptResponse;
+use steam_language_gen::generated::messages::MsgChannelEncryptResult;
+use steam_language_gen::SerializableBytes;
+
+use crate::errors::ClientError;
 use crate::messages::message::ClientMessage;
 use crate::messages::packet::PacketMessage;
 use crate::messages::MessageKind;
-use atomic::{Atomic, Ordering};
 
-pub(crate) fn handle_encryption_negotiation(
-    tx: BytesTx,
-    conn_encryption_state: &mut Atomic<EncryptionState>,
-    message: PacketMessage,
-) -> anyhow::Result<()> {
+/// Size of the nonce Steam sends, which selects the HMAC variant of the session encryption.
+const NONCE_SIZE: usize = 16;
 
-    // asddassdj
-    match message.emsg() {
-        EMsg::ChannelEncryptRequest => {
-            let encrypt_response: Box<dyn SerializableBytes> = Box::new(handle_encrypt_request(message));
-
-            println!("req current state: {:?}", conn_encryption_state);
-            conn_encryption_state.swap(EncryptionState::Challenged, Ordering::AcqRel);
-            tx.send(encrypt_response)
-                .map_err::<PacketError, _>(|_| PacketError::Malformed)?;
-        }
-        EMsg::ChannelEncryptResult => {
-            println!("result matched current state: {:?}", conn_encryption_state);
-            conn_encryption_state.swap(EncryptionState::Encrypted, Ordering::AcqRel);
-            handle_encrypt_result(message).unwrap();
-        }
-        _ => unreachable!(),
-    }
-
-    Ok(())
-}
-
-fn handle_encrypt_result(message: PacketMessage) -> anyhow::Result<()> {
-    let incoming_message: ClientMessage<MsgChannelEncryptResult> = ClientMessage::from_packet_message(message);
-    println!("{:?}", incoming_message.body.result);
-
-    Ok(())
-}
-
-pub(crate) fn handle_encrypt_request(message: PacketMessage) -> ClientMessage<MsgChannelEncryptResponse> {
-    let incoming_message: ClientMessage<MsgChannelEncryptRequest> = ClientMessage::from_packet_message(message);
-
-    let connected_universe = incoming_message.body.universe;
-    let protocol_version = incoming_message.body.protocol_version;
-
-    println!(
-        "Got encryption request. Universe: {:?} Protocol Version {:?}",
-        connected_universe, protocol_version
+/// Answers a `ChannelEncryptRequest`. Returns the session key, and the `ChannelEncryptResponse` to send.
+pub(crate) fn answer_encrypt_request(message: PacketMessage) -> Result<(SessionKey, Vec<u8>), ClientError> {
+    let request: ClientMessage<MsgChannelEncryptRequest> = ClientMessage::from_packet_message(message)?;
+    // `body` is a packed struct, so the fields are copied out instead of borrowed.
+    let universe = request.body.universe;
+    let protocol_version = request.body.protocol_version;
+    debug!(
+        "Got encryption request. Universe: {:?} Protocol version: {}",
+        universe, protocol_version
     );
 
-    let mut random_challenge = BytesMut::with_capacity(1024);
-
-    let payload = incoming_message.payload();
-    if incoming_message.payload().len() >= 16 {
-        random_challenge.put(payload);
+    // steam-crypto only has the public universe's key
+    if universe != EUniverse::Public {
+        return Err(ClientError::UnsupportedUniverse(universe));
+    }
+    let nonce = request.payload();
+    if nonce.len() < NONCE_SIZE {
+        warn!(
+            "Encryption request has a nonce of {} bytes, expected {}.",
+            nonce.len(),
+            NONCE_SIZE
+        );
     }
 
-    let (session_keys, encrypted_payload) = generate_encrypt_request_handshake(&*random_challenge);
+    let (session_key, encrypted_payload) = generate_encrypt_request_handshake(nonce)?;
+    let response: ClientMessage<MsgChannelEncryptResponse> = ClientMessage::new().set_payload(&encrypted_payload);
+    Ok((session_key, response.to_bytes()))
+}
 
-    // last message source is now our target.. dunno yet about our source, maybe last message target?
-    let target = incoming_message.wrapped_header.target();
-    let source = incoming_message.wrapped_header.source();
+/// Checks the `ChannelEncryptResult`: from then on the channel is encrypted.
+pub(crate) fn check_encrypt_result(message: PacketMessage) -> Result<(), ClientError> {
+    let message: ClientMessage<MsgChannelEncryptResult> = ClientMessage::from_packet_message(message)?;
+    let result = message.body.result;
+    debug!("Encryption result: {:?}", result);
 
-    let reply_message: ClientMessage<MsgChannelEncryptResponse> = ClientMessage::new()
-        .set_target(target)
-        .set_payload(encrypted_payload.as_ref());
+    match result {
+        EResult::OK => Ok(()),
+        result => Err(ClientError::EncryptionFailed(result)),
+    }
+}
 
-    println!("Incoming message: {}.", incoming_message);
-    println!(
-        "Answering with: {} Payload {:?}.",
-        reply_message,
-        &reply_message.payload()[..128]
-    );
-    reply_message
+#[cfg(test)]
+mod tests {
+    use steam_language_gen::generated::enums::EMsg;
+
+    use super::*;
+
+    /// ChannelEncryptRequest captured from a CM.
+    const CHANNEL_ENCRYPT_REQUEST: [u8; 44] = [
+        23, 5, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 1, 0, 0, 0, 1, 0,
+        0, 0, 66, 126, 251, 245, 88, 122, 243, 123, 102, 163, 11, 54, 151, 145, 31, 54,
+    ];
+
+    fn encrypt_result(result: EResult) -> PacketMessage {
+        let mut raw = (EMsg::ChannelEncryptResult as u32).to_le_bytes().to_vec();
+        raw.extend_from_slice(&[0xFF; 16]);
+        raw.extend_from_slice(&(result as u32).to_le_bytes());
+        PacketMessage::from_raw_bytes(&raw).unwrap()
+    }
+
+    #[test]
+    fn answers_the_encrypt_request() {
+        let request = PacketMessage::from_raw_bytes(&CHANNEL_ENCRYPT_REQUEST).unwrap();
+        let (_key, response) = answer_encrypt_request(request).unwrap();
+
+        let response = PacketMessage::from_raw_bytes(&response).unwrap();
+        assert_eq!(response.emsg(), EMsg::ChannelEncryptResponse);
+        // protocol version and key size, then the encrypted key, its CRC32 and four zero bytes
+        assert_eq!(response.payload()[..8], [1, 0, 0, 0, 128, 0, 0, 0]);
+        assert_eq!(response.payload().len(), 8 + 128 + 4 + 4);
+        assert_eq!(response.payload()[8 + 128 + 4..], [0; 4]);
+    }
+
+    #[test]
+    fn rejects_other_universes() {
+        let mut request = CHANNEL_ENCRYPT_REQUEST;
+        request[24] = EUniverse::Beta as u8;
+        let request = PacketMessage::from_raw_bytes(&request).unwrap();
+        assert!(matches!(
+            answer_encrypt_request(request),
+            Err(ClientError::UnsupportedUniverse(EUniverse::Beta))
+        ));
+    }
+
+    #[test]
+    fn checks_the_encrypt_result() {
+        assert!(check_encrypt_result(encrypt_result(EResult::OK)).is_ok());
+        assert!(matches!(
+            check_encrypt_result(encrypt_result(EResult::Fail)),
+            Err(ClientError::EncryptionFailed(EResult::Fail))
+        ));
+    }
 }

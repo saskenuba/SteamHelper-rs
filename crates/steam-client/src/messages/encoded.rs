@@ -13,15 +13,14 @@
 
 #[cfg(test)]
 mod tests {
-    use steam_language_gen::generated::{
-        enums::{EChatRoomEnterResponse, EMsg},
-        messages::MsgClientChatEnter,
-    };
+    use steam_language_gen::generated::enums::EMsg;
+    use steam_language_gen::generated::messages::MsgClientChatEnter;
 
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use crate::messages::message::ClientMessage;
+    use crate::messages::packet::PacketMessage;
     use crate::messages::MessageKind;
-    use crate::{messages::packet::PacketMessage, utils::str_from_u8_nul_utf8};
+    use crate::utils::str_from_u8_nul_utf8;
 
     /// ChannelEncryptRequest
     fn get_channel_encrypt_request() -> [u8; 44] {
@@ -73,8 +72,8 @@ mod tests {
         let emsg = EMsg::from_raw_message(&packet).unwrap();
         assert_eq!(emsg, EMsg::ClientChatEnter);
 
-        let packet_message = PacketMessage::from_raw_bytes(&packet);
-        let message: ClientMessage<MsgClientChatEnter> = ClientMessage::from_packet_message(packet_message);
+        let packet_message = PacketMessage::from_raw_bytes(&packet).unwrap();
+        let message: ClientMessage<MsgClientChatEnter> = ClientMessage::from_packet_message(packet_message).unwrap();
         let chat_name = str_from_u8_nul_utf8(message.payload()).unwrap();
         assert_eq!("Saxton Hell", chat_name);
     }

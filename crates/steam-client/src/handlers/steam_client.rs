@@ -29,7 +29,7 @@ impl HandlerKind for SteamClient {
 
 #[cfg(test)]
 mod tests {
-    use steam_protobuf::steam::{
+    use steam_protobuf::protobufs::{
         steammessages_base::CMsgProtoBufHeader, steammessages_clientserver_login::CMsgClientLogonResponse,
     };
 

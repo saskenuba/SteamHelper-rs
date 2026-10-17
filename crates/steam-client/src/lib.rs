@@ -1,3 +1,7 @@
+//! Client of the Steam CM (connection manager) protocol, the one the Steam client speaks.
+//!
+//! See [`client::SteamClient`] to connect and log on.
+
 #![allow(dead_code)]
 #![warn(missing_docs, missing_doc_code_examples)]
 #![deny(
@@ -18,6 +22,8 @@ use std::sync::Arc;
 use lazy_static::lazy_static;
 use tappet::SteamAPI;
 
+#[doc(hidden)]
+pub mod __private;
 pub mod client;
 pub mod config;
 pub mod connection;
@@ -30,9 +36,4 @@ pub(crate) mod utils;
 lazy_static! {
     /// Internal Steam web API client
     pub(crate) static ref API_CLIENT: Arc<SteamAPI> = Arc::new(SteamAPI::new("1"));
-}
-
-struct SteamCMClient {
-    steam_id: i32,
-    session_id: i32,
 }

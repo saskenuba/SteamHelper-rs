@@ -9,14 +9,21 @@
 
 use std::fmt::Formatter;
 
-use bytes::BytesMut;
+use bytes::Buf;
+use bytes::Bytes;
 use steam_language_gen::generated::enums::EMsg;
-use steam_language_gen::generated::headers::{ExtendedMessageHeader, MessageHeaders, StandardMessageHeader};
+use steam_language_gen::generated::headers::ExtendedMessageHeader;
+use steam_language_gen::generated::headers::MessageHeaders;
+use steam_language_gen::generated::headers::StandardMessageHeader;
 use steam_language_gen::generated::messages::HasEMsg;
-use steam_language_gen::{DeserializableBytes, MessageBodyExt, MessageHeaderWrapper, SerializableBytes};
-use steam_language_gen::{HasJobId, MessageHeaderExt};
-use steam_protobuf::steam::steammessages_base::CMsgProtoBufHeader;
-use steam_protobuf::Message;
+use steam_language_gen::HasJobId;
+use steam_language_gen::MessageBodyExt;
+use steam_language_gen::MessageError;
+use steam_language_gen::MessageHeaderExt;
+use steam_language_gen::MessageHeaderWrapper;
+use steam_language_gen::SerializableBytes;
+use steam_protobuf::protobuf::Message;
+use steam_protobuf::protobufs::steammessages_base::CMsgProtoBufHeader;
 
 use crate::messages::packet::PacketMessage;
 use crate::messages::MessageKind;
@@ -42,7 +49,7 @@ pub struct ClientMessage<M> {
     /// A client message header wrapped in `MessageHeaderWrapper`.
     pub wrapped_header: MessageHeaderWrapper,
     pub body: M,
-    payload: Vec<u8>,
+    pub(crate) payload: Bytes,
 }
 
 impl<M> ClientMessage<M>
@@ -54,8 +61,21 @@ where
             emsg,
             wrapped_header: MessageHeaderWrapper::Proto(CMsgProtoBufHeader::new()),
             body: M::new(),
-            payload: vec![],
+            payload: Bytes::new(),
         }
+    }
+
+    /// Used to decode incoming messages with a protobuf body.
+    ///
+    /// `bytes` fields of the body share the packet's buffer.
+    pub(crate) fn from_proto_packet(msg: PacketMessage) -> Result<Self, MessageError> {
+        let (emsg, wrapped_header, body) = msg.into_parts();
+        Ok(Self {
+            emsg,
+            body: M::parse_from_tokio_bytes(&body)?,
+            wrapped_header,
+            payload: Bytes::new(),
+        })
     }
 }
 
@@ -74,45 +94,31 @@ impl<M: std::fmt::Debug + HasEMsg> std::fmt::Display for ClientMessage<M> {
 
 impl<M: SerializableBytes> SerializableBytes for ClientMessage<M> {
     fn to_bytes(&self) -> Vec<u8> {
-        let mut output_buffer = BytesMut::with_capacity(1024);
-        let emsg = self.emsg as u32;
+        let mut output_buffer = Vec::with_capacity(1024);
 
-        output_buffer.extend(&emsg.to_le_bytes());
-        output_buffer.extend(self.wrapped_header.to_bytes());
+        self.wrapped_header.write(self.emsg, &mut output_buffer);
         output_buffer.extend(self.body.to_bytes());
-        output_buffer.extend(self.payload.as_slice());
-        output_buffer.freeze().to_vec()
+        output_buffer.extend_from_slice(&self.payload);
+        output_buffer
     }
 }
 
-const DEFAULT_MESSAGE_MAX_SIZE: usize = 1024;
-
-impl<T: MessageBodyExt + HasEMsg + SerializableBytes + DeserializableBytes> ClientMessage<T> {
-    /// Used to decode incoming messages
-    pub(crate) fn from_packet_message(msg: PacketMessage) -> Self {
-        let (header_bytes, message_payload_bytes) = T::split_from_bytes(msg.payload());
-        println!("{:?}", message_payload_bytes);
-        let message = T::from_bytes(header_bytes);
-        let linked_emsg = T::emsg();
+impl<T: MessageBodyExt + HasEMsg + SerializableBytes> ClientMessage<T> {
+    /// Used to decode incoming messages. The payload is a slice of the packet's buffer.
+    pub(crate) fn from_packet_message(msg: PacketMessage) -> Result<Self, MessageError> {
+        let (_, wrapped_header, mut payload) = msg.into_parts();
+        let (message, rest) = T::parse(&payload)?;
+        let body_len = payload.len() - rest.len();
+        payload.advance(body_len);
 
         // since we already have the correct header from the packet message, we dont need to look up
         // for it again..
-        let header_kind = MessageHeaders::header_from_emsg(linked_emsg).unwrap();
-        let header = msg.header();
-        match header_kind {
-            MessageHeaders::Standard => Self {
-                emsg: linked_emsg,
-                wrapped_header: header,
-                body: message,
-                payload: message_payload_bytes.to_vec(),
-            },
-            MessageHeaders::Extended => Self {
-                emsg: linked_emsg,
-                wrapped_header: header,
-                body: message,
-                payload: message_payload_bytes.to_vec(),
-            },
-        }
+        Ok(Self {
+            emsg: T::emsg(),
+            wrapped_header,
+            body: message,
+            payload,
+        })
     }
 
     /// Used to build replies to Steam3
@@ -124,13 +130,13 @@ impl<T: MessageBodyExt + HasEMsg + SerializableBytes + DeserializableBytes> Clie
                 emsg: T::emsg(),
                 wrapped_header: MessageHeaderWrapper::Std(StandardMessageHeader::create()),
                 body: T::create(),
-                payload: Vec::with_capacity(DEFAULT_MESSAGE_MAX_SIZE),
+                payload: Bytes::new(),
             },
             MessageHeaders::Extended => Self {
                 emsg: T::emsg(),
                 wrapped_header: MessageHeaderWrapper::Ext(ExtendedMessageHeader::create()),
                 body: T::create(),
-                payload: Vec::with_capacity(DEFAULT_MESSAGE_MAX_SIZE),
+                payload: Bytes::new(),
             },
         }
     }
@@ -140,7 +146,7 @@ impl<T: MessageBodyExt + HasEMsg + SerializableBytes + DeserializableBytes> Clie
         self
     }
     pub(crate) fn set_payload(mut self, payload: &[u8]) -> Self {
-        self.payload = payload.to_vec();
+        self.payload = Bytes::copy_from_slice(payload);
         self
     }
 }
@@ -153,14 +159,15 @@ impl<C: HasEMsg + SerializableBytes> MessageKind for ClientMessage<C> {
 
 #[cfg(test)]
 mod tests {
-    use steam_language_gen::{
-        generated::{
-            enums::{EMsg, EUniverse},
-            headers::{ExtendedMessageHeader, StandardMessageHeader},
-            messages::{MsgChannelEncryptRequest, MsgClientChatEnter},
-        },
-        DeserializableBytes, MessageHeaderExt, SerializableBytes,
-    };
+    use steam_language_gen::generated::enums::EMsg;
+    use steam_language_gen::generated::enums::EUniverse;
+    use steam_language_gen::generated::headers::StandardMessageHeader;
+    use steam_language_gen::generated::messages::MsgChannelEncryptRequest;
+    use steam_language_gen::generated::messages::MsgClientChatEnter;
+    use steam_language_gen::MessageBodyExt;
+    use steam_language_gen::MessageHeaderExt;
+    use steam_language_gen::MessageHeaderWrapper;
+    use steam_language_gen::SerializableBytes;
 
     /// ChannelEncryptRequest
     /// This has standard header
@@ -203,13 +210,12 @@ mod tests {
     fn deserialize_client_chat_enter() {
         let message = get_client_chat_enter();
 
-        let emsg = EMsg::from_raw_message(&message).unwrap();
-        let message_complete = EMsg::strip_message(&message);
-        let (header, message): (&[u8], &[u8]) = ExtendedMessageHeader::split_from_bytes(message_complete);
+        let (emsg, header, body) = MessageHeaderWrapper::parse(&message).unwrap();
 
         assert_eq!(EMsg::ClientChatEnter, emsg);
+        assert!(matches!(header, MessageHeaderWrapper::Ext(_)));
 
-        let msg = MsgClientChatEnter::from_bytes(message);
+        let (msg, _payload) = MsgClientChatEnter::parse(body).unwrap();
         println!(": {:#?}", msg);
     }
 
@@ -221,17 +227,17 @@ mod tests {
 
         let emsg = EMsg::from_raw_message(&message).unwrap();
         let message_complete = EMsg::strip_message(&message);
-        let (header, message): (&[u8], &[u8]) = StandardMessageHeader::split_from_bytes(message_complete);
+        let (header, message) = StandardMessageHeader::parse(message_complete).unwrap();
         let msgheader_default: StandardMessageHeader = StandardMessageHeader::new();
 
         assert_eq!(EMsg::ChannelEncryptRequest, emsg);
-        assert_eq!(msgheader_default.to_bytes(), header);
-        assert_eq!(StandardMessageHeader::from_bytes(header), msgheader_default);
+        assert_eq!(msgheader_default.to_bytes(), &message_complete[..16]);
+        assert_eq!(header, msgheader_default);
 
         let msg = MsgChannelEncryptRequest {
             protocol_version: 1,
             universe: EUniverse::Public,
         };
-        assert_eq!(MsgChannelEncryptRequest::from_bytes(message), msg);
+        assert_eq!(MsgChannelEncryptRequest::parse(message).unwrap(), (msg, &[][..]));
     }
 }

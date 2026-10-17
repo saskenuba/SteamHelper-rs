@@ -8,297 +8,313 @@
 //!
 //! Apparently, bytes received are in little endian
 
-use std::error::Error;
+use std::collections::VecDeque;
+use std::fmt;
+use std::sync::Arc;
 
-use async_trait::async_trait;
-use bytes::BytesMut;
-use futures::{SinkExt, StreamExt};
-use steam_crypto::SessionKeys;
+use bytes::Bytes;
+use futures::stream::SplitSink;
+use futures::stream::SplitStream;
+use futures::SinkExt;
+use futures::StreamExt;
 use steam_language_gen::generated::enums::EMsg;
-use steam_language_gen::SerializableBytes;
-use tokio::io::AsyncWriteExt;
+use steam_language_gen::generated::EMsgError;
+use steam_language_gen::MessageError;
+use steam_language_gen::MessageHeaderWrapper;
+use steam_protobuf::protobufs::steammessages_base::CMsgMulti;
+use tokio::io::AsyncRead;
+use tokio::io::AsyncWrite;
 use tokio::net::TcpStream;
-use tokio::sync::mpsc;
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
-use tokio_util::codec::{FramedRead, FramedWrite};
+use tokio::sync::Mutex;
+use tokio_util::codec::Framed;
 
-use crate::connection::encryption::handle_encryption_negotiation;
-use crate::errors::ConnectionError;
-use crate::messages::codec::PacketMessageCodec;
+use crate::connection::encryption::answer_encrypt_request;
+use crate::connection::encryption::check_encrypt_result;
+use crate::errors::ClientError;
+use crate::messages::codec::EncryptedCodec;
+use crate::messages::codec::FrameCodec;
 use crate::messages::message::ClientMessage;
-use crate::{errors::PacketError, messages::packet::PacketMessage};
-use atomic::{Atomic, Ordering};
+use crate::messages::multi::unpack_multi;
+use crate::messages::packet::PacketMessage;
 
 pub(crate) mod encryption;
 
-const PACKET_MAGIC_BYTES: &[u8] = br#"VT01"#;
+/// Clears the protobuf flag of a raw EMsg.
+const EMSG_MASK: u32 = 0x7FFF_FFFF;
 
-/// This should be an abstraction over low-level socket handlers and is not to be used directly.
-/// [SteamClient] is used for binding and connecting.
-#[derive(Debug)]
-pub(crate) struct SteamConnection<S> {
-    /// Stream of data to Steam Content server. May be TCP or Websocket.
-    stream: S,
-    /// Address to which the connection is bound.
-    endpoint: String,
-    /// Current encryption state
-    state: Atomic<EncryptionState>,
-    /// Populated after the initial handshake with Steam
-    session_keys: Option<SessionKeys>,
+/// The writing half of an encrypted connection. Shared, so the heartbeat can write while the client reads.
+pub(crate) type Sink<T> = Arc<Mutex<SplitSink<Framed<T, EncryptedCodec>, Vec<u8>>>>;
+
+/// Encrypted connection to a CM server.
+///
+/// Reads whole messages, and skips the ones it can't parse, such as an `EMsg` we don't know, instead of failing.
+/// `Multi` messages are unpacked into the messages they carry.
+///
+/// Reading doesn't allocate, past growing the buffers: messages are slices of the frames read, decrypted in place.
+/// Unzipping a `Multi` allocates its buffer.
+pub(crate) struct Connection<T = TcpStream> {
+    sink: Sink<T>,
+    stream: SplitStream<Framed<T, EncryptedCodec>>,
+    /// Packets unpacked from a `Multi`, not read yet.
+    pending: VecDeque<Bytes>,
 }
 
-impl<S> SteamConnection<S> {
-    pub fn change_encryption_state(&self, new_state: EncryptionState) {
-        self.state.swap(new_state, Ordering::AcqRel);
+impl Connection<TcpStream> {
+    /// Connects over TCP to `endpoint` (`ip:port`), and encrypts the channel.
+    pub(crate) async fn connect(endpoint: &str) -> Result<Self, ClientError> {
+        debug!("Connecting to {}", endpoint);
+        let stream = TcpStream::connect(endpoint).await?;
+        Self::encrypt(Framed::new(stream, FrameCodec)).await
     }
 }
 
-#[async_trait]
-trait Connection<S> {
-    async fn new_connection(ip_addr: &str) -> Result<SteamConnection<S>, Box<dyn Error>>;
-    async fn read_packets(&mut self) -> Result<PacketMessage, PacketError>;
-    async fn write_packets(&mut self, data: &[u8]) -> Result<(), Box<dyn Error>>;
-}
+impl<T> Connection<T>
+where
+    T: AsyncRead + AsyncWrite + Send + Unpin + 'static,
+{
+    /// Runs the encryption handshake on a connection that was just opened.
+    async fn encrypt(mut framed: Framed<T, FrameCodec>) -> Result<Self, ClientError> {
+        let request = read_plain(&mut framed, EMsg::ChannelEncryptRequest).await?;
+        let (session_key, response) = answer_encrypt_request(request)?;
+        framed.send(response).await?;
 
-pub(crate) type PacketTx = UnboundedSender<PacketMessage>;
-pub(crate) type MessageTx<T> = UnboundedSender<ClientMessage<T>>;
+        let result = read_plain(&mut framed, EMsg::ChannelEncryptResult).await?;
+        check_encrypt_result(result)?;
 
-pub(crate) type DynBytes = Box<dyn SerializableBytes>;
-pub(crate) type BytesTx = UnboundedSender<Box<dyn SerializableBytes + 'static>>;
-
-#[cfg(not(feature = "websockets"))]
-impl SteamConnection<TcpStream> {
-    async fn main_loop(mut self) -> Result<(), ConnectionError> {
-        let (sender, mut receiver): (UnboundedSender<DynBytes>, UnboundedReceiver<DynBytes>) =
-            mpsc::unbounded_channel();
-
-        let connection_state = &mut self.state;
-        let (stream_rx, stream_tx) = self.stream.into_split();
-
-        let mut framed_read = FramedRead::new(stream_rx, PacketMessageCodec::default());
-        let mut framed_write = FramedWrite::new(stream_tx, PacketMessageCodec::default());
-
-        tokio::spawn(async move {
-            if let Some(mes) = receiver.recv().await {
-                let message: Vec<u8> = mes.to_bytes();
-                framed_write.send(message).await.unwrap();
-            }
-        });
-
-        while let Some(packet_message) = framed_read.next().await {
-            let packet_message = packet_message.unwrap();
-
-            match packet_message.emsg() {
-                EMsg::ChannelEncryptRequest | EMsg::ChannelEncryptResponse | EMsg::ChannelEncryptResult => {
-                    handle_encryption_negotiation(sender.clone(), connection_state, packet_message).unwrap();
-                }
-                _ => {
-                    unimplemented!()
-                }
-            };
-        }
-
-        Ok(())
+        // anything already read after the result stays buffered, and is decrypted with the new codec
+        Ok(Self::from_encrypted(
+            framed.map_codec(|_| EncryptedCodec::new(session_key)),
+        ))
     }
-}
 
-#[cfg(not(feature = "websockets"))]
-#[async_trait]
-impl Connection<TcpStream> for SteamConnection<TcpStream> {
-    /// Opens a tcp stream to specified IP
-    async fn new_connection(ip_addr: &str) -> Result<SteamConnection<TcpStream>, Box<dyn Error>> {
-        trace!("Connecting to ip: {}", &ip_addr);
-
-        let stream = TcpStream::connect(ip_addr).await?;
-
-        Ok(SteamConnection {
+    fn from_encrypted(framed: Framed<T, EncryptedCodec>) -> Self {
+        let (sink, stream) = framed.split();
+        Self {
+            sink: Arc::new(Mutex::new(sink)),
             stream,
-            endpoint: ip_addr.to_string(),
-            state: Atomic::new(EncryptionState::Disconnected),
-            session_keys: None,
-        })
-    }
-
-    #[inline]
-    async fn read_packets(&mut self) -> Result<PacketMessage, PacketError> {
-        let mut framed_stream = FramedRead::new(&mut self.stream, PacketMessageCodec::default());
-        Ok(framed_stream.next().await.unwrap().unwrap())
-    }
-
-    #[inline]
-    async fn write_packets(&mut self, data: &[u8]) -> Result<(), Box<dyn Error>> {
-        let mut output_buffer = BytesMut::with_capacity(1024);
-
-        trace!("payload size: {} ", data.len());
-
-        output_buffer.extend_from_slice(&(data.len() as u32).to_le_bytes());
-        output_buffer.extend_from_slice(PACKET_MAGIC_BYTES);
-        output_buffer.extend_from_slice(data);
-        let output_buffer = output_buffer.freeze();
-
-        trace!("Writing {} bytes of data to stream..", output_buffer.len());
-        trace!("Payload bytes: {:?}", output_buffer);
-
-        let write_result = self.stream.write(&output_buffer).await?;
-        trace!("write result: {}", write_result);
-        Ok(())
-    }
-}
-
-#[cfg(feature = "websockets")]
-mod connection_method {
-    use tokio_tls::TlsStream;
-    use tokio_tungstenite::{connect_async, stream::Stream, WebSocketStream};
-
-    use super::*;
-
-    type Ws = WebSocketStream<Stream<TcpStream, TlsStream<TcpStream>>>;
-
-    #[async_trait]
-    impl Connection<Ws> for SteamConnection<Ws> {
-        async fn new_connection(ws_url: &str) -> Result<SteamConnection<Ws>, Box<dyn Error>> {
-            let formatted_ws_url = format!("wss://{}/cmsocket/", ws_url);
-            debug!("Connecting to addr: {}", formatted_ws_url);
-
-            let (stream, _) = connect_async(&formatted_ws_url).await?;
-
-            Ok(SteamConnection {
-                stream,
-                endpoint: formatted_ws_url,
-                state: EncryptionState::Disconnected,
-            })
-        }
-        #[inline]
-        async fn read_packets(&mut self) -> Result<Vec<u8>, Box<dyn Error>> {
-            let mut data_len: [u8; 4] = [0; 4];
-            self.stream.get_mut().read_exact(&mut data_len).await?;
-
-            let mut packet_magic: [u8; 4] = [0; 4];
-            self.stream.get_mut().read_exact(&mut packet_magic).await?;
-
-            if packet_magic != PACKET_MAGIC_BYTES {
-                log::error!("Could not find magic packet on read.");
-            }
-
-            let mut incoming_data = BytesMut::with_capacity(1024);
-            self.stream.get_mut().read_buf(&mut incoming_data).await?;
-
-            // sanity check
-            debug!("data length: {}", u32::from_le_bytes(data_len));
-            trace!("data: {:?}", incoming_data);
-
-            Ok(incoming_data.to_vec())
-        }
-
-        #[inline]
-        async fn write_packets(&mut self, data: &[u8]) -> Result<(), Box<dyn Error>> {
-            unimplemented!()
+            pending: VecDeque::new(),
         }
     }
-}
 
-#[derive(Debug, Copy, Clone)]
-/// Represents the current state of encryption of the connection.
-/// Steam is always encrypted, with the exception when the connection is starting.
-pub(crate) enum EncryptionState {
-    /// After initial connection is established, Steam requests to encrypt messages
-    /// through a [EMsg::ChannelEncryptRequest]
-    Connected,
-    /// We are challenged after Steam returns a [EMsg::ChannelEncryptResult].
+    /// The writing half, to write from another task.
+    pub(crate) fn sink(&self) -> Sink<T> {
+        self.sink.clone()
+    }
+
+    /// Encrypts and sends a serialized message.
+    pub(crate) async fn send(&self, message: Vec<u8>) -> Result<(), ClientError> {
+        send(&self.sink, message).await
+    }
+
+    /// Reads the next message we can parse.
     ///
-    /// After checking the result for a positive outcome, we should be `Encrypted`, else we get disconnected,
-    /// and try again.
-    Challenged,
-    /// We are encrypted and there is nothing left to do.
-    Encrypted,
-    /// State only after logOff or if encryption fails.
-    Disconnected,
+    /// Fails if the connection was closed, or a frame could not be read or decrypted. Messages that can't be parsed
+    /// are logged and skipped.
+    pub(crate) async fn recv(&mut self) -> Result<PacketMessage, ClientError> {
+        loop {
+            let raw = match self.pending.pop_front() {
+                Some(raw) => raw,
+                None => match self.stream.next().await {
+                    Some(frame) => frame?,
+                    None => return Err(ClientError::Dropped),
+                },
+            };
+
+            if let Some(packet) = parse(raw, &mut self.pending) {
+                return Ok(packet);
+            }
+        }
+    }
+}
+
+impl<T> fmt::Debug for Connection<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Connection")
+            .field("pending", &self.pending.len())
+            .finish_non_exhaustive()
+    }
+}
+
+/// Encrypts and sends a serialized message.
+pub(crate) async fn send<T>(sink: &Sink<T>, message: Vec<u8>) -> Result<(), ClientError>
+where
+    T: AsyncWrite + Unpin,
+{
+    sink.lock().await.send(message).await?;
+    Ok(())
+}
+
+/// Reads plain messages until `expected`, during the encryption handshake.
+async fn read_plain<T>(framed: &mut Framed<T, FrameCodec>, expected: EMsg) -> Result<PacketMessage, ClientError>
+where
+    T: AsyncRead + AsyncWrite + Unpin,
+{
+    loop {
+        let frame = framed.next().await.ok_or(ClientError::Dropped)??;
+        let packet = PacketMessage::from_bytes(frame.freeze())?;
+        if packet.emsg() == expected {
+            return Ok(packet);
+        }
+        debug!(
+            "Skipping {:?} during channel setup, waiting for {:?}",
+            packet.emsg(),
+            expected
+        );
+    }
+}
+
+/// Parses a raw message. A `Multi` is unpacked into `pending`, and messages that can't be parsed are logged.
+///
+/// Returns the message, unless it was one of those.
+pub(crate) fn parse(raw: Bytes, pending: &mut VecDeque<Bytes>) -> Option<PacketMessage> {
+    // for the log, as parsing consumes `raw`
+    let raw_len = raw.len();
+    let raw_emsg = raw
+        .get(..4)
+        .map(|emsg| u32::from_le_bytes([emsg[0], emsg[1], emsg[2], emsg[3]]));
+
+    let packet = match PacketMessage::from_bytes(raw) {
+        Ok(packet) => packet,
+        Err(MessageError::EMsg(EMsgError::ValueNotFound(_))) => {
+            let emsg = raw_emsg.unwrap_or_default() & EMSG_MASK;
+            debug!("Skipping a message with unknown EMsg {} ({} bytes)", emsg, raw_len);
+            return None;
+        }
+        Err(error) => {
+            warn!("Skipping a message that could not be parsed: {}", error);
+            return None;
+        }
+    };
+
+    if packet.emsg() != EMsg::Multi {
+        trace!("Received {:?}", packet.emsg());
+        return Some(packet);
+    }
+    if !matches!(packet.header(), MessageHeaderWrapper::Proto(_)) {
+        warn!("Skipping a Multi without a protobuf header");
+        return None;
+    }
+
+    let multi = match ClientMessage::<CMsgMulti>::from_proto_packet(packet) {
+        Ok(multi) => multi.body,
+        Err(error) => {
+            warn!("Skipping a Multi that could not be parsed: {}", error);
+            return None;
+        }
+    };
+    match unpack_multi(multi, pending) {
+        Ok(unpacked) => trace!("Unpacked {} messages from a Multi", unpacked),
+        Err(error) => warn!("Skipping a Multi that could not be unpacked: {}", error),
+    }
+    None
 }
 
 #[cfg(test)]
 mod tests {
-    use env_logger::Builder;
-    use log::LevelFilter;
-    use steam_language_gen::generated::enums::EMsg;
+    use std::io::Write;
+
+    use bytes::BytesMut;
+    use flate2::write::GzEncoder;
+    use flate2::Compression;
+    use steam_crypto::SessionKey;
     use steam_language_gen::SerializableBytes;
+    use steam_protobuf::protobufs::steammessages_clientserver_login::CMsgClientHeartBeat;
+    use steam_protobuf::protobufs::steammessages_clientserver_login::CMsgClientLoggedOff;
+    use tokio::io::duplex;
+    use tokio::io::AsyncWriteExt;
+    use tokio::io::DuplexStream;
+    use tokio_util::codec::Encoder;
 
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
-    use crate::connection::encryption::handle_encrypt_request;
-    use crate::content_manager::dump_tcp_servers;
 
-    fn init() {
-        let _ = Builder::from_default_env()
-            .filter_module("steam_api", LevelFilter::Trace)
-            .is_test(true)
-            .try_init();
+    fn key() -> SessionKey {
+        SessionKey::from([3; 32])
+    }
+
+    fn proto<M: steam_protobuf::protobuf::Message>(emsg: EMsg, body: M) -> Vec<u8> {
+        let mut message = ClientMessage::<M>::new_proto(emsg);
+        message.body = body;
+        message.to_bytes()
+    }
+
+    fn multi(packets: &[Vec<u8>], gzip: bool) -> Vec<u8> {
+        let mut body = vec![];
+        for packet in packets {
+            body.extend_from_slice(&(packet.len() as u32).to_le_bytes());
+            body.extend_from_slice(packet);
+        }
+        let mut multi = CMsgMulti::new();
+        if gzip {
+            multi.set_size_unzipped(body.len() as u32);
+            let mut encoder = GzEncoder::new(vec![], Compression::default());
+            encoder.write_all(&body).unwrap();
+            body = encoder.finish().unwrap();
+        }
+        multi.set_message_body(body.into());
+        proto(EMsg::Multi, multi)
+    }
+
+    fn logged_off() -> Vec<u8> {
+        let mut body = CMsgClientLoggedOff::new();
+        body.set_eresult(1);
+        proto(EMsg::ClientLoggedOff, body)
+    }
+
+    fn unknown_emsg() -> Vec<u8> {
+        let mut raw = (0x7FFF_0000u32 | 0x8000_0000).to_le_bytes().to_vec();
+        raw.extend_from_slice(&[0, 0, 0, 0]);
+        raw
+    }
+
+    /// A connection already encrypted with `key()`, and the server's end of it.
+    fn connection() -> (Connection<DuplexStream>, DuplexStream) {
+        let (client, server) = duplex(64 * 1024);
+        (
+            Connection::from_encrypted(Framed::new(client, EncryptedCodec::new(key()))),
+            server,
+        )
+    }
+
+    async fn write_encrypted(server: &mut DuplexStream, messages: &[Vec<u8>]) {
+        let mut frames = BytesMut::new();
+        for message in messages {
+            EncryptedCodec::new(key()).encode(message.clone(), &mut frames).unwrap();
+        }
+        server.write_all(&frames).await.unwrap();
     }
 
     #[tokio::test]
-    #[cfg(not(feature = "websockets"))]
-    async fn connect_to_web_server() {
-        init();
+    async fn skips_unknown_messages_and_unpacks_multis() {
+        let (mut connection, mut server) = connection();
+        let heartbeat = proto(EMsg::ClientHeartBeat, CMsgClientHeartBeat::new());
 
-        let dumped_cm_servers = dump_tcp_servers().await.unwrap();
-        let steam_connection = SteamConnection::new_connection(&dumped_cm_servers[0]).await;
-        assert!(steam_connection.is_ok());
-    }
+        write_encrypted(
+            &mut server,
+            &[
+                unknown_emsg(),
+                vec![1, 2],
+                multi(
+                    &[heartbeat.clone(), unknown_emsg(), multi(&[logged_off()], false)],
+                    true,
+                ),
+                heartbeat,
+            ],
+        )
+        .await;
+        drop(server);
 
-    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-    #[cfg(not(feature = "websockets"))]
-    async fn main_loop() {
-        let dumped_cm_servers = dump_tcp_servers().await.unwrap();
-        let steam_connection = SteamConnection::new_connection(&dumped_cm_servers[0]).await.unwrap();
-        steam_connection.main_loop().await.unwrap()
+        assert_eq!(connection.recv().await.unwrap().emsg(), EMsg::ClientHeartBeat);
+        assert_eq!(connection.recv().await.unwrap().emsg(), EMsg::ClientLoggedOff);
+        assert_eq!(connection.recv().await.unwrap().emsg(), EMsg::ClientHeartBeat);
+        assert!(matches!(connection.recv().await, Err(ClientError::Dropped)));
     }
 
     #[tokio::test]
-    #[cfg(not(feature = "websockets"))]
-    async fn test_spawn() {
-        let dumped_cm_servers = dump_tcp_servers().await.unwrap();
-        let mut steam_connection = SteamConnection::new_connection(&dumped_cm_servers[0]).await.unwrap();
+    async fn sends_encrypted_frames() {
+        let (connection, mut server) = connection();
+        connection.send(logged_off()).await.unwrap();
 
-        let packet_message = steam_connection.read_packets().await.unwrap();
-        assert_eq!(packet_message.emsg(), EMsg::ChannelEncryptRequest);
-
-        let answer = handle_encrypt_request(packet_message).to_bytes();
-        steam_connection.write_packets(&answer).await.unwrap();
-        let data = steam_connection.read_packets().await.unwrap();
-        assert_eq!(data.emsg(), EMsg::ChannelEncryptResult);
-        // steam_connection.main_loop().await.unwrap()
-    }
-
-    // #[tokio::test()]
-    // #[cfg(not(feature = "websockets"))]
-    // async fn answer_encrypt_request() {
-    // init();
-    //
-    // let cm_servers = CmServerSvList::fetch_servers(env!("STEAM_API")).await;
-    // let dumped_cm_servers = cm_servers.unwrap().dump_tcp_servers();
-    //
-    // let mut steam_connection: SteamConnection<TcpStream> =
-    // SteamConnection::new_connection(&dumped_cm_servers[0]).await.unwrap(); let data =
-    // steam_connection.read_packets().await.unwrap(); let message = EMsg::from_raw_message(&data);
-    //
-    // assert_eq!(message.unwrap(), EMsg::ChannelEncryptRequest);
-    //
-    //
-    // let answer = handle_encrypt_request(PacketMessage::from_rawdata(&data));
-    // steam_connection.write_packets(answer.as_slice()).await.unwrap();
-    // let data = steam_connection.read_packets().await.unwrap();
-    // let message = EMsg::from_raw_message(&data).unwrap();
-    // assert_eq!(message, EMsg::ChannelEncryptResult);
-    // }
-
-    #[tokio::test(threaded_scheduler)]
-    #[cfg(feature = "websockets")]
-    async fn connect_to_ws_server() {
-        init();
-
-        let get_results = CmServerSvList::fetch_servers("1").await;
-        let fetched_servers = get_results.unwrap().dump_ws_servers();
-
-        let steam_connection = SteamConnection::new_connection(&fetched_servers[0]).await;
-        assert!(steam_connection.is_ok())
+        let mut server = Framed::new(&mut server, EncryptedCodec::new(key()));
+        assert_eq!(server.next().await.unwrap().unwrap(), logged_off());
     }
 }
