@@ -1,6 +1,6 @@
 [package]
 name = "steam-language"
-version = "1.0.0"
+version = "1.1.0"
 authors = ["Martin <martin@hotmail.com.br>"]
 edition = "2018"
 license = "MIT"
@@ -31,7 +31,7 @@ thiserror = { version = "2", optional = true }
 
 [dependencies.steam-language-gen-derive]
 path = "../steam-language-gen-derive"
-version = "^0.1"
+version = "^0.2.0"
 optional = true
 
 [package.metadata.docs.rs]

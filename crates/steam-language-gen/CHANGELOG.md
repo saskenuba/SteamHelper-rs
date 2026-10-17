@@ -5,6 +5,103 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.0 (2026-10-17)
+
+### New Features
+
+ - <csr-id-3caf1f1803df29d5df382cb77570afca0f2a2037/> parse message headers without panicking
+   Protobuf headers were split at size_of::<CMsgProtoBufHeader>() (480
+   bytes) instead of reading their u32 length prefix, and EMsg parsing
+   didn't mask the protobuf flag, so every protobuf packet failed. Short
+   input panicked everywhere.
+   
+   - MessageHeaderWrapper::parse(packet) returns the EMsg, the header and
+     the body; write(emsg, out) sets the protobuf flag and length prefix
+   - MessageHeaderExt::parse and MessageBodyExt::parse return the parsed
+     value and the rest, or a MessageError. The derives read through
+     bincode::deserialize_from, so they consume exactly what bincode reads
+   - removed DeserializableBytes, split_from_bytes and the wrapper's
+     SerializableBytes impl
+   - ExtendedMessageHeader header_size defaults to 36, as in SteamKit
+   - emsg: EMsg::split_raw; from_raw_message masks the protobuf flag and
+     errors on short input; EMsgError implements Display and Error
+   - tests with captured packets, round trips and short input
+   
+   The `messages` feature is unstable, so its API changes here are not
+   semver breaking for steam-language. steam-language-gen-derive and
+   steam-language-gen change incompatibly and need a minor (0.x) bump.
+ - <csr-id-b293671e69a3bb751ab8d9d3f75fc1d474f2861d/> add steam-language with enums, emsg and messages features
+   Moves the generated Steam language out of steam-language-gen into one
+   crate, split by features so each client only builds what it uses:
+   
+   - no features: enums (EResult, EAccountType, EUniverse, ...), with only
+     serde, bitflags and num-derive as dependencies
+   - emsg: EMsg message ids and their packet helpers
+   - messages: headers, Msg* structs and their traits, with steam-protobuf
+     and bincode. Unstable: not covered by semver.
+   
+   steam-language-gen keeps the generator and re-exports steam-language
+   under the previous paths, so existing code keeps compiling. num-derive
+   is now 0.4, which removes 130 non-local impl warnings.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release over the course of 5 calendar days.
+ - 983 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Parse message headers without panicking ([`3caf1f1`](https://github.com/saskenuba/SteamHelper-rs/commit/3caf1f1803df29d5df382cb77570afca0f2a2037))
+    - Add steam-language with enums, emsg and messages features ([`b293671`](https://github.com/saskenuba/SteamHelper-rs/commit/b293671e69a3bb751ab8d9d3f75fc1d474f2861d))
+</details>
+
+## 0.1.4 (2024-02-07)
+
+### Bug Fixes
+
+ - <csr-id-cf93aa068e3c8828921d02b44ebe33610ce56600/> adjusted steam-language-gen to protobuf trait rename
+ - <csr-id-1f04859fec6328ce5d19af878b98fcb6ac97f053/> adjusted steam-language-gen to new generated protobufs
+
+### Other
+
+ - <csr-id-c6d4c46661dfd4d1ba1397b2cd45980ceec6345c/> language-gen 0.1.4
+ - <csr-id-ea700e7d188525b08e1ad3ce8f35f1768ff9e494/> prepared changelog for release
+ - <csr-id-8e82b3df552648eccad3e3d572c3215bd7e16c86/> bumped steamkit submodule
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 7 commits contributed to the release over the course of 27 calendar days.
+ - 631 days passed between releases.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Language-gen 0.1.4 ([`c6d4c46`](https://github.com/saskenuba/SteamHelper-rs/commit/c6d4c46661dfd4d1ba1397b2cd45980ceec6345c))
+    - Release steam-protobuf v0.2.0, steam-language-gen v0.1.3, steam-mobile v0.4.0 ([`89c10fa`](https://github.com/saskenuba/SteamHelper-rs/commit/89c10fa25974961bb4e90ad2167d94e95c3a8cf8))
+    - Prepared changelog for release ([`ea700e7`](https://github.com/saskenuba/SteamHelper-rs/commit/ea700e7d188525b08e1ad3ce8f35f1768ff9e494))
+    - Adjusted steam-language-gen to protobuf trait rename ([`cf93aa0`](https://github.com/saskenuba/SteamHelper-rs/commit/cf93aa068e3c8828921d02b44ebe33610ce56600))
+    - Adjusted steam-language-gen to new generated protobufs ([`1f04859`](https://github.com/saskenuba/SteamHelper-rs/commit/1f04859fec6328ce5d19af878b98fcb6ac97f053))
+    - Merge pull request #15 from saskenuba/steam-mobile-login-revamp ([`d6cf2ef`](https://github.com/saskenuba/SteamHelper-rs/commit/d6cf2ef64b3efbd95dbd7d8de738c2a7d956ff2d))
+    - Bumped steamkit submodule ([`8e82b3d`](https://github.com/saskenuba/SteamHelper-rs/commit/8e82b3df552648eccad3e3d572c3215bd7e16c86))
+</details>
+
 ## 0.1.3 (2024-01-23)
 
 <csr-id-8e82b3df552648eccad3e3d572c3215bd7e16c86/>
@@ -22,29 +119,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - <csr-id-ea700e7d188525b08e1ad3ce8f35f1768ff9e494/> prepared changelog for release
 
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 5 commits contributed to the release over the course of 12 calendar days.
- - 615 days passed between releases.
- - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' were seen in commit messages
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - Prepared changelog for release ([`ea700e7`](https://github.com/saskenuba/SteamHelper-rs/commit/ea700e7d188525b08e1ad3ce8f35f1768ff9e494))
-    - Adjusted steam-language-gen to protobuf trait rename ([`cf93aa0`](https://github.com/saskenuba/SteamHelper-rs/commit/cf93aa068e3c8828921d02b44ebe33610ce56600))
-    - Adjusted steam-language-gen to new generated protobufs ([`1f04859`](https://github.com/saskenuba/SteamHelper-rs/commit/1f04859fec6328ce5d19af878b98fcb6ac97f053))
-    - Merge pull request #15 from saskenuba/steam-mobile-login-revamp ([`d6cf2ef`](https://github.com/saskenuba/SteamHelper-rs/commit/d6cf2ef64b3efbd95dbd7d8de738c2a7d956ff2d))
-    - Bumped steamkit submodule ([`8e82b3d`](https://github.com/saskenuba/SteamHelper-rs/commit/8e82b3df552648eccad3e3d572c3215bd7e16c86))
-</details>
-
 ## 0.1.2 (2022-05-17)
 
 <csr-id-843013c43386a837de6b816f65ab2e520677bab4/>
@@ -53,29 +127,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-690b0d1df9400aa7e23cd613046c6f88f93cb7a9/>
 <csr-id-7e079927b99f2078f455fa1d85be28465846e9b7/>
 
-### Refactor
-
- - <csr-id-843013c43386a837de6b816f65ab2e520677bab4/> renamed traits, impl serializablebytes for proto..
-   dropped downcast-rs dep
- - <csr-id-d1665f62bc81693f5055cd323ca8f8790ca93c63/> enums now implement copy
-
- - <csr-id-e3b425dafa7bf75ab287c23b365bf7a151eb2361/> added feature gate for generator deps
-
-
 ### Documentation
 
- - <csr-id-60e3691a305ec8cd3f32fdf5ed68f6b28185b42d/> added CHANGELOG.md, prepare smart-release
  - <csr-id-fb87360214c2f6d1319f467b82b27706ae157111/> added CHANGELOG.md, modified manifest versions
    We are now using cargo-smart-release to organize releases among with
    conventional commits;
-
-### Other
-
- - <csr-id-690b0d1df9400aa7e23cd613046c6f88f93cb7a9/> submodules
- - <csr-id-7e079927b99f2078f455fa1d85be28465846e9b7/> add licenses to crates,
-   * Removed unused deps on steam-language-gen;
-   
-   Preparing for release on crates.io
 
 ### Bug Fixes
 
@@ -85,8 +141,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 31 commits contributed to the release over the course of 921 calendar days.
- - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 30 commits contributed to the release over the course of 921 calendar days.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -114,7 +170,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Fixup! fix(steam-web-api): added version for local deps ([`72effa1`](https://github.com/saskenuba/SteamHelper-rs/commit/72effa1e4d9d32f70250dda3f8b6941c99ddea07))
     - Added feature gate for generator deps ([`e3b425d`](https://github.com/saskenuba/SteamHelper-rs/commit/e3b425dafa7bf75ab287c23b365bf7a151eb2361))
     - Minor fix(steam-language-gen): refactored enums, removed deprecated ([`8fce1c7`](https://github.com/saskenuba/SteamHelper-rs/commit/8fce1c7b32661ce4806fab97c836eb6fd7a3a84a))
-    - Add licenses to crates, ([`7e07992`](https://github.com/saskenuba/SteamHelper-rs/commit/7e079927b99f2078f455fa1d85be28465846e9b7))
     - (steam-language-gen) bumped some old enums with serde_repr ([`34db07d`](https://github.com/saskenuba/SteamHelper-rs/commit/34db07d2ec084750c5f42a2c8990353ed597c3fa))
     - Big refactor and important bug fix. check log for details + ([`9fc8a4e`](https://github.com/saskenuba/SteamHelper-rs/commit/9fc8a4e2686ffc6d5cff86822f07a73d2c8f12fa))
     - Parser now emit messages with custom attr macro containing emsg, + ([`101b688`](https://github.com/saskenuba/SteamHelper-rs/commit/101b688cb8b9a0eb5105ccfc9d465b8c3951a9eb))
