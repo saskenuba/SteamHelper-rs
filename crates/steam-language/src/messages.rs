@@ -1,11 +1,14 @@
 use derive_new::new;
-use serde::{Deserialize, Serialize};
-
-use steam_language_gen_derive::{linked_emsg, SteamMsg};
+use serde::Deserialize;
+use serde::Serialize;
+use steam_language_gen_derive::linked_emsg;
+use steam_language_gen_derive::SteamMsg;
 
 use crate::emsg::EMsg;
 use crate::enums::*;
-use crate::{DeserializableBytes, MessageBodyExt, SerializableBytes};
+use crate::MessageBodyExt;
+use crate::MessageError;
+use crate::SerializableBytes;
 
 pub trait HasEMsg {
     /// Get the linked EMsg variant from Steam Messages.
@@ -134,11 +137,11 @@ pub struct MsgClientRequestedClientStats {
 }
 
 //#[derive(Clone, Copy, Eq, PartialEq, Debug, Serialize, Deserialize, SteamMsg)]
-//pub struct MsgClientP2PIntroducerMessage {
-//	steam_id: u64,
-//	routing_type_: EIntroducerRouting,
-//	data: [u8; 1450],
-//	data_len: u32,
+// pub struct MsgClientP2PIntroducerMessage {
+// 	steam_id: u64,
+// 	routing_type_: EIntroducerRouting,
+// 	data: [u8; 1450],
+// 	data_len: u32,
 //}
 
 #[derive(Clone, Copy, Eq, PartialEq, Debug, Serialize, Deserialize, SteamMsg)]
@@ -265,7 +268,6 @@ pub struct MsgClientJoinChat {
     steam_id_chat: u64,
     is_voice_speaker: u8,
 }
-
 
 #[linked_emsg(EMsg::ClientChatEnter)]
 #[derive(new, Clone, Copy, Eq, PartialEq, Debug, Serialize, Deserialize, SteamMsg)]

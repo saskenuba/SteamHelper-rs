@@ -1,9 +1,11 @@
 //! [`EMsg`] message ids, and helpers to read them from raw packets.
 
 use arrayref::array_ref;
-use num_derive::{FromPrimitive, ToPrimitive};
+use num_derive::FromPrimitive;
+use num_derive::ToPrimitive;
 use num_traits::FromPrimitive;
-use serde_repr::{Deserialize_repr, Serialize_repr};
+use serde_repr::Deserialize_repr;
+use serde_repr::Serialize_repr;
 
 #[derive(FromPrimitive, ToPrimitive, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr)]
 #[repr(i32)]
@@ -362,11 +364,17 @@ pub enum EMsg {
     ClientRichPresenceInfo = 7503,
 }
 
-const PROTOMASK: u32 = 0x8000_0000;
+/// Set on the raw EMsg of messages with a protobuf header.
+pub(crate) const PROTOMASK: u32 = 0x8000_0000;
 const EMSGMASK: u32 = !PROTOMASK;
 
 impl EMsg {
     /// Creates an `EMsg` from a uint32
+    ///
+    /// # Panics
+    ///
+    /// If the id is unknown. Steam sends ids that are not listed here, so prefer `EMsg::from_u32`, from
+    /// [`FromPrimitive`], on data from the network.
     pub fn from_uint(message: u32) -> Self {
         match EMsg::from_u32(message) {
             Some(value) => value,
@@ -374,34 +382,53 @@ impl EMsg {
         }
     }
 
-    /// Creates an `EMsg` from a raw data packet.
+    /// Creates an `EMsg` from a raw data packet, ignoring its protobuf flag.
     pub fn from_raw_message(message: &[u8]) -> Result<Self, EMsgError> {
-        // an error should be throw if the message doesnt have 4 bytes of length
-        let extracted_varint: u32 = Self::extract_varint(message);
+        Self::split_raw(message).map(|(emsg, _, _)| emsg)
+    }
 
-        match EMsg::from_u32(extracted_varint) {
-            Some(value) => Ok(value),
-            None => Err(EMsgError::ValueNotFound("A value was not found.")),
+    /// Splits a raw data packet into its `EMsg`, whether it is flagged as a protobuf, and the data after it.
+    pub fn split_raw(message: &[u8]) -> Result<(Self, bool, &[u8]), EMsgError> {
+        if message.len() < 4 {
+            return Err(EMsgError::MessageNotLongEnough("a message needs 4 bytes for its EMsg"));
+        }
+        let raw = Self::extract_varint(message);
+
+        match EMsg::from_u32(raw & EMSGMASK) {
+            Some(value) => Ok((value, raw & PROTOMASK != 0, &message[4..])),
+            None => Err(EMsgError::ValueNotFound("the EMsg is unknown")),
         }
     }
 
-    /// Strips protobuf message flag out and and returns it
+    /// Returns only the protobuf flag of a raw `EMsg`, which is zero when it is not set.
     pub fn strip_protobuf_flag(message: u32) -> u32 {
         message & PROTOMASK
     }
 
     /// Strips the [EMsg] from data, and returns the data
+    ///
+    /// # Panics
+    ///
+    /// If `message` is shorter than 4 bytes. [`EMsg::split_raw`] returns an error instead.
     pub fn strip_message(message: &[u8]) -> &[u8] {
         &message[4..]
     }
 
     /// Checks if a message is flagged as a protobuf
     /// We can only check with the varint on it
+    ///
+    /// # Panics
+    ///
+    /// If `message` is shorter than 4 bytes. [`EMsg::split_raw`] returns an error instead.
     pub fn is_protobuf(message: &[u8]) -> bool {
         Self::strip_protobuf_flag(Self::extract_varint(message)) > 0
     }
 
     /// Extract varint from data
+    ///
+    /// # Panics
+    ///
+    /// If `message` is shorter than 4 bytes.
     pub fn extract_varint(message: &[u8]) -> u32 {
         u32::from_le_bytes(*array_ref!(message, 0, 4))
     }
@@ -412,4 +439,55 @@ impl EMsg {
 pub enum EMsgError {
     MessageNotLongEnough(&'static str),
     ValueNotFound(&'static str),
+}
+
+impl std::fmt::Display for EMsgError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EMsgError::MessageNotLongEnough(reason) | EMsgError::ValueNotFound(reason) => f.write_str(reason),
+        }
+    }
+}
+
+impl std::error::Error for EMsgError {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn split_raw_masks_the_protobuf_flag() {
+        let raw = (EMsg::ClientLogon as u32 | PROTOMASK).to_le_bytes();
+        let (emsg, is_protobuf, rest) = EMsg::split_raw(&raw).unwrap();
+
+        assert_eq!(emsg, EMsg::ClientLogon);
+        assert!(is_protobuf);
+        assert!(rest.is_empty());
+        assert_eq!(EMsg::from_raw_message(&raw).unwrap(), EMsg::ClientLogon);
+    }
+
+    #[test]
+    fn split_raw_without_the_protobuf_flag() {
+        let raw = [0x17, 0x05, 0x00, 0x00, 0xAA];
+        let (emsg, is_protobuf, rest) = EMsg::split_raw(&raw).unwrap();
+
+        assert_eq!(emsg, EMsg::ChannelEncryptRequest);
+        assert!(!is_protobuf);
+        assert_eq!(rest, [0xAA]);
+    }
+
+    #[test]
+    fn split_raw_rejects_short_and_unknown_input() {
+        for len in 0..4 {
+            assert!(matches!(
+                EMsg::split_raw(&[0x17, 0x05, 0x00, 0x00][..len]),
+                Err(EMsgError::MessageNotLongEnough(_))
+            ));
+        }
+        assert!(matches!(
+            EMsg::from_raw_message(&u32::MAX.to_le_bytes()),
+            Err(EMsgError::ValueNotFound(_))
+        ));
+    }
+
 }

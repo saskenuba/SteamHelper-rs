@@ -13,7 +13,7 @@ default = []
 # EMsg message ids, and helpers to read them from packets.
 emsg = ["arrayref"]
 # Message headers and Msg* structs. Unstable: not covered by semver.
-messages = ["emsg", "bincode", "derive-new", "enum_dispatch", "steam-language-gen-derive", "steam-protobuf"]
+messages = ["emsg", "bincode", "derive-new", "enum_dispatch", "steam-language-gen-derive", "steam-protobuf", "thiserror"]
 
 [dependencies]
 bitflags = "1"
@@ -27,6 +27,7 @@ bincode = { version = "1", optional = true }
 derive-new = { version = "0.5", optional = true }
 enum_dispatch = { version = "0.3.5", optional = true }
 steam-protobuf = { workspace = true, optional = true, features = ["steammessages_base"] }
+thiserror = { version = "2", optional = true }
 
 [dependencies.steam-language-gen-derive]
 path = "../steam-language-gen-derive"

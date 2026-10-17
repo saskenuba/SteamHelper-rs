@@ -5,9 +5,12 @@
 
 #![allow(dead_code, non_upper_case_globals, non_camel_case_types)]
 
-pub use steam_language::{
-    DeserializableBytes, HasJobId, MessageBodyExt, MessageHeaderExt, MessageHeaderWrapper, SerializableBytes,
-};
+pub use steam_language::HasJobId;
+pub use steam_language::MessageBodyExt;
+pub use steam_language::MessageError;
+pub use steam_language::MessageHeaderExt;
+pub use steam_language::MessageHeaderWrapper;
+pub use steam_language::SerializableBytes;
 
 pub mod generated;
 #[cfg(feature = "generator")]

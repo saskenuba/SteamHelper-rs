@@ -2,11 +2,12 @@ use derive_new::new;
 use serde::Deserialize;
 use serde::Serialize;
 use steam_language_gen_derive::MsgHeader;
+use steam_protobuf::protobuf::Message;
 use steam_protobuf::protobufs::steammessages_base::CMsgProtoBufHeader;
 
 use crate::emsg::EMsg;
-use crate::DeserializableBytes;
 use crate::HasJobId;
+use crate::MessageError;
 use crate::MessageHeaderExt;
 use crate::SerializableBytes;
 
@@ -31,9 +32,9 @@ impl MessageHeaders {
 
 #[derive(new, Clone, Debug, Serialize, Deserialize, PartialEq, Eq, MsgHeader)]
 pub struct StandardMessageHeader {
-    #[new(value = "std::u64::MAX")]
+    #[new(value = "u64::MAX")]
     pub target_job_id: u64,
-    #[new(value = "std::u64::MAX")]
+    #[new(value = "u64::MAX")]
     pub source_job_id: u64,
 }
 
@@ -42,9 +43,24 @@ impl MessageHeaderExt for CMsgProtoBufHeader {
         Self::new()
     }
 
-    fn split_from_bytes(data: &[u8]) -> (&[u8], &[u8]) {
-        let size = std::mem::size_of::<Self>();
-        (&data[..size], &data[size..])
+    /// The header is prefixed by its length, as a u32.
+    fn parse(data: &[u8]) -> Result<(Self, &[u8]), MessageError> {
+        let too_short = |needed| MessageError::TooShort {
+            needed,
+            got: data.len(),
+        };
+
+        if data.len() < 4 {
+            return Err(too_short(4));
+        }
+        let (length, rest) = data.split_at(4);
+        let length = u32::from_le_bytes([length[0], length[1], length[2], length[3]]) as usize;
+        if rest.len() < length {
+            return Err(too_short(4 + length));
+        }
+
+        let (header, rest) = rest.split_at(length);
+        Ok((Self::parse_from_bytes(header)?, rest))
     }
 }
 
@@ -68,13 +84,14 @@ impl HasJobId for CMsgProtoBufHeader {
 
 #[derive(new, Clone, Debug, Serialize, Deserialize, PartialEq, Eq, MsgHeader)]
 pub struct ExtendedMessageHeader {
-    #[new(value = "32")]
+    /// Size of the header with its `EMsg`.
+    #[new(value = "36")]
     header_size: u8,
     #[new(value = "2")]
     header_version: u16,
-    #[new(value = "std::u64::MAX")]
+    #[new(value = "u64::MAX")]
     pub target_job_id: u64,
-    #[new(value = "std::u64::MAX")]
+    #[new(value = "u64::MAX")]
     pub source_job_id: u64,
     #[new(value = "239")]
     header_canary: u8,

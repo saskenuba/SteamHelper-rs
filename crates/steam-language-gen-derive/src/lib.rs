@@ -1,8 +1,8 @@
 use proc_macro::TokenStream;
-
-use syn::{AttributeArgs, DeriveInput, parse_macro_input};
-
 use quote::quote;
+use syn::parse_macro_input;
+use syn::AttributeArgs;
+use syn::DeriveInput;
 
 #[proc_macro_derive(SteamMsg)]
 pub fn steammsg_derive(input: TokenStream) -> TokenStream {
@@ -25,21 +25,17 @@ fn impl_steammsg_macro(ast: &DeriveInput) -> TokenStream {
                 bincode::serialize(&self).unwrap()
             }
         }
-        impl DeserializableBytes for #name {
-            fn from_bytes(packet_data: &[u8]) -> Self {
-                bincode::deserialize(packet_data).unwrap()
-            }
-        }
         impl MessageBodyExt for #name {
-            fn split_from_bytes(data: &[u8]) -> (&[u8], &[u8]) {
-                let size = std::mem::size_of::<Self>();
-                (&data[..size], &data[size..])
+            // bincode reads exactly the bytes it needs, and leaves the rest in the slice
+            fn parse(data: &[u8]) -> Result<(Self, &[u8]), MessageError> {
+                let mut rest = data;
+                let parsed = bincode::deserialize_from(&mut rest)?;
+                Ok((parsed, rest))
             }
         }
     };
     gen.into()
 }
-
 
 #[proc_macro_derive(MsgHeader)]
 pub fn header_derive(input: TokenStream) -> TokenStream {
@@ -51,7 +47,6 @@ pub fn header_derive(input: TokenStream) -> TokenStream {
     impl_header_macro(&ast)
 }
 
-
 fn impl_header_macro(ast: &DeriveInput) -> TokenStream {
     let name = &ast.ident;
     let gen = quote! {
@@ -61,18 +56,13 @@ fn impl_header_macro(ast: &DeriveInput) -> TokenStream {
                 bincode::serialize(&self).unwrap()
             }
         }
-        impl DeserializableBytes for #name {
-            fn from_bytes(packet_data: &[u8]) -> Self {
-                let decoded: Self = bincode::deserialize(packet_data).unwrap();
-                decoded
-            }
-        }
 
         impl MessageHeaderExt for #name {
-            // we are taking out 4 bytes of the emsg
-            fn split_from_bytes(data: &[u8]) -> (&[u8], &[u8]) {
-                let size = std::mem::size_of::<Self>();
-                (&data[..size], &data[size..])
+            // bincode reads exactly the bytes it needs, and leaves the rest in the slice
+            fn parse(data: &[u8]) -> Result<(Self, &[u8]), MessageError> {
+                let mut rest = data;
+                let parsed = bincode::deserialize_from(&mut rest)?;
+                Ok((parsed, rest))
             }
             fn create() -> Self {
                 Self::new()
