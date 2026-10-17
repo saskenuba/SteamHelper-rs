@@ -24,8 +24,6 @@ lazy_static = "^1"
 regex = "^1"
 thiserror = "1"
 tracing = "^0.1"
-tracing-futures = "^0.2"
-triomphe = "^0"
 
 chrono = { version = "0.4", optional = true }
 scraper = { version = "^0", optional = true }
@@ -33,17 +31,11 @@ scraper = { version = "^0", optional = true }
 futures = "^0.3"
 futures-timer = "^3"
 
-parking_lot.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-serde_repr.workspace = true
 serde_with = { version = "^1.9", features = ["json"] }
 
 steam-language.workspace = true
 steam-mobile = { workspace = true, default-features = false }
 steamid-parser.workspace = true
 tappet.workspace = true
-
-[dev-dependencies]
-tokio = { version = "^1", features = ["rt", "macros"] }
-tracing-subscriber = "0.3"

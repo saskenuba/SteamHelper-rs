@@ -17,7 +17,7 @@
 use std::net::Ipv4Addr;
 use std::time::Duration;
 
-use num::FromPrimitive;
+use num_traits::FromPrimitive;
 use steam_language_gen::generated::enums::EAccountType;
 use steam_language_gen::generated::enums::EMsg;
 use steam_language_gen::generated::enums::EOSType;

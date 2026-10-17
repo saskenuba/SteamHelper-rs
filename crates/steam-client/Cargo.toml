@@ -14,37 +14,23 @@ websockets = ["tokio-tungstenite"]
 [dependencies]
 
 anyhow = "^1.0"
-arrayref = "^0.3"
-async-trait = "^0.1"
-atomic = "^0.5"
-bincode = "^1"
-byteorder = "1"
 bytes = "^1.0"
 crc32fast = "1"
-derive-new = "0.5.8"
-erased-serde = "^0.3"
 futures = "^0.3"
 lazy_static = "1"
 log = "^0.4"
 miniz_oxide = "0.9"
-num = "^0.3"
+num-traits = "0.2"
 regex = "^1"
 serde = { version = "^1.0", features = ["derive"] }
 serde_json = "^1"
-serde_repr = "^0"
 thiserror = "^1.0"
 
 # futures
 tokio = { version = "^1.1", features = ["net", "rt", "macros", "sync", "time"] }
 tokio-util = { version = "^0.7", features = ["codec"] }
 tokio-tungstenite = { version = "^0.13", optional = true }
-tokio-compat-02 = "0.2.0"
 
-
-# Web API calls
-[dependencies.reqwest]
-version = "^0.11"
-features = ["json", "blocking"]
 
 # Internal Dependencies
 [dependencies.steam-protobuf]
@@ -56,9 +42,6 @@ path = "../steam-crypto"
 
 [dependencies.steam-language-gen]
 path = "../steam-language-gen"
-
-[dependencies.steam-language-gen-derive]
-path = "../steam-language-gen-derive"
 
 [dependencies.tappet]
 path = "../tappet"

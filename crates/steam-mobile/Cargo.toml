@@ -28,7 +28,6 @@ scraper = "0.18"
 serde_with = { version = "^3", features = [] }
 thiserror = "1"
 tracing = "0.1"
-tracing-futures = "0.2"
 uuid = { version = "1", features = ["v4"] }
 
 base64.workspace = true
