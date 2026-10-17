@@ -7,11 +7,11 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rand = "0.7.2"
-openssl = "0.10.25"
-lazy-static-include = "2.2.2"
-lazy_static = "1.4.0"
-crc = "1"
+aes = "0.8"
+cbc = { version = "0.1", features = ["alloc"] }
 crc32fast = "1"
-bytes = "0.5"
-byteorder = "1"
+hmac = "0.12"
+rand.workspace = true
+rsa = "0.9"
+sha1 = { version = "0.10", features = ["oid"] }
+thiserror = "^2"
