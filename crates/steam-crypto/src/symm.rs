@@ -4,6 +4,7 @@
 //! PKCS#7 padding under that IV. Both use the session key.
 
 use std::convert::TryFrom;
+use std::ops::Range;
 
 use aes::cipher::block_padding::Pkcs7;
 use aes::cipher::BlockDecrypt;
@@ -78,39 +79,67 @@ fn encrypt_hmac_iv_with_random(input: &[u8], key: &SessionKey, random: [u8; HMAC
 
 /// Decrypts a ciphertext made by [`symmetric_encrypt`] or [`symmetric_encrypt_with_iv`].
 pub fn symmetric_decrypt(input: &[u8], key: &SessionKey) -> Result<Vec<u8>> {
-    decrypt(input, key).map(|(_, message)| message)
+    let mut buffer = input.to_vec();
+    let message = symmetric_decrypt_in_place(&mut buffer, key)?;
+    Ok(into_message(buffer, message))
 }
 
 /// Decrypts a ciphertext made by [`symmetric_encrypt_hmac_iv`], and checks the HMAC carried in its IV.
 pub fn symmetric_decrypt_hmac_iv(input: &[u8], key: &SessionKey) -> Result<Vec<u8>> {
-    let (iv, message) = decrypt(input, key)?;
+    let mut buffer = input.to_vec();
+    let message = symmetric_decrypt_hmac_iv_in_place(&mut buffer, key)?;
+    Ok(into_message(buffer, message))
+}
+
+/// Decrypts, in place, a ciphertext made by [`symmetric_encrypt`] or [`symmetric_encrypt_with_iv`].
+///
+/// Returns where the plain message is in `buffer`: after the IV, and before the padding. The rest of `buffer` is left
+/// with the plain IV and padding.
+pub fn symmetric_decrypt_in_place(buffer: &mut [u8], key: &SessionKey) -> Result<Range<usize>> {
+    decrypt_in_place(buffer, key).map(|(_, message)| message)
+}
+
+/// Decrypts, in place, a ciphertext made by [`symmetric_encrypt_hmac_iv`], and checks the HMAC carried in its IV.
+///
+/// Returns where the plain message is in `buffer`, as [`symmetric_decrypt_in_place`]. Doesn't allocate.
+pub fn symmetric_decrypt_hmac_iv_in_place(buffer: &mut [u8], key: &SessionKey) -> Result<Range<usize>> {
+    let (iv, message) = decrypt_in_place(buffer, key)?;
     let (hmac_prefix, random) = iv.split_at(HMAC_PREFIX_SIZE);
 
     let mut mac = hmac_sha1_mac(key);
     mac.update(random);
-    mac.update(&message);
+    mac.update(&buffer[message.clone()]);
     mac.verify_truncated_left(hmac_prefix)
         .map_err(|_| CryptoError::InvalidHmac)?;
 
     Ok(message)
 }
 
-/// Returns the plain IV and the plain message.
-fn decrypt(input: &[u8], key: &SessionKey) -> Result<([u8; BLOCK_SIZE], Vec<u8>)> {
-    if input.len() < 2 * BLOCK_SIZE || !input.len().is_multiple_of(BLOCK_SIZE) {
-        return Err(CryptoError::InvalidLength(input.len()));
+/// Keeps only the plain message of a buffer decrypted in place.
+fn into_message(mut buffer: Vec<u8>, message: Range<usize>) -> Vec<u8> {
+    buffer.truncate(message.end);
+    buffer.drain(..message.start);
+    buffer
+}
+
+/// Returns the plain IV, and where the plain message is in `buffer`.
+fn decrypt_in_place(buffer: &mut [u8], key: &SessionKey) -> Result<([u8; BLOCK_SIZE], Range<usize>)> {
+    if buffer.len() < 2 * BLOCK_SIZE || !buffer.len().is_multiple_of(BLOCK_SIZE) {
+        return Err(CryptoError::InvalidLength(buffer.len()));
     }
-    let (encrypted_iv, encrypted_message) = input.split_at(BLOCK_SIZE);
+    let (encrypted_iv, encrypted_message) = buffer.split_at_mut(BLOCK_SIZE);
     let key = key.as_bytes().into();
 
-    let mut iv = aes::Block::from(<[u8; BLOCK_SIZE]>::try_from(encrypted_iv).expect("split at BLOCK_SIZE"));
+    let mut iv = aes::Block::from(<[u8; BLOCK_SIZE]>::try_from(&*encrypted_iv).expect("split at BLOCK_SIZE"));
     Aes256::new(key).decrypt_block(&mut iv);
+    encrypted_iv.copy_from_slice(&iv);
 
-    let message = Aes256CbcDec::new(key, &iv)
-        .decrypt_padded_vec_mut::<Pkcs7>(encrypted_message)
-        .map_err(|_| CryptoError::InvalidPadding)?;
+    let message_len = Aes256CbcDec::new(key, &iv)
+        .decrypt_padded_mut::<Pkcs7>(encrypted_message)
+        .map_err(|_| CryptoError::InvalidPadding)?
+        .len();
 
-    Ok((iv.into(), message))
+    Ok((iv.into(), BLOCK_SIZE..BLOCK_SIZE + message_len))
 }
 
 fn hmac_sha1_mac(key: &SessionKey) -> HmacSha1 {
@@ -177,6 +206,22 @@ mod tests {
     }
 
     #[test]
+    fn decrypts_in_place() {
+        let mut buffer = encrypt_hmac_iv_with_random(MESSAGE, &key(), *b"abc");
+        let message = symmetric_decrypt_hmac_iv_in_place(&mut buffer, &key()).unwrap();
+        assert_eq!(message, 16..16 + MESSAGE.len());
+        assert_eq!(&buffer[message], MESSAGE);
+        // the plain IV: the HMAC prefix, then the random bytes
+        assert_eq!(&buffer[13..16], b"abc");
+
+        let iv = [0xF0; 16];
+        let mut buffer = symmetric_encrypt_with_iv(b"", &key(), &iv);
+        let message = symmetric_decrypt_in_place(&mut buffer, &key()).unwrap();
+        assert_eq!(message, 16..16);
+        assert_eq!(buffer[..16], iv);
+    }
+
+    #[test]
     fn round_trips() {
         for message in [&b""[..], b"a", &[0u8; 16], &[0xFF; 1000]] {
             let encrypted = symmetric_encrypt_hmac_iv(message, &key());
@@ -220,6 +265,10 @@ mod tests {
         for len in [0, 15, 16, 31, 33] {
             assert_eq!(
                 symmetric_decrypt(&vec![0; len], &key()),
+                Err(CryptoError::InvalidLength(len))
+            );
+            assert_eq!(
+                symmetric_decrypt_hmac_iv_in_place(&mut vec![0; len], &key()),
                 Err(CryptoError::InvalidLength(len))
             );
         }

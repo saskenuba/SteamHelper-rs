@@ -32,6 +32,8 @@ use sha1::Digest;
 use sha1::Sha1;
 pub use symm::symmetric_decrypt;
 pub use symm::symmetric_decrypt_hmac_iv;
+pub use symm::symmetric_decrypt_hmac_iv_in_place;
+pub use symm::symmetric_decrypt_in_place;
 pub use symm::symmetric_encrypt;
 pub use symm::symmetric_encrypt_hmac_iv;
 pub use symm::symmetric_encrypt_with_iv;
