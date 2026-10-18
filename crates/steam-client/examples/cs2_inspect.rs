@@ -3,7 +3,7 @@
 //!
 //! ```sh
 //! STEAM_ACCOUNT=<account name> RUST_LOG=steam_client=info \
-//!     cargo run -p steam-client --features cs2 --example cs2_inspect -- '<inspect link>' ...
+//!     cargo run -p steam-client-lib --features cs2 --example cs2_inspect -- '<inspect link>' ...
 //! ```
 //!
 //! The links are the arguments (quote them: they hold `%20` or a space), or, without any, the lines of stdin.

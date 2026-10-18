@@ -1,6 +1,6 @@
 //! Drives a client without spawning it: one loop waits for Steam's events and, on a timer, calls Steam.
 //!
-//! Run with `cargo run -p steam-client --example task_free`. It runs 210 s, calling every 60 s; set `RUN_SECONDS`
+//! Run with `cargo run -p steam-client-lib --example task_free`. It runs 210 s, calling every 60 s; set `RUN_SECONDS`
 //! and `CALL_SECONDS` to change them, and `RUST_LOG=steam_client=debug` to see the heartbeats go out. Expect
 //! `Logged on`, the few events of an anonymous logon, a call answered every minute, then `Logged off`.
 //!

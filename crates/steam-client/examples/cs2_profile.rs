@@ -4,7 +4,7 @@
 //!
 //! ```sh
 //! STEAM_ACCOUNT=<account name> RUST_LOG=steam_client=info \
-//!     cargo run -p steam-client --features cs2 --example cs2_profile -- 76561198084749846 CSGO-xxxxx-xxxxx-xxxxx-xxxxx-xxxxx
+//!     cargo run -p steam-client-lib --features cs2 --example cs2_profile -- 76561198084749846 CSGO-xxxxx-xxxxx-xxxxx-xxxxx-xxxxx
 //! ```
 //!
 //! Reads:

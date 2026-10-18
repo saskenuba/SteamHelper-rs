@@ -1,8 +1,9 @@
 //! A bot's lifecycle: spawn the client, follow what happens to its connection, keep calling, and stop on Ctrl-C.
 //!
-//! Run with `cargo run -p steam-client --example reconnect`, and stop it with Ctrl-C (a second Ctrl-C exits at once,
-//! without logging off). Set `STOP=drop` to stop by dropping the handle instead of calling `log_off`, `CALL_SECONDS`
-//! to change how often it calls Steam (60 s), and `RUST_LOG=steam_client=info` to see the task reconnect.
+//! Run with `cargo run -p steam-client-lib --example reconnect`, and stop it with Ctrl-C (a second Ctrl-C exits at
+//! once, without logging off). Set `STOP=drop` to stop by dropping the handle instead of calling `log_off`,
+//! `CALL_SECONDS` to change how often it calls Steam (60 s), and `RUST_LOG=steam_client=info` to see the task
+//! reconnect.
 //!
 //! Expect `Logged on`, `Called Steam: answered` every minute, and on Ctrl-C `Logged off` (or `Dropped the handle`),
 //! then `Stopped: ...`. A live run can't show a reconnect on demand: Steam drops connections when it restarts a

@@ -2,7 +2,7 @@
 //! "You said: ...", until Ctrl-C.
 //!
 //! ```sh
-//! STEAM_ACCOUNT=<account name> RUST_LOG=steam_client=info cargo run -p steam-client --example chat_bot
+//! STEAM_ACCOUNT=<account name> RUST_LOG=steam_client=info cargo run -p steam-client-lib --example chat_bot
 //! ```
 //!
 //! Reads:

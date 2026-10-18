@@ -2,7 +2,7 @@
 //! Ctrl-C.
 //!
 //! ```sh
-//! STEAM_ACCOUNT=<account name> RUST_LOG=steam_client=info cargo run -p steam-client --example trade_notifications
+//! STEAM_ACCOUNT=<account name> RUST_LOG=steam_client=info cargo run -p steam-client-lib --example trade_notifications
 //! ```
 //!
 //! Reads:

@@ -1,7 +1,7 @@
 //! What does Steam send me? Logs on anonymously, spawns the client, prints every event for a while, and logs off.
 //!
-//! Run with `cargo run -p steam-client --example events`. It listens for 30 s; set `EVENT_SECONDS` to change it, and
-//! `RUST_LOG=steam_client=debug` to see the connection's own log.
+//! Run with `cargo run -p steam-client-lib --example events`. It listens for 30 s; set `EVENT_SECONDS` to change it,
+//! and `RUST_LOG=steam_client=debug` to see the connection's own log.
 //!
 //! Each message prints its EMsg, and a service notification (`EMsg::ServiceMethod`) also the method Steam called, as
 //! `Service.Method#1`. To read a message, parse it as its steam-protobuf type with `message.parse_proto::<T>()`;

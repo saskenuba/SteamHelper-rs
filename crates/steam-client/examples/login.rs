@@ -3,7 +3,7 @@
 //! (`chat_bot`, `trade_notifications`, `web_session_bot`) read the token this saves.
 //!
 //! ```sh
-//! STEAM_ACCOUNT=<account name> RUST_LOG=steam_client=info cargo run -p steam-client --example login
+//! STEAM_ACCOUNT=<account name> RUST_LOG=steam_client=info cargo run -p steam-client-lib --example login
 //! ```
 //!
 //! Reads:

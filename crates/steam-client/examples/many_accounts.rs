@@ -1,8 +1,8 @@
 //! Runs many clients in one process: logs on N anonymous clients, spawns them all, idles, and shows what they cost in
 //! memory, then logs them all off.
 //!
-//! Run with `cargo run -p steam-client --example many_accounts -- 5`, or set `ACCOUNTS`: 5 clients by default, 20 at
-//! most, to be gentle with Steam. They idle 60 s; set `IDLE_SECONDS` to change it. Expect a `Logged on` line per
+//! Run with `cargo run -p steam-client-lib --example many_accounts -- 5`, or set `ACCOUNTS`: 5 clients by default, 20
+//! at most, to be gentle with Steam. They idle 60 s; set `IDLE_SECONDS` to change it. Expect a `Logged on` line per
 //! client, then the process's resident memory (RSS, from `ps`) before, after the first client and after them all, and
 //! per client, then `Logged off` per client. A client that fails to connect or log on stops the setup; those
 //! already logged on still log off, as do all of them if one fails to.

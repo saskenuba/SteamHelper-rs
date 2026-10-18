@@ -1,8 +1,8 @@
 //! Connects to a Steam CM server, logs on anonymously, spawns the client, stays idle for a while, calls a service
 //! method, and logs off.
 //!
-//! Run with `RUST_LOG=steam_client=debug cargo run -p steam-client --example anonymous_logon`. The idle time is 210 s
-//! (Steam drops a client that sends no heartbeat within about 3 min); set `IDLE_SECONDS` to change it.
+//! Run with `RUST_LOG=steam_client=debug cargo run -p steam-client-lib --example anonymous_logon`. The idle time is 210
+//! s (Steam drops a client that sends no heartbeat within about 3 min); set `IDLE_SECONDS` to change it.
 
 use std::time::Duration;
 use std::time::Instant;

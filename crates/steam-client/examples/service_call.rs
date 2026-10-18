@@ -1,6 +1,6 @@
 //! Calls service methods: one the crate knows before logon, and one it doesn't know once logged on anonymously.
 //!
-//! Run with `cargo run -p steam-client --example service_call` (`RUST_LOG=steam_client=debug` for the connection's
+//! Run with `cargo run -p steam-client-lib --example service_call` (`RUST_LOG=steam_client=debug` for the connection's
 //! log). No variables. Expect the size and exponent of the RSA key Steam encrypts a made-up account's password with,
 //! then the first few content servers Steam lists for our cell, then `Logged off`.
 //!
