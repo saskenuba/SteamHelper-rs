@@ -54,12 +54,12 @@ use crate::protocol::free_if_big;
 pub const APP_ID: u32 = 730;
 /// How long [`Cs2::connect`] (and a request after the session was lost) waits for the game coordinator's welcome.
 pub const GREET_TIMEOUT: Duration = Duration::from_secs(60);
-/// How long a request waits for the game coordinator's answer by default, as node-globaloffensive's `inspectItem`
-/// (its other requests wait forever).
-pub const INSPECT_TIMEOUT: Duration = Duration::from_secs(10);
+/// How long a request of any kind waits for the game coordinator's answer by default, as node-globaloffensive's
+/// `inspectItem` (its other requests wait forever).
+pub const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 /// The time between two requests of any kind by default, from one sent to the next, as csfloat's inspect service
 /// waits (`request_delay`): the game coordinator drops requests that come faster, without a word.
-pub const INSPECT_COOLDOWN: Duration = Duration::from_millis(1100);
+pub const REQUEST_COOLDOWN: Duration = Duration::from_millis(1100);
 /// How many events wait for [`Cs2::next_event`]; past this, newer ones are dropped and a [`Cs2Event::Lagged`]
 /// counts them.
 pub const EVENT_CAPACITY: usize = 256;
@@ -111,8 +111,8 @@ const LIVE_GAME_FOR_USER: u32 = ECsgoGCMsg::k_EMsgGCCStrike15_v2_MatchListReques
 /// # }
 /// ```
 ///
-/// The account must own CS2 (the free license). Each request waits [`INSPECT_COOLDOWN`] after the request before it,
-/// whatever its kind, and gives up after [`INSPECT_TIMEOUT`]: change them with [`with_cooldown`](Self::with_cooldown)
+/// The account must own CS2 (the free license). Each request waits [`REQUEST_COOLDOWN`] after the request before it,
+/// whatever its kind, and gives up after [`REQUEST_TIMEOUT`]: change them with [`with_cooldown`](Self::with_cooldown)
 /// and [`with_timeout`](Self::with_timeout). One request at a time, per account: more accounts ask more.
 ///
 /// When the session with the game coordinator ends (the client lost its connection to Steam, or the game
@@ -206,8 +206,8 @@ impl Cs2 {
             account,
             session: Session::Lost,
             welcomed_before: false,
-            cooldown: INSPECT_COOLDOWN,
-            timeout: INSPECT_TIMEOUT,
+            cooldown: REQUEST_COOLDOWN,
+            timeout: REQUEST_TIMEOUT,
             last_request: None,
             events: EventQueue::default(),
             inventory: Inventory::default(),
@@ -215,13 +215,13 @@ impl Cs2 {
         }
     }
 
-    /// Waits `cooldown` between two requests, from one sent to the next, instead of [`INSPECT_COOLDOWN`].
+    /// Waits `cooldown` between two requests, from one sent to the next, instead of [`REQUEST_COOLDOWN`].
     pub fn with_cooldown(mut self, cooldown: Duration) -> Self {
         self.cooldown = cooldown;
         self
     }
 
-    /// Waits `timeout` for each answer, instead of [`INSPECT_TIMEOUT`].
+    /// Waits `timeout` for each answer, instead of [`REQUEST_TIMEOUT`].
     pub fn with_timeout(mut self, timeout: Duration) -> Self {
         self.timeout = timeout;
         self

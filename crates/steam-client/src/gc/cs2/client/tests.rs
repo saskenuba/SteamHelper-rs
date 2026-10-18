@@ -324,7 +324,7 @@ async fn an_inspect_times_out_and_its_late_answer_is_skipped() {
         request_read(&mut session.cm)
     );
     assert!(matches!(result, Err(ClientError::GcTimeout(PREVIEW_RESPONSE))));
-    assert_eq!(sent.elapsed(), INSPECT_TIMEOUT);
+    assert_eq!(sent.elapsed(), REQUEST_TIMEOUT);
 
     let cm = &mut session.cm;
     let gc = async {
@@ -378,7 +378,7 @@ async fn waits_the_cooldown_from_one_request_to_the_next() {
     };
     let (sent, ()) = tokio::join!(gc, inspects);
     let gaps: Vec<_> = sent.windows(2).map(|pair| pair[1] - pair[0]).collect();
-    assert_eq!(gaps, [INSPECT_COOLDOWN, INSPECT_COOLDOWN, Duration::from_secs(2)]);
+    assert_eq!(gaps, [REQUEST_COOLDOWN, REQUEST_COOLDOWN, Duration::from_secs(2)]);
 }
 
 #[tokio::test(start_paused = true)]
@@ -788,7 +788,7 @@ async fn a_profile_request_times_out() {
         read_request::<CMsgGCCStrike15_v2_ClientRequestPlayersProfile>(&mut session.cm, REQUEST_PLAYERS_PROFILE)
     );
     assert!(matches!(result, Err(ClientError::GcTimeout(PLAYERS_PROFILE))));
-    assert_eq!(sent.elapsed(), INSPECT_TIMEOUT);
+    assert_eq!(sent.elapsed(), REQUEST_TIMEOUT);
 }
 
 #[tokio::test(start_paused = true)]
@@ -902,7 +902,7 @@ async fn every_kind_of_request_waits_the_same_cooldown() {
         soon(cs2.live_matches()).await.unwrap();
     };
     let (gaps, ()) = tokio::join!(gc, requests);
-    assert_eq!(gaps, [INSPECT_COOLDOWN, INSPECT_COOLDOWN]);
+    assert_eq!(gaps, [REQUEST_COOLDOWN, REQUEST_COOLDOWN]);
 }
 
 #[tokio::test(start_paused = true)]
