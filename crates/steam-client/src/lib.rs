@@ -79,7 +79,7 @@ pub mod auth;
 pub mod client;
 pub mod config;
 pub mod connection;
-mod content_manager;
+mod cm_list;
 pub mod errors;
 pub mod events;
 pub mod gc;
