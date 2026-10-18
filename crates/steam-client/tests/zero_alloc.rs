@@ -6,6 +6,9 @@
 //! frame, which makes it shared (see `the_first_frame_shares_the_read_buffer`), and the queue of packets unpacked from
 //! a `Multi` has room.
 //!
+//! The `through_the_protocol` cases go the way the connection does: bytes as read from the socket, into the protocol,
+//! out as the messages it keeps or the responses to calls.
+//!
 //! Protobuf bodies still allocate (strings, repeated fields, nested messages): they are measured, not asserted on.
 //! Run with `--nocapture` to see the counts.
 
@@ -17,6 +20,7 @@ use std::alloc::System;
 use std::cell::Cell;
 use std::collections::VecDeque;
 use std::io::Write;
+use std::time::Instant;
 
 use bytes::Bytes;
 use bytes::BytesMut;
@@ -24,17 +28,24 @@ use flate2::write::GzEncoder;
 use flate2::Compression;
 use steam_client::__private::decode_plain;
 use steam_client::__private::EncryptedCodec;
+use steam_client::__private::EncryptedConnection;
 use steam_client::__private::Packet;
+use steam_client::__private::Protocol;
 use steam_crypto::symmetric_encrypt_hmac_iv;
 use steam_crypto::SessionKey;
 use steam_language_gen::generated::enums::EMsg;
 use steam_language_gen::generated::enums::EUniverse;
 use steam_language_gen::generated::messages::MsgChannelEncryptRequest;
 use steam_language_gen::generated::messages::MsgClientChatEnter;
+use steam_language_gen::HasJobId;
 use steam_language_gen::MessageHeaderWrapper;
 use steam_protobuf::protobuf::Message;
+use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_AccessToken_GenerateForApp_Response;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_AllowedConfirmation;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_BeginAuthSessionViaCredentials_Response;
+use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_GetPasswordRSAPublicKey_Response;
+use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_PollAuthSessionStatus_Request;
+use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_PollAuthSessionStatus_Response;
 use steam_protobuf::protobufs::steammessages_base::CMsgMulti;
 use steam_protobuf::protobufs::steammessages_base::CMsgProtoBufHeader;
 use steam_protobuf::protobufs::steammessages_clientserver_login::CMsgClientLoggedOff;
@@ -189,6 +200,24 @@ fn multi(packets: &[&[u8]], gzip: bool) -> Vec<u8> {
     proto_packet(EMsg::Multi, CMsgProtoBufHeader::new(), &multi)
 }
 
+/// The job id of [`service_method_response`].
+const JOB_ID: u64 = 42;
+
+/// A response to a service method call, as account logon reads them: a protobuf header with the job id and the
+/// result, and a body.
+fn service_method_response() -> Vec<u8> {
+    service_method_response_to(JOB_ID)
+}
+
+fn service_method_response_to(job_id: u64) -> Vec<u8> {
+    let mut header = CMsgProtoBufHeader::new();
+    header.set_jobid_target(job_id);
+    header.set_eresult(1);
+    let mut response = CAuthentication_PollAuthSessionStatus_Response::new();
+    response.set_new_client_id(7);
+    proto_packet(EMsg::ServiceMethodResponse, header, &response)
+}
+
 /// Checks the bodies with a fixed layout, as a check that parsing ran.
 fn check_body(emsg: EMsg, packet: Packet) {
     match emsg {
@@ -203,16 +232,20 @@ fn check_body(emsg: EMsg, packet: Packet) {
             let (_, payload) = packet.parse_body::<MsgClientChatEnter>().unwrap();
             assert!(payload.starts_with(b"Saxton Hell\0"));
         }
+        // how the client matches it to its call
+        EMsg::ServiceMethodResponse => assert_eq!(packet.header().target(), JOB_ID),
         _ => assert!(matches!(packet.header(), MessageHeaderWrapper::Proto(_))),
     }
 }
 
 #[test]
 fn plain_packets_dont_allocate() {
+    let service_method_response = service_method_response();
     let cases = [
         (EMsg::ChannelEncryptRequest, &CHANNEL_ENCRYPT_REQUEST[..]),
         (EMsg::ClientChatEnter, &CLIENT_CHAT_ENTER),
         (EMsg::ClientLogOnResponse, &LOGON_RESPONSE),
+        (EMsg::ServiceMethodResponse, &service_method_response),
     ];
     for (emsg, message) in cases {
         let mut src = plain_read_buffer(message);
@@ -230,10 +263,12 @@ fn plain_packets_dont_allocate() {
 
 #[test]
 fn encrypted_packets_dont_allocate() {
+    let service_method_response = service_method_response();
     let cases = [
         (EMsg::ChannelEncryptRequest, &CHANNEL_ENCRYPT_REQUEST[..]),
         (EMsg::ClientChatEnter, &CLIENT_CHAT_ENTER),
         (EMsg::ClientLogOnResponse, &LOGON_RESPONSE),
+        (EMsg::ServiceMethodResponse, &service_method_response),
     ];
     for (emsg, message) in cases {
         let mut codec = EncryptedCodec::new(key());
@@ -336,6 +371,102 @@ fn the_first_frame_shares_the_read_buffer() {
     assert!(count <= 1);
 }
 
+/// A `Multi` to read first, so that the protocol's queues have grown as on a connection that has been reading.
+fn warm_up() -> Vec<u8> {
+    let nested = multi(&[&CHANNEL_ENCRYPT_REQUEST, &LOGON_RESPONSE], false);
+    multi(&[&LOGON_RESPONSE, &CLIENT_CHAT_ENTER, &nested], false)
+}
+
+/// The protocol over TCP after it read a first message, as on a connection that has been reading.
+fn encrypted_protocol() -> Protocol {
+    let mut protocol = Protocol::encrypted(key());
+    protocol.handle_input(&encrypted(&warm_up()), Instant::now()).unwrap();
+    while protocol.poll_message().is_some() {}
+    protocol
+}
+
+/// The same over WebSocket, where messages are neither framed nor encrypted.
+fn websocket_protocol() -> Protocol {
+    let mut protocol = Protocol::websocket();
+    protocol.handle_input(&warm_up(), Instant::now()).unwrap();
+    while protocol.poll_message().is_some() {}
+    protocol
+}
+
+/// Reads `input` through the protocol, and the messages it keeps. Returns their EMsgs, and how many allocations it
+/// took.
+fn read_through_the_protocol(mut protocol: Protocol, input: &[u8]) -> (Vec<EMsg>, usize) {
+    let now = Instant::now();
+    let mut emsgs = Vec::with_capacity(16);
+    let ((), count) = allocations(|| {
+        protocol.handle_input(input, now).unwrap();
+        while let Some(packet) = protocol.poll_message() {
+            let emsg = packet.emsg();
+            check_body(emsg, packet);
+            emsgs.push(emsg);
+        }
+    });
+    (emsgs, count)
+}
+
+#[test]
+fn reading_through_the_protocol_doesnt_allocate() {
+    let cases = [
+        (EMsg::ChannelEncryptRequest, &CHANNEL_ENCRYPT_REQUEST[..]),
+        (EMsg::ClientChatEnter, &CLIENT_CHAT_ENTER),
+        (EMsg::ClientLogOnResponse, &LOGON_RESPONSE),
+    ];
+    for (emsg, message) in cases {
+        let (emsgs, count) = read_through_the_protocol(encrypted_protocol(), &encrypted(message));
+        println!("through the protocol, encrypted {:?}: {} allocations", emsg, count);
+        assert_eq!(emsgs, [emsg]);
+        assert_eq!(count, 0, "encrypted {:?}", emsg);
+
+        let (emsgs, count) = read_through_the_protocol(websocket_protocol(), message);
+        println!("through the protocol, plain {:?}: {} allocations", emsg, count);
+        assert_eq!(emsgs, [emsg]);
+        assert_eq!(count, 0, "plain {:?}", emsg);
+    }
+}
+
+#[test]
+fn reading_a_response_through_the_protocol_doesnt_allocate() {
+    let mut protocol = encrypted_protocol();
+    let job_id = protocol.call(CAuthentication_PollAuthSessionStatus_Request::new());
+    let input = encrypted(&service_method_response_to(job_id));
+    let now = Instant::now();
+
+    let ((), count) = allocations(|| {
+        protocol.handle_input(&input, now).unwrap();
+        let packet = protocol.take_response(job_id).unwrap().unwrap();
+        assert_eq!(packet.emsg(), EMsg::ServiceMethodResponse);
+        assert_eq!(packet.header().target(), job_id);
+    });
+    println!(
+        "through the protocol, encrypted ServiceMethodResponse: {} allocations",
+        count
+    );
+    assert_eq!(count, 0);
+}
+
+#[test]
+fn reading_multis_through_the_protocol_allocates_their_buffer_only() {
+    let nested = multi(&[&CHANNEL_ENCRYPT_REQUEST, &LOGON_RESPONSE], false);
+
+    let raw = multi(&[&LOGON_RESPONSE, &CLIENT_CHAT_ENTER, &nested], false);
+    let (emsgs, count) = read_through_the_protocol(encrypted_protocol(), &encrypted(&raw));
+    println!("through the protocol, raw Multi: {} allocations", count);
+    assert_eq!(emsgs, MULTI_CONTENTS);
+    assert_eq!(count, 0);
+
+    let gzipped = multi(&[&LOGON_RESPONSE, &CLIENT_CHAT_ENTER, &nested], true);
+    let (emsgs, count) = read_through_the_protocol(encrypted_protocol(), &encrypted(&gzipped));
+    println!("through the protocol, gzipped Multi: {} allocations", count);
+    assert_eq!(emsgs, MULTI_CONTENTS);
+    // the unzipped buffer, and its reference count, as in `gzipped_multis_allocate_their_buffer_only`
+    assert_eq!(count, 2);
+}
+
 /// Protobuf bodies: not asserted on yet, see the module docs.
 #[test]
 fn measures_protobuf_bodies() {
@@ -373,17 +504,62 @@ fn measures_protobuf_bodies() {
     let mut header = CMsgProtoBufHeader::new();
     header.set_jobid_target(42);
     header.set_eresult(1);
-    let packet = proto_packet(EMsg::ServiceMethodResponse, header, &response);
+    let packet = proto_packet(EMsg::ServiceMethodResponse, header.clone(), &response);
     measure::<CAuthentication_BeginAuthSessionViaCredentials_Response>(
         "CAuthentication_BeginAuthSessionViaCredentials_Response",
         EMsg::ServiceMethodResponse,
         &packet,
     );
+
+    // the rest of account logon, and web tokens; tokens are JWTs of a few hundred bytes
+    let token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJFZERTQSJ9.".repeat(10);
+    let mut response = CAuthentication_GetPasswordRSAPublicKey_Response::new();
+    response.set_publickey_mod("ab".repeat(256));
+    response.set_publickey_exp("010001".into());
+    response.set_timestamp(1);
+    let packet = proto_packet(EMsg::ServiceMethodResponse, header.clone(), &response);
+    measure::<CAuthentication_GetPasswordRSAPublicKey_Response>(
+        "CAuthentication_GetPasswordRSAPublicKey_Response",
+        EMsg::ServiceMethodResponse,
+        &packet,
+    );
+
+    let mut response = CAuthentication_PollAuthSessionStatus_Response::new();
+    response.set_refresh_token(token.clone());
+    response.set_access_token(token.clone());
+    response.set_account_name("account".into());
+    let packet = proto_packet(EMsg::ServiceMethodResponse, header.clone(), &response);
+    measure::<CAuthentication_PollAuthSessionStatus_Response>(
+        "CAuthentication_PollAuthSessionStatus_Response",
+        EMsg::ServiceMethodResponse,
+        &packet,
+    );
+
+    let mut response = CAuthentication_AccessToken_GenerateForApp_Response::new();
+    response.set_access_token(token);
+    let packet = proto_packet(EMsg::ServiceMethodResponse, header, &response);
+    measure::<CAuthentication_AccessToken_GenerateForApp_Response>(
+        "CAuthentication_AccessToken_GenerateForApp_Response",
+        EMsg::ServiceMethodResponse,
+        &packet,
+    );
 }
 
-/// Strings in a protobuf header allocate, as in bodies.
+/// Strings in a protobuf header allocate, as in bodies: `target_job_name`, and the `error_message` of a failed service
+/// method.
 #[test]
 fn measures_protobuf_headers_with_strings() {
+    let mut header = CMsgProtoBufHeader::new();
+    header.set_jobid_target(JOB_ID);
+    header.set_eresult(5);
+    header.set_error_message("Invalid password".into());
+    let packet = proto_packet(EMsg::ServiceMethodResponse, header, &CMsgClientLoggedOff::new());
+    let mut src = plain_read_buffer(&packet);
+
+    let (packet, count) = allocations(|| Packet::from_bytes(decode_plain(&mut src).unwrap().unwrap()).unwrap());
+    assert_eq!(packet.emsg(), EMsg::ServiceMethodResponse);
+    println!("protobuf header with error_message: {} allocations", count);
+
     let mut header = CMsgProtoBufHeader::new();
     header.set_jobid_target(42);
     header.set_target_job_name("Authentication.BeginAuthSessionViaCredentials#1".into());
@@ -393,4 +569,133 @@ fn measures_protobuf_headers_with_strings() {
     let (packet, count) = allocations(|| Packet::from_bytes(decode_plain(&mut src).unwrap().unwrap()).unwrap());
     assert_eq!(packet.emsg(), EMsg::ServiceMethodResponse);
     println!("protobuf header with target_job_name: {} allocations", count);
+}
+
+/// The send path: not asserted on, sending may allocate. A heartbeat, as it goes out every 9 s.
+#[test]
+fn measures_the_send_path() {
+    use steam_protobuf::protobufs::steammessages_clientserver_login::CMsgClientHeartBeat;
+
+    let mut protocol = encrypted_protocol();
+    protocol.send(EMsg::ClientHeartBeat, CMsgClientHeartBeat::new());
+    protocol.take_transmits();
+    let (written, count) = allocations(|| {
+        protocol.send(EMsg::ClientHeartBeat, CMsgClientHeartBeat::new());
+        protocol.take_transmits()
+    });
+    assert!(written > 0);
+    println!("send path, heartbeat: {} allocations", count);
+}
+
+/// Messages nothing reads are kept, up to the event queue's capacity, and each keeps the read buffer it is a slice of.
+/// So reading allocates while they are kept: a new read buffer when the one before is still held, and its reference
+/// count once a message is sliced from it: about two per read, whatever the number of messages in it. Returns how many
+/// reads, and how many allocations, once the queue is full.
+fn read_retained(messages: usize) -> (usize, usize) {
+    let mut protocol = encrypted_protocol();
+    let stream: Vec<u8> = (0..messages).flat_map(|_| encrypted(&LOGON_RESPONSE)).collect();
+    let now = Instant::now();
+    // in reads as the socket gives them
+    let reads: Vec<_> = stream.chunks(8 * 1024).collect();
+    // fills the queue
+    for read in &reads {
+        protocol.handle_input(read, now).unwrap();
+    }
+    let ((), count) = allocations(|| {
+        for read in &reads {
+            protocol.handle_input(read, now).unwrap();
+        }
+    });
+    (reads.len(), count)
+}
+
+#[test]
+fn messages_kept_cost_an_allocation_per_read_not_per_message() {
+    for messages in [500, 2000, 8000] {
+        let (reads, count) = read_retained(messages);
+        println!(
+            "kept, {} messages in {} reads, once the queue is full: {} allocations",
+            messages, reads, count
+        );
+        assert!(count <= 3 * reads, "{} allocations for {} reads", count, reads);
+    }
+}
+
+/// Frames bigger than the read buffer it starts with: the buffer grows for the first, and is reused for the next ones,
+/// up to 64 KiB. Past that, its memory goes once the frame does, and the next big frame grows it again.
+#[test]
+fn big_frames_dont_allocate_once_the_buffer_grew() {
+    use steam_protobuf::protobufs::steammessages_clientserver_login::CMsgClientHello;
+
+    let mut hello = CMsgClientHello::new();
+    hello.set_protocol_version(1);
+    let now = Instant::now();
+    for (size, kept) in [
+        (4 * 1024, true),
+        (7 * 1024, true),
+        (9 * 1024, true),
+        (16 * 1024, true),
+        (60 * 1024, true),
+        // encrypted, a frame of 64 KiB exactly: the IV, then the packet padded to the next 16 bytes
+        (64 * 1024 - 32, true),
+        (64 * 1024, false),
+        (300 * 1024, false),
+    ] {
+        let mut packet = proto_packet(EMsg::ClientHello, CMsgProtoBufHeader::new(), &hello);
+        packet.resize(size, 0);
+        let frame = encrypted(&packet);
+        let mut protocol = encrypted_protocol();
+        // in reads as the socket gives them, and dropped once read
+        let read = |protocol: &mut Protocol| {
+            for chunk in frame.chunks(4 * 1024) {
+                protocol.handle_input(chunk, now).unwrap();
+            }
+            assert!(protocol.poll_message().is_some());
+        };
+        for _ in 0..5 {
+            read(&mut protocol);
+        }
+        let ((), count) = allocations(|| {
+            for _ in 0..100 {
+                read(&mut protocol);
+            }
+        });
+        println!("{} B frames, 100 read: {} allocations", frame.len(), count);
+        if kept {
+            assert_eq!(count, 0, "{} B frames", frame.len());
+        } else {
+            assert!(count >= 100, "{} B frames: {} allocations", frame.len(), count);
+        }
+    }
+}
+
+/// The send path through the connection: the encryption allocates (`steam-crypto`, twice per message), and nothing
+/// else, once the buffers grew. In particular, what was written isn't kept, so the protocol reuses its buffer.
+#[test]
+fn sending_allocates_only_the_encryption() {
+    use steam_protobuf::protobufs::steammessages_clientserver_login::CMsgClientHeartBeat;
+    use tokio::io::AsyncReadExt;
+
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    let (client, mut server) = tokio::io::duplex(64 * 1024);
+    let mut connection = EncryptedConnection::new(client, key());
+    let mut received = [0; 4096];
+    let mut total = 0;
+    for round in 0..20 {
+        let ((), count) = allocations(|| {
+            runtime
+                .block_on(connection.send(EMsg::ClientHeartBeat, CMsgClientHeartBeat::new()))
+                .unwrap()
+        });
+        runtime.block_on(async { assert!(server.read(&mut received).await.unwrap() > 0) });
+        // the first rounds grow the buffers
+        if round >= 5 {
+            total += count;
+        }
+    }
+    println!("send path through the connection, 15 heartbeats: {} allocations", total);
+    assert_eq!(total, 2 * 15);
 }

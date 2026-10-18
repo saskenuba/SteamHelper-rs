@@ -14,21 +14,24 @@ websockets = ["tokio-tungstenite"]
 [dependencies]
 
 anyhow = "^1.0"
+base64.workspace = true
 bytes = "^1.0"
 crc32fast = "1"
-futures = "^0.3"
 lazy_static = "1"
 log = "^0.4"
 miniz_oxide = "0.9"
 num-traits = "0.2"
-regex = "^1"
+rand.workspace = true
+rsa = "0.9"
 serde = { version = "^1.0", features = ["derive"] }
 serde_json = "^1"
+sha1 = "0.10"
+# already in the tree through tokio: TCP keepalive times, which tokio doesn't expose
+socket2 = "0.6"
 thiserror = "^1.0"
 
 # futures
-tokio = { version = "^1.1", features = ["net", "rt", "macros", "sync", "time"] }
-tokio-util = { version = "^0.7", features = ["codec"] }
+tokio = { version = "^1.1", features = ["io-util", "net", "rt", "macros", "sync", "time"] }
 tokio-tungstenite = { version = "^0.13", optional = true }
 
 
@@ -49,7 +52,10 @@ path = "../tappet"
 [dependencies.steamid-parser]
 path = "../steamid-parser"
 
+[dependencies.steam-totp]
+path = "../steam-totp"
+
 [dev-dependencies]
 env_logger = { version = "*", features = ["termcolor"] }
 flate2 = "1"
-tokio = { version = "^1.1", features = ["rt-multi-thread"] }
+tokio = { version = "^1.1", features = ["rt-multi-thread", "test-util"] }

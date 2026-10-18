@@ -86,7 +86,7 @@ impl Iterator for Packets {
 fn gunzip(body: &[u8], size: u32) -> Result<Bytes, MultiError> {
     let deflated = skip_gzip_header(body)?;
     // checked before allocating, so a hostile size costs nothing
-    if size as usize > deflated.len().saturating_mul(MAX_INFLATE_RATIO) {
+    if !can_inflate_to(deflated.len(), size) {
         return Err(MultiError::UnzippedSize(size));
     }
 
@@ -115,6 +115,11 @@ fn gunzip(body: &[u8], size: u32) -> Result<Bytes, MultiError> {
         return Err(MultiError::UnzippedSize(size));
     }
     Ok(unzipped.into())
+}
+
+/// Whether `deflated` bytes can inflate to `size` bytes: deflate's best ratio is [`MAX_INFLATE_RATIO`].
+fn can_inflate_to(deflated: usize, size: u32) -> bool {
+    size as usize <= deflated.saturating_mul(MAX_INFLATE_RATIO)
 }
 
 /// Skips the header of a gzip member (RFC 1952). Returns what follows: the deflate stream, then the trailer.
@@ -173,6 +178,14 @@ mod tests {
     use flate2::GzBuilder;
 
     use super::*;
+
+    #[test]
+    fn sizes_past_deflates_best_ratio_are_refused() {
+        assert!(can_inflate_to(10, 10 * MAX_INFLATE_RATIO as u32));
+        assert!(!can_inflate_to(10, 10 * MAX_INFLATE_RATIO as u32 + 1));
+        assert!(!can_inflate_to(0, 1));
+        assert!(can_inflate_to(usize::MAX, u32::MAX));
+    }
 
     fn packed(packets: &[&[u8]]) -> Vec<u8> {
         let mut body = vec![];
@@ -265,6 +278,19 @@ mod tests {
             unpack(multi(gzipped, Some(body.len() as u32))).unwrap(),
             [&b"a packet"[..]]
         );
+    }
+
+    #[test]
+    fn rejects_truncated_optional_header_fields() {
+        for header in [
+            // the extra field's length, then fewer bytes than it says
+            &[0x1F, 0x8B, 8, 1 << 2, 0, 0, 0, 0, 0, 0xFF, 1][..],
+            &[0x1F, 0x8B, 8, 1 << 2, 0, 0, 0, 0, 0, 0xFF, 4, 0, 1][..],
+            // half a header CRC
+            &[0x1F, 0x8B, 8, 1 << 1, 0, 0, 0, 0, 0, 0xFF, 0xAB][..],
+        ] {
+            assert_eq!(skip_gzip_header(header), Err(TRUNCATED_HEADER), "{:?}", header);
+        }
     }
 
     #[test]

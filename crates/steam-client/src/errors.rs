@@ -7,7 +7,10 @@ use steam_language_gen::generated::enums::EMsg;
 use steam_language_gen::generated::enums::EResult;
 use steam_language_gen::generated::enums::EUniverse;
 use steam_language_gen::MessageError;
+use steam_totp::error::TotpError;
 use thiserror::Error;
+
+use crate::auth::Confirmation;
 
 /// Errors of [`SteamClient`](crate::client::SteamClient).
 #[derive(Debug, Error)]
@@ -59,6 +62,38 @@ pub enum ClientError {
     #[error("Steam logged the client off: {0:?}.")]
     LoggedOff(EResult),
 
+    /// A spawned client stopped: it logged off, or Steam ended its session for good (its last events say why).
+    #[error("The client stopped: it logged off, or its session ended for good.")]
+    Closed,
+
+    /// A service method failed, such as `Authentication.BeginAuthSessionViaCredentials` with `InvalidPassword`.
+    #[error("{method} failed: {result:?} {message}")]
+    ServiceMethod {
+        /// The method, as `Service.Method#1`.
+        method: &'static str,
+        /// Why it failed.
+        result: EResult,
+        /// Steam's explanation, often empty.
+        message: String,
+    },
+
+    /// Steam Guard asks for a confirmation the logon can't give, such as an email code to a logon with a shared
+    /// secret. Begin an [`AuthSession`](crate::auth::AuthSession) to answer it.
+    #[error("Steam Guard asks for one of {0:?}, which this logon can't give.")]
+    SteamGuard(Vec<Confirmation>),
+
+    /// A token isn't one Steam issues.
+    #[error("Invalid token: {0}.")]
+    InvalidToken(String),
+
+    /// The password could not be encrypted.
+    #[error("Could not encrypt the password: {0}.")]
+    PasswordEncryption(&'static str),
+
+    /// A Steam Guard code could not be generated.
+    #[error(transparent)]
+    Totp(Box<TotpError>),
+
     /// A message Steam sent could not be parsed.
     #[error(transparent)]
     Message(#[from] MessageError),
@@ -70,6 +105,12 @@ pub enum ClientError {
     /// The connection failed below the message layer.
     #[error(transparent)]
     Packet(#[from] PacketError),
+}
+
+impl From<TotpError> for ClientError {
+    fn from(error: TotpError) -> Self {
+        Self::Totp(Box::new(error))
+    }
 }
 
 impl From<io::Error> for ClientError {
@@ -93,4 +134,18 @@ pub enum PacketError {
     /// Reading or writing the socket failed.
     #[error(transparent)]
     IoError(#[from] io::Error),
+}
+
+#[cfg(test)]
+mod tests {
+    use std::time::SystemTime;
+    use std::time::UNIX_EPOCH;
+
+    use super::*;
+
+    #[test]
+    fn boxes_the_errors_of_other_crates() {
+        let time = UNIX_EPOCH.duration_since(SystemTime::now()).unwrap_err();
+        assert!(matches!(ClientError::from(TotpError::Time(time)), ClientError::Totp(_)));
+    }
 }
