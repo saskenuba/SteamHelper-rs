@@ -1,4 +1,4 @@
-# Steam-Crypto
+# Steam-Cryptography
 
 Cryptography used by the Steam CM protocol, the one the Steam client speaks.
 It is used internally by steam-client, and isn't published.

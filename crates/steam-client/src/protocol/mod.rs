@@ -21,7 +21,7 @@ use std::time::Instant;
 use bytes::Bytes;
 use bytes::BytesMut;
 use num_traits::FromPrimitive;
-use steam_crypto::SessionKey;
+use steam_cryptography::SessionKey;
 use steam_language_gen::generated::enums::EMsg;
 use steam_language_gen::generated::enums::EResult;
 use steam_language_gen::generated::EMsgError;

@@ -32,8 +32,8 @@ use steam_client::__private::EncryptedCodec;
 use steam_client::__private::EncryptedConnection;
 use steam_client::__private::Packet;
 use steam_client::__private::Protocol;
-use steam_crypto::symmetric_encrypt_hmac_iv;
-use steam_crypto::SessionKey;
+use steam_cryptography::symmetric_encrypt_hmac_iv;
+use steam_cryptography::SessionKey;
 use steam_language_gen::generated::enums::EMsg;
 use steam_language_gen::generated::enums::EUniverse;
 use steam_language_gen::generated::messages::MsgChannelEncryptRequest;
@@ -670,8 +670,8 @@ fn big_frames_dont_allocate_once_the_buffer_grew() {
     }
 }
 
-/// The send path through the connection: the encryption allocates (`steam-crypto`, twice per message), and nothing
-/// else, once the buffers grew. In particular, what was written isn't kept, so the protocol reuses its buffer.
+/// The send path through the connection: the encryption allocates (`steam-cryptography`, twice per message), and
+/// nothing else, once the buffers grew. In particular, what was written isn't kept, so the protocol reuses its buffer.
 #[test]
 fn sending_allocates_only_the_encryption() {
     use steam_protobuf::protobufs::steammessages_clientserver_login::CMsgClientHeartBeat;

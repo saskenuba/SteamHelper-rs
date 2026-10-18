@@ -316,7 +316,7 @@ pub(crate) mod tests {
 
     use bytes::Bytes;
     use bytes::BytesMut;
-    use steam_crypto::SessionKey;
+    use steam_cryptography::SessionKey;
     use steam_language_gen::generated::enums::EResult;
     use steam_language_gen::HasJobId;
     use steam_language_gen::MessageHeaderWrapper;

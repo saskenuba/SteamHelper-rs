@@ -5,7 +5,7 @@ use std::time::Instant;
 
 use bytes::Bytes;
 use bytes::BytesMut;
-use steam_crypto::SessionKey;
+use steam_cryptography::SessionKey;
 use steam_language_gen::generated::enums::EMsg;
 use steam_language_gen::generated::messages::HasEMsg;
 use steam_language_gen::MessageBodyExt;

@@ -2,7 +2,7 @@
 
 use std::io;
 
-use steam_crypto::CryptoError;
+use steam_cryptography::CryptoError;
 use steam_language_gen::generated::enums::EMsg;
 use steam_language_gen::generated::enums::EResult;
 use steam_language_gen::generated::enums::EUniverse;

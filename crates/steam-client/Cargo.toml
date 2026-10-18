@@ -44,8 +44,8 @@ tokio-tungstenite = { version = "^0.13", optional = true }
 path = "../steam-protobuf"
 features = ["full"]
 
-[dependencies.steam-crypto]
-path = "../steam-crypto"
+[dependencies.steam-cryptography]
+path = "../steam-cryptography"
 
 [dependencies.steam-language-gen]
 path = "../steam-language-gen"

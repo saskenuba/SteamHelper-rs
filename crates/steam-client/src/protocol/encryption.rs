@@ -6,7 +6,7 @@
 //!
 //! Reference: https://github.com/SteamRE/SteamKit/blob/master/SteamKit2/SteamKit2/Networking/Steam3/EnvelopeEncryptedConnection.cs
 
-use steam_crypto::generate_encrypt_request_handshake;
+use steam_cryptography::generate_encrypt_request_handshake;
 use steam_language_gen::generated::enums::EResult;
 use steam_language_gen::generated::enums::EUniverse;
 use steam_language_gen::generated::messages::MsgChannelEncryptRequest;
@@ -38,7 +38,7 @@ pub(crate) fn answer_encrypt_request(message: PacketMessage) -> Result<(Encrypti
         universe, protocol_version
     );
 
-    // steam-crypto only has the public universe's key
+    // steam-cryptography only has the public universe's key
     if universe != EUniverse::Public {
         return Err(ClientError::UnsupportedUniverse(universe));
     }

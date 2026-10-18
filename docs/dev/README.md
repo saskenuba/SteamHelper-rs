@@ -44,7 +44,7 @@ We call this message we are receiving internally as `EMsg`, or Encoded Message.
 
 Every message that needs to be sent to Steam's Network, need to be serialized,
 and encrypted if that is the case. You can find helper cryptographic functions
-on `steam-crypto` crate.
+on `steam-cryptography` crate.
 
 #### Steam Servers
 

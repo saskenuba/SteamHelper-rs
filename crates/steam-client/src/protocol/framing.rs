@@ -9,12 +9,12 @@ use bytes::Buf;
 use bytes::BufMut;
 use bytes::Bytes;
 use bytes::BytesMut;
-use steam_crypto::symmetric_decrypt_hmac_iv_in_place;
-use steam_crypto::symmetric_decrypt_in_place;
-use steam_crypto::symmetric_encrypt;
-use steam_crypto::symmetric_encrypt_hmac_iv;
-use steam_crypto::CryptoError;
-use steam_crypto::SessionKey;
+use steam_cryptography::symmetric_decrypt_hmac_iv_in_place;
+use steam_cryptography::symmetric_decrypt_in_place;
+use steam_cryptography::symmetric_encrypt;
+use steam_cryptography::symmetric_encrypt_hmac_iv;
+use steam_cryptography::CryptoError;
+use steam_cryptography::SessionKey;
 
 use crate::errors::PacketError;
 
@@ -124,7 +124,7 @@ pub(crate) fn decrypt(frame: BytesMut, key: &SessionKey) -> Result<Bytes, Packet
 
 #[cfg(test)]
 mod tests {
-    use steam_crypto::CryptoError;
+    use steam_cryptography::CryptoError;
 
     use super::*;
 
