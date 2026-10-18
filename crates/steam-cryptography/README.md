@@ -1,7 +1,7 @@
 # Steam-Cryptography
 
 Cryptography used by the Steam CM protocol, the one the Steam client speaks.
-It is used internally by steam-client, and isn't published.
+It is used by steam-client-lib.
 
 When a client connects, Steam sends a random nonce. The client generates a
 session key, encrypts it with the Steam universe's RSA public key, and sends it

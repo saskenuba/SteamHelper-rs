@@ -3,7 +3,9 @@ name = "steam-client-lib"
 version = "0.1.0"
 authors = ["Martin <martin@hotmail.com.br>"]
 edition = "2018"
-publish = false
+license = "MIT"
+repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-client"
+description = "Steam client over the CM protocol: logon with tokens, events, service calls and the CS2 game coordinator."
 
 # The package is steam-client-lib because crates.io's steam-client is someone else's; the crate stays steam_client
 [lib]
@@ -45,22 +47,28 @@ tokio-tungstenite = { version = "^0.13", optional = true }
 
 # Internal Dependencies
 [dependencies.steam-protobuf]
+version = "^0.3"
 path = "../steam-protobuf"
 features = ["full"]
 
 [dependencies.steam-cryptography]
+version = "^0.1"
 path = "../steam-cryptography"
 
 [dependencies.steam-language-gen]
+version = "^0.2"
 path = "../steam-language-gen"
 
 [dependencies.tappet]
+version = "^0.6"
 path = "../tappet"
 
 [dependencies.steamid-parser]
+version = "^1"
 path = "../steamid-parser"
 
 [dependencies.steam-totp]
+version = "^0.2"
 path = "../steam-totp"
 
 [[example]]
@@ -72,6 +80,6 @@ name = "cs2_profile"
 required-features = ["cs2"]
 
 [dev-dependencies]
-env_logger = { version = "*", features = ["termcolor"] }
+env_logger = { version = "0.9", features = ["termcolor"] }
 flate2 = "1"
 tokio = { version = "^1.22", features = ["rt-multi-thread", "test-util", "signal"] }
