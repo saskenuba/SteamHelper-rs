@@ -8,6 +8,7 @@ use steam_language_gen::generated::enums::EResult;
 use steam_language_gen::generated::enums::EUniverse;
 use steam_language_gen::MessageError;
 use steam_totp::error::TotpError;
+use steamid_parser::SteamID;
 use thiserror::Error;
 
 use crate::auth::Confirmation;
@@ -111,6 +112,10 @@ pub enum ClientError {
         /// The game coordinator's explanation, often empty.
         message: String,
     },
+
+    /// A request about a player needs an individual account in the public universe, such as CS2's profiles.
+    #[error("{0} is not an individual account.")]
+    NotIndividual(SteamID),
 
     /// A string isn't a CS2 inspect link.
     #[cfg(feature = "cs2")]

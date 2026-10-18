@@ -11,7 +11,7 @@ default = []
 # Optional Websockets connection to Steam Servers
 websockets = ["tokio-tungstenite"]
 
-# Counter-Strike 2 over its game coordinator: inspect links (pattern, float, stickers)
+# Counter-Strike 2 over its game coordinator: inspect links (pattern, float, stickers), profiles, matches, inventory
 cs2 = ["steam-protobuf/csgo"]
 
 [dependencies]
@@ -61,6 +61,10 @@ path = "../steam-totp"
 
 [[example]]
 name = "cs2_inspect"
+required-features = ["cs2"]
+
+[[example]]
+name = "cs2_profile"
 required-features = ["cs2"]
 
 [dev-dependencies]
