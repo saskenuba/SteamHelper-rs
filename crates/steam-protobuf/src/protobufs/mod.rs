@@ -341,3 +341,6 @@ pub mod webuimessages_transportvalidation;
 
 #[cfg(feature = "webuimessages_user")]
 pub mod webuimessages_user;
+
+#[cfg(feature = "csgo")]
+pub mod csgo;
