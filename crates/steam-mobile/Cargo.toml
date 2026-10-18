@@ -62,7 +62,7 @@ version = "0.16.0-rc.1"
 package = "cookie-hashed-domain"
 
 [dependencies.steam-totp]
-version = "^0.2"
+version = "^0.2.3"
 path = "../steam-totp"
 
 [dependencies.steamid-parser]

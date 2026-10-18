@@ -1,6 +1,6 @@
 [package]
 name = "steam-protobuf"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Martin <martin@hotmail.com.br>"]
 edition = "2021"
 license = "MIT"

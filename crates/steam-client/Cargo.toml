@@ -47,12 +47,12 @@ tokio-tungstenite = { version = "^0.13", optional = true }
 
 # Internal Dependencies
 [dependencies.steam-protobuf]
-version = "^0.3"
+version = "^0.3.1"
 path = "../steam-protobuf"
 features = ["full"]
 
 [dependencies.steam-cryptography]
-version = "^0.1"
+version = "^0.1.0"
 path = "../steam-cryptography"
 
 [dependencies.steam-language-gen]
@@ -60,7 +60,7 @@ version = "^0.2"
 path = "../steam-language-gen"
 
 [dependencies.tappet]
-version = "^0.6"
+version = "^0.6.1"
 path = "../tappet"
 
 [dependencies.steamid-parser]
@@ -68,7 +68,7 @@ version = "^1"
 path = "../steamid-parser"
 
 [dependencies.steam-totp]
-version = "^0.2"
+version = "^0.2.3"
 path = "../steam-totp"
 
 [[example]]

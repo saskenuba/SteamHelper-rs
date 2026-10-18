@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.1 (2026-10-18)
+
+### Chore
+
+ - <csr-id-8cba64f4e70cd363e2fb272f9fe16df5bb95c147/> remove unused dependencies
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release over the course of 1 calendar day.
+ - 1 day passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Remove unused dependencies ([`8cba64f`](https://github.com/saskenuba/SteamHelper-rs/commit/8cba64f4e70cd363e2fb272f9fe16df5bb95c147))
+</details>
+
 ## 0.2.0 (2026-10-17)
 
 ### New Features
@@ -16,15 +41,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    input panicked everywhere.
    
    - MessageHeaderWrapper::parse(packet) returns the EMsg, the header and
-     the body; write(emsg, out) sets the protobuf flag and length prefix
+   the body; write(emsg, out) sets the protobuf flag and length prefix
    - MessageHeaderExt::parse and MessageBodyExt::parse return the parsed
-     value and the rest, or a MessageError. The derives read through
-     bincode::deserialize_from, so they consume exactly what bincode reads
+   value and the rest, or a MessageError. The derives read through
+   bincode::deserialize_from, so they consume exactly what bincode reads
    - removed DeserializableBytes, split_from_bytes and the wrapper's
-     SerializableBytes impl
+   SerializableBytes impl
    - ExtendedMessageHeader header_size defaults to 36, as in SteamKit
    - emsg: EMsg::split_raw; from_raw_message masks the protobuf flag and
-     errors on short input; EMsgError implements Display and Error
+   errors on short input; EMsgError implements Display and Error
    - tests with captured packets, round trips and short input
    
    The `messages` feature is unstable, so its API changes here are not
@@ -35,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 1614 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -47,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release steam-language-gen-derive v0.2.0, steam-language v1.1.0, steam-language-gen v0.2.0 ([`df6a226`](https://github.com/saskenuba/SteamHelper-rs/commit/df6a2269279754ba717febabe8a6e3d625e9e3eb))
     - Parse message headers without panicking ([`3caf1f1`](https://github.com/saskenuba/SteamHelper-rs/commit/3caf1f1803df29d5df382cb77570afca0f2a2037))
 </details>
 

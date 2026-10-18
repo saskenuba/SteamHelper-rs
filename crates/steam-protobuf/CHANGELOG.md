@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.3.1 (2026-10-18)
+
+### New Features
+
+ - <csr-id-14c570c2246a35b369da16cc3c5c576a2f9ae41d/> CS2 base_gcmessages protos
+   regen starts from base_gcmessages too: CSOEconItem and its attributes,
+   the items of the account's shared-object cache (its inventory), which
+   gcsdk_gcmessages' CacheSubscribed and SingleObject carry as bytes.
+   The other csgo output and all of steam's are unchanged.
+ - <csr-id-32d91f3c0578b064116dd3ba6f73840972706541/> CS2 game coordinator protos
+   The CS2 protos are generated into their own tree, protobufs::csgo,
+   behind one `csgo` feature, not part of `full`. csgo's steammessages
+   defines the same messages as steam's (CMsgProtoBufHeader among them),
+   so it gets a codegen run of its own, with only assets/protobufs/csgo
+   as include path.
+   
+   regen starts from cstrike15_gcmessages, gcsdk_gcmessages and
+   gcsystemmsgs and follows their imports (steammessages,
+   engine_gcmessages): the hello and welcome, the connection status, the
+   GC message ids, and the inspect request and its
+   CEconItemPreviewDataBlock. The steam output is unchanged.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release.
+ - 7 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - CS2 base_gcmessages protos ([`14c570c`](https://github.com/saskenuba/SteamHelper-rs/commit/14c570c2246a35b369da16cc3c5c576a2f9ae41d))
+    - CS2 game coordinator protos ([`32d91f3`](https://github.com/saskenuba/SteamHelper-rs/commit/32d91f3c0578b064116dd3ba6f73840972706541))
+</details>
+
 ## 0.3.0 (2026-10-11)
 
 ### New Features (BREAKING)
@@ -13,22 +55,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    Updates the protobuf generator and regenerates every Steam protobuf:
    
    - protobuf, protobuf-codegen 3.7.2 and protoc-bin-vendored 3.3
-     (protoc 36.2); drops the unused protoc-rust and walkdir
+   (protoc 36.2); drops the unused protoc-rust and walkdir
    - SteamDatabase/Protobufs submodule moved to the latest upstream, which
-     adds 21 protos and drops clientserver_ufs, deviceauth_steamclient and
-     star_steamclient
+   adds 21 protos and drops clientserver_ufs, deviceauth_steamclient and
+   star_steamclient
    - each proto is a module behind a cargo feature of the same name, which
-     enables the protos it imports; `full` enables all of them. regen
-     writes both mod.rs and the features block in Cargo.toml, and clears
-     stale output first
+   enables the protos it imports; `full` enables all of them. regen
+   writes both mod.rs and the features block in Cargo.toml, and clears
+   stale output first
    - generated with lite_runtime, without descriptors or reflection. A full
-     build goes from ~52s to ~21s, and a crate using only the auth protos
-     builds steam-protobuf in ~1s
+   build goes from ~52s to ~21s, and a crate using only the auth protos
+   builds steam-protobuf in ~1s
    - generated code refers to ::protobuf instead of relying on the
-     crate-root glob from inside_protobuf; the runtime is re-exported as
-     steam_protobuf::protobuf
+   crate-root glob from inside_protobuf; the runtime is re-exported as
+   steam_protobuf::protobuf
    - edition 2021, thiserror 2, and a .gitattributes marking the generated
-     protos as linguist-generated
+   protos as linguist-generated
    
    steam-mobile, steam-language (messages) and steam-client now name the
    features they use.
@@ -37,7 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 977 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -49,6 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release steam-protobuf v0.3.0, steam-language v1.0.0, steamid-parser v1.0.0, steam-mobile v0.6.0 ([`55df24d`](https://github.com/saskenuba/SteamHelper-rs/commit/55df24dbca5be6f3b26cb2979ca22f28614956c3))
     - Regenerate with lite runtime, one feature per proto ([`cd7631a`](https://github.com/saskenuba/SteamHelper-rs/commit/cd7631af6c19be5790615e75a5953192d201549f))
 </details>
 
