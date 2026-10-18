@@ -49,7 +49,8 @@
 //! # }
 //! ```
 //!
-//! A game's coordinator talks to an account that plays the game: see [`gc`].
+//! A game's coordinator, such as CS2's, talks to an account that plays the game: see [`gc`]. With the `cs2` feature,
+//! `gc::cs2::Cs2` inspects CS2 items (pattern, float, stickers).
 
 #![allow(dead_code)]
 #![warn(missing_docs, missing_doc_code_examples)]

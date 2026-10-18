@@ -11,6 +11,10 @@ use steam_totp::error::TotpError;
 use thiserror::Error;
 
 use crate::auth::Confirmation;
+#[cfg(feature = "cs2")]
+use crate::gc::cs2::InspectLinkError;
+#[cfg(feature = "cs2")]
+use crate::gc::cs2::ItemDetailsError;
 
 /// Errors of [`SteamClient`](crate::client::SteamClient).
 #[derive(Debug, Error)]
@@ -93,6 +97,30 @@ pub enum ClientError {
     /// A Steam Guard code could not be generated.
     #[error(transparent)]
     Totp(Box<TotpError>),
+
+    /// A game coordinator did not send the message of this type (the game's own numbering) in time, such as CS2's
+    /// `ClientWelcome` (4004) or its answer to an inspect link (9157).
+    #[error("Timed out waiting for the game coordinator's message {0}.")]
+    GcTimeout(u32),
+
+    /// A game coordinator refused the session, such as CS2's `ClientLogonFatalError`.
+    #[error("The game coordinator refused the session: {message} (code {code}).")]
+    GcRefused {
+        /// The game's own error code.
+        code: u32,
+        /// The game coordinator's explanation, often empty.
+        message: String,
+    },
+
+    /// A string isn't a CS2 inspect link.
+    #[cfg(feature = "cs2")]
+    #[error(transparent)]
+    InspectLink(#[from] InspectLinkError),
+
+    /// The details of a CS2 item could not be read.
+    #[cfg(feature = "cs2")]
+    #[error(transparent)]
+    ItemDetails(#[from] ItemDetailsError),
 
     /// A message Steam sent could not be parsed.
     #[error(transparent)]

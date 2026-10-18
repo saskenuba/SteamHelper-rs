@@ -44,6 +44,8 @@ use crate::messages::message::ClientMessage;
 use crate::protocol::free_if_big;
 use crate::service;
 
+#[cfg(feature = "cs2")]
+pub mod cs2;
 
 /// Flags a GC message type as protobuf.
 const PROTO_MASK: u32 = 0x8000_0000;
