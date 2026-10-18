@@ -9,7 +9,12 @@ const OUT_DIR: &str = "src/protobufs";
 const CSGO_DIR: &str = "assets/protobufs/csgo";
 const CSGO_OUT_DIR: &str = "src/protobufs/csgo";
 /// The CS2 protos a game-coordinator client needs; the protos they import are generated too.
-const CSGO_ROOTS: &[&str] = &["cstrike15_gcmessages.proto", "gcsdk_gcmessages.proto", "gcsystemmsgs.proto"];
+const CSGO_ROOTS: &[&str] = &[
+    "base_gcmessages.proto",
+    "cstrike15_gcmessages.proto",
+    "gcsdk_gcmessages.proto",
+    "gcsystemmsgs.proto",
+];
 const CSGO_FEATURE: &str = "csgo";
 const FEATURES_BEGIN: &str = "# @generated features begin";
 const FEATURES_END: &str = "# @generated features end";
