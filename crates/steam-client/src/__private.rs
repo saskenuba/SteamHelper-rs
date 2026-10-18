@@ -22,6 +22,7 @@ use crate::connection::Connection;
 use crate::errors::ClientError;
 use crate::errors::PacketError;
 use crate::events::Event;
+use crate::gc::GcMessage;
 use crate::handle;
 use crate::handle::Events;
 use crate::handle::SteamHandle;
@@ -99,6 +100,18 @@ impl Protocol {
         std::iter::from_fn(|| self.0.poll_transmit())
             .map(|transmit| transmit.len())
             .sum()
+    }
+
+    /// The next game coordinator's message, read as a spawned client reads it to route it, skipping other events
+    /// and messages.
+    pub fn poll_gc_message(&mut self) -> Option<Result<GcMessage, ClientError>> {
+        loop {
+            if let Event::Message(message) = self.0.poll_event()? {
+                if let Some(gc_message) = message.gc_message() {
+                    return Some(gc_message);
+                }
+            }
+        }
     }
 
     /// The next message nothing waited for, skipping other events.

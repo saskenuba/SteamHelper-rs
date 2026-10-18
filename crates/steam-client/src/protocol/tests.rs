@@ -12,6 +12,9 @@ use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_A
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_AccessToken_GenerateForApp_Response;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_GetPasswordRSAPublicKey_Request;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_GetPasswordRSAPublicKey_Response;
+use steam_protobuf::protobufs::steammessages_clientserver::cmsg_client_games_played::GamePlayed;
+use steam_protobuf::protobufs::steammessages_clientserver::CMsgClientGamesPlayed;
+use steam_protobuf::protobufs::steammessages_clientserver_2::CMsgGCClient;
 use steam_protobuf::protobufs::steammessages_clientserver_login::CMsgClientHello;
 
 use super::*;
@@ -745,6 +748,70 @@ fn stamps_the_session_on_later_messages() {
     let message = sent(&mut protocol);
     assert_eq!(message.emsg(), EMsg::ClientLogOff);
     assert_session(&message);
+}
+
+#[test]
+fn routes_messages_to_an_app_with_the_session() {
+    let mut protocol = logged_on(Instant::now());
+    let mut hello = CMsgClientHello::new();
+    hello.set_protocol_version(7);
+    let envelope = crate::gc::client_to_gc(730, 4006, &hello).unwrap();
+    protocol.send_routed(EMsg::ClientToGC, 730, envelope);
+
+    let message = sent(&mut protocol);
+    assert_eq!(message.emsg(), EMsg::ClientToGC);
+    assert_session(&message);
+    assert_eq!(proto_header(&message).routing_appid(), 730);
+    let envelope = ClientMessage::<CMsgGCClient>::from_proto_packet(message).unwrap().body;
+    assert_eq!(envelope.appid(), 730);
+    assert_eq!(envelope.msgtype(), 4006 | 0x8000_0000);
+    // the type with the protobuf flag, an empty GC header, then the body
+    let mut payload = vec![0xA6, 0x0F, 0x00, 0x80, 0, 0, 0, 0];
+    payload.extend_from_slice(&hello.write_to_bytes().unwrap());
+    assert_eq!(envelope.payload(), &payload[..]);
+
+    // other messages aren't routed
+    protocol.send(EMsg::ClientHello, CMsgClientHello::new());
+    assert!(!proto_header(&sent(&mut protocol)).has_routing_appid());
+}
+
+#[test]
+fn routes_messages_before_logon_without_a_session() {
+    let mut protocol = CmProtocol::encrypted(key());
+    protocol.send_routed(EMsg::ClientToGC, 570, CMsgGCClient::new());
+    let message = sent(&mut protocol);
+    let header = proto_header(&message);
+    assert_eq!(header.routing_appid(), 570);
+    assert!(!header.has_steamid());
+    assert!(!header.has_client_sessionid());
+}
+
+#[test]
+fn sets_the_games_played() {
+    let mut protocol = logged_on(Instant::now());
+    protocol.send(
+        EMsg::ClientGamesPlayedWithDataBlob,
+        crate::client::games_played(&[730, 440]),
+    );
+    let message = sent(&mut protocol);
+    assert_eq!(message.emsg(), EMsg::ClientGamesPlayedWithDataBlob);
+    assert_eq!(message.emsg() as u32, 5410);
+    assert_session(&message);
+    let games = ClientMessage::<CMsgClientGamesPlayed>::from_proto_packet(message)
+        .unwrap()
+        .body;
+    let ids: Vec<_> = games.games_played.iter().map(|game| game.game_id()).collect();
+    assert_eq!(ids, [730, 440]);
+    // the game ids only, as node-steam-user sends them
+    let mut expected = CMsgClientGamesPlayed::new();
+    for id in [730, 440] {
+        let mut game = GamePlayed::new();
+        game.set_game_id(id);
+        expected.games_played.push(game);
+    }
+    assert_eq!(games, expected);
+    // playing nothing is an empty list
+    assert!(crate::client::games_played(&[]).games_played.is_empty());
 }
 
 #[test]

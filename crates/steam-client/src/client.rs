@@ -30,9 +30,12 @@ use steam_language_gen::generated::enums::EMsg;
 use steam_language_gen::generated::enums::EOSType;
 use steam_language_gen::generated::enums::EPersonaState;
 use steam_language_gen::generated::enums::EUniverse;
+use steam_protobuf::protobuf::Message;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_AccessToken_GenerateForApp_Request;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_AccessToken_GenerateForApp_Response;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::ETokenRenewalType;
+use steam_protobuf::protobufs::steammessages_clientserver::cmsg_client_games_played::GamePlayed;
+use steam_protobuf::protobufs::steammessages_clientserver::CMsgClientGamesPlayed;
 use steam_protobuf::protobufs::steammessages_clientserver_friends::CMsgClientChangeStatus;
 use steam_protobuf::protobufs::steammessages_clientserver_login::CMsgClientHello;
 use steam_protobuf::protobufs::steammessages_clientserver_login::CMsgClientLogon;
@@ -48,6 +51,7 @@ use crate::connection::Connection;
 use crate::content_manager::dump_tcp_servers;
 use crate::errors::ClientError;
 use crate::events::Event;
+use crate::gc;
 use crate::handle;
 use crate::handle::Events;
 use crate::handle::SteamHandle;
@@ -119,6 +123,8 @@ pub struct User {
     refresh_token: RefreshToken,
     /// The persona state last set, which a spawned client sets again after logging on again.
     persona_state: Option<EPersonaState>,
+    /// The apps last set as played, which a spawned client sets again after logging on again.
+    games_played: Vec<u32>,
 }
 
 impl Debug for User {
@@ -127,6 +133,7 @@ impl Debug for User {
             .field("account_name", &self.account_name)
             .field("refresh_token", &self.refresh_token)
             .field("persona_state", &self.persona_state)
+            .field("games_played", &self.games_played)
             .finish()
     }
 }
@@ -398,6 +405,30 @@ impl SteamClient<LoggedOn<User>> {
             .await
     }
 
+    /// Sets the apps the account plays, by app id (CS2 is 730), with `ClientGamesPlayedWithDataBlob`, as
+    /// node-steam-user's `gamesPlayed`; none to stop playing. Steam answers nothing.
+    ///
+    /// A game's coordinator only talks to an account that plays it (see [`crate::gc`]), and the account must own the
+    /// game. Friends see the account in game. A [spawned](SteamClient::spawn) client sets the latest apps again each
+    /// time it logs on again.
+    pub async fn set_games_played(&mut self, app_ids: &[u32]) -> Result<(), ClientError> {
+        self.state.account.set_games_played(app_ids);
+        self.connection
+            .send(EMsg::ClientGamesPlayedWithDataBlob, games_played(app_ids))
+            .await
+    }
+
+    /// Sends a protobuf message of type `msg_type` (the game's own numbering, without the protobuf flag) to the
+    /// game coordinator of app `app_id`, which the account must play ([`SteamClient::set_games_played`]). What it
+    /// answers comes as [`EMsg::ClientFromGC`] events: read them with
+    /// [`RawMessage::gc_message`](crate::events::RawMessage::gc_message).
+    ///
+    /// A [spawned](SteamClient::spawn) client sends with a [`GcChannel`](gc::GcChannel) instead, which also receives.
+    pub async fn send_to_gc<M: Message>(&mut self, app_id: u32, msg_type: u32, body: &M) -> Result<(), ClientError> {
+        let message = gc::client_to_gc(app_id, msg_type, body)?;
+        self.connection.send_routed(EMsg::ClientToGC, app_id, message).await
+    }
+
     fn access_token_request(&self, renewal: ETokenRenewalType) -> CAuthentication_AccessToken_GenerateForApp_Request {
         access_token_request(self.refresh_token(), self.steam_id(), renewal)
     }
@@ -424,6 +455,11 @@ pub(crate) mod account {
         fn persona_state(&self) -> Option<EPersonaState> {
             None
         }
+
+        /// The apps to set as played again once logged on again, if any.
+        fn games_played(&self) -> &[u32] {
+            &[]
+        }
     }
 
     impl Logon for Anonymous {
@@ -443,6 +479,10 @@ pub(crate) mod account {
         fn persona_state(&self) -> Option<EPersonaState> {
             self.persona_state
         }
+
+        fn games_played(&self) -> &[u32] {
+            &self.games_played
+        }
     }
 }
 
@@ -452,6 +492,7 @@ impl User {
             account_name: account_name.to_string(),
             refresh_token,
             persona_state: None,
+            games_played: Vec::new(),
         }
     }
 
@@ -469,6 +510,10 @@ impl User {
 
     pub(crate) fn set_persona_state(&mut self, state: EPersonaState) {
         self.persona_state = Some(state);
+    }
+
+    pub(crate) fn set_games_played(&mut self, app_ids: &[u32]) {
+        self.games_played = app_ids.to_vec();
     }
 }
 
@@ -532,6 +577,18 @@ pub(crate) fn change_status(state: EPersonaState) -> CMsgClientChangeStatus {
     let mut status = CMsgClientChangeStatus::new();
     status.set_persona_state(state as i32 as u32);
     status
+}
+
+/// `ClientGamesPlayedWithDataBlob`'s body, playing `app_ids`: their game ids only, as node-steam-user's `gamesPlayed`
+/// and SteamKit's Dota sample send them. A Steam app's game id is its app id.
+pub(crate) fn games_played(app_ids: &[u32]) -> CMsgClientGamesPlayed {
+    let mut games = CMsgClientGamesPlayed::new();
+    for &app_id in app_ids {
+        let mut game = GamePlayed::new();
+        game.set_game_id(u64::from(app_id));
+        games.games_played.push(game);
+    }
+    games
 }
 
 /// The tokens of a `GenerateAccessTokenForApp` response: a refresh token only when Steam replaced it.
@@ -1033,6 +1090,51 @@ mod tests {
         quickly(server).await.unwrap();
         // kept, for a spawned client to set again
         assert_eq!(client.state.account.persona_state, Some(EPersonaState::Invisible));
+    }
+
+    #[tokio::test]
+    async fn plays_a_game_and_talks_to_its_game_coordinator_without_a_task() {
+        use steam_protobuf::protobufs::steammessages_base::CMsgProtoBufHeader;
+        use steam_protobuf::protobufs::steammessages_clientserver_2::CMsgGCClient;
+
+        let (client, mut cm) = connected().await;
+        let server = tokio::spawn(async move {
+            logs_on_the_account(&mut cm, &refresh_token_jwt()).await;
+            let games = cm.read().await;
+            assert_eq!(games.emsg, EMsg::ClientGamesPlayedWithDataBlob);
+            assert_eq!(games.header.client_sessionid(), 5);
+            let ids: Vec<_> = games
+                .body::<CMsgClientGamesPlayed>()
+                .games_played
+                .iter()
+                .map(|game| game.game_id())
+                .collect();
+            assert_eq!(ids, [730]);
+
+            let sent = cm.read().await;
+            assert_eq!(sent.emsg, EMsg::ClientToGC);
+            assert_eq!(sent.header.routing_appid(), 730);
+            assert_eq!(sent.header.steamid(), STEAM_ID);
+            let envelope = sent.body::<CMsgGCClient>();
+            assert_eq!((envelope.appid(), envelope.msgtype()), (730, 4006 | 0x8000_0000));
+            // the GC answers
+            let payload = gc::tests::proto_payload(4004, &CMsgProtoBufHeader::new(), b"");
+            cm.send(gc::tests::from_gc(730, 4004 | 0x8000_0000, payload)).await;
+            cm
+        });
+
+        let refresh_token = RefreshToken::new(refresh_token_jwt()).unwrap();
+        let mut client = client.login_with_refresh_token("account", refresh_token).await.unwrap();
+        client.set_games_played(&[730]).await.unwrap();
+        client.send_to_gc(730, 4006, &CMsgClientHello::new()).await.unwrap();
+        let _cm = server.await.unwrap();
+        let Event::Message(message) = client.next_event().await.unwrap() else {
+            panic!("expected a message");
+        };
+        let message = message.gc_message().unwrap().unwrap();
+        assert_eq!((message.app_id(), message.msg_type()), (730, 4004));
+        // kept, for a spawned client to set again
+        assert_eq!(client.state.account.games_played, [730]);
     }
 
     #[test]

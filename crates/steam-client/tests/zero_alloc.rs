@@ -9,7 +9,8 @@
 //! The `through_the_protocol` cases go the way the connection does: bytes as read from the socket, into the protocol,
 //! out as the messages it keeps or the responses to calls.
 //!
-//! Protobuf bodies still allocate (strings, repeated fields, nested messages): they are measured, not asserted on.
+//! Protobuf bodies still allocate (strings, repeated fields, nested messages): they are measured, not asserted on,
+//! except `CMsgGCClient`, which game coordinators' messages come in (its payload is a slice of the read buffer).
 //! Run with `--nocapture` to see the counts.
 
 #![allow(unsafe_code)]
@@ -698,4 +699,80 @@ fn sending_allocates_only_the_encryption() {
     }
     println!("send path through the connection, 15 heartbeats: {} allocations", total);
     assert_eq!(total, 2 * 15);
+}
+
+/// A `ClientFromGC` from CS2's game coordinator, as a CM sends it: the session on the CM header, `msgtype` flagged
+/// when protobuf, and the payload with its GC header.
+fn from_gc(msg_type: u32, payload: Vec<u8>, gcname: Option<&str>) -> Vec<u8> {
+    use steam_protobuf::protobufs::steammessages_clientserver_2::CMsgGCClient;
+
+    let mut header = CMsgProtoBufHeader::new();
+    header.set_steamid(76561197960265729);
+    header.set_client_sessionid(-123);
+    let mut envelope = CMsgGCClient::new();
+    envelope.set_appid(730);
+    envelope.set_msgtype(msg_type);
+    envelope.set_payload(payload.into());
+    if let Some(gcname) = gcname {
+        envelope.set_gcname(gcname.to_string());
+    }
+    proto_packet(EMsg::ClientFromGC, header, &envelope)
+}
+
+/// A protobuf GC payload: the type, flagged, a GC header with a target job, and a body of `body_len` bytes.
+fn proto_gc_payload(msg_type: u32, body_len: usize) -> Vec<u8> {
+    let mut header = CMsgProtoBufHeader::new();
+    header.set_jobid_target(42);
+    let header = header.write_to_bytes().unwrap();
+    let mut payload = (msg_type | 0x8000_0000).to_le_bytes().to_vec();
+    payload.extend_from_slice(&(header.len() as u32).to_le_bytes());
+    payload.extend_from_slice(&header);
+    payload.resize(payload.len() + body_len, 7);
+    payload
+}
+
+/// Reads `message` through the protocol, up to what a spawned client decides its route by: the app, the type, the
+/// body past the GC header. Returns those, and how many allocations it took.
+fn read_gc_message(message: &[u8]) -> ((u32, u32, bool, usize), usize) {
+    let mut protocol = encrypted_protocol();
+    let input = encrypted(message);
+    let now = Instant::now();
+    allocations(|| {
+        protocol.handle_input(&input, now).unwrap();
+        let message = protocol.poll_gc_message().unwrap().unwrap();
+        (
+            message.app_id(),
+            message.msg_type(),
+            message.is_proto(),
+            message.body().len(),
+        )
+    })
+}
+
+#[test]
+fn reading_a_game_coordinators_message_through_the_protocol_doesnt_allocate() {
+    // CS2's answer to an inspect, and its welcome
+    for (msg_type, body_len) in [(9157, 120), (4004, 600)] {
+        let message = from_gc(msg_type | 0x8000_0000, proto_gc_payload(msg_type, body_len), None);
+        let (read, count) = read_gc_message(&message);
+        println!("through the protocol, ClientFromGC {}: {} allocations", msg_type, count);
+        assert_eq!(read, (730, msg_type, true, body_len));
+        assert_eq!(count, 0, "ClientFromGC {}", msg_type);
+    }
+
+    // a GC message that isn't protobuf: an 18-byte header
+    let mut payload = vec![1, 0];
+    payload.extend_from_slice(&[0xFF; 8]);
+    payload.extend_from_slice(&[0; 8]);
+    payload.extend_from_slice(b"body");
+    let (read, count) = read_gc_message(&from_gc(1003, payload, None));
+    println!("through the protocol, ClientFromGC not protobuf: {} allocations", count);
+    assert_eq!(read, (730, 1003, false, 4));
+    assert_eq!(count, 0);
+
+    // `gcname` is a string: measured only, Steam isn't known to send it to clients
+    let message = from_gc(9157 | 0x8000_0000, proto_gc_payload(9157, 120), Some("CS2"));
+    let (read, count) = read_gc_message(&message);
+    println!("through the protocol, ClientFromGC with gcname: {} allocations", count);
+    assert_eq!(read.0, 730);
 }

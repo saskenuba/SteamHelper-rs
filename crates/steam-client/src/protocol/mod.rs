@@ -350,12 +350,26 @@ impl CmProtocol {
 
     /// Sends a message, with the session on its header once logged on.
     pub(crate) fn send<M: Message>(&mut self, emsg: EMsg, body: M) {
-        let header = match &self.logon {
-            Logon::LoggedOn { info, .. } => info.session.header(),
-            _ => CMsgProtoBufHeader::new(),
-        };
+        let header = self.header();
         trace!("Sending {:?}", emsg);
         self.send_proto(emsg, &header, &body);
+    }
+
+    /// Sends a message routed to app `app_id` (`routing_appid` on the header), such as one for its game coordinator,
+    /// with the session on its header once logged on.
+    pub(crate) fn send_routed<M: Message>(&mut self, emsg: EMsg, app_id: u32, body: M) {
+        let mut header = self.header();
+        header.set_routing_appid(app_id);
+        trace!("Sending {:?} to app {}", emsg, app_id);
+        self.send_proto(emsg, &header, &body);
+    }
+
+    /// The header of what is sent: with the session once logged on.
+    fn header(&self) -> CMsgProtoBufHeader {
+        match &self.logon {
+            Logon::LoggedOn { info, .. } => info.session.header(),
+            _ => CMsgProtoBufHeader::new(),
+        }
     }
 
     /// Calls a service method: before logon as `ServiceMethodCallFromClientNonAuthed`, once logged on as

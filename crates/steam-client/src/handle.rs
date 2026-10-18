@@ -11,7 +11,9 @@
 //! retried every second. The events say so: [`Event::Disconnected`], with the reason, then [`Event::Reconnected`].
 //! Calls waiting when the connection is lost, and calls made until it is back, fail with [`ClientError::Dropped`].
 //! Once logged on again, a [`User`] sets the persona state it was last set to, if any
-//! ([`SteamHandle::set_persona_state`]).
+//! ([`SteamHandle::set_persona_state`]), then the games it was last set to play ([`SteamHandle::set_games_played`]),
+//! before anything else. Each [`GcChannel`] gets a [`GcEvent::SessionLost`] when the connection is lost, and keeps
+//! its app's messages after the reconnect.
 //!
 //! Steam logging the client off, or refusing a logon, only ends it for good when retrying can't help. Retried, as
 //! node-steam-user (`nonFatalLogOffResults`, and its logon retries): a `ClientLoggedOff` with `Invalid`, `Fail`,
@@ -48,6 +50,7 @@ use steam_language_gen::generated::enums::EPersonaState;
 use steam_language_gen::generated::enums::EResult;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_AccessToken_GenerateForApp_Request;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::ETokenRenewalType;
+use steam_protobuf::protobufs::steammessages_clientserver_2::CMsgGCClient;
 use steamid_parser::SteamID;
 use thiserror::Error;
 use tokio::io::AsyncRead;
@@ -64,6 +67,7 @@ use crate::auth::AccessToken;
 use crate::auth::RefreshToken;
 use crate::client::access_token_request;
 use crate::client::change_status;
+use crate::client::games_played;
 use crate::client::hello;
 use crate::client::renewed_tokens;
 use crate::client::Account;
@@ -75,6 +79,12 @@ use crate::errors::ClientError;
 use crate::events::DisconnectReason;
 use crate::events::Event;
 use crate::events::RawMessage;
+use crate::gc;
+use crate::gc::GcChannel;
+#[cfg(doc)]
+use crate::gc::GcEvent;
+use crate::gc::GcRoutes;
+use crate::gc::Route;
 use crate::protocol::free_if_big;
 use crate::protocol::CmProtocol;
 use crate::protocol::Ended;
@@ -370,6 +380,29 @@ impl SteamHandle<User> {
         shared.account.set_persona_state(state);
         self.command(Command::SetPersonaState(state))
     }
+
+    /// Sets the apps the account plays, as
+    /// [`SteamClient::set_games_played`](crate::client::SteamClient::set_games_played) does, and sets them again each
+    /// time the client logs on again. The task sends it: this doesn't wait. While the client is connecting again,
+    /// they are set once logged on.
+    pub fn set_games_played(&self, app_ids: &[u32]) -> Result<(), ClientError> {
+        // under the lock, so the task sends the apps in the order they were kept
+        let mut shared = self.shared.state();
+        shared.account.set_games_played(app_ids);
+        self.command(Command::SetGamesPlayed(app_ids.into()))
+    }
+
+    /// Opens a channel to the game coordinator of app `app_id`: its messages go there instead of the [`Events`],
+    /// until the channel is dropped. The account must play the app ([`SteamHandle::set_games_played`]) for the
+    /// coordinator to talk to it. See [`crate::gc`].
+    ///
+    /// The latest channel of an app takes its messages: an earlier one ends. Channels last across reconnects, each
+    /// getting a [`GcEvent::SessionLost`] when the connection is lost.
+    pub fn game_coordinator(&self, app_id: u32) -> Result<GcChannel, ClientError> {
+        let (channel, route) = gc::channel(app_id, self.commands.downgrade());
+        self.command(Command::RouteGc(route))?;
+        Ok(channel)
+    }
 }
 
 /// `GenerateAccessTokenForApp` with the account's latest refresh token.
@@ -426,6 +459,7 @@ where
         commands: command_receiver,
         events: EventSender(events.clone()),
         calls: Calls::default(),
+        routes: GcRoutes::default(),
         connect,
         attempt: 0,
         session_start: Instant::now(),
@@ -435,15 +469,20 @@ where
     (SteamHandle { commands, shared }, Events(events), SteamTask(task))
 }
 
-/// What a handle asks of the task.
-enum Command {
+/// What a handle, or a [`GcChannel`], asks of the task.
+pub(crate) enum Command {
     Call(Box<dyn StartCall>),
     SetPersonaState(EPersonaState),
+    SetGamesPlayed(Box<[u32]>),
+    /// Sends a game coordinator's messages to a channel.
+    RouteGc(Route),
+    /// Sends a message to a game coordinator.
+    ToGc(Box<CMsgGCClient>),
     LogOff(oneshot::Sender<Result<(), ClientError>>),
 }
 
 /// A call to make, its types erased.
-trait StartCall: Send {
+pub(crate) trait StartCall: Send {
     /// When the caller stops waiting.
     fn deadline(&self) -> Instant;
     /// Whether the caller is gone: the call isn't made.
@@ -517,7 +556,7 @@ impl StartCall for RenewCall {
 }
 
 /// A call the task made, until its response comes.
-struct PendingCall {
+pub(crate) struct PendingCall {
     job_id: u64,
     /// None once nobody waits for it, but its response still matters.
     deadline: Option<Instant>,
@@ -631,11 +670,18 @@ impl EventQueue {
     }
 
     /// Takes the events the protocol kept, from one read: all of them, dropping the oldest messages from earlier
-    /// reads past [`EVENT_CAPACITY`].
-    fn push_read(&self, protocol: &mut CmProtocol) {
+    /// reads past [`EVENT_CAPACITY`]. Game coordinators' messages go to their channel, if they have one.
+    fn push_read(&self, protocol: &mut CmProtocol, routes: &mut GcRoutes) {
         let mut queue = self.lock();
         let mut read = 0;
         while let Some(event) = protocol.poll_event() {
+            let event = match event {
+                Event::Message(message) => match routes.route(message) {
+                    Some(message) => Event::Message(message),
+                    None => continue,
+                },
+                event => event,
+            };
             if queue.reader_gone {
                 continue;
             }
@@ -831,7 +877,7 @@ impl Calls {
     }
 
     /// Answers the calls whose response came, or forgets those whose caller is gone, and passes on the events.
-    fn deliver(&mut self, protocol: &mut CmProtocol, events: &EventQueue) {
+    fn deliver(&mut self, protocol: &mut CmProtocol, events: &EventQueue, routes: &mut GcRoutes) {
         let mut index = 0;
         while index < self.pending.len() {
             let job_id = self.pending[index].job_id;
@@ -850,7 +896,7 @@ impl Calls {
                 index += 1;
             }
         }
-        events.push_read(protocol);
+        events.push_read(protocol, routes);
     }
 
     /// When the next call times out.
@@ -920,6 +966,8 @@ struct Driver<T, A> {
     commands: mpsc::UnboundedReceiver<Command>,
     events: EventSender,
     calls: Calls,
+    /// Where game coordinators' messages go.
+    routes: GcRoutes,
     connect: Connector<T>,
     /// How many times in a row connecting again failed, or gave a session that didn't last: the delay before the next
     /// attempt doubles with each.
@@ -972,15 +1020,25 @@ where
         let stopped = loop {
             let next = match &mut self.link {
                 Link::Connected(connection) => {
-                    connected(connection, &mut self.commands, &self.events, &mut self.calls).await
+                    connected(
+                        connection,
+                        &mut self.commands,
+                        &self.events,
+                        &mut self.calls,
+                        &mut self.routes,
+                    )
+                    .await
                 }
-                Link::Reconnecting(relog) => reconnecting(relog, &mut self.commands, &self.events).await,
+                Link::Reconnecting(relog) => {
+                    reconnecting(relog, &mut self.commands, &self.events, &mut self.routes).await
+                }
             };
             match next {
                 Next::Continue => {}
                 Next::Reconnect(reason) => {
                     self.calls.fail();
                     self.events.push_lifecycle(Event::Disconnected { reason });
+                    self.routes.session_lost();
                     if self.session_start.elapsed() >= STABLE_SESSION {
                         self.attempt = 0;
                     }
@@ -1000,9 +1058,13 @@ where
         };
         // the connection closes before the events end, and before the task does; callers get `Closed`
         let Self {
-            link, calls, events, ..
+            link,
+            calls,
+            events,
+            routes,
+            ..
         } = self;
-        drop((link, calls, events));
+        drop((link, calls, routes, events));
         stopped
     }
 
@@ -1019,18 +1081,25 @@ where
             endpoint,
             logon,
         } = relogged;
-        let persona_state = {
+        let (persona_state, games) = {
             let mut state = self.shared.state();
             state.logon = logon;
             state.endpoint = endpoint;
-            state.account.persona_state()
+            (
+                state.account.persona_state(),
+                games_played(state.account.games_played()),
+            )
         };
         info!("Logged on again as {}", logon.session.steam_id);
-        // a new session shows as offline until set otherwise; a state set later is sent by its command
+        // a new session shows as offline, and plays nothing, until set otherwise; what is set later is sent by its
+        // command
         if let Some(persona_state) = persona_state {
             connection
                 .protocol()
                 .send(EMsg::ClientChangeStatus, change_status(persona_state));
+        }
+        if !games.games_played.is_empty() {
+            connection.protocol().send(EMsg::ClientGamesPlayedWithDataBlob, games);
         }
         self.session_start = Instant::now();
         self.link = Link::Connected(connection);
@@ -1044,11 +1113,12 @@ async fn connected<T>(
     commands: &mut mpsc::UnboundedReceiver<Command>,
     events: &EventQueue,
     calls: &mut Calls,
+    routes: &mut GcRoutes,
 ) -> Next<T>
 where
     T: AsyncRead + AsyncWrite + Unpin,
 {
-    calls.deliver(connection.protocol(), events);
+    calls.deliver(connection.protocol(), events, routes);
     match connection.protocol().logged_off() {
         Some(Ok(result)) if retries_log_off(result) => {
             info!("Steam logged us off ({:?}): logging on again", result);
@@ -1078,9 +1148,16 @@ where
             Some(Command::SetPersonaState(state)) => {
                 connection.protocol().send(EMsg::ClientChangeStatus, change_status(state));
             }
+            Some(Command::SetGamesPlayed(app_ids)) => {
+                connection.protocol().send(EMsg::ClientGamesPlayedWithDataBlob, games_played(&app_ids));
+            }
+            Some(Command::RouteGc(route)) => routes.add(route),
+            Some(Command::ToGc(message)) => {
+                connection.protocol().send_routed(EMsg::ClientToGC, message.appid(), *message);
+            }
             Some(Command::LogOff(done)) => {
                 let logged_off = connection.log_off().await;
-                logged_off_for_good(connection.protocol(), calls, events);
+                logged_off_for_good(connection.protocol(), calls, events, routes);
                 let _ = done.send(logged_off);
                 return Next::Stop(Stopped::LoggedOff);
             }
@@ -1089,7 +1166,7 @@ where
                 if timeout(SHUTDOWN_TIMEOUT, connection.log_off()).await.is_err() {
                     debug!("Steam didn't confirm the log off");
                 }
-                logged_off_for_good(connection.protocol(), calls, events);
+                logged_off_for_good(connection.protocol(), calls, events, routes);
                 return Next::Stop(Stopped::HandlesDropped);
             }
         },
@@ -1101,8 +1178,8 @@ where
 }
 
 /// Passes on what came while logging off, then that Steam logged us off, if it said so.
-fn logged_off_for_good(protocol: &mut CmProtocol, calls: &mut Calls, events: &EventQueue) {
-    calls.deliver(protocol, events);
+fn logged_off_for_good(protocol: &mut CmProtocol, calls: &mut Calls, events: &EventQueue, routes: &mut GcRoutes) {
+    calls.deliver(protocol, events, routes);
     if let Some(Ok(result)) = protocol.logged_off() {
         events.push_lifecycle(Event::LoggedOff(result));
     }
@@ -1113,12 +1190,18 @@ async fn reconnecting<T>(
     relog: &mut Relog<T>,
     commands: &mut mpsc::UnboundedReceiver<Command>,
     events: &EventQueue,
+    routes: &mut GcRoutes,
 ) -> Next<T> {
     tokio::select! {
         command = commands.recv() => match command {
             Some(Command::Call(call)) => call.fail(ClientError::Dropped),
             // kept in the account: set once logged on again
-            Some(Command::SetPersonaState(_)) => {}
+            Some(Command::SetPersonaState(_) | Command::SetGamesPlayed(_)) => {}
+            Some(Command::RouteGc(route)) => routes.add(route),
+            // the session it was for is gone: its channel got `SessionLost`
+            Some(Command::ToGc(message)) => {
+                debug!("Not sending to app {}'s game coordinator while connecting again", message.appid());
+            }
             Some(Command::LogOff(done)) => {
                 let _ = done.send(Ok(()));
                 return Next::Stop(Stopped::LoggedOff);
@@ -1211,15 +1294,17 @@ async fn sleep_until(deadline: Option<Instant>) {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use std::sync::atomic::AtomicU16;
     use std::sync::atomic::Ordering;
 
+    use steam_protobuf::protobuf::Message;
     use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_AccessToken_GenerateForApp_Response;
     use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_GetPasswordRSAPublicKey_Request;
     use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_GetPasswordRSAPublicKey_Response;
     use steam_protobuf::protobufs::steammessages_base::CMsgMulti;
     use steam_protobuf::protobufs::steammessages_base::CMsgProtoBufHeader;
+    use steam_protobuf::protobufs::steammessages_clientserver::CMsgClientGamesPlayed;
     use steam_protobuf::protobufs::steammessages_clientserver_friends::CMsgClientChangeStatus;
     use steam_protobuf::protobufs::steammessages_clientserver_login::CMsgClientHello;
     use steam_protobuf::protobufs::steammessages_clientserver_login::CMsgClientLoggedOff;
@@ -1239,6 +1324,7 @@ mod tests {
     use crate::connection::tests::Call;
     use crate::connection::tests::FakeCm;
     use crate::connection::tests::TEST_TIMEOUT;
+    use crate::gc::GcEvent;
     use crate::protocol::proto_message;
     use crate::protocol::tests::logs;
     use crate::protocol::tests::ANONYMOUS_LOGON_RESPONSE;
@@ -1248,16 +1334,16 @@ mod tests {
     const AUTHED: EMsg = EMsg::ServiceMethodCallFromClient;
 
     /// A spawned client, the fake CM it is connected to, and the fake CMs it connects to again, in order.
-    struct Spawned<A> {
-        handle: SteamHandle<A>,
-        events: Events,
-        task: SteamTask,
-        cm: FakeCm,
-        reconnects: mpsc::UnboundedReceiver<Reconnection>,
+    pub(crate) struct Spawned<A> {
+        pub(crate) handle: SteamHandle<A>,
+        pub(crate) events: Events,
+        pub(crate) task: SteamTask,
+        pub(crate) cm: FakeCm,
+        pub(crate) reconnects: mpsc::UnboundedReceiver<Reconnection>,
     }
 
     /// A connection the task made again: the fake CM, and the server the task asked to avoid.
-    struct Reconnection {
+    pub(crate) struct Reconnection {
         cm: FakeCm,
         avoid: Option<String>,
     }
@@ -1268,7 +1354,7 @@ mod tests {
 
     /// Logs `account` on over a fake connection to `127.0.0.1:27017`, and spawns it. Connecting again connects to a
     /// new fake CM at the next port, which the test takes from `reconnects`.
-    async fn spawned_as<A: Account>(account: A) -> Spawned<A> {
+    pub(crate) async fn spawned_as<A: Account>(account: A) -> Spawned<A> {
         let (sender, reconnects) = mpsc::unbounded_channel();
         let port = Arc::new(AtomicU16::new(27018));
         let connect = connector(move |avoid| {
@@ -1315,7 +1401,7 @@ mod tests {
     }
 
     /// The next fake CM the client connects to.
-    async fn reconnected(reconnects: &mut mpsc::UnboundedReceiver<Reconnection>) -> FakeCm {
+    pub(crate) async fn reconnected(reconnects: &mut mpsc::UnboundedReceiver<Reconnection>) -> FakeCm {
         soon(reconnects.recv()).await.unwrap().cm
     }
 
@@ -1328,13 +1414,13 @@ mod tests {
     }
 
     /// Answers a client connecting again: its hello, then its logon. Returns the logon.
-    async fn relogs(cm: &mut FakeCm) -> CMsgClientLogon {
+    pub(crate) async fn relogs(cm: &mut FakeCm) -> CMsgClientLogon {
         assert_eq!(next(cm).await.emsg, EMsg::ClientHello);
         logs_on(cm).await
     }
 
     /// The next message the client sent that isn't a heartbeat.
-    async fn next(cm: &mut FakeCm) -> Call {
+    pub(crate) async fn next(cm: &mut FakeCm) -> Call {
         soon(async {
             loop {
                 let call = cm.read().await;
@@ -1347,7 +1433,7 @@ mod tests {
     }
 
     /// The next event.
-    async fn recv(events: &mut Events) -> Option<Event> {
+    pub(crate) async fn recv(events: &mut Events) -> Option<Event> {
         soon(events.recv()).await
     }
 
@@ -1360,7 +1446,7 @@ mod tests {
         status.body::<CMsgClientChangeStatus>().persona_state()
     }
 
-    fn user() -> User {
+    pub(crate) fn user() -> User {
         User::new("account", RefreshToken::new(refresh_token_jwt()).unwrap())
     }
 
@@ -1388,7 +1474,7 @@ mod tests {
     }
 
     /// Calls through the fake CM: once answered, the task handled everything the CM sent before.
-    async fn round_trip(handle: &SteamHandle<impl Sized>, cm: &mut FakeCm) {
+    pub(crate) async fn round_trip(handle: &SteamHandle<impl Sized>, cm: &mut FakeCm) {
         let steam = async {
             let call = next(cm).await;
             answer(cm, &call).await;
@@ -1567,7 +1653,7 @@ mod tests {
         drop(receiver);
 
         let events = EventQueue::default();
-        calls.deliver(&mut protocol, &events);
+        calls.deliver(&mut protocol, &events, &mut GcRoutes::default());
         assert!(calls.pending.is_empty());
         // forgotten by the protocol too: a response that still comes is an event
         let mut header = CMsgProtoBufHeader::new();
@@ -1584,7 +1670,7 @@ mod tests {
             )
             .unwrap();
         assert!(protocol.take_answer(job_id).is_none());
-        calls.deliver(&mut protocol, &events);
+        calls.deliver(&mut protocol, &events, &mut GcRoutes::default());
         assert!(matches!(events.lock().pop(), Some(Event::Message(_))));
     }
 
@@ -1847,7 +1933,7 @@ mod tests {
                 Instant::now().into_std(),
             )
             .unwrap();
-        queue.push_read(&mut protocol);
+        queue.push_read(&mut protocol, &mut GcRoutes::default());
         let queue = queue.lock();
         assert!(queue.events.is_empty());
         assert_eq!((queue.messages, queue.lifecycle), (0, 0));
@@ -2764,6 +2850,325 @@ mod tests {
             handle.set_persona_state(EPersonaState::Online),
             Err(ClientError::Closed)
         ));
+    }
+
+    /// Reads the games the client sets as played next, with the session on the header.
+    async fn games(cm: &mut FakeCm) -> Vec<u64> {
+        let games = next(cm).await;
+        assert_eq!(games.emsg, EMsg::ClientGamesPlayedWithDataBlob);
+        assert_eq!(games.header.steamid(), ANONYMOUS_STEAM_ID);
+        assert!(games.header.has_client_sessionid());
+        let body = games.body::<CMsgClientGamesPlayed>();
+        body.games_played.iter().map(|game| game.game_id()).collect()
+    }
+
+    /// A message from CS2's GC, of type `msg_type`, its body a hello of `version`.
+    fn from_gc(msg_type: u32, version: u32) -> Vec<u8> {
+        let mut hello = CMsgClientHello::new();
+        hello.set_protocol_version(version);
+        let payload = gc::tests::proto_payload(msg_type, &CMsgProtoBufHeader::new(), &hello.write_to_bytes().unwrap());
+        gc::tests::from_gc(CS2, msg_type | 0x8000_0000, payload)
+    }
+
+    fn gc_version(event: &GcEvent) -> Option<u32> {
+        match event {
+            GcEvent::Message(message) => Some(message.parse::<CMsgClientHello>().unwrap().protocol_version()),
+            _ => None,
+        }
+    }
+
+    async fn gc_recv(channel: &mut GcChannel) -> Option<GcEvent> {
+        soon(channel.recv()).await
+    }
+
+    /// Sends a hello to CS2's GC through `channel`, and checks Steam got it, routed: then the task took every command
+    /// before it, such as the channel's route.
+    async fn greets(channel: &GcChannel, cm: &mut FakeCm) {
+        let mut hello = CMsgClientHello::new();
+        hello.set_protocol_version(1);
+        channel.send(4006, &hello).unwrap();
+        let sent = next(cm).await;
+        assert_eq!(sent.emsg, EMsg::ClientToGC);
+        assert_eq!(sent.header.routing_appid(), CS2);
+        assert_eq!(sent.header.steamid(), ANONYMOUS_STEAM_ID);
+        let envelope = sent.body::<CMsgGCClient>();
+        assert_eq!(envelope.appid(), CS2);
+        assert_eq!(envelope.msgtype(), 4006 | 0x8000_0000);
+        let body = gc::gc_body(envelope.msgtype(), envelope.payload.unwrap()).unwrap();
+        assert_eq!(CMsgClientHello::parse_from_tokio_bytes(&body).unwrap(), hello);
+    }
+
+    const CS2: u32 = 730;
+
+    #[tokio::test(start_paused = true)]
+    async fn a_game_coordinators_messages_go_to_its_channel() {
+        let Spawned {
+            mut cm,
+            handle,
+            mut events,
+            ..
+        } = spawned_as(user()).await;
+        let mut channel = handle.game_coordinator(CS2).unwrap();
+        assert_eq!(channel.app_id(), CS2);
+        greets(&channel, &mut cm).await;
+
+        cm.send(from_gc(4004, 1)).await;
+        let event = gc_recv(&mut channel).await.unwrap();
+        assert_eq!(gc_version(&event), Some(1));
+        match event {
+            GcEvent::Message(message) => assert_eq!((message.app_id(), message.msg_type()), (CS2, 4004)),
+            event => panic!("expected a message, got {:?}", event),
+        }
+        // another app's are events
+        let payload = gc::tests::proto_payload(4004, &CMsgProtoBufHeader::new(), b"");
+        let other = gc::tests::from_gc(570, 4004 | 0x8000_0000, payload);
+        cm.send(other).await;
+        assert!(
+            matches!(recv(&mut events).await, Some(Event::Message(message)) if message.emsg() == EMsg::ClientFromGC)
+        );
+        assert!(matches!(events.try_recv(), Err(TryRecvError::Empty)));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_dropped_channels_messages_are_events_again() {
+        let Spawned {
+            mut cm,
+            handle,
+            mut events,
+            ..
+        } = spawned_as(user()).await;
+        let channel = handle.game_coordinator(CS2).unwrap();
+        greets(&channel, &mut cm).await;
+        drop(channel);
+
+        cm.send(from_gc(4004, 3)).await;
+        let event = recv(&mut events).await.unwrap();
+        let Event::Message(message) = event else {
+            panic!("expected a message, got {:?}", event);
+        };
+        let message = message.gc_message().unwrap().unwrap();
+        assert_eq!(message.parse::<CMsgClientHello>().unwrap().protocol_version(), 3);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_new_channel_takes_the_apps_messages() {
+        let Spawned { mut cm, handle, .. } = spawned_as(user()).await;
+        let mut old = handle.game_coordinator(CS2).unwrap();
+        let mut new = handle.game_coordinator(CS2).unwrap();
+        greets(&new, &mut cm).await;
+        assert!(gc_recv(&mut old).await.is_none());
+        assert!(matches!(
+            old.send(4006, &CMsgClientHello::new()),
+            Err(ClientError::Closed)
+        ));
+        cm.send(from_gc(4004, 4)).await;
+        assert_eq!(gc_version(&gc_recv(&mut new).await.unwrap()), Some(4));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_channel_not_read_drops_the_newest_and_counts_them_and_calls_are_still_answered() {
+        let Spawned {
+            mut cm,
+            handle,
+            mut events,
+            ..
+        } = spawned_as(user()).await;
+        let mut channel = handle.game_coordinator(CS2).unwrap();
+        greets(&channel, &mut cm).await;
+        let sent = gc::GC_CAPACITY as u32 + 5;
+        for chunk in (0..sent).collect::<Vec<_>>().chunks(50) {
+            for version in chunk {
+                cm.send(from_gc(4004, *version)).await;
+            }
+            round_trip(&handle, &mut cm).await;
+        }
+
+        for version in 0..gc::GC_CAPACITY as u32 {
+            assert_eq!(gc_version(&gc_recv(&mut channel).await.unwrap()), Some(version));
+        }
+        assert!(matches!(gc_recv(&mut channel).await, Some(GcEvent::Lagged(5))));
+        cm.send(from_gc(4004, 1000)).await;
+        assert_eq!(gc_version(&gc_recv(&mut channel).await.unwrap()), Some(1000));
+        // none went to the events
+        assert!(matches!(events.try_recv(), Err(TryRecvError::Empty)));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn channels_lose_their_session_on_a_reconnect_and_keep_their_route() {
+        let Spawned {
+            mut cm,
+            handle,
+            mut events,
+            mut reconnects,
+            ..
+        } = spawned_as(user()).await;
+        let mut channel = handle.game_coordinator(CS2).unwrap();
+        greets(&channel, &mut cm).await;
+        cm.send(from_gc(4004, 1)).await;
+        assert_eq!(gc_version(&gc_recv(&mut channel).await.unwrap()), Some(1));
+
+        drop(cm);
+        assert!(matches!(gc_recv(&mut channel).await, Some(GcEvent::SessionLost)));
+        assert!(disconnected(DisconnectReason::ConnectionLost)(&recv(&mut events).await));
+        // dropped while connecting again: the call is the first thing sent
+        channel.send(4006, &CMsgClientHello::new()).unwrap();
+        let mut cm = reconnected(&mut reconnects).await;
+        relogs(&mut cm).await;
+        assert!(matches!(recv(&mut events).await, Some(Event::Reconnected)));
+        round_trip(&handle, &mut cm).await;
+
+        // the route is kept
+        greets(&channel, &mut cm).await;
+        cm.send(from_gc(4004, 2)).await;
+        assert_eq!(gc_version(&gc_recv(&mut channel).await.unwrap()), Some(2));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_channel_opened_while_logging_on_again_gets_the_new_sessions_messages() {
+        let Spawned {
+            cm,
+            handle,
+            mut events,
+            mut reconnects,
+            ..
+        } = spawned_as(user()).await;
+        drop(cm);
+        assert!(disconnected(DisconnectReason::ConnectionLost)(&recv(&mut events).await));
+        let mut channel = handle.game_coordinator(CS2).unwrap();
+        let mut cm = reconnected(&mut reconnects).await;
+        relogs(&mut cm).await;
+        assert!(matches!(recv(&mut events).await, Some(Event::Reconnected)));
+
+        cm.send(from_gc(4004, 5)).await;
+        assert_eq!(gc_version(&gc_recv(&mut channel).await.unwrap()), Some(5));
+        assert!(matches!(events.try_recv(), Err(TryRecvError::Empty)));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn channels_end_once_the_client_stopped() {
+        let Spawned {
+            mut cm,
+            handle,
+            mut events,
+            ..
+        } = spawned_as(user()).await;
+        let mut channel = handle.game_coordinator(CS2).unwrap();
+        greets(&channel, &mut cm).await;
+        cm.send(logged_off(EResult::LogonSessionReplaced)).await;
+        assert!(matches!(recv(&mut events).await, Some(Event::LoggedOff(_))));
+        assert!(gc_recv(&mut channel).await.is_none());
+        assert!(matches!(
+            channel.send(4006, &CMsgClientHello::new()),
+            Err(ClientError::Closed)
+        ));
+        assert!(matches!(handle.game_coordinator(CS2), Err(ClientError::Closed)));
+        assert!(matches!(handle.set_games_played(&[CS2]), Err(ClientError::Closed)));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_channel_doesnt_keep_the_client_running() {
+        let Spawned {
+            mut cm, handle, task, ..
+        } = spawned_as(user()).await;
+        let mut channel = handle.game_coordinator(CS2).unwrap();
+        greets(&channel, &mut cm).await;
+        drop(handle);
+        assert_eq!(next(&mut cm).await.emsg, EMsg::ClientLogOff);
+        assert_eq!(ends(task, SHUTDOWN_TIMEOUT).await, Stopped::HandlesDropped);
+        assert!(gc_recv(&mut channel).await.is_none());
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_user_sets_its_games_played_and_again_after_logging_on_again() {
+        let Spawned {
+            mut cm,
+            handle,
+            mut events,
+            mut reconnects,
+            ..
+        } = spawned_as(user()).await;
+        handle.set_games_played(&[CS2]).unwrap();
+        assert_eq!(games(&mut cm).await, [730]);
+        handle.set_persona_state(EPersonaState::Online).unwrap();
+        assert_eq!(persona_state(&mut cm).await, EPersonaState::Online as u32);
+        handle.clone().set_games_played(&[CS2, 440]).unwrap();
+        assert_eq!(games(&mut cm).await, [730, 440]);
+
+        drop(cm);
+        assert!(disconnected(DisconnectReason::ConnectionLost)(&recv(&mut events).await));
+        let mut cm = reconnected(&mut reconnects).await;
+        relogs(&mut cm).await;
+        // the persona, then the latest games, once, before anything else
+        assert_eq!(persona_state(&mut cm).await, EPersonaState::Online as u32);
+        assert_eq!(games(&mut cm).await, [730, 440]);
+        assert!(matches!(recv(&mut events).await, Some(Event::Reconnected)));
+        round_trip(&handle, &mut cm).await;
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn games_played_set_while_logging_on_again_are_set_once_logged_on() {
+        let Spawned {
+            cm,
+            handle,
+            mut events,
+            mut reconnects,
+            ..
+        } = spawned_as(user()).await;
+        drop(cm);
+        assert!(disconnected(DisconnectReason::ConnectionLost)(&recv(&mut events).await));
+        handle.set_games_played(&[440]).unwrap();
+        handle.set_games_played(&[CS2]).unwrap();
+
+        let mut cm = reconnected(&mut reconnects).await;
+        relogs(&mut cm).await;
+        assert_eq!(games(&mut cm).await, [730]);
+        assert!(matches!(recv(&mut events).await, Some(Event::Reconnected)));
+        // and only once: the call comes next
+        round_trip(&handle, &mut cm).await;
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn games_played_set_before_spawning_are_set_again_after_logging_on_again() {
+        let mut account = user();
+        // as `SteamClient::set_games_played` keeps them
+        account.set_games_played(&[CS2]);
+        let Spawned {
+            cm,
+            handle,
+            mut events,
+            mut reconnects,
+            ..
+        } = spawned_as(account).await;
+        drop(cm);
+        assert!(disconnected(DisconnectReason::ConnectionLost)(&recv(&mut events).await));
+        let mut cm = reconnected(&mut reconnects).await;
+        relogs(&mut cm).await;
+        assert_eq!(games(&mut cm).await, [730]);
+        assert!(matches!(recv(&mut events).await, Some(Event::Reconnected)));
+        round_trip(&handle, &mut cm).await;
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn playing_nothing_isnt_set_again() {
+        let Spawned {
+            mut cm,
+            handle,
+            mut events,
+            mut reconnects,
+            ..
+        } = spawned_as(user()).await;
+        handle.set_games_played(&[CS2]).unwrap();
+        assert_eq!(games(&mut cm).await, [730]);
+        handle.set_games_played(&[]).unwrap();
+        assert!(games(&mut cm).await.is_empty());
+
+        drop(cm);
+        assert!(disconnected(DisconnectReason::ConnectionLost)(&recv(&mut events).await));
+        let mut cm = reconnected(&mut reconnects).await;
+        relogs(&mut cm).await;
+        assert!(matches!(recv(&mut events).await, Some(Event::Reconnected)));
+        // a new session plays nothing anyway: the call is the first thing sent
+        round_trip(&handle, &mut cm).await;
     }
 
     #[tokio::test(start_paused = true)]

@@ -48,6 +48,8 @@
 //! # Ok(())
 //! # }
 //! ```
+//!
+//! A game's coordinator talks to an account that plays the game: see [`gc`].
 
 #![allow(dead_code)]
 #![warn(missing_docs, missing_doc_code_examples)]
@@ -78,6 +80,7 @@ pub mod connection;
 mod content_manager;
 pub mod errors;
 pub mod events;
+pub mod gc;
 pub mod handle;
 pub mod handlers;
 pub mod messages;

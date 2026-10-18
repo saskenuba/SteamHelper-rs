@@ -99,6 +99,17 @@ where
         self.flush().await
     }
 
+    /// Sends a message routed to app `app_id`, with the session on its header once logged on.
+    pub(crate) async fn send_routed<M: Message>(
+        &mut self,
+        emsg: EMsg,
+        app_id: u32,
+        body: M,
+    ) -> Result<(), ClientError> {
+        self.protocol.send_routed(emsg, app_id, body);
+        self.flush().await
+    }
+
     /// Calls a service method and waits for its response, at most [`RESPONSE_TIMEOUT`]. If it fails or is
     /// cancelled, the job is forgotten: a response that still comes is kept as an event.
     pub(crate) async fn call<M: ServiceMethod>(&mut self, request: M::Request) -> Result<M::Response, ClientError> {

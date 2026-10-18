@@ -31,7 +31,8 @@ socket2 = "0.6"
 thiserror = "^1.0"
 
 # futures
-tokio = { version = "^1.1", features = ["io-util", "net", "rt", "macros", "sync", "time"] }
+# 1.22: mpsc::WeakUnboundedSender
+tokio = { version = "^1.22", features = ["io-util", "net", "rt", "macros", "sync", "time"] }
 tokio-tungstenite = { version = "^0.13", optional = true }
 
 
@@ -58,4 +59,4 @@ path = "../steam-totp"
 [dev-dependencies]
 env_logger = { version = "*", features = ["termcolor"] }
 flate2 = "1"
-tokio = { version = "^1.1", features = ["rt-multi-thread", "test-util", "signal"] }
+tokio = { version = "^1.22", features = ["rt-multi-thread", "test-util", "signal"] }
