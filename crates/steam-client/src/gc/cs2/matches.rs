@@ -18,6 +18,21 @@ use crate::gc::cs2::ShareCode;
 /// The matches the game coordinator gives (`MatchList`, 9139), in answer to a request about matches.
 ///
 /// What the methods don't give, such as the tournament, is in [`raw`](Self::raw).
+///
+/// ```no_run
+/// # async fn run(mut cs2: steam_client::gc::cs2::Cs2)
+/// # -> Result<(), Box<dyn std::error::Error>> {
+/// use steam_client::gc::cs2::ShareCode;
+///
+/// let code: ShareCode = "CSGO-vGqmL-vb2x2-nTQtU-e9dco-qWHzN".parse()?;
+/// // no matches when the game coordinator found none
+/// for info in cs2.match_info(&code).await?.matches() {
+///     println!("{:?}: {:?}", info.map(), info.score());
+///     println!("demo {:?}", info.demo_url());
+/// }
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Clone, PartialEq)]
 pub struct MatchList {
     proto: CMsgGCCStrike15_v2_MatchList,
@@ -61,6 +76,23 @@ impl fmt::Debug for MatchList {
 
 /// A match of a [`MatchList`]: a `CDataGCCStrike15_v2_MatchInfo`. Its rounds' stats are cumulative: the last round
 /// has the match's totals.
+///
+/// A friend's recent matches, and the share code of each, which [`Cs2::match_info`](crate::gc::cs2::Cs2::match_info)
+/// takes:
+///
+/// ```no_run
+/// # async fn run(mut cs2: steam_client::gc::cs2::Cs2)
+/// # -> Result<(), steam_client::errors::ClientError> {
+/// use steamid_parser::SteamID;
+///
+/// let friend = SteamID::from_steam64(76561198084749846);
+/// for info in cs2.recent_matches(friend).await?.matches() {
+///     let code = info.share_code().map(|code| code.to_string());
+///     println!("{:?} on {:?}: {:?}", info.time(), info.map(), code);
+/// }
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Clone, Copy, PartialEq)]
 pub struct MatchInfo<'a> {
     proto: &'a CDataGCCStrike15_v2_MatchInfo,

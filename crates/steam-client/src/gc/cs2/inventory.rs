@@ -77,6 +77,24 @@ const NEW_ITEM: u32 = 1 << 30;
 ///
 /// Items in storage units count too when the game coordinator sent them (it may, unasked): tell them by
 /// [`InventoryItem::storage_unit`].
+///
+/// ```no_run
+/// # fn run(cs2: &steam_client::gc::cs2::Cs2) {
+/// let inventory = cs2.inventory();
+/// println!("{} items", inventory.len());
+/// // the AK-47s (def index 7)
+/// for item in inventory.iter().filter(|item| item.def_index() == 7) {
+///     println!("{}: float {:?}", item.id(), item.float());
+/// }
+/// // the storage units, and those of their items the game coordinator sent
+/// for unit in inventory.iter() {
+///     if let Some(count) = unit.storage_unit_count() {
+///         let sent = inventory.in_storage_unit(unit.id()).count();
+///         println!("{:?}: {} items, {} sent", unit.custom_name(), count, sent);
+///     }
+/// }
+/// # }
+/// ```
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Inventory {
     items: BTreeMap<u64, InventoryItem>,

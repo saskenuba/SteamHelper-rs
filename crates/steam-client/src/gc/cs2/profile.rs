@@ -16,6 +16,27 @@ const XP_BASE: i32 = 327_680_000;
 ///
 /// What the methods don't give, such as the ongoing match, the tournament or the per-map ranks, is in
 /// [`raw`](Self::raw).
+///
+/// ```no_run
+/// # async fn run(mut cs2: steam_client::gc::cs2::Cs2)
+/// # -> Result<(), steam_client::errors::ClientError> {
+/// use steamid_parser::SteamID;
+///
+/// // a friend of the account who plays CS2
+/// let friend = SteamID::from_steam64(76561198084749846);
+/// let profile = cs2.player_profile(friend).await?;
+/// for rank in profile.ranks() {
+///     println!("mode {:?}: rank {}", rank.rank_type, rank.rank);
+/// }
+/// println!("level {:?}, {:?} XP", profile.level(), profile.xp());
+/// if let Some(commendations) = profile.commendations() {
+///     println!("{} friendly", commendations.friendly);
+///     println!("{} teaching", commendations.teaching);
+///     println!("{} leader", commendations.leader);
+/// }
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Clone, PartialEq)]
 pub struct PlayerProfile {
     /// Boxed: the events that carry profiles stay small.

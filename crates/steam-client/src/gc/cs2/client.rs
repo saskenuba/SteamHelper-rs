@@ -381,6 +381,26 @@ impl Cs2 {
     ///
     /// Fails with [`ClientError::Closed`] once the client stopped and every event was read, and with
     /// [`ClientError::GcRefused`] if the game coordinator refused the session (the next call greets it again).
+    ///
+    /// ```no_run
+    /// # async fn run(mut cs2: steam_client::gc::cs2::Cs2)
+    /// # -> Result<(), steam_client::errors::ClientError> {
+    /// use steam_client::gc::cs2::Cs2Event;
+    ///
+    /// loop {
+    ///     match cs2.next_event().await? {
+    ///         Cs2Event::ItemAcquired(item) => println!("Acquired {}", item.id()),
+    ///         Cs2Event::ItemChanged { new, .. } => println!("Changed {}", new.id()),
+    ///         Cs2Event::ItemRemoved(item) => println!("Removed {}", item.id()),
+    ///         Cs2Event::MatchmakingStats(stats) => println!("Level {:?}", stats.level()),
+    ///         Cs2Event::SessionLost => println!("Lost the session, greeting again"),
+    ///         Cs2Event::Welcomed => println!("Welcomed again: {} items", cs2.inventory().len()),
+    ///         Cs2Event::Lagged(missed) => println!("Missed {} events", missed),
+    ///         _ => {}
+    ///     }
+    /// }
+    /// # }
+    /// ```
     pub async fn next_event(&mut self) -> Result<Cs2Event, ClientError> {
         loop {
             if let Some(event) = self.events.pop() {

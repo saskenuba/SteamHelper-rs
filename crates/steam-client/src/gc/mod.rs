@@ -15,6 +15,10 @@
 //! Without a task, [`SteamClient::send_to_gc`](crate::client::SteamClient::send_to_gc) sends, and
 //! [`RawMessage::gc_message`] reads what [`next_event`](crate::client::SteamClient::next_event) gives.
 //!
+//! [`GcChannel`] shows a channel greeting CS2's game coordinator and reading what it sends. With the `cs2` feature,
+//! `gc::cs2` is the worked case for one game: a session over a channel that greets the coordinator, pairs each request
+//! with its answer and reads CS2's messages.
+//!
 //! [`SteamHandle::set_games_played`]: crate::handle::SteamHandle::set_games_played
 //! [`SteamHandle::game_coordinator`]: crate::handle::SteamHandle::game_coordinator
 
@@ -64,6 +68,59 @@ pub const GC_CAPACITY: usize = 256;
 /// [`GcEvent::Lagged`] counts them. Dropping the channel gives the app's messages back to the
 /// [`Events`](crate::handle::Events). The channel doesn't keep the client running: it ends once the client stopped,
 /// or once another channel took the app.
+///
+/// Any game's coordinator, here CS2's, with its protos from steam-protobuf's `csgo` feature (which the `cs2` feature
+/// enables): play the game, greet the coordinator until it welcomes the account, and again after the session was
+/// lost.
+///
+/// ```no_run
+/// # #[cfg(feature = "cs2")]
+/// # async fn run(handle: steam_client::handle::SteamHandle<steam_client::client::User>)
+/// # -> Result<(), steam_client::errors::ClientError> {
+/// use std::time::Duration;
+///
+/// use steam_client::gc::GcEvent;
+/// use steam_protobuf::protobufs::csgo::gcsdk_gcmessages::CMsgClientHello;
+/// use steam_protobuf::protobufs::csgo::gcsdk_gcmessages::CMsgClientWelcome;
+/// use steam_protobuf::protobufs::csgo::gcsystemmsgs::EGCBaseClientMsg;
+/// use tokio::time;
+/// use tokio::time::MissedTickBehavior;
+///
+/// const CS2: u32 = 730;
+/// const HELLO: u32 = EGCBaseClientMsg::k_EMsgGCClientHello as u32;
+/// const WELCOME: u32 = EGCBaseClientMsg::k_EMsgGCClientWelcome as u32;
+///
+/// handle.set_games_played(&[CS2])?;
+/// let mut channel = handle.game_coordinator(CS2)?;
+/// let mut welcomed = false;
+/// let mut hellos = time::interval(Duration::from_secs(5));
+/// // one hello at once after the session was lost, not one for each tick missed
+/// hellos.set_missed_tick_behavior(MissedTickBehavior::Delay);
+/// loop {
+///     let event = tokio::select! {
+///         _ = hellos.tick(), if !welcomed => {
+///             channel.send(HELLO, &CMsgClientHello::new())?;
+///             continue;
+///         }
+///         event = channel.recv() => event,
+///     };
+///     match event {
+///         Some(GcEvent::Message(message)) if message.msg_type() == WELCOME => {
+///             let welcome: CMsgClientWelcome = message.parse()?;
+///             println!("Welcomed by version {}", welcome.version());
+///             welcomed = true;
+///         }
+///         Some(GcEvent::Message(message)) => println!("Message {}", message.msg_type()),
+///         // the hellos sent while the client connects again are dropped: keep sending them
+///         Some(GcEvent::SessionLost) => welcomed = false,
+///         Some(GcEvent::Lagged(missed)) => println!("Missed {} messages", missed),
+///         Some(_) => {}
+///         // the client stopped, or another channel took the app
+///         None => return Ok(()),
+///     }
+/// }
+/// # }
+/// ```
 pub struct GcChannel {
     app_id: u32,
     queue: Arc<GcQueue>,

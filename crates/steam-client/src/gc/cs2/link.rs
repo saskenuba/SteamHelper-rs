@@ -38,6 +38,30 @@ const RUNGAME_STEAM_ID: u64 = 76561202255233023;
 /// Parses from a whole link (`steam://rungame/730/…/+csgo_econ_action_preview%20S…A…D…`), with `%20` or a space,
 /// or from its command (`+csgo_econ_action_preview S…A…D…`), or from its argument alone (`S…A…D…`). Displays as a
 /// whole link.
+///
+/// An inventory link, a market one from its argument alone, and a generated one that embeds its item, decoded
+/// offline:
+///
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use steam_client::gc::cs2::InspectLink;
+///
+/// let link = concat!(
+///     "steam://rungame/730/76561202255233023/+csgo_econ_action_preview",
+///     "%20S76561198084749846A698323590D7935523998312483177",
+/// );
+/// let inventory: InspectLink = link.parse()?;
+/// assert_eq!(inventory.asset_id(), Some(698323590));
+/// assert_eq!(inventory.to_string(), link);
+/// let market: InspectLink = "M625254122282020305A6760346663D30614827701953021".parse()?;
+/// assert_eq!(market.asset_id(), Some(6760346663));
+/// let InspectLink::Embedded(item) = "00183C20B803280538E9A3C5DD0340E102C246A0D1".parse()? else {
+///     unreachable!("the link embeds its item");
+/// };
+/// assert_eq!(item.details()?.paint_index(), Some(440));
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum InspectLink {
     /// An item in an inventory: `S<owner>A<asset id>D<d>`.
