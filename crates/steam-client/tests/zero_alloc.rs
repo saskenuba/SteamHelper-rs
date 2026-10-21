@@ -49,6 +49,8 @@ use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_P
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_PollAuthSessionStatus_Response;
 use steam_protobuf::protobufs::steammessages_base::CMsgMulti;
 use steam_protobuf::protobufs::steammessages_base::CMsgProtoBufHeader;
+use steam_protobuf::protobufs::steammessages_clientserver_2::CMsgClientRequestFreeLicense;
+use steam_protobuf::protobufs::steammessages_clientserver_2::CMsgClientRequestFreeLicenseResponse;
 use steam_protobuf::protobufs::steammessages_clientserver_login::CMsgClientLoggedOff;
 use steam_protobuf::protobufs::steammessages_clientserver_login::CMsgClientLogonResponse;
 
@@ -445,6 +447,30 @@ fn reading_a_response_through_the_protocol_doesnt_allocate() {
     });
     println!(
         "through the protocol, encrypted ServiceMethodResponse: {} allocations",
+        count
+    );
+    assert_eq!(count, 0);
+}
+
+#[test]
+fn reading_a_job_messages_answer_through_the_protocol_doesnt_allocate() {
+    let mut protocol = encrypted_protocol();
+    let job_id = protocol.call_job(CMsgClientRequestFreeLicense::new());
+    let mut header = CMsgProtoBufHeader::new();
+    header.set_jobid_target(job_id);
+    let mut response = CMsgClientRequestFreeLicenseResponse::new();
+    response.set_eresult(1);
+    let input = encrypted(&proto_packet(EMsg::ClientRequestFreeLicenseResponse, header, &response));
+    let now = Instant::now();
+
+    let ((), count) = allocations(|| {
+        protocol.handle_input(&input, now).unwrap();
+        let packet = protocol.take_response(job_id).unwrap().unwrap();
+        assert_eq!(packet.emsg(), EMsg::ClientRequestFreeLicenseResponse);
+        assert_eq!(packet.header().target(), job_id);
+    });
+    println!(
+        "through the protocol, encrypted ClientRequestFreeLicenseResponse: {} allocations",
         count
     );
     assert_eq!(count, 0);

@@ -82,6 +82,15 @@ pub enum ClientError {
         message: String,
     },
 
+    /// A job message failed: the result in its response, such as `RateLimitExceeded` for `ClientRequestFreeLicense`.
+    #[error("{request:?} failed: {result:?}")]
+    JobMessage {
+        /// The request's message.
+        request: EMsg,
+        /// Why it failed.
+        result: EResult,
+    },
+
     /// Steam Guard asks for a confirmation the logon can't give, such as an email code to a logon with a shared
     /// secret. Begin an [`AuthSession`](crate::auth::AuthSession) to answer it.
     #[error("Steam Guard asks for one of {0:?}, which this logon can't give.")]

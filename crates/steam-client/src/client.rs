@@ -56,6 +56,9 @@ use crate::handle;
 use crate::handle::Events;
 use crate::handle::SteamHandle;
 use crate::handle::SteamTask;
+use crate::job::JobMessage;
+use crate::job::JobRequest;
+use crate::job::JobResponseOf;
 use crate::protocol::LogonInfo;
 use crate::service;
 use crate::service::ResponseOf;
@@ -295,6 +298,22 @@ impl<A> SteamClient<LoggedOn<A>> {
     /// Calls the method of `request`, one of [`service::methods`], as [`SteamClient::call`] does.
     pub async fn call_service_method<R: ServiceRequest>(&mut self, request: R) -> Result<ResponseOf<R>, ClientError> {
         self.call::<R::Method>(request).await
+    }
+
+    /// Sends job message `J`, in the session, and waits for the message answering it, at most 30 s. Fails with
+    /// [`ClientError::JobMessage`] if the answer has a result other than `OK` (see [`JobMessage::result`]). See
+    /// [`JobMessage`] to send a message the crate doesn't know.
+    ///
+    /// Messages Steam sends meanwhile are kept, as events for [`SteamClient::next_event`].
+    pub async fn call_job<J: JobMessage>(&mut self, request: J::Request) -> Result<J::Response, ClientError> {
+        service::check(&request)?;
+        self.connection.call_job::<J>(request).await
+    }
+
+    /// Sends the job message of `request`, one of [`job::messages`](crate::job::messages), as [`SteamClient::call_job`]
+    /// does.
+    pub async fn call_job_message<R: JobRequest>(&mut self, request: R) -> Result<JobResponseOf<R>, ClientError> {
+        self.call_job::<R::Job>(request).await
     }
 
     /// Waits for the next thing Steam sends that no call waits for, sending heartbeats meanwhile.

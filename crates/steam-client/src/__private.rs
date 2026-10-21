@@ -27,6 +27,7 @@ use crate::handle;
 use crate::handle::Events;
 use crate::handle::SteamHandle;
 use crate::handle::SteamTask;
+use crate::job::JobRequest;
 use crate::messages::message::ClientMessage;
 use crate::messages::packet::PacketMessage;
 use crate::protocol;
@@ -79,6 +80,11 @@ impl Protocol {
     /// Calls a service method. Returns its job id.
     pub fn call<R: ServiceRequest>(&mut self, request: R) -> u64 {
         self.0.call::<R::Method>(request).job_id()
+    }
+
+    /// Sends a job message. Returns its job id.
+    pub fn call_job<R: JobRequest>(&mut self, request: R) -> u64 {
+        self.0.call_job::<R::Job>(request).job_id()
     }
 
     /// The response to job `job_id`, unparsed, once it came.

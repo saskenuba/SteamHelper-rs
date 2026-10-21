@@ -29,9 +29,13 @@ use tokio::time::Instant;
 
 use crate::errors::ClientError;
 use crate::events::Event;
+use crate::job::Job;
+use crate::job::JobMessage;
 use crate::protocol::CmProtocol;
+use crate::protocol::Exchange;
 use crate::protocol::LogonInfo;
 use crate::protocol::Transport;
+use crate::service::Service;
 use crate::service::ServiceMethod;
 
 /// How long Steam has to answer a request.
@@ -113,7 +117,16 @@ where
     /// Calls a service method and waits for its response, at most [`RESPONSE_TIMEOUT`]. If it fails or is
     /// cancelled, the job is forgotten: a response that still comes is kept as an event.
     pub(crate) async fn call<M: ServiceMethod>(&mut self, request: M::Request) -> Result<M::Response, ClientError> {
-        let call = self.protocol.call::<M>(request);
+        self.exchange::<Service<M>>(request).await
+    }
+
+    /// Sends a job message and waits for the message answering it, as [`Connection::call`] does.
+    pub(crate) async fn call_job<J: JobMessage>(&mut self, request: J::Request) -> Result<J::Response, ClientError> {
+        self.exchange::<Job<J>>(request).await
+    }
+
+    async fn exchange<E: Exchange>(&mut self, request: E::Request) -> Result<E::Response, ClientError> {
+        let call = self.protocol.exchange::<E>(request);
         let guard = ForgetOnDrop {
             job_id: call.job_id(),
             connection: self,
@@ -123,7 +136,7 @@ where
             guard.connection.wait(|protocol| protocol.take_response(&call)),
         )
         .await
-        .unwrap_or(Err(ClientError::Timeout(EMsg::ServiceMethodResponse)))?
+        .unwrap_or(Err(ClientError::Timeout(E::RESPONSE)))?
     }
 
     /// Sends `ClientLogon`, with `steam_id` on the header, and waits for Steam's answer.

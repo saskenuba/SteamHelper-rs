@@ -4,6 +4,8 @@
 //! Before logon they go as `ServiceMethodCallFromClientNonAuthed`, once logged on as `ServiceMethodCallFromClient`
 //! with the session on the header. See [`SteamClient::call`](crate::client::SteamClient::call).
 
+use std::marker::PhantomData;
+
 use steam_language_gen::generated::enums::EMsg;
 use steam_language_gen::generated::enums::EResult;
 use steam_language_gen::MessageHeaderWrapper;
@@ -29,6 +31,7 @@ use crate::messages::message::ClientMessage;
 use crate::messages::packet::PacketMessage;
 use crate::protocol::eresult;
 use crate::protocol::proto_message;
+use crate::protocol::Exchange;
 use crate::protocol::Session;
 
 /// A service method: its name, and the bodies of its request and response. Implemented by a marker type, which
@@ -178,11 +181,28 @@ impl Caller {
         }
     }
 
-    fn header(&self) -> CMsgProtoBufHeader {
+    pub(crate) fn header(&self) -> CMsgProtoBufHeader {
         match self {
             Self::NonAuthed => CMsgProtoBufHeader::new(),
             Self::Authed(session) => session.header(),
         }
+    }
+}
+
+/// Service method `M`, as the protocol calls it.
+pub(crate) struct Service<M>(PhantomData<fn() -> M>);
+
+impl<M: ServiceMethod> Exchange for Service<M> {
+    type Request = M::Request;
+    type Response = M::Response;
+    const RESPONSE: EMsg = EMsg::ServiceMethodResponse;
+
+    fn request(caller: &Caller, job_id: u64) -> (EMsg, CMsgProtoBufHeader) {
+        (caller.emsg(), request_header::<M>(caller, job_id))
+    }
+
+    fn response(packet: PacketMessage) -> Result<M::Response, ClientError> {
+        response::<M>(packet)
     }
 }
 

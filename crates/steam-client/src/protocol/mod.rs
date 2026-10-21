@@ -3,8 +3,8 @@
 //! [`CmProtocol`] takes the bytes read from the connection and the time they were read, and gives back the bytes to
 //! write, what Steam sent, and when it next needs the time. It owns everything between the socket and the messages:
 //! framing, the channel encryption handshake and the encryption itself, parsing, unpacking `Multi`s, matching
-//! responses to calls by job id, the logon session and its heartbeat. It has no async code and reads no clock; the
-//! driver, [`crate::connection::Connection`], does the IO.
+//! responses to calls (service methods and job messages) by job id, the logon session and its heartbeat. It has no
+//! async code and reads no clock; the driver, [`crate::connection::Connection`], does the IO.
 //!
 //! Reading messages allocates nothing, past growing the buffers and parsing protobuf bodies (see
 //! `tests/zero_alloc.rs`).
@@ -42,14 +42,16 @@ use steamid_parser::SteamID;
 use crate::errors::ClientError;
 use crate::events::Event;
 use crate::events::RawMessage;
+use crate::job::Job;
+use crate::job::JobMessage;
 use crate::messages::message::ClientMessage;
 use crate::messages::packet::PacketMessage;
 use crate::protocol::encryption::answer_encrypt_request;
 use crate::protocol::encryption::check_encrypt_result;
 use crate::protocol::framing::Encryption;
 use crate::protocol::multi::unpack_multi;
-use crate::service;
 use crate::service::Caller;
+use crate::service::Service;
 use crate::service::ServiceMethod;
 
 pub(crate) mod encryption;
@@ -185,22 +187,39 @@ impl From<Ended> for ClientError {
 /// What a call got.
 #[derive(Debug)]
 enum Answer {
-    Waiting,
+    /// For the message that answers it, with its job id.
+    Waiting(EMsg),
     /// The response, unparsed, or why none will come.
     Answered(Result<RawMessage, Ended>),
 }
 
-/// A call of service method `M`, to take its response with [`CmProtocol::take_response`].
+/// A request answered by one message carrying its job id: a service method ([`Service`]) or a job message ([`Job`]).
+pub(crate) trait Exchange: 'static {
+    /// The request's body.
+    type Request: Message;
+    /// The response, parsed and checked.
+    type Response: Send + 'static;
+    /// The message that answers it.
+    const RESPONSE: EMsg;
+
+    /// The message to send, and its header, as job `job_id` from `caller`.
+    fn request(caller: &Caller, job_id: u64) -> (EMsg, CMsgProtoBufHeader);
+
+    /// Checks the response, and parses it.
+    fn response(packet: PacketMessage) -> Result<Self::Response, ClientError>;
+}
+
+/// A call of [`Exchange`] `E`, to take its response with [`CmProtocol::take_response`].
 ///
 /// It belongs to the protocol that made it: job ids are counted per protocol, so another one would take the answer
 /// to its own job with that id. The connection only uses a call with its own protocol, and a spawned client fails
 /// its calls when it replaces the connection.
-pub(crate) struct Call<M> {
+pub(crate) struct Call<E> {
     job_id: u64,
-    method: PhantomData<fn() -> M>,
+    exchange: PhantomData<fn() -> E>,
 }
 
-impl<M> Call<M> {
+impl<E> Call<E> {
     pub(crate) fn job_id(&self) -> u64 {
         self.job_id
     }
@@ -375,15 +394,25 @@ impl CmProtocol {
     /// Calls a service method: before logon as `ServiceMethodCallFromClientNonAuthed`, once logged on as
     /// `ServiceMethodCallFromClient` with the session on the header. Once the session ended, the call fails at once.
     ///
-    /// `request` must have its required fields set (see [`service::check`]).
-    pub(crate) fn call<M: ServiceMethod>(&mut self, request: M::Request) -> Call<M> {
+    /// `request` must have its required fields set (see [`crate::service::check`]).
+    pub(crate) fn call<M: ServiceMethod>(&mut self, request: M::Request) -> Call<Service<M>> {
+        self.exchange::<Service<M>>(request)
+    }
+
+    /// Sends job message `J`, with the session on the header once logged on, as [`CmProtocol::call`] does.
+    pub(crate) fn call_job<J: JobMessage>(&mut self, request: J::Request) -> Call<Job<J>> {
+        self.exchange::<Job<J>>(request)
+    }
+
+    /// Sends the request of `E` as a new job, to wait for the message that answers it.
+    pub(crate) fn exchange<E: Exchange>(&mut self, request: E::Request) -> Call<E> {
         let job_id = self.jobs.next();
         let answer = match self.caller() {
             Ok(caller) => {
-                trace!("Calling {} as job {}", M::METHOD, job_id);
-                let header = service::request_header::<M>(&caller, job_id);
-                self.send_proto(caller.emsg(), &header, &request);
-                Answer::Waiting
+                let (emsg, header) = E::request(&caller, job_id);
+                trace!("Calling {:?} {} as job {}", emsg, header.target_job_name(), job_id);
+                self.send_proto(emsg, &header, &request);
+                Answer::Waiting(E::RESPONSE)
             }
             // nothing would answer
             Err(ended) => Answer::Answered(Err(ended)),
@@ -391,7 +420,7 @@ impl CmProtocol {
         self.calls.insert(job_id, answer);
         Call {
             job_id,
-            method: PhantomData,
+            exchange: PhantomData,
         }
     }
 
@@ -404,15 +433,9 @@ impl CmProtocol {
     }
 
     /// Takes the response to `call` once it came, parsed, or why the call failed.
-    pub(crate) fn take_response<M: ServiceMethod>(
-        &mut self,
-        call: &Call<M>,
-    ) -> Option<Result<M::Response, ClientError>> {
+    pub(crate) fn take_response<E: Exchange>(&mut self, call: &Call<E>) -> Option<Result<E::Response, ClientError>> {
         Some(match self.take_answer(call.job_id)? {
-            Ok(message) => message
-                .parse()
-                .map_err(ClientError::from)
-                .and_then(service::response::<M>),
+            Ok(message) => message.parse().map_err(ClientError::from).and_then(E::response),
             Err(ended) => Err(ended.into()),
         })
     }
@@ -420,8 +443,8 @@ impl CmProtocol {
     /// Takes the answer to job `job_id` once it came: the response, unparsed, or why the call failed.
     pub(crate) fn take_answer(&mut self, job_id: u64) -> Option<Result<RawMessage, Ended>> {
         match self.calls.remove(&job_id)? {
-            Answer::Waiting => {
-                self.calls.insert(job_id, Answer::Waiting);
+            Answer::Waiting(response) => {
+                self.calls.insert(job_id, Answer::Waiting(response));
                 None
             }
             Answer::Answered(answer) => Some(answer),
@@ -534,16 +557,6 @@ impl CmProtocol {
 
     fn handle_packet(&mut self, message: RawMessage, packet: PacketMessage, now: Instant) {
         match packet.emsg() {
-            EMsg::ServiceMethodResponse => {
-                let job_id = packet.header().target();
-                match self.calls.get_mut(&job_id) {
-                    Some(answer) if matches!(answer, Answer::Waiting) => *answer = Answer::Answered(Ok(message)),
-                    _ => {
-                        debug!("Nothing waits for job {}", job_id);
-                        self.push_event(Event::Message(message));
-                    }
-                }
-            }
             EMsg::ClientLogOnResponse if matches!(self.logon, Logon::Pending) => match logon_result(packet) {
                 Ok(info) => {
                     debug!(
@@ -563,7 +576,21 @@ impl CmProtocol {
                 self.end(Ended::LoggedOff(result));
                 self.push_event(Event::LoggedOff(result));
             }
-            _ => self.push_event(Event::Message(message)),
+            emsg => {
+                // the answer to a call: the message it waits for, with its job id
+                let job_id = packet.header().target();
+                match self.calls.get_mut(&job_id) {
+                    Some(answer) if matches!(&*answer, Answer::Waiting(response) if *response == emsg) => {
+                        *answer = Answer::Answered(Ok(message))
+                    }
+                    _ => {
+                        if job_id != NO_JOB {
+                            debug!("Nothing waits for {:?} to job {}", emsg, job_id);
+                        }
+                        self.push_event(Event::Message(message));
+                    }
+                }
+            }
         }
     }
 
@@ -585,7 +612,7 @@ impl CmProtocol {
     fn end(&mut self, ended: Ended) {
         self.logon = Logon::Ended(ended);
         for answer in self.calls.values_mut() {
-            if let Answer::Waiting = answer {
+            if let Answer::Waiting(_) = answer {
                 *answer = Answer::Answered(Err(ended));
             }
         }
@@ -647,13 +674,15 @@ pub(crate) fn free_if_big<T>(queue: &mut VecDeque<T>) {
     }
 }
 
-/// Hands out the job ids requests are matched to their responses with.
+/// "No job" on a header: what messages that answer no request carry as their target.
+const NO_JOB: u64 = u64::MAX;
+
+/// Hands out the job ids requests are matched to their responses with: never [`NO_JOB`].
 #[derive(Debug)]
 struct JobIds(u64);
 
 impl JobIds {
     fn new() -> Self {
-        // `u64::MAX` means "no job" on the header
         Self(0)
     }
 

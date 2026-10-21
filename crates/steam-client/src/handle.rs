@@ -85,14 +85,20 @@ use crate::gc::GcChannel;
 use crate::gc::GcEvent;
 use crate::gc::GcRoutes;
 use crate::gc::Route;
+use crate::job::Job;
+use crate::job::JobMessage;
+use crate::job::JobRequest;
+use crate::job::JobResponseOf;
 use crate::protocol::free_if_big;
 use crate::protocol::CmProtocol;
 use crate::protocol::Ended;
+use crate::protocol::Exchange;
 use crate::protocol::LogonInfo;
 use crate::protocol::EVENT_QUEUE_CAPACITY;
 use crate::service;
 use crate::service::methods::GenerateAccessTokenForApp;
 use crate::service::ResponseOf;
+use crate::service::Service;
 use crate::service::ServiceMethod;
 use crate::service::ServiceRequest;
 
@@ -274,19 +280,38 @@ impl<A> SteamHandle<A> {
     ///
     /// Dropping the future forgets the call: a response that still comes is an [`Event::Message`].
     pub async fn call<M: ServiceMethod>(&self, request: M::Request) -> Result<M::Response, ClientError> {
-        service::check(&request)?;
-        let (sender, receiver) = oneshot::channel();
-        self.command(Command::Call(Box::new(TypedCall::<M> {
-            request,
-            sender,
-            deadline: Instant::now() + RESPONSE_TIMEOUT,
-        })))?;
-        receiver.await.map_err(|_| ClientError::Closed)?
+        self.exchange::<Service<M>>(request).await
     }
 
     /// Calls the method of `request`, one of [`service::methods`], as [`SteamHandle::call`] does.
     pub async fn call_service_method<R: ServiceRequest>(&self, request: R) -> Result<ResponseOf<R>, ClientError> {
         self.call::<R::Method>(request).await
+    }
+
+    /// Sends job message `J`, in the session, and waits for the message answering it, as
+    /// [`SteamClient::call_job`](crate::client::SteamClient::call_job) does: at most 30 s, concurrently with the
+    /// other calls. See [`JobMessage`] to send a message the crate doesn't know.
+    ///
+    /// Dropping the future forgets the call: an answer that still comes is an [`Event::Message`].
+    pub async fn call_job<J: JobMessage>(&self, request: J::Request) -> Result<J::Response, ClientError> {
+        self.exchange::<Job<J>>(request).await
+    }
+
+    /// Sends the job message of `request`, one of [`job::messages`](crate::job::messages), as [`SteamHandle::call_job`]
+    /// does.
+    pub async fn call_job_message<R: JobRequest>(&self, request: R) -> Result<JobResponseOf<R>, ClientError> {
+        self.call_job::<R::Job>(request).await
+    }
+
+    async fn exchange<E: Exchange>(&self, request: E::Request) -> Result<E::Response, ClientError> {
+        service::check(&request)?;
+        let (sender, receiver) = oneshot::channel();
+        self.command(Command::Call(Box::new(TypedCall::<E> {
+            request,
+            sender,
+            deadline: Instant::now() + RESPONSE_TIMEOUT,
+        })))?;
+        receiver.await.map_err(|_| ClientError::Closed)?
     }
 
     /// Logs off, waits for Steam to confirm (at most 30 s), and stops the client. Calls from other handles fail with
@@ -487,17 +512,19 @@ pub(crate) trait StartCall: Send {
     fn deadline(&self) -> Instant;
     /// Whether the caller is gone: the call isn't made.
     fn is_closed(&self) -> bool;
+    /// The message that answers it.
+    fn response(&self) -> EMsg;
     fn start(self: Box<Self>, protocol: &mut CmProtocol) -> PendingCall;
     fn fail(self: Box<Self>, error: ClientError);
 }
 
-struct TypedCall<M: ServiceMethod> {
-    request: M::Request,
-    sender: oneshot::Sender<Result<M::Response, ClientError>>,
+struct TypedCall<E: Exchange> {
+    request: E::Request,
+    sender: oneshot::Sender<Result<E::Response, ClientError>>,
     deadline: Instant,
 }
 
-impl<M: ServiceMethod> StartCall for TypedCall<M> {
+impl<E: Exchange> StartCall for TypedCall<E> {
     fn deadline(&self) -> Instant {
         self.deadline
     }
@@ -506,12 +533,17 @@ impl<M: ServiceMethod> StartCall for TypedCall<M> {
         self.sender.is_closed()
     }
 
+    fn response(&self) -> EMsg {
+        E::RESPONSE
+    }
+
     fn start(self: Box<Self>, protocol: &mut CmProtocol) -> PendingCall {
-        let call = protocol.call::<M>(self.request);
+        let call = protocol.exchange::<E>(self.request);
         PendingCall {
             job_id: call.job_id(),
+            response: E::RESPONSE,
             deadline: Some(self.deadline),
-            responder: Box::new(Responder::<M>(self.sender)),
+            responder: Box::new(Responder::<E>(self.sender)),
         }
     }
 
@@ -537,11 +569,16 @@ impl StartCall for RenewCall {
         self.sender.is_closed()
     }
 
+    fn response(&self) -> EMsg {
+        EMsg::ServiceMethodResponse
+    }
+
     fn start(self: Box<Self>, protocol: &mut CmProtocol) -> PendingCall {
         let request = token_request(&self.shared.state(), ETokenRenewalType::k_ETokenRenewalType_Allow);
         let call = protocol.call::<GenerateAccessTokenForApp>(request);
         PendingCall {
             job_id: call.job_id(),
+            response: EMsg::ServiceMethodResponse,
             deadline: Some(self.deadline),
             responder: Box::new(RenewResponder {
                 shared: self.shared,
@@ -558,6 +595,8 @@ impl StartCall for RenewCall {
 /// A call the task made, until its response comes.
 pub(crate) struct PendingCall {
     job_id: u64,
+    /// The message that answers it.
+    response: EMsg,
     /// None once nobody waits for it, but its response still matters.
     deadline: Option<Instant>,
     responder: Box<dyn Respond>,
@@ -571,27 +610,22 @@ trait Respond: Send {
     /// Whether nothing needs the answer anymore, so the call can be forgotten.
     fn is_closed(&self) -> bool;
 
-    /// Tells the caller the call timed out. Returns what still waits for the response, if it matters when it comes
-    /// late.
-    fn time_out(self: Box<Self>) -> Option<Box<dyn Respond>> {
-        self.respond(Err(ClientError::Timeout(EMsg::ServiceMethodResponse)));
+    /// Tells the caller the call timed out waiting for `response`. Returns what still waits for the response, if it
+    /// matters when it comes late.
+    fn time_out(self: Box<Self>, response: EMsg) -> Option<Box<dyn Respond>> {
+        self.respond(Err(ClientError::Timeout(response)));
         None
     }
 }
 
-struct Responder<M: ServiceMethod>(oneshot::Sender<Result<M::Response, ClientError>>);
+struct Responder<E: Exchange>(oneshot::Sender<Result<E::Response, ClientError>>);
 
-impl<M: ServiceMethod> Respond for Responder<M> {
+impl<E: Exchange> Respond for Responder<E> {
     fn respond(self: Box<Self>, answer: Result<RawMessage, ClientError>) -> Option<RawMessage> {
         if self.0.is_closed() {
             return answer.ok();
         }
-        let response = answer.and_then(|message| {
-            message
-                .parse()
-                .map_err(ClientError::from)
-                .and_then(service::response::<M>)
-        });
+        let response = answer.and_then(|message| message.parse().map_err(ClientError::from).and_then(E::response));
         let _ = self.0.send(response);
         None
     }
@@ -632,9 +666,9 @@ impl Respond for RenewResponder {
         false
     }
 
-    fn time_out(mut self: Box<Self>) -> Option<Box<dyn Respond>> {
+    fn time_out(mut self: Box<Self>, response: EMsg) -> Option<Box<dyn Respond>> {
         if let Some(sender) = self.sender.take() {
-            let _ = sender.send(Err(ClientError::Timeout(EMsg::ServiceMethodResponse)));
+            let _ = sender.send(Err(ClientError::Timeout(response)));
         }
         Some(self)
     }
@@ -917,10 +951,11 @@ impl Calls {
             }
             let call = self.pending.swap_remove(index);
             self.timeouts += 1;
-            match call.responder.time_out() {
+            match call.responder.time_out(call.response) {
                 // still waits for the response, with nobody waiting for it
                 Some(responder) => self.pending.push(PendingCall {
                     job_id: call.job_id,
+                    response: call.response,
                     deadline: None,
                     responder,
                 }),
@@ -934,7 +969,8 @@ impl Calls {
             } else if let Some(call) = self.parked.remove(index) {
                 // never sent: the connection doesn't take what it's given
                 self.timeouts += 1;
-                call.fail(ClientError::Timeout(EMsg::ServiceMethodResponse));
+                let response = call.response();
+                call.fail(ClientError::Timeout(response));
             }
         }
     }
@@ -1305,6 +1341,8 @@ pub(crate) mod tests {
     use steam_protobuf::protobufs::steammessages_base::CMsgMulti;
     use steam_protobuf::protobufs::steammessages_base::CMsgProtoBufHeader;
     use steam_protobuf::protobufs::steammessages_clientserver::CMsgClientGamesPlayed;
+    use steam_protobuf::protobufs::steammessages_clientserver_2::CMsgClientRequestFreeLicense;
+    use steam_protobuf::protobufs::steammessages_clientserver_2::CMsgClientRequestFreeLicenseResponse;
     use steam_protobuf::protobufs::steammessages_clientserver_friends::CMsgClientChangeStatus;
     use steam_protobuf::protobufs::steammessages_clientserver_login::CMsgClientHello;
     use steam_protobuf::protobufs::steammessages_clientserver_login::CMsgClientLoggedOff;
@@ -1590,6 +1628,103 @@ pub(crate) mod tests {
         assert_eq!(response.unwrap().publickey_mod(), "marker");
     }
 
+    fn free_license_request(app_id: u32) -> CMsgClientRequestFreeLicense {
+        let mut request = CMsgClientRequestFreeLicense::new();
+        request.appids = vec![app_id];
+        request
+    }
+
+    /// A `ClientRequestFreeLicenseResponse` body, as `emsg`, to job `job_id`.
+    fn free_license_response(emsg: EMsg, job_id: u64, result: EResult, granted: &[u32]) -> Vec<u8> {
+        let mut response = CMsgClientRequestFreeLicenseResponse::new();
+        response.set_eresult(result as u32);
+        response.granted_appids = granted.to_vec();
+        let mut header = CMsgProtoBufHeader::new();
+        header.set_jobid_target(job_id);
+        proto_message(emsg, header, response)
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn job_messages_are_answered_by_their_own_message() {
+        let Spawned {
+            mut cm,
+            handle,
+            mut events,
+            ..
+        } = spawned().await;
+        let steam = async {
+            let call = next(&mut cm).await;
+            assert_eq!(call.emsg, EMsg::ClientRequestFreeLicense);
+            assert_eq!(call.header.steamid(), ANONYMOUS_STEAM_ID);
+            assert!(call.header.has_client_sessionid());
+            assert!(!call.header.has_target_job_name());
+            assert_eq!(call.body::<CMsgClientRequestFreeLicense>().appids, [440]);
+            let job_id = call.header.jobid_source();
+            // another message to the same job doesn't answer it
+            cm.send(free_license_response(
+                EMsg::ServiceMethodResponse,
+                job_id,
+                EResult::OK,
+                &[],
+            ))
+            .await;
+            cm.send(free_license_response(
+                EMsg::ClientRequestFreeLicenseResponse,
+                job_id,
+                EResult::OK,
+                &[440],
+            ))
+            .await;
+        };
+        let (granted, ()) = tokio::join!(soon(handle.call_job_message(free_license_request(440))), steam);
+        assert_eq!(granted.unwrap().granted_appids, [440]);
+        assert!(
+            matches!(recv(&mut events).await, Some(Event::Message(message)) if message.emsg() == EMsg::ServiceMethodResponse)
+        );
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn job_messages_fail_with_their_result_or_time_out_waiting_for_their_answer() {
+        let Spawned { mut cm, handle, .. } = spawned().await;
+        let steam = async {
+            let call = next(&mut cm).await;
+            cm.send(free_license_response(
+                EMsg::ClientRequestFreeLicenseResponse,
+                call.header.jobid_source(),
+                EResult::RateLimitExceeded,
+                &[],
+            ))
+            .await;
+        };
+        let (refused, ()) = tokio::join!(
+            soon(handle.call_job::<crate::job::messages::RequestFreeLicense>(free_license_request(440))),
+            steam
+        );
+        assert!(
+            matches!(
+                refused,
+                Err(ClientError::JobMessage {
+                    request: EMsg::ClientRequestFreeLicense,
+                    result: EResult::RateLimitExceeded,
+                })
+            ),
+            "{:?}",
+            refused
+        );
+
+        let start = Instant::now();
+        let (result, _) = tokio::join!(handle.call_job_message(free_license_request(570)), next(&mut cm));
+        assert!(
+            matches!(
+                result,
+                Err(ClientError::Timeout(EMsg::ClientRequestFreeLicenseResponse))
+            ),
+            "{:?}",
+            result
+        );
+        assert_eq!(start.elapsed(), RESPONSE_TIMEOUT);
+    }
+
     #[tokio::test(start_paused = true)]
     async fn a_dropped_calls_response_is_an_event() {
         let Spawned {
@@ -1641,7 +1776,7 @@ pub(crate) mod tests {
     fn a_call_whose_caller_is_gone_is_forgotten() {
         let mut protocol = CmProtocol::encrypted(key());
         let (sender, receiver) = oneshot::channel();
-        let typed = TypedCall::<GetPasswordRSAPublicKey> {
+        let typed = TypedCall::<Service<GetPasswordRSAPublicKey>> {
             request: rsa_key_request("gone"),
             sender,
             deadline: Instant::now() + RESPONSE_TIMEOUT,
@@ -1944,7 +2079,7 @@ pub(crate) mod tests {
         let mut protocol = CmProtocol::encrypted(key());
         let call = |deadline| {
             let (sender, receiver) = oneshot::channel();
-            let typed = Box::new(TypedCall::<GetPasswordRSAPublicKey> {
+            let typed = Box::new(TypedCall::<Service<GetPasswordRSAPublicKey>> {
                 request: rsa_key_request("due"),
                 sender,
                 deadline,

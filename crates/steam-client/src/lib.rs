@@ -10,7 +10,10 @@
 //!
 //! Service methods are named by marker types ([`service::ServiceMethod`]): the crate's own in [`service::methods`],
 //! which `call_service_method(request)` finds from the request, and any other with a marker type of yours and
-//! `call::<Method>(request)`. Notifications Steam sends likewise ([`service::notifications`]).
+//! `call::<Method>(request)`. Notifications Steam sends likewise ([`service::notifications`]). Requests that aren't
+//! service methods but are answered by one message with their job id, such as a free license, are job messages, named
+//! the same way ([`job::JobMessage`]): the crate's own in [`job::messages`], with `call_job_message(request)`, any
+//! other with `call_job::<Message>(request)`.
 //!
 //! A bot that answers its friends' messages. Not tried live: account logons ask for the new Steam chat
 //! (`chat_mode = 2`, as node-steam-user does), and the bot sets its persona online, which node-steam-user says
@@ -52,6 +55,10 @@
 //! A game's coordinator, such as CS2's, talks to an account that plays the game: see [`gc`]. With the `cs2` feature,
 //! `gc::cs2::Cs2` inspects CS2 items (pattern, float, stickers) and reads matchmaking stats, player profiles, matches
 //! and the account's inventory.
+//!
+//! A logged on account's access token for the Steam websites and Web API comes from `web_access_token`
+//! (`SteamClient` or `SteamHandle<User>`). steam-mobile's feature `cm` logs its authenticator in to the websites
+//! through a `SteamHandle<User>` (`SteamAuthenticator::login_with_client`), which then renews the token by itself.
 
 #![allow(dead_code)]
 #![warn(missing_docs, missing_doc_code_examples)]
@@ -77,14 +84,15 @@ use tappet::SteamAPI;
 pub mod __private;
 pub mod auth;
 pub mod client;
+mod cm_list;
 pub mod config;
 pub mod connection;
-mod cm_list;
 pub mod errors;
 pub mod events;
 pub mod gc;
 pub mod handle;
 pub mod handlers;
+pub mod job;
 pub mod messages;
 mod protocol;
 pub mod service;
