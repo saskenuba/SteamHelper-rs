@@ -8,6 +8,8 @@ cfg_if::cfg_if! {
         pub use crate::trading_types::*;
         /// Trade offer state from the `GetTradeOffer` or `GetTradeOffers` endpoint.
         pub use steam_language::enums::ETradeOfferState;
+        /// Confirmation method from the `GetTradeOffer` or `GetTradeOffers` endpoint.
+        pub use steam_language::enums::ETradeOfferConfirmationMethod;
     }
 }
 
