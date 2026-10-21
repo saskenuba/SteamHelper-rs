@@ -137,8 +137,8 @@ pub enum GcEvent {
     /// until it logged on again are dropped; once it did (the games played are set again), greet the coordinator
     /// again as the game does. The messages after this are from the new session.
     SessionLost,
-    /// This many messages were dropped here because they weren't read in time. The events after it are the newer
-    /// ones.
+    /// This many messages were dropped here because they weren't read in time, or (counted by every channel) one from
+    /// a game coordinator couldn't be read. The events after it are the newer ones.
     Lagged(u64),
 }
 
@@ -362,6 +362,8 @@ impl GcRoutes {
             Some(Ok(gc_message)) => gc_message,
             Some(Err(error)) => {
                 warn!("Could not read a message from a game coordinator: {}", error);
+                // whose it is can't be told: each channel misses it, as one dropped
+                self.0.retain(|_, route| route.queue.missed());
                 return Some(message);
             }
             None => return Some(message),
@@ -442,6 +444,18 @@ impl GcQueue {
         queue.flush_dropped();
         queue.events.push_back(GcEvent::Message(message));
         queue.messages += 1;
+        drop(queue);
+        self.ready.notify_one();
+        true
+    }
+
+    /// Counts a message that couldn't be read as dropped. False if the channel was dropped.
+    fn missed(&self) -> bool {
+        let mut queue = self.lock();
+        if queue.reader_gone {
+            return false;
+        }
+        queue.dropped += 1;
         drop(queue);
         self.ready.notify_one();
         true

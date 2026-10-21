@@ -288,6 +288,14 @@ fn routes_by_app_and_gives_back_what_it_doesnt_route() {
     assert!(routes.route(RawMessage::new(EMsg::ClientHello, hello.into())).is_some());
     assert!(routes.route(raw(from_gc(CS2, 4004 | PROTO_MASK, vec![1]))).is_some());
     assert_eq!(channel.queue.lock().messages, 1);
+    // which the channel misses, as one dropped: it may have been its own; so does one whose envelope can't be read
+    assert_eq!(channel.queue.lock().dropped, 1);
+    let mut garbage = from_gc(CS2, 4004 | PROTO_MASK, vec![]);
+    garbage.extend_from_slice(&[0xFF, 0xFF]);
+    assert!(routes.route(raw(garbage)).is_some());
+    let mut channel = channel;
+    assert!(matches!(channel.try_recv(), Ok(GcEvent::Message(_))));
+    assert!(matches!(channel.try_recv(), Ok(GcEvent::Lagged(2))));
 
     // once dropped, its route goes
     drop(channel);
