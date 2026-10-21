@@ -98,6 +98,12 @@ macro_rules! tokens {
                 pub fn expires_at(&self) -> SystemTime {
                     self.0.expires_at
                 }
+
+                /// When Steam issued the token (its `iat` claim), if it says. Steam's clock, as [`Self::expires_at`]
+                /// is: the time between the two is how long the token lasts, whatever this machine's clock says.
+                pub fn issued_at(&self) -> Option<SystemTime> {
+                    self.0.issued_at
+                }
             }
 
             impl Debug for $token {
@@ -120,6 +126,7 @@ struct Jwt {
     token: String,
     steam_id: SteamID,
     expires_at: SystemTime,
+    issued_at: Option<SystemTime>,
 }
 
 impl Jwt {
@@ -128,6 +135,7 @@ impl Jwt {
         struct Claims {
             sub: String,
             exp: u64,
+            iat: Option<u64>,
         }
 
         // the errors never show the token
@@ -147,10 +155,17 @@ impl Jwt {
             .map(SteamID::from_steam64)
             .map_err(|_| invalid("its subject is not a SteamID"))?;
 
+        let expires_at = UNIX_EPOCH
+            .checked_add(Duration::from_secs(claims.exp))
+            .ok_or_else(|| invalid("its expiry is out of range"))?;
+
         Ok(Self {
             token,
             steam_id,
-            expires_at: UNIX_EPOCH + Duration::from_secs(claims.exp),
+            expires_at,
+            issued_at: claims
+                .iat
+                .and_then(|iat| UNIX_EPOCH.checked_add(Duration::from_secs(iat))),
         })
     }
 }
@@ -479,7 +494,15 @@ pub(crate) mod tests {
         let token = RefreshToken::new(refresh_token_jwt()).unwrap();
         assert_eq!(token.steam_id().to_steam64(), STEAM_ID);
         assert_eq!(token.expires_at(), UNIX_EPOCH + Duration::from_secs(1_800_000_000));
+        assert_eq!(token.issued_at(), Some(UNIX_EPOCH + Duration::from_secs(1_700_000_000)));
         assert_eq!(token.expose_secret(), refresh_token_jwt());
+    }
+
+    #[test]
+    fn a_token_without_an_issue_time_still_parses() {
+        let token = AccessToken::new(jwt(r#"{"sub":"76561197960287930","exp":1700086400}"#)).unwrap();
+        assert_eq!(token.expires_at(), UNIX_EPOCH + Duration::from_secs(1_700_086_400));
+        assert_eq!(token.issued_at(), None);
     }
 
     #[test]
@@ -494,6 +517,16 @@ pub(crate) mod tests {
         ] {
             assert!(matches!(AccessToken::new(token), Err(ClientError::InvalidToken(_))));
         }
+    }
+
+    #[test]
+    fn an_expiry_out_of_range_is_an_error_not_a_panic() {
+        let token = jwt(&format!(r#"{{"sub":"{}","iat":1,"exp":{}}}"#, STEAM_ID, u64::MAX));
+        assert!(matches!(
+            AccessToken::new(token.clone()),
+            Err(ClientError::InvalidToken(_))
+        ));
+        assert!(matches!(RefreshToken::new(token), Err(ClientError::InvalidToken(_))));
     }
 
     #[test]
