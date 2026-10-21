@@ -1,4 +1,5 @@
 use crate::types::trade_offer_web::{Asset, AssetList};
+use crate::InventoryContext;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct AssetCollection(pub(crate) Vec<Asset>);
@@ -11,10 +12,10 @@ impl AssetCollection {
         }
     }
 
-    pub fn add(&mut self, appid: u32, contextid: u32, assetid: i64) {
+    pub fn add(&mut self, context: InventoryContext, assetid: i64) {
         let asset = Asset {
-            appid,
-            contextid: contextid.to_string(),
+            appid: context.appid(),
+            contextid: context.contextid().to_string(),
             amount: 1,
             assetid: assetid.to_string(),
         };
@@ -40,8 +41,8 @@ mod tests {
     #[test]
     fn oi() {
         let mut my_assets = AssetCollection::default();
-        my_assets.add(570, 2, 17034419698);
-        my_assets.add(730, 2, 18465222145);
+        my_assets.add(InventoryContext::DOTA2, 17034419698);
+        my_assets.add(InventoryContext::CS2, 18465222145);
         println!("{:?}", serde_json::to_string(&my_assets.dump_to_asset_list()));
     }
 }

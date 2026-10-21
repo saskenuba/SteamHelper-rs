@@ -15,7 +15,11 @@ keywords = ["steam", "tradeoffer", "trading"]
 default = ["additional-checks"]
 
 additional-checks = ["scraper"]
-time = ["chrono"]
+
+# Where the items of an accepted offer went, through CS2's game coordinator (steam-client-lib's `cs2`):
+# `SteamTradeManager::accept_offer_and_find_items`. The account's CS2 session and web session share one Steam client
+# logon (steam-mobile's `cm`, `SteamAuthenticator::login_with_client`).
+cs2 = ["dep:steam-client-lib", "steam-client-lib/cs2", "steam-mobile/cm"]
 
 [dependencies]
 const_format = "^0.2"
@@ -25,17 +29,37 @@ regex = "^1"
 thiserror = "1"
 tracing = "^0.1"
 
-chrono = { version = "0.4", optional = true }
 scraper = { version = "^0", optional = true }
+steam-client-lib = { path = "../steam-client", version = "^0.1.0", optional = true }
 
 futures = "^0.3"
 futures-timer = "^3"
+# Same major as tappet's, which takes a `reqwest::Client` for its per-call `SteamAPI` (access token mode).
+reqwest = { version = "^0.11", default-features = false }
 
 serde.workspace = true
-serde_json.workspace = true
+# `raw_value`: inventory parts read only when asked for, without allocating.
+serde_json = { workspace = true, features = ["raw_value"] }
 serde_with = { version = "^1.9", features = ["json"] }
 
 steam-language.workspace = true
 steam-mobile = { workspace = true, default-features = false }
 steamid-parser.workspace = true
 tappet.workspace = true
+
+[dev-dependencies]
+# What steam-mobile encodes request forms with.
+serde_urlencoded = "0.7"
+# The examples.
+tokio = { version = "^1", features = ["rt-multi-thread", "macros", "time"] }
+tracing-subscriber = { version = "^0.3", features = ["env-filter"] }
+# The examples' Steam Guard codes from a shared secret (cs2_trade_items).
+steam-totp = { path = "../steam-totp", version = "^0.2.3" }
+
+[[example]]
+name = "full_trade"
+required-features = ["cs2"]
+
+[[example]]
+name = "cs2_trade_items"
+required-features = ["cs2"]

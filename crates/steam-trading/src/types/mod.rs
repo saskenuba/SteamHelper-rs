@@ -3,6 +3,7 @@ use crate::TRADEOFFER_BASE;
 use crate::TRADEOFFER_NEW_URL;
 
 pub mod asset_collection;
+pub mod context;
 pub mod sessionid;
 pub mod trade_link;
 pub mod trade_offer;
