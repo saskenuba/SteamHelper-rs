@@ -34,7 +34,10 @@ use tokio::time::Instant;
 
 use crate::client::User;
 use crate::errors::ClientError;
+use crate::gc::cs2::inventory;
 use crate::gc::cs2::inventory::Change;
+use crate::gc::cs2::inventory::KeptInventory;
+use crate::gc::cs2::inventory::SO_CACHE_SUBSCRIPTION_REFRESH;
 use crate::gc::cs2::InspectLink;
 use crate::gc::cs2::Inventory;
 use crate::gc::cs2::InventoryItem;
@@ -106,7 +109,9 @@ const LIVE_GAME_FOR_USER: u32 = ECsgoGCMsg::k_EMsgGCCStrike15_v2_MatchListReques
 /// );
 /// let item = cs2.inspect_str(link).await?;
 /// println!("pattern {:?}, float {:?}", item.pattern(), item.float());
-/// println!("{} items in the inventory", cs2.inventory().len());
+/// if let Some(inventory) = cs2.inventory()? {
+///     println!("{} items in the inventory", inventory.len());
+/// }
 /// # Ok(())
 /// # }
 /// ```
@@ -134,7 +139,7 @@ pub struct Cs2 {
     /// When the latest request was sent, which the cooldown counts from.
     last_request: Option<Instant>,
     events: EventQueue,
-    inventory: Inventory,
+    inventory: KeptInventory,
     matchmaking_stats: Option<PlayerProfile>,
 }
 
@@ -158,13 +163,20 @@ pub enum Cs2Event {
     /// while waiting. Never dropped.
     SessionLost,
     /// The game coordinator welcomed the account again, after the session was lost or unasked (it restarted). The
-    /// inventory is the welcome's, if it sent one; changes in between came as no events. Never dropped.
+    /// inventory comes with it, as the item events and [`InventoryLoaded`](Self::InventoryLoaded) that follow. Never
+    /// dropped.
     Welcomed,
     /// The account's own matchmaking stats (ranks, wins, level, cooldown…), which the game coordinator sends after
     /// its welcome and when they change. Also kept: [`Cs2::matchmaking_stats`].
     MatchmakingStats(PlayerProfile),
-    /// The game coordinator sent the whole inventory again (`CacheSubscribed`). Changes in between came as no events.
+    /// The inventory is current again, or was sent whole again (`CacheSubscribed`, alone or in a welcome): what
+    /// changed since the last one known came just before, as item events. Never dropped.
     InventoryLoaded,
+    /// The inventory isn't current any more, so [`Cs2::inventory`] gives none: the session ended, messages of the
+    /// game coordinator were dropped or couldn't be read, or it unsubscribed the account's cache or holds another
+    /// version of it. Changes that come meanwhile are no events; [`InventoryLoaded`](Self::InventoryLoaded) follows
+    /// once a copy comes again, after what changed. Never dropped.
+    InventoryUnavailable,
     /// An item came into the inventory, or out of a storage unit.
     ItemAcquired(InventoryItem),
     /// An item changed, such as its position, name or stickers.
@@ -179,7 +191,8 @@ pub enum Cs2Event {
     /// A message `Cs2` doesn't read, or an answer no request waits for (any more).
     Other(GcMessage),
     /// This many events, or messages from the game coordinator, were dropped because they weren't read in time. The
-    /// inventory may have missed changes since.
+    /// inventory stays right: dropped events are only events, and dropped messages make it
+    /// [unavailable](Self::InventoryUnavailable) until the game coordinator sends it again, which `Cs2` asks for.
     Lagged(u64),
 }
 
@@ -210,7 +223,7 @@ impl Cs2 {
             timeout: REQUEST_TIMEOUT,
             last_request: None,
             events: EventQueue::default(),
-            inventory: Inventory::default(),
+            inventory: KeptInventory::default(),
             matchmaking_stats: None,
         }
     }
@@ -233,9 +246,16 @@ impl Cs2 {
         self.session == Session::Welcomed
     }
 
-    /// The account's inventory, as the game coordinator last said, as far as the messages read tell.
-    pub fn inventory(&self) -> &Inventory {
-        &self.inventory
+    /// The account's inventory, if it is the game coordinator's current one: first reads what came since (the
+    /// messages become [events](Cs2Event), as during requests), then gives the inventory as of the latest message from
+    /// the game coordinator. `None` while it isn't known to be current: before the game coordinator sent it, and
+    /// from [`Cs2Event::InventoryUnavailable`] until [`Cs2Event::InventoryLoaded`].
+    ///
+    /// Fails with [`ClientError::Closed`] once the client stopped, and with [`ClientError::GcRefused`] if the game
+    /// coordinator refused the session.
+    pub fn inventory(&mut self) -> Result<Option<&Inventory>, ClientError> {
+        self.read_waiting()?;
+        Ok(self.inventory.current())
     }
 
     /// The account's own matchmaking stats the game coordinator last sent, if it did.
@@ -394,7 +414,11 @@ impl Cs2 {
     ///         Cs2Event::ItemRemoved(item) => println!("Removed {}", item.id()),
     ///         Cs2Event::MatchmakingStats(stats) => println!("Level {:?}", stats.level()),
     ///         Cs2Event::SessionLost => println!("Lost the session, greeting again"),
-    ///         Cs2Event::Welcomed => println!("Welcomed again: {} items", cs2.inventory().len()),
+    ///         Cs2Event::Welcomed => println!("Welcomed again"),
+    ///         Cs2Event::InventoryLoaded => {
+    ///             let items = cs2.inventory()?.map_or(0, |inventory| inventory.len());
+    ///             println!("The inventory is current: {} items", items);
+    ///         }
     ///         Cs2Event::Lagged(missed) => println!("Missed {} events", missed),
     ///         _ => {}
     ///     }
@@ -558,11 +582,18 @@ impl Cs2 {
             GcEvent::Lagged(missed) => {
                 warn!("Missed {} messages of CS2's game coordinator", missed);
                 self.events.missed(missed);
+                // changes to the inventory may be among them, or the cache asked for
+                if self.inventory.invalidate() {
+                    self.events.push(Cs2Event::InventoryUnavailable);
+                }
+                if self.has_session() {
+                    self.ask_for_inventory()?;
+                }
                 return Ok(());
             }
         };
         match message.msg_type() {
-            CLIENT_WELCOME => self.welcomed(&message),
+            CLIENT_WELCOME => self.welcomed(&message)?,
             CONNECTION_STATUS => match message.parse::<CMsgConnectionStatus>() {
                 // the raw value, as node-globaloffensive compares it: one unknown here isn't a session
                 Ok(status) => {
@@ -597,43 +628,75 @@ impl Cs2 {
                     self.events.push(Cs2Event::Other(message));
                 }
             },
-            _ => match self.inventory.apply(&message, self.account) {
-                Some(changes) => {
-                    for change in changes {
-                        self.events.push(match change {
-                            Change::Loaded => Cs2Event::InventoryLoaded,
-                            Change::Acquired(item) => Cs2Event::ItemAcquired(item),
-                            Change::Changed { old, new } => Cs2Event::ItemChanged { old, new },
-                            Change::Removed(item) => Cs2Event::ItemRemoved(item),
-                        });
-                    }
-                }
+            _ => match self.inventory.apply(&message, self.account, self.has_session()) {
+                Some(changes) => self.changed(changes)?,
                 None => self.events.push(Cs2Event::Other(message)),
             },
         }
         Ok(())
     }
 
-    /// Reads the welcome: the session is on, with the inventory it carries.
-    fn welcomed(&mut self, message: &GcMessage) {
-        debug!("CS2's game coordinator welcomed the account");
-        self.session = Session::Welcomed;
-        match message.parse::<CMsgClientWelcome>() {
-            Ok(welcome) => {
-                self.inventory.load(&welcome.outofdate_subscribed_caches, self.account);
-            }
-            Err(error) => warn!("Unreadable welcome from CS2's game coordinator: {}", error),
+    /// Passes on how the inventory changed, as events, and asks for it again if it needs.
+    fn changed(&mut self, changes: Vec<Change>) -> Result<(), ClientError> {
+        for change in changes {
+            self.events.push(match change {
+                Change::Refresh => {
+                    self.ask_for_inventory()?;
+                    continue;
+                }
+                Change::Loaded => Cs2Event::InventoryLoaded,
+                Change::Unavailable => Cs2Event::InventoryUnavailable,
+                Change::Acquired(item) => Cs2Event::ItemAcquired(item),
+                Change::Changed { old, new } => Cs2Event::ItemChanged { old, new },
+                Change::Removed(item) => Cs2Event::ItemRemoved(item),
+            });
         }
-        if mem::replace(&mut self.welcomed_before, true) {
-            self.events.push(Cs2Event::Welcomed);
-        }
+        Ok(())
     }
 
-    /// The session ended, if it was on.
+    /// Asks the game coordinator to send the account's cache again (`CacheSubscriptionRefresh`), as the game does when
+    /// its copy may be old.
+    fn ask_for_inventory(&mut self) -> Result<(), ClientError> {
+        debug!("Asking CS2's game coordinator for the inventory again");
+        self.channel
+            .send(SO_CACHE_SUBSCRIPTION_REFRESH, &inventory::refresh(self.account))
+    }
+
+    /// Reads the welcome: the session is on, with the inventory it carries. The first welcome is no event: `connect`
+    /// returns with it.
+    fn welcomed(&mut self, message: &GcMessage) -> Result<(), ClientError> {
+        debug!("CS2's game coordinator welcomed the account");
+        self.session = Session::Welcomed;
+        let first = !mem::replace(&mut self.welcomed_before, true);
+        if !first {
+            self.events.push(Cs2Event::Welcomed);
+        }
+        let mut changes = match message.parse::<CMsgClientWelcome>() {
+            Ok(welcome) => self.inventory.welcome(&welcome, self.account),
+            Err(error) => {
+                warn!("Unreadable welcome from CS2's game coordinator: {}", error);
+                // a new session, without the cache it brings
+                let mut changes = vec![];
+                if self.inventory.invalidate() {
+                    changes.push(Change::Unavailable);
+                }
+                changes
+            }
+        };
+        if first {
+            changes.retain(|change| !matches!(change, Change::Loaded));
+        }
+        self.changed(changes)
+    }
+
+    /// The session ended, if it was on, and with it what's known of the inventory.
     fn lose_session(&mut self) {
         if self.session == Session::Welcomed {
             self.session = Session::Lost;
             self.events.push(Cs2Event::SessionLost);
+        }
+        if self.inventory.invalidate() {
+            self.events.push(Cs2Event::InventoryUnavailable);
         }
     }
 }
@@ -667,10 +730,13 @@ struct EventQueue {
 }
 
 impl EventQueue {
-    /// Keeps `event`, or drops it past [`EVENT_CAPACITY`], unless it's about the session. Those are never dropped,
-    /// and one is enough while nothing came after it.
+    /// Keeps `event`, or drops it past [`EVENT_CAPACITY`], unless it's about the session or whether the inventory is
+    /// current. Those are never dropped, and one is enough while nothing came after it.
     fn push(&mut self, event: Cs2Event) {
-        let about_session = matches!(event, Cs2Event::SessionLost | Cs2Event::Welcomed);
+        let about_session = matches!(
+            event,
+            Cs2Event::SessionLost | Cs2Event::Welcomed | Cs2Event::InventoryLoaded | Cs2Event::InventoryUnavailable
+        );
         if !about_session && self.events.len() >= EVENT_CAPACITY {
             if self.dropped == 0 {
                 debug!("CS2's events aren't read: dropping them");

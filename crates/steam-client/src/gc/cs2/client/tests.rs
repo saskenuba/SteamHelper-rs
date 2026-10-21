@@ -8,6 +8,10 @@ use steam_protobuf::protobufs::csgo::cstrike15_gcmessages::CDataGCCStrike15_v2_M
 use steam_protobuf::protobufs::csgo::cstrike15_gcmessages::CEconItemPreviewDataBlock;
 use steam_protobuf::protobufs::csgo::gcsdk_gcmessages::cmsg_somultiple_objects;
 use steam_protobuf::protobufs::csgo::gcsdk_gcmessages::CMsgClientWelcome;
+use steam_protobuf::protobufs::csgo::gcsdk_gcmessages::CMsgSOCacheSubscribed;
+use steam_protobuf::protobufs::csgo::gcsdk_gcmessages::CMsgSOCacheSubscriptionCheck;
+use steam_protobuf::protobufs::csgo::gcsdk_gcmessages::CMsgSOCacheSubscriptionRefresh;
+use steam_protobuf::protobufs::csgo::gcsdk_gcmessages::CMsgSOCacheUnsubscribed;
 use steam_protobuf::protobufs::csgo::gcsdk_gcmessages::CMsgSOIDOwner;
 use steam_protobuf::protobufs::csgo::gcsdk_gcmessages::CMsgSOMultipleObjects;
 use steam_protobuf::protobufs::csgo::gcsdk_gcmessages::CMsgSOSingleObject;
@@ -24,6 +28,8 @@ use crate::events::Event;
 use crate::gc;
 use crate::gc::cs2::inventory;
 use crate::gc::cs2::inventory::SO_CACHE_SUBSCRIBED;
+use crate::gc::cs2::inventory::SO_CACHE_SUBSCRIPTION_CHECK;
+use crate::gc::cs2::inventory::SO_CACHE_UNSUBSCRIBED;
 use crate::gc::cs2::inventory::SO_CREATE;
 use crate::gc::cs2::inventory::SO_DESTROY;
 use crate::gc::cs2::inventory::SO_UPDATE;
@@ -147,8 +153,9 @@ struct Session {
     reconnects: mpsc::UnboundedReceiver<Reconnection>,
 }
 
+/// A session the game coordinator welcomed with the account's cache, without items.
 async fn session() -> Session {
-    session_welcomed(|_| CMsgClientWelcome::new()).await
+    session_welcomed(|account| welcome_with(account, &[])).await
 }
 
 /// A session the game coordinator welcomed with `welcome(account)`.
@@ -667,6 +674,11 @@ fn ids(inventory: &Inventory) -> Vec<u64> {
     inventory.iter().map(InventoryItem::id).collect()
 }
 
+/// The ids of the current inventory; fails if it isn't current.
+fn current_ids(cs2: &mut Cs2) -> Vec<u64> {
+    ids(cs2.inventory().unwrap().expect("the inventory is current"))
+}
+
 /// The events waiting, once the client read what the fake CM sent.
 async fn waiting(session: &mut Session) -> Vec<Cs2Event> {
     round_trip(&session.handle, &mut session.cm).await;
@@ -699,8 +711,8 @@ async fn keeps_the_inventory_and_the_stats_the_game_coordinator_sends() {
         session_welcomed(|account| welcome_with(account, &[inventory::tests::item(1), inventory::tests::item(2)]))
             .await;
     // the account's items only
-    assert_eq!(ids(session.cs2.inventory()), [1, 2]);
-    let item = session.cs2.inventory().get(1).unwrap();
+    assert_eq!(current_ids(&mut session.cs2), [1, 2]);
+    let item = session.cs2.inventory().unwrap().unwrap().get(1).unwrap();
     assert_eq!((item.paint_index(), item.pattern()), (Some(44), Some(661)));
     assert!(session.cs2.matchmaking_stats().is_none());
 
@@ -920,7 +932,7 @@ async fn keeps_what_comes_while_a_request_waits() {
     };
     let (details, ()) = tokio::join!(soon(inspect(&mut session.cs2, inventory(ASSET))), gc);
     assert_eq!(details.unwrap().item_id(), Some(ASSET));
-    assert_eq!(ids(session.cs2.inventory()), [5]);
+    assert_eq!(current_ids(&mut session.cs2), [5]);
     let events = waiting(&mut session).await;
     match events.as_slice() {
         [Cs2Event::ItemAcquired(item), Cs2Event::Other(unknown), Cs2Event::MatchmakingStats(stats), Cs2Event::Other(late)] =>
@@ -973,10 +985,11 @@ async fn follows_the_inventory() {
         }
         events => panic!("unexpected events: {:?}", events),
     }
-    assert_eq!(ids(session.cs2.inventory()), [1, 3]);
-    assert_eq!(session.cs2.inventory().get(1).unwrap().position(), Some(8));
+    assert_eq!(current_ids(&mut session.cs2), [1, 3]);
+    let inventory = session.cs2.inventory().unwrap().unwrap();
+    assert_eq!(inventory.get(1).unwrap().position(), Some(8));
 
-    // the whole inventory again
+    // the whole inventory again: what changed, then the load
     let cache = inventory::tests::cache(Some(account), &[inventory::tests::item(6)]);
     from_gc(&mut session.cm, SO_CACHE_SUBSCRIBED, &cache).await;
     // several objects at once
@@ -987,12 +1000,11 @@ async fn follows_the_inventory() {
     objects.objects_modified.push(single);
     from_gc(&mut session.cm, SO_UPDATE_MULTIPLE, &objects).await;
     let events = waiting(&mut session).await;
-    assert!(
-        matches!(events.as_slice(), [Cs2Event::InventoryLoaded, Cs2Event::ItemAcquired(item)] if item.id() == 7),
-        "{:?}",
-        events
+    assert_eq!(
+        summary(&events),
+        ["removed 1", "removed 3", "acquired 6", "loaded", "acquired 7"]
     );
-    assert_eq!(ids(session.cs2.inventory()), [6, 7]);
+    assert_eq!(current_ids(&mut session.cs2), [6, 7]);
 }
 
 #[tokio::test(start_paused = true)]
@@ -1025,6 +1037,10 @@ async fn greets_again_while_waiting_for_events() {
         soon(session.cs2.next_event()).await,
         Ok(Cs2Event::SessionLost)
     ));
+    assert!(matches!(
+        soon(session.cs2.next_event()).await,
+        Ok(Cs2Event::InventoryUnavailable)
+    ));
     assert!(!session.cs2.has_session());
 
     let account = session.handle.steam_id();
@@ -1041,7 +1057,8 @@ async fn greets_again_while_waiting_for_events() {
     assert!(matches!(event, Ok(Cs2Event::Welcomed)));
     assert_eq!(hellos, (Duration::from_millis(500), Duration::from_millis(2500)));
     assert!(session.cs2.has_session());
-    assert_eq!(ids(session.cs2.inventory()), [4]);
+    assert_eq!(current_ids(&mut session.cs2), [4]);
+    assert_eq!(summary(&waiting(&mut session).await), ["acquired 4", "loaded"]);
     // welcomed: waits without greeting
     let wait = timeout(Duration::from_secs(120), session.cs2.next_event());
     let (event, ()) = tokio::join!(wait, quiet(&mut session.cm, Duration::from_secs(110)));
@@ -1069,7 +1086,12 @@ async fn a_status_without_session_is_an_event_then_a_greeting() {
     assert!(
         matches!(
             events.as_slice(),
-            [Cs2Event::SessionLost, Cs2Event::Welcomed, Cs2Event::SessionLost]
+            [
+                Cs2Event::SessionLost,
+                Cs2Event::InventoryUnavailable,
+                Cs2Event::Welcomed,
+                Cs2Event::SessionLost
+            ]
         ),
         "{:?}",
         events
@@ -1101,7 +1123,7 @@ async fn the_events_end_once_the_client_stopped() {
     drop(handle);
     // the client stopping may end the session first
     let mut event = soon(cs2.next_event()).await;
-    if let Ok(Cs2Event::SessionLost) = event {
+    while let Ok(Cs2Event::SessionLost | Cs2Event::InventoryUnavailable) = event {
         event = soon(cs2.next_event()).await;
     }
     assert!(matches!(event, Err(ClientError::Closed)), "{:?}", event);
@@ -1187,4 +1209,498 @@ async fn greets_from_the_start_once_the_connection_to_steam_was_lost() {
     assert!(matches!(event, Ok(Cs2Event::Welcomed)), "{:?}", event);
     // hellos sent while connecting again were dropped: from the first one again
     assert_eq!(at, FIRST_HELLO);
+}
+
+// The inventory is current or none, never an old one.
+
+/// The events, as short words: how the inventory changed and the session, with the item ids.
+fn summary(events: &[Cs2Event]) -> Vec<String> {
+    events
+        .iter()
+        .map(|event| match event {
+            Cs2Event::SessionLost => "session lost".to_string(),
+            Cs2Event::Welcomed => "welcomed".to_string(),
+            Cs2Event::InventoryLoaded => "loaded".to_string(),
+            Cs2Event::InventoryUnavailable => "unavailable".to_string(),
+            Cs2Event::ItemAcquired(item) => format!("acquired {}", item.id()),
+            Cs2Event::ItemChanged { new, .. } => format!("changed {}", new.id()),
+            Cs2Event::ItemRemoved(item) => format!("removed {}", item.id()),
+            Cs2Event::Lagged(missed) => format!("lagged {}", missed),
+            Cs2Event::Other(message) => format!("other {}", message.msg_type()),
+            Cs2Event::MatchmakingStats(_) => "stats".to_string(),
+        })
+        .collect()
+}
+
+/// The account's cache at `version`, holding `items`.
+fn cache_at(account: SteamID, version: u64, items: &[CSOEconItem]) -> CMsgSOCacheSubscribed {
+    let mut cache = inventory::tests::cache(Some(account), items);
+    cache.set_version(version);
+    cache
+}
+
+fn owner_soid(account: SteamID) -> CMsgSOIDOwner {
+    let mut soid = CMsgSOIDOwner::new();
+    soid.set_type(1);
+    soid.set_id(account.to_steam64());
+    soid
+}
+
+fn check(account: SteamID, version: u64) -> CMsgSOCacheSubscriptionCheck {
+    let mut check = CMsgSOCacheSubscriptionCheck::new();
+    check.set_version(version);
+    check.owner_soid = Some(owner_soid(account)).into();
+    check
+}
+
+/// Reads a request for the account's cache.
+async fn refresh_read(cm: &mut FakeCm, account: SteamID) {
+    let (refresh, _) = read_request::<CMsgSOCacheSubscriptionRefresh>(cm, SO_CACHE_SUBSCRIPTION_REFRESH).await;
+    assert_eq!(*refresh.owner_soid, owner_soid(account));
+}
+
+#[tokio::test(start_paused = true)]
+async fn the_inventory_is_none_once_the_session_ends() {
+    let mut session =
+        session_welcomed(|account| welcome_with(account, &[inventory::tests::item(1), inventory::tests::item(2)]))
+            .await;
+    assert_eq!(current_ids(&mut session.cs2), [1, 2]);
+    // the connection to Steam is lost: read by `inventory` itself, without waiting for an event
+    session.cm = reconnected_cm(&mut session).await;
+    assert!(session.cs2.inventory().unwrap().is_none());
+    assert_eq!(drain(&mut session.cs2), ["session lost", "unavailable"]);
+
+    // the game coordinator says it has no session: the same
+    let mut session = session_welcomed(|account| welcome_with(account, &[inventory::tests::item(1)])).await;
+    from_gc(
+        &mut session.cm,
+        CONNECTION_STATUS,
+        &status(GCConnectionStatus::GCConnectionStatus_NO_SESSION as i32),
+    )
+    .await;
+    round_trip(&session.handle, &mut session.cm).await;
+    assert!(session.cs2.inventory().unwrap().is_none());
+    // what the game coordinator sends without a session changes nothing, and isn't passed on
+    let account = session.handle.steam_id();
+    from_gc(
+        &mut session.cm,
+        SO_CREATE,
+        &object(1, &inventory::tests::item(5), Some(account)),
+    )
+    .await;
+    from_gc(
+        &mut session.cm,
+        SO_CACHE_SUBSCRIBED,
+        &cache_at(account, 3, &[inventory::tests::item(5)]),
+    )
+    .await;
+    assert_eq!(summary(&waiting(&mut session).await), ["session lost", "unavailable"]);
+    assert!(session.cs2.inventory().unwrap().is_none());
+
+    // and once the client stopped, there is no inventory to give: none while the task ends, then an error
+    let Session { mut cs2, handle, .. } = session;
+    drop(handle);
+    soon(async {
+        loop {
+            match cs2.inventory() {
+                Ok(None) => tokio::time::sleep(Duration::from_millis(10)).await,
+                Err(ClientError::Closed) => return,
+                other => panic!("unexpected: {:?}", other.map(|inventory| inventory.is_some())),
+            }
+        }
+    })
+    .await;
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_cache_without_items_is_an_empty_inventory() {
+    let mut session =
+        session_welcomed(|account| welcome_with(account, &[inventory::tests::item(1), inventory::tests::item(2)]))
+            .await;
+    let account = session.handle.steam_id();
+    // the account's cache, holding objects of other types only: every item is gone
+    let mut cache = inventory::tests::cache(Some(account), &[]);
+    cache.objects.retain(|objects| objects.type_id() != 1);
+    from_gc(&mut session.cm, SO_CACHE_SUBSCRIBED, &cache).await;
+    assert_eq!(
+        summary(&waiting(&mut session).await),
+        ["removed 1", "removed 2", "loaded"]
+    );
+    assert!(current_ids(&mut session.cs2).is_empty());
+
+    // a welcome whose cache holds no items, the same
+    let mut session = session_welcomed(|account| {
+        let mut welcome = welcome_with(account, &[]);
+        welcome.outofdate_subscribed_caches[1].objects.clear();
+        welcome
+    })
+    .await;
+    assert!(current_ids(&mut session.cs2).is_empty());
+}
+
+#[tokio::test(start_paused = true)]
+async fn what_changed_while_the_inventory_was_none_comes_as_events() {
+    let mut first = inventory::tests::item(2);
+    first.set_inventory(3);
+    let mut session =
+        session_welcomed(|account| welcome_with(account, &[inventory::tests::item(1), first.clone()])).await;
+    let account = session.handle.steam_id();
+    session.cm = reconnected_cm(&mut session).await;
+    let mut moved = first;
+    moved.set_inventory(9);
+    let cm = &mut session.cm;
+    let cs2 = &mut session.cs2;
+    let gc = async {
+        hello_read(cm).await;
+        // before the welcome: no session yet, so nothing
+        from_gc(cm, SO_CREATE, &object(1, &inventory::tests::item(8), Some(account))).await;
+        from_gc(
+            cm,
+            CLIENT_WELCOME,
+            &welcome_with(account, &[moved, inventory::tests::item(3)]),
+        )
+        .await;
+    };
+    let events = async {
+        let mut events = vec![];
+        loop {
+            let event = cs2.next_event().await.unwrap();
+            let loaded = matches!(event, Cs2Event::InventoryLoaded);
+            events.push(event);
+            if loaded {
+                return events;
+            }
+        }
+    };
+    let (events, ()) = tokio::join!(soon(events), gc);
+    assert_eq!(
+        summary(&events),
+        [
+            "session lost",
+            "unavailable",
+            "welcomed",
+            "removed 1",
+            "changed 2",
+            "acquired 3",
+            "loaded"
+        ]
+    );
+    assert_eq!(current_ids(&mut session.cs2), [2, 3]);
+    assert_eq!(
+        session.cs2.inventory().unwrap().unwrap().get(2).unwrap().position(),
+        Some(9)
+    );
+}
+
+/// A `Cs2` on a bare channel, welcomed, with the account's cache at version 10 holding item 1.
+struct OnChannel {
+    cs2: Cs2,
+    route: gc::Route,
+    /// What `cs2` sends; the sender keeps the channel open.
+    sent: mpsc::UnboundedReceiver<Command>,
+    _commands: mpsc::UnboundedSender<Command>,
+    account: SteamID,
+}
+
+fn welcomed_on_channel() -> OnChannel {
+    let (commands, sent) = mpsc::unbounded_channel();
+    let (channel, route) = gc::channel(APP_ID, commands.downgrade());
+    let account = SteamID::from_account_id(1);
+    let mut cs2 = Cs2::new(channel, account);
+    cs2.session = super::Session::Welcomed;
+    cs2.welcomed_before = true;
+    assert!(route.queue.push(gc_message(
+        SO_CACHE_SUBSCRIBED,
+        &cache_at(account, 10, &[inventory::tests::item(1)])
+    )));
+    assert!(matches!(cs2.try_next_event(), Ok(Some(Cs2Event::InventoryLoaded))));
+    assert_eq!(current_ids(&mut cs2), [1]);
+    OnChannel {
+        cs2,
+        route,
+        sent,
+        _commands: commands,
+        account,
+    }
+}
+
+/// The next message sent to the game coordinator: its type and body.
+fn sent_to_gc(sent: &mut mpsc::UnboundedReceiver<Command>) -> Option<(u32, Bytes)> {
+    match sent.try_recv() {
+        Ok(Command::ToGc(message)) => {
+            let msg_type = message.msgtype();
+            Some((
+                msg_type & !0x8000_0000,
+                gc::gc_body(msg_type, message.payload.unwrap()).unwrap(),
+            ))
+        }
+        Ok(_) => panic!("expected a message to the game coordinator"),
+        Err(_) => None,
+    }
+}
+
+fn assert_refresh_sent(sent: &mut mpsc::UnboundedReceiver<Command>, account: SteamID) {
+    let (msg_type, body) = sent_to_gc(sent).expect("a request for the cache");
+    assert_eq!(msg_type, SO_CACHE_SUBSCRIPTION_REFRESH);
+    let refresh = CMsgSOCacheSubscriptionRefresh::parse_from_tokio_bytes(&body).unwrap();
+    assert_eq!(*refresh.owner_soid, owner_soid(account));
+}
+
+fn drain(cs2: &mut Cs2) -> Vec<String> {
+    summary(&std::iter::from_fn(|| cs2.try_next_event().unwrap()).collect::<Vec<_>>())
+}
+
+#[tokio::test(start_paused = true)]
+async fn dropped_messages_make_the_inventory_none_until_it_comes_again() {
+    let OnChannel {
+        mut cs2,
+        route,
+        mut sent,
+        account,
+        _commands,
+    } = welcomed_on_channel();
+    // messages were dropped, maybe changes: asks for the cache again
+    route.queue.lock().dropped = 2;
+    assert!(route.queue.push(gc_message(
+        SO_CREATE,
+        &object(1, &inventory::tests::item(5), Some(account))
+    )));
+    assert!(cs2.inventory().unwrap().is_none());
+    assert_refresh_sent(&mut sent, account);
+    // the change after the gap isn't applied on an old copy
+    assert_eq!(drain(&mut cs2), ["lagged 2", "unavailable"]);
+    assert!(cs2.inventory().unwrap().is_none());
+
+    // the cache again: what changed, then current
+    let items = [inventory::tests::item(1), inventory::tests::item(5)];
+    assert!(route
+        .queue
+        .push(gc_message(SO_CACHE_SUBSCRIBED, &cache_at(account, 12, &items))));
+    assert_eq!(drain(&mut cs2), ["acquired 5", "loaded"]);
+    assert_eq!(current_ids(&mut cs2), [1, 5]);
+
+    // dropped again while none: asks again, the answer may have been among them
+    route.queue.lock().dropped = 1;
+    assert!(route.queue.push(gc_message(9999, &stats(1, 1))));
+    assert_eq!(drain(&mut cs2), ["lagged 1", "unavailable", "other 9999"]);
+    assert_refresh_sent(&mut sent, account);
+    route.queue.lock().dropped = 1;
+    assert!(route.queue.push(gc_message(9999, &stats(1, 1))));
+    assert_eq!(drain(&mut cs2), ["lagged 1", "other 9999"]);
+    assert_refresh_sent(&mut sent, account);
+    assert!(sent_to_gc(&mut sent).is_none());
+}
+
+#[tokio::test(start_paused = true)]
+async fn the_game_coordinator_can_say_the_inventory_is_old_or_gone() {
+    let OnChannel {
+        mut cs2,
+        route,
+        mut sent,
+        account,
+        _commands,
+    } = welcomed_on_channel();
+    let push = |message: GcMessage| assert!(route.queue.push(message));
+    // the same version: still current
+    push(gc_message(SO_CACHE_SUBSCRIPTION_CHECK, &check(account, 10)));
+    assert!(drain(&mut cs2).is_empty());
+    assert_eq!(current_ids(&mut cs2), [1]);
+    assert!(sent_to_gc(&mut sent).is_none());
+
+    // a change moves the version
+    let mut created = object(1, &inventory::tests::item(2), Some(account));
+    created.set_version(11);
+    push(gc_message(SO_CREATE, &created));
+    // so do changes to other objects of the cache
+    let mut other = object(7, &inventory::tests::item(3), Some(account));
+    other.set_version(12);
+    push(gc_message(SO_UPDATE, &other));
+    push(gc_message(SO_CACHE_SUBSCRIPTION_CHECK, &check(account, 12)));
+    assert_eq!(drain(&mut cs2), ["acquired 2", "other 22"]);
+    assert_eq!(current_ids(&mut cs2), [1, 2]);
+    // several at once, too
+    let mut objects = CMsgSOMultipleObjects::new();
+    let mut other = cmsg_somultiple_objects::SingleObject::new();
+    other.set_type_id(7);
+    objects.objects_modified.push(other);
+    objects.set_version(13);
+    push(gc_message(SO_UPDATE_MULTIPLE, &objects));
+    push(gc_message(SO_CACHE_SUBSCRIPTION_CHECK, &check(account, 13)));
+    assert_eq!(drain(&mut cs2), ["other 26"]);
+    assert_eq!(current_ids(&mut cs2), [1, 2]);
+    assert!(sent_to_gc(&mut sent).is_none());
+
+    // someone else's check isn't about the inventory
+    push(gc_message(
+        SO_CACHE_SUBSCRIPTION_CHECK,
+        &check(SteamID::from_account_id(5), 1),
+    ));
+    assert_eq!(drain(&mut cs2), ["other 27"]);
+
+    // another version: old, asks for it again
+    push(gc_message(SO_CACHE_SUBSCRIPTION_CHECK, &check(account, 14)));
+    assert_eq!(drain(&mut cs2), ["unavailable"]);
+    assert!(cs2.inventory().unwrap().is_none());
+    assert_refresh_sent(&mut sent, account);
+    // a check while none asks again
+    push(gc_message(SO_CACHE_SUBSCRIPTION_CHECK, &check(account, 14)));
+    assert!(drain(&mut cs2).is_empty());
+    assert_refresh_sent(&mut sent, account);
+    push(gc_message(
+        SO_CACHE_SUBSCRIBED,
+        &cache_at(account, 14, &[inventory::tests::item(2)]),
+    ));
+    assert_eq!(drain(&mut cs2), ["removed 1", "loaded"]);
+
+    // the cache unsubscribed: none, until it comes again
+    let mut unsubscribed = CMsgSOCacheUnsubscribed::new();
+    unsubscribed.owner_soid = Some(owner_soid(account)).into();
+    push(gc_message(SO_CACHE_UNSUBSCRIBED, &unsubscribed));
+    assert_eq!(drain(&mut cs2), ["unavailable"]);
+    assert!(cs2.inventory().unwrap().is_none());
+    assert!(sent_to_gc(&mut sent).is_none());
+    // someone else's isn't ours
+    unsubscribed.owner_soid = Some(owner_soid(SteamID::from_account_id(5))).into();
+    push(gc_message(SO_CACHE_UNSUBSCRIBED, &unsubscribed));
+    assert_eq!(drain(&mut cs2), ["other 25"]);
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_welcome_without_the_inventory_leaves_none() {
+    let OnChannel {
+        mut cs2,
+        route,
+        mut sent,
+        account,
+        _commands,
+    } = welcomed_on_channel();
+    // the game coordinator restarted: a new session, without the account's cache
+    assert!(route.queue.push(gc_message(CLIENT_WELCOME, &CMsgClientWelcome::new())));
+    assert_eq!(drain(&mut cs2), ["welcomed", "unavailable"]);
+    assert!(cs2.inventory().unwrap().is_none());
+    assert!(sent_to_gc(&mut sent).is_none());
+    // one that says the account's is up to date, which it can't be: asks for it
+    let mut welcome = CMsgClientWelcome::new();
+    welcome.uptodate_subscribed_caches.push(check(account, 10));
+    assert!(route.queue.push(gc_message(CLIENT_WELCOME, &welcome)));
+    assert_eq!(drain(&mut cs2), ["welcomed"]);
+    assert_refresh_sent(&mut sent, account);
+    assert!(cs2.inventory().unwrap().is_none());
+    // an unreadable welcome is a session without it, too
+    assert!(route
+        .queue
+        .push(gc_message(SO_CACHE_SUBSCRIBED, &cache_at(account, 1, &[]))));
+    assert_eq!(drain(&mut cs2), ["removed 1", "loaded"]);
+    let payload = gc::tests::proto_payload(CLIENT_WELCOME, &CMsgProtoBufHeader::new(), b"\x0a");
+    let broken = gc::tests::raw(gc::tests::from_gc(APP_ID, CLIENT_WELCOME | 0x8000_0000, payload))
+        .gc_message()
+        .unwrap()
+        .unwrap();
+    assert!(route.queue.push(broken));
+    assert_eq!(drain(&mut cs2), ["welcomed", "unavailable"]);
+}
+
+#[tokio::test(start_paused = true)]
+async fn what_cant_be_read_makes_the_inventory_none_until_it_comes_again() {
+    let OnChannel {
+        mut cs2,
+        route,
+        mut sent,
+        account,
+        _commands,
+    } = welcomed_on_channel();
+    let push = |message: GcMessage| assert!(route.queue.push(message));
+    let reload = |cs2: &mut Cs2| {
+        assert!(route.queue.push(gc_message(
+            SO_CACHE_SUBSCRIBED,
+            &cache_at(account, 20, &[inventory::tests::item(1)])
+        )));
+        assert_eq!(drain(cs2).last().map(String::as_str), Some("loaded"));
+        assert_eq!(current_ids(cs2), [1]);
+    };
+    // an update of an item it can't read: the copy would keep it as it was
+    let mut unreadable = inventory::tests::item(1);
+    unreadable.clear_def_index();
+    push(gc_message(SO_UPDATE, &object(1, &unreadable, Some(account))));
+    assert_eq!(drain(&mut cs2), ["unavailable"]);
+    assert!(cs2.inventory().unwrap().is_none());
+    assert_refresh_sent(&mut sent, account);
+    reload(&mut cs2);
+
+    // the same among several
+    let mut objects = CMsgSOMultipleObjects::new();
+    let mut readable = cmsg_somultiple_objects::SingleObject::new();
+    readable.set_type_id(1);
+    readable.set_object_data(inventory::tests::object(&inventory::tests::item(2)));
+    let mut without_data = cmsg_somultiple_objects::SingleObject::new();
+    without_data.set_type_id(1);
+    objects.objects_modified = vec![readable, without_data];
+    push(gc_message(SO_UPDATE_MULTIPLE, &objects));
+    assert_eq!(drain(&mut cs2), ["unavailable"]);
+    assert_refresh_sent(&mut sent, account);
+    reload(&mut cs2);
+
+    // a removal of an item it can't read
+    let mut destroyed = object(1, &inventory::tests::item(1), Some(account));
+    destroyed.set_object_data(Bytes::from_static(b"\x0a"));
+    push(gc_message(SO_DESTROY, &destroyed));
+    assert_eq!(drain(&mut cs2), ["unavailable"]);
+    assert_refresh_sent(&mut sent, account);
+    reload(&mut cs2);
+
+    // a shared-object message it can't read, whoever's it is
+    for msg_type in [SO_UPDATE, SO_CACHE_SUBSCRIBED] {
+        let payload = gc::tests::proto_payload(msg_type, &CMsgProtoBufHeader::new(), b"\x0a");
+        push(
+            gc::tests::raw(gc::tests::from_gc(APP_ID, msg_type | 0x8000_0000, payload))
+                .gc_message()
+                .unwrap()
+                .unwrap(),
+        );
+        assert_eq!(drain(&mut cs2), ["unavailable"]);
+        assert_refresh_sent(&mut sent, account);
+        reload(&mut cs2);
+    }
+    assert!(sent_to_gc(&mut sent).is_none());
+}
+
+#[tokio::test(start_paused = true)]
+async fn the_inventory_reads_what_came_first() {
+    let mut session = session().await;
+    let account = session.handle.steam_id();
+    from_gc(
+        &mut session.cm,
+        SO_CREATE,
+        &object(1, &inventory::tests::item(5), Some(account)),
+    )
+    .await;
+    round_trip(&session.handle, &mut session.cm).await;
+    // no event read: `inventory` reads the message itself
+    assert_eq!(current_ids(&mut session.cs2), [5]);
+    assert_eq!(summary(&waiting(&mut session).await), ["acquired 5"]);
+}
+
+#[tokio::test(start_paused = true)]
+async fn asks_the_game_coordinator_for_the_inventory_again() {
+    let mut session = session().await;
+    let account = session.handle.steam_id();
+    from_gc(&mut session.cm, SO_CACHE_SUBSCRIPTION_CHECK, &check(account, 99)).await;
+    round_trip(&session.handle, &mut session.cm).await;
+    assert!(session.cs2.inventory().unwrap().is_none());
+    // over the CM, as the game sends it
+    refresh_read(&mut session.cm, account).await;
+}
+
+#[test]
+fn inventory_events_are_never_dropped() {
+    let mut events = EventQueue::default();
+    let message = gc_message(9999, &stats(1, 1));
+    for _ in 0..EVENT_CAPACITY + 1 {
+        events.push(Cs2Event::Other(message.clone()));
+    }
+    events.push(Cs2Event::InventoryUnavailable);
+    events.push(Cs2Event::InventoryUnavailable);
+    events.push(Cs2Event::InventoryLoaded);
+    let rest: Vec<_> = std::iter::from_fn(|| events.pop()).skip(EVENT_CAPACITY).collect();
+    assert_eq!(summary(&rest), ["lagged 1", "unavailable", "loaded"]);
 }

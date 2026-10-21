@@ -112,12 +112,16 @@ async fn print_events(cs2: &mut Cs2) -> std::result::Result<(), ClientError> {
     loop {
         match cs2.next_event().await {
             Ok(Cs2Event::SessionLost) => eprintln!("Lost the session with the game coordinator, greeting it again"),
-            Ok(Cs2Event::Welcomed) => eprintln!("Welcomed again: {} items", cs2.inventory().len()),
+            Ok(Cs2Event::Welcomed) => eprintln!("Welcomed again"),
             Ok(Cs2Event::MatchmakingStats(stats)) => {
                 println!("Matchmaking stats:");
                 print_profile(&stats);
             }
-            Ok(Cs2Event::InventoryLoaded) => println!("Inventory loaded again: {} items", cs2.inventory().len()),
+            Ok(Cs2Event::InventoryLoaded) => {
+                let items = cs2.inventory()?.map_or(0, |inventory| inventory.len());
+                println!("The inventory is current again: {} items", items);
+            }
+            Ok(Cs2Event::InventoryUnavailable) => eprintln!("The inventory may be old: none until it comes again"),
             Ok(Cs2Event::ItemAcquired(item)) => println!("Acquired {} (def index {})", item.id(), item.def_index()),
             Ok(Cs2Event::ItemChanged { new, .. }) => println!("Changed {}", new.id()),
             Ok(Cs2Event::ItemRemoved(item)) => println!("Removed {}", item.id()),
@@ -147,20 +151,22 @@ async fn main() -> Result<()> {
 
     let work = async {
         let mut cs2 = Cs2::connect(&handle).await?;
-        println!(
-            "CS2's game coordinator welcomed the account: {} items",
-            cs2.inventory().len()
-        );
-        for item in cs2.inventory().iter().take(10) {
-            println!(
-                "  {}: def index {}, paint index {:?}, pattern {:?}, float {:?}, name {:?}",
-                item.id(),
-                item.def_index(),
-                item.paint_index(),
-                item.pattern(),
-                item.float(),
-                item.custom_name()
-            );
+        match cs2.inventory()? {
+            Some(inventory) => {
+                println!("CS2's game coordinator welcomed the account: {} items", inventory.len());
+                for item in inventory.iter().take(10) {
+                    println!(
+                        "  {}: def index {}, paint index {:?}, pattern {:?}, float {:?}, name {:?}",
+                        item.id(),
+                        item.def_index(),
+                        item.paint_index(),
+                        item.pattern(),
+                        item.float(),
+                        item.custom_name()
+                    );
+                }
+            }
+            None => println!("CS2's game coordinator welcomed the account, without the inventory"),
         }
         let stats = cs2.request_matchmaking_stats().await?;
         println!("Matchmaking stats:");

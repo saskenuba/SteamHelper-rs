@@ -4,6 +4,7 @@
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
 use std::fmt;
+use std::mem;
 use std::time::Duration;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
@@ -14,7 +15,11 @@ use steam_protobuf::protobuf::Message;
 use steam_protobuf::protobuf::MessageField;
 use steam_protobuf::protobufs::csgo::base_gcmessages::CSOEconItem;
 use steam_protobuf::protobufs::csgo::base_gcmessages::CSOEconItemAttribute;
+use steam_protobuf::protobufs::csgo::gcsdk_gcmessages::CMsgClientWelcome;
 use steam_protobuf::protobufs::csgo::gcsdk_gcmessages::CMsgSOCacheSubscribed;
+use steam_protobuf::protobufs::csgo::gcsdk_gcmessages::CMsgSOCacheSubscriptionCheck;
+use steam_protobuf::protobufs::csgo::gcsdk_gcmessages::CMsgSOCacheSubscriptionRefresh;
+use steam_protobuf::protobufs::csgo::gcsdk_gcmessages::CMsgSOCacheUnsubscribed;
 use steam_protobuf::protobufs::csgo::gcsdk_gcmessages::CMsgSOIDOwner;
 use steam_protobuf::protobufs::csgo::gcsdk_gcmessages::CMsgSOMultipleObjects;
 use steam_protobuf::protobufs::csgo::gcsdk_gcmessages::CMsgSOSingleObject;
@@ -34,6 +39,9 @@ pub(crate) const SO_UPDATE: u32 = ESOMsg::k_ESOMsg_Update as u32;
 pub(crate) const SO_DESTROY: u32 = ESOMsg::k_ESOMsg_Destroy as u32;
 pub(crate) const SO_CACHE_SUBSCRIBED: u32 = ESOMsg::k_ESOMsg_CacheSubscribed as u32;
 pub(crate) const SO_UPDATE_MULTIPLE: u32 = ESOMsg::k_ESOMsg_UpdateMultiple as u32;
+pub(crate) const SO_CACHE_UNSUBSCRIBED: u32 = ESOMsg::k_ESOMsg_CacheUnsubscribed as u32;
+pub(crate) const SO_CACHE_SUBSCRIPTION_CHECK: u32 = ESOMsg::k_ESOMsg_CacheSubscriptionCheck as u32;
+pub(crate) const SO_CACHE_SUBSCRIPTION_REFRESH: u32 = ESOMsg::k_ESOMsg_CacheSubscriptionRefresh as u32;
 
 /// The item attributes read, as node-globaloffensive (v3.3.0, `handlers.js` `_processSOEconItem`) reads them. Each
 /// value is 4 little-endian bytes: a float or an integer, depending on the attribute.
@@ -79,8 +87,11 @@ const NEW_ITEM: u32 = 1 << 30;
 /// [`InventoryItem::storage_unit`].
 ///
 /// ```no_run
-/// # fn run(cs2: &steam_client::gc::cs2::Cs2) {
-/// let inventory = cs2.inventory();
+/// # fn run(cs2: &mut steam_client::gc::cs2::Cs2) -> Result<(), steam_client::errors::ClientError> {
+/// // none while it may be old
+/// let Some(inventory) = cs2.inventory()? else {
+///     return Ok(());
+/// };
 /// println!("{} items", inventory.len());
 /// // the AK-47s (def index 7)
 /// for item in inventory.iter().filter(|item| item.def_index() == 7) {
@@ -93,6 +104,7 @@ const NEW_ITEM: u32 = 1 << 30;
 ///         println!("{:?}: {} items, {} sent", unit.custom_name(), count, sent);
 ///     }
 /// }
+/// # Ok(())
 /// # }
 /// ```
 #[derive(Debug, Clone, Default, PartialEq)]
@@ -126,51 +138,91 @@ impl Inventory {
         self.iter()
             .filter(move |item| item.storage_unit() == Some(storage_unit))
     }
+}
 
-    /// Replaces the items with those `caches` hold for `owner`, if one holds items. True if it did.
-    pub(crate) fn load<'a>(
-        &mut self,
-        caches: impl IntoIterator<Item = &'a CMsgSOCacheSubscribed>,
-        owner: SteamID,
-    ) -> bool {
-        let mut loaded = None;
-        for cache in caches.into_iter().filter(|cache| owned_by(&cache.owner_soid, owner)) {
-            for objects in cache.objects.iter().filter(|objects| objects.type_id() == ITEM_TYPE) {
-                let items = loaded.get_or_insert_with(BTreeMap::new);
-                items.extend(
-                    objects
-                        .object_data
-                        .iter()
-                        .filter_map(read)
-                        .map(|item| (item.id(), item)),
-                );
-            }
+/// The account's inventory as [`Cs2`](crate::gc::cs2::Cs2) keeps it: the game coordinator's copy while it is known to
+/// be current, and nothing otherwise. Never an old copy taken for a current one.
+///
+/// The copy is current from a cache of the account (`CacheSubscribed`, alone or in a welcome) until anything says it
+/// may not be: the session ended, messages were dropped or couldn't be read (an item among them too), the game
+/// coordinator unsubscribed the cache or holds another version of it, or welcomed the account again without it.
+/// Changes that come meanwhile aren't applied: the next cache replaces the copy whole, and what it changed comes out as
+/// changes.
+#[derive(Debug, Default)]
+pub(crate) struct KeptInventory {
+    /// The items: the current ones while `current`, else the last ones known, which the next cache is compared with.
+    items: Inventory,
+    current: bool,
+    /// Whether a cache came before: the first one changes nothing.
+    loaded_before: bool,
+    /// The version of the account's cache the items are at, when the game coordinator said.
+    version: Option<u64>,
+}
+
+impl KeptInventory {
+    /// The items, if they are the game coordinator's current ones as far as the messages read tell.
+    pub(crate) fn current(&self) -> Option<&Inventory> {
+        self.current.then_some(&self.items)
+    }
+
+    /// Forgets that the items are current. True if they were.
+    pub(crate) fn invalidate(&mut self) -> bool {
+        self.version = None;
+        mem::replace(&mut self.current, false)
+    }
+
+    /// Reads a welcome, which starts a new session: the items are the account's cache it carries. Without one, they
+    /// aren't current any more; when the welcome lists the account's cache as up to date, which it can't be since
+    /// the hello names no version, asks for it.
+    pub(crate) fn welcome(&mut self, welcome: &CMsgClientWelcome, owner: SteamID) -> Vec<Change> {
+        if let Some(changes) = self.load(&welcome.outofdate_subscribed_caches, owner) {
+            return changes;
         }
-        match loaded {
-            Some(items) => {
-                self.items = items;
-                true
-            }
-            None => false,
+        let mut changes = Vec::new();
+        if self.invalidate() {
+            changes.push(Change::Unavailable);
         }
+        if welcome
+            .uptodate_subscribed_caches
+            .iter()
+            .any(|check| owned_by(&check.owner_soid, owner))
+        {
+            changes.push(Change::Refresh);
+        }
+        changes
     }
 
     /// Applies a shared-object message of the game coordinator: what changed, or `None` if it isn't one or isn't
-    /// about `owner`'s items.
-    pub(crate) fn apply(&mut self, message: &GcMessage, owner: SteamID) -> Option<Vec<Change>> {
+    /// about `owner`'s cache. Without a session (`session_on` false), the account's are read as nothing: the next
+    /// welcome brings the cache.
+    pub(crate) fn apply(&mut self, message: &GcMessage, owner: SteamID, session_on: bool) -> Option<Vec<Change>> {
         let body = message.body();
         let parsed = match message.msg_type() {
             SO_CREATE | SO_UPDATE | SO_DESTROY => CMsgSOSingleObject::parse_from_tokio_bytes(body).map(|object| {
-                if object.type_id() != ITEM_TYPE || !owned_by(&object.owner_soid, owner) {
+                if !owned_by(&object.owner_soid, owner) {
+                    return None;
+                }
+                let is_item = object.type_id() == ITEM_TYPE;
+                if !self.current || !session_on {
+                    // other objects stay the caller's
+                    return is_item.then(Vec::new);
+                }
+                // any object of the cache moves its version
+                self.version = object.version.or(self.version);
+                if !is_item {
                     return None;
                 }
                 let data = object.object_data.unwrap_or_default();
                 let change = match message.msg_type() {
-                    SO_DESTROY => self.destroy(&data),
+                    SO_DESTROY => item_id(&data).map(|id| self.items.destroy(id)),
                     // the game coordinator creates what it updates, and the other way around
-                    _ => read(&data).and_then(|item| self.put(item)),
+                    _ => read(&data).map(|item| self.items.put(item)),
                 };
-                Some(change.into_iter().collect())
+                match change {
+                    Some(change) => Some(change.into_iter().collect()),
+                    // the copy may hold it as it was
+                    None => Some(self.stale()),
+                }
             }),
             SO_UPDATE_MULTIPLE => CMsgSOMultipleObjects::parse_from_tokio_bytes(body).map(|objects| {
                 if !owned_by(&objects.owner_soid, owner) {
@@ -181,27 +233,103 @@ impl Inventory {
                     .iter()
                     .filter(|object| object.type_id() == ITEM_TYPE)
                     .collect();
+                if !self.current || !session_on {
+                    return (!items.is_empty()).then(Vec::new);
+                }
+                self.version = objects.version.or(self.version);
                 if items.is_empty() {
                     return None;
                 }
-                Some(
-                    items
-                        .into_iter()
-                        .filter_map(|object| read(object.object_data.as_ref()?))
-                        .filter_map(|item| self.put(item))
-                        .collect(),
-                )
+                let read: Option<Vec<_>> = items
+                    .into_iter()
+                    .map(|object| object.object_data.as_ref().and_then(read))
+                    .collect();
+                match read {
+                    Some(items) => Some(items.into_iter().filter_map(|item| self.items.put(item)).collect()),
+                    // the copy may hold one it can't read as it was
+                    None => Some(self.stale()),
+                }
             }),
-            SO_CACHE_SUBSCRIBED => CMsgSOCacheSubscribed::parse_from_tokio_bytes(body)
-                .map(|cache| self.load([&cache], owner).then(|| vec![Change::Loaded])),
+            SO_CACHE_SUBSCRIBED => CMsgSOCacheSubscribed::parse_from_tokio_bytes(body).map(|cache| {
+                if !session_on {
+                    return owned_by(&cache.owner_soid, owner).then(Vec::new);
+                }
+                self.load([&cache], owner)
+            }),
+            SO_CACHE_UNSUBSCRIBED => CMsgSOCacheUnsubscribed::parse_from_tokio_bytes(body).map(|cache| {
+                if !owned_by(&cache.owner_soid, owner) {
+                    return None;
+                }
+                Some(if self.invalidate() {
+                    vec![Change::Unavailable]
+                } else {
+                    Vec::new()
+                })
+            }),
+            SO_CACHE_SUBSCRIPTION_CHECK => CMsgSOCacheSubscriptionCheck::parse_from_tokio_bytes(body).map(|check| {
+                if !owned_by(&check.owner_soid, owner) {
+                    return None;
+                }
+                if !session_on || (self.current && check.version.is_some() && check.version == self.version) {
+                    return Some(Vec::new());
+                }
+                Some(self.stale())
+            }),
             _ => return None,
         };
         parsed.unwrap_or_else(|error| {
             warn!("Unreadable shared object from CS2's game coordinator: {}", error);
-            None
+            // whose it is can't be told: it may have changed the copy, or been the cache
+            session_on.then(|| self.stale())
         })
     }
 
+    /// The copy may be old: it isn't current until the game coordinator sends the cache again, which it is asked for.
+    fn stale(&mut self) -> Vec<Change> {
+        let mut changes = Vec::new();
+        if self.invalidate() {
+            changes.push(Change::Unavailable);
+        }
+        changes.push(Change::Refresh);
+        changes
+    }
+
+    /// Replaces the items with those the caches of `owner` among `caches` hold, none if they hold none: a cache is the
+    /// whole of it. What changed since the last items known, then [`Change::Loaded`]; `None` if no cache is `owner`'s.
+    fn load<'a>(
+        &mut self,
+        caches: impl IntoIterator<Item = &'a CMsgSOCacheSubscribed>,
+        owner: SteamID,
+    ) -> Option<Vec<Change>> {
+        let mut loaded = None;
+        for cache in caches.into_iter().filter(|cache| owned_by(&cache.owner_soid, owner)) {
+            let (items, version) = loaded.get_or_insert_with(|| (BTreeMap::new(), None));
+            *version = cache.version.or(*version);
+            for objects in cache.objects.iter().filter(|objects| objects.type_id() == ITEM_TYPE) {
+                items.extend(
+                    objects
+                        .object_data
+                        .iter()
+                        .filter_map(read)
+                        .map(|item| (item.id(), item)),
+                );
+            }
+        }
+        let (items, version) = loaded?;
+        let mut changes = if mem::replace(&mut self.loaded_before, true) {
+            changes_between(&self.items.items, &items)
+        } else {
+            Vec::new()
+        };
+        changes.push(Change::Loaded);
+        self.items.items = items;
+        self.current = true;
+        self.version = version;
+        Some(changes)
+    }
+}
+
+impl Inventory {
     /// Adds `item`, or replaces the one with its id.
     fn put(&mut self, item: InventoryItem) -> Option<Change> {
         let new = item.clone();
@@ -212,14 +340,8 @@ impl Inventory {
         })
     }
 
-    fn destroy(&mut self, data: &Bytes) -> Option<Change> {
-        let id = match CSOEconItem::parse_from_tokio_bytes(data) {
-            Ok(item) => item.id(),
-            Err(error) => {
-                warn!("Unreadable item from CS2's game coordinator: {}", error);
-                return None;
-            }
-        };
+    /// Removes the item with `id`.
+    fn destroy(&mut self, id: u64) -> Option<Change> {
         let removed = self.items.remove(&id);
         if removed.is_none() {
             debug!("CS2's game coordinator removed an item the inventory doesn't have");
@@ -228,17 +350,48 @@ impl Inventory {
     }
 }
 
-/// How the inventory changed.
+/// What changed from `old` to `new`, by item id.
+fn changes_between(old: &BTreeMap<u64, InventoryItem>, new: &BTreeMap<u64, InventoryItem>) -> Vec<Change> {
+    let removed = old
+        .iter()
+        .filter(|(id, _)| !new.contains_key(id))
+        .map(|(_, item)| Change::Removed(item.clone()));
+    let acquired_or_changed = new.iter().filter_map(|(id, item)| match old.get(id) {
+        None => Some(Change::Acquired(item.clone())),
+        Some(before) if before != item => Some(Change::Changed {
+            old: before.clone(),
+            new: item.clone(),
+        }),
+        Some(_) => None,
+    });
+    removed.chain(acquired_or_changed).collect()
+}
+
+/// How the inventory changed, or what it needs.
 #[derive(Debug)]
 pub(crate) enum Change {
-    /// A cache replaced it whole.
+    /// A cache replaced it whole; the changes it brought came before.
     Loaded,
+    /// It isn't current any more.
+    Unavailable,
+    /// The account's cache should be asked for again (`CacheSubscriptionRefresh`).
+    Refresh,
     Acquired(InventoryItem),
     Changed {
         old: InventoryItem,
         new: InventoryItem,
     },
     Removed(InventoryItem),
+}
+
+/// Asks the game coordinator for `owner`'s cache again.
+pub(crate) fn refresh(owner: SteamID) -> CMsgSOCacheSubscriptionRefresh {
+    let mut refresh = CMsgSOCacheSubscriptionRefresh::new();
+    let mut soid = CMsgSOIDOwner::new();
+    soid.set_type(1);
+    soid.set_id(owner.to_steam64());
+    refresh.owner_soid = Some(soid).into();
+    refresh
 }
 
 /// Whether a shared object (or cache) is `owner`'s: it says so, or names no owner.
@@ -254,6 +407,14 @@ fn read(data: &Bytes) -> Option<InventoryItem> {
         .map_err(InventoryItemError::from)
         .and_then(InventoryItem::try_from)
         .map_err(|error| warn!("Skipping an item of CS2's game coordinator: {}", error))
+        .ok()
+}
+
+/// The id of a serialized `CSOEconItem`, if it can be read.
+fn item_id(data: &Bytes) -> Option<u64> {
+    CSOEconItem::parse_from_tokio_bytes(data)
+        .map(|item| item.id())
+        .map_err(|error| warn!("Unreadable item from CS2's game coordinator: {}", error))
         .ok()
 }
 
@@ -673,8 +834,11 @@ pub(crate) mod tests {
             .push(int(attribute::STORAGE_UNIT_HIGH, (unit_id >> 32) as u32));
         let stored = InventoryItem::try_from(stored).unwrap();
         assert_eq!(stored.storage_unit(), Some(unit_id));
-        let mut inventory = Inventory::default();
-        assert!(inventory.load([&cache(None, &[stored.raw().clone(), item(1)])], owner()));
+        let mut kept = KeptInventory::default();
+        assert!(kept
+            .load([&cache(None, &[stored.raw().clone(), item(1)])], owner())
+            .is_some());
+        let inventory = kept.current().unwrap();
         let held: Vec<_> = inventory.in_storage_unit(unit_id).map(InventoryItem::id).collect();
         assert_eq!(held, [0x1_0000_0002]);
     }
@@ -733,13 +897,17 @@ pub(crate) mod tests {
         assert_eq!(attribute_string(&string.write_to_bytes().unwrap()), Some(long.as_str()));
     }
 
+    fn ids(kept: &KeptInventory) -> Vec<u64> {
+        kept.current().unwrap().iter().map(InventoryItem::id).collect()
+    }
+
     #[test]
     fn loads_the_owners_items_only() {
-        let mut inventory = Inventory::default();
+        let mut inventory = KeptInventory::default();
         let someone = SteamID::from_account_id(5);
-        assert!(!inventory.load([&cache(Some(someone), &[item(1)])], owner()));
-        assert!(!inventory.load(None, owner()));
-        assert!(inventory.is_empty());
+        assert!(inventory.load([&cache(Some(someone), &[item(1)])], owner()).is_none());
+        assert!(inventory.load(None, owner()).is_none());
+        assert!(inventory.current().is_none());
 
         let mut broken = item(3);
         broken.clear_def_index();
@@ -747,20 +915,60 @@ pub(crate) mod tests {
             cache(Some(someone), &[item(1)]),
             cache(Some(owner()), &[item(2), broken, item(4)]),
         ];
-        assert!(inventory.load(&caches, owner()));
-        let ids: Vec<_> = inventory.iter().map(InventoryItem::id).collect();
-        assert_eq!(ids, [2, 4]);
-        assert_eq!(inventory.len(), 2);
-        assert!(inventory.get(2).is_some() && inventory.get(1).is_none());
+        // the first cache changes nothing: it is the start
+        assert!(matches!(
+            inventory.load(&caches, owner()).as_deref(),
+            Some([Change::Loaded])
+        ));
+        assert_eq!(ids(&inventory), [2, 4]);
+        let current = inventory.current().unwrap();
+        assert_eq!(current.len(), 2);
+        assert!(current.get(2).is_some() && current.get(1).is_none());
 
-        // a cache without items keeps them
+        // a cache is the whole of it: one without items is an empty inventory
         let mut empty = cache(None, &[]);
         empty.objects.retain(|objects| objects.type_id() != ITEM_TYPE);
-        assert!(!inventory.load([&empty], owner()));
-        assert_eq!(inventory.len(), 2);
-        // one with none replaces them
-        assert!(inventory.load([&cache(None, &[])], owner()));
-        assert!(inventory.is_empty());
+        match inventory.load([&empty], owner()).as_deref() {
+            Some([Change::Removed(two), Change::Removed(four), Change::Loaded]) => {
+                assert_eq!((two.id(), four.id()), (2, 4));
+            }
+            changes => panic!("unexpected changes: {:?}", changes),
+        }
+        assert!(ids(&inventory).is_empty());
+        // and one with none, the same
+        assert!(inventory.load([&cache(None, &[item(1)])], owner()).is_some());
+        assert!(inventory.load([&cache(None, &[])], owner()).is_some());
+        assert!(ids(&inventory).is_empty());
+    }
+
+    #[test]
+    fn tells_what_changed_since_the_last_items_known() {
+        let mut inventory = KeptInventory::default();
+        let mut moved = item(2);
+        inventory.load([&cache(None, &[item(1), moved.clone()])], owner());
+        assert!(inventory.invalidate());
+        assert!(!inventory.invalidate());
+        assert!(inventory.current().is_none());
+        // changes while it isn't current aren't applied
+        let mut created = CMsgSOSingleObject::new();
+        created.set_type_id(ITEM_TYPE);
+        created.set_object_data(object_of(&item(9)));
+        assert!(inventory
+            .apply(&message(SO_CREATE, &created), owner(), true)
+            .unwrap()
+            .is_empty());
+        moved.set_inventory(5);
+        match inventory.load([&cache(None, &[moved, item(3)])], owner()).as_deref() {
+            Some(
+                [Change::Removed(removed), Change::Changed { old, new }, Change::Acquired(acquired), Change::Loaded],
+            ) => {
+                assert_eq!(removed.id(), 1);
+                assert_eq!((old.position(), new.position()), (Some(3), Some(5)));
+                assert_eq!(acquired.id(), 3);
+            }
+            changes => panic!("unexpected changes: {:?}", changes),
+        }
+        assert_eq!(ids(&inventory), [2, 3]);
     }
 
     #[test]
@@ -774,10 +982,10 @@ pub(crate) mod tests {
             object.set_object_data(object_of(item));
             objects.objects_modified.push(object);
         }
-        let mut inventory = Inventory::default();
+        let mut inventory = KeptInventory::default();
         inventory.load([&cache(None, &[item(1)])], owner());
         let changes = inventory
-            .apply(&message(SO_UPDATE_MULTIPLE, &objects), owner())
+            .apply(&message(SO_UPDATE_MULTIPLE, &objects), owner(), true)
             .unwrap();
         match changes.as_slice() {
             [Change::Changed { old, new }, Change::Acquired(acquired)] => {
@@ -788,14 +996,27 @@ pub(crate) mod tests {
         }
         // the same again changes nothing
         assert!(inventory
-            .apply(&message(SO_UPDATE_MULTIPLE, &objects), owner())
+            .apply(&message(SO_UPDATE_MULTIPLE, &objects), owner(), true)
             .unwrap()
             .is_empty());
         // objects that aren't items aren't the inventory's
         objects.objects_modified.retain(|object| object.type_id() != ITEM_TYPE);
         assert!(inventory
-            .apply(&message(SO_UPDATE_MULTIPLE, &objects), owner())
+            .apply(&message(SO_UPDATE_MULTIPLE, &objects), owner(), true)
             .is_none());
+        // without a session, nothing is applied
+        assert!(inventory.invalidate());
+        let mut objects = CMsgSOMultipleObjects::new();
+        let mut object = SingleObject::new();
+        object.set_type_id(ITEM_TYPE);
+        object.set_object_data(object_of(&item(4)));
+        objects.objects_modified.push(object);
+        inventory.load([&cache(None, &[item(1)])], owner());
+        assert!(inventory
+            .apply(&message(SO_UPDATE_MULTIPLE, &objects), owner(), false)
+            .unwrap()
+            .is_empty());
+        assert_eq!(ids(&inventory), [1]);
     }
 
     fn object_of(item: &CSOEconItem) -> Bytes {

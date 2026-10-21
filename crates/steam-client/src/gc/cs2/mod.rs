@@ -4,9 +4,11 @@
 //!
 //! A session runs over a [spawned](crate::client::SteamClient::spawn) client, logged on to an account that owns CS2
 //! (the free license). [`Cs2::connect`] plays CS2 and greets the game coordinator until it welcomes the account; the
-//! welcome carries the inventory, which the session then keeps as the game coordinator changes it. Requests go one at
-//! a time, [`REQUEST_COOLDOWN`] (1.1 s) apart: the game coordinator drops those that come faster. What no request
-//! waits for comes from [`Cs2::next_event`].
+//! welcome carries the inventory, which the session then keeps as the game coordinator changes it, and gives only
+//! while it is current: [`Cs2::inventory`] is `None` from [`Cs2Event::InventoryUnavailable`] (the session ended,
+//! messages were dropped…) until [`Cs2Event::InventoryLoaded`]. Requests go one at a time, [`REQUEST_COOLDOWN`]
+//! (1.1 s) apart: the game coordinator drops those that come faster. What no request waits for comes from
+//! [`Cs2::next_event`].
 //!
 //! ```no_run
 //! # async fn run(handle: steam_client::handle::SteamHandle<steam_client::client::User>)
@@ -36,10 +38,11 @@
 //!     println!("demo {:?}", info.demo_url());
 //! }
 //!
-//! let inventory = cs2.inventory();
-//! println!("{} items", inventory.len());
-//! if let Some(skin) = inventory.iter().find(|item| item.paint_index().is_some()) {
-//!     println!("float {:?}, pattern {:?}", skin.float(), skin.pattern());
+//! if let Some(inventory) = cs2.inventory()? {
+//!     println!("{} items", inventory.len());
+//!     if let Some(skin) = inventory.iter().find(|item| item.paint_index().is_some()) {
+//!         println!("float {:?}, pattern {:?}", skin.float(), skin.pattern());
+//!     }
 //! }
 //!
 //! loop {
@@ -47,7 +50,11 @@
 //!         Cs2Event::ItemAcquired(item) => println!("Acquired {}", item.id()),
 //!         Cs2Event::ItemRemoved(item) => println!("Removed {}", item.id()),
 //!         Cs2Event::SessionLost => println!("Lost the session, greeting again"),
-//!         Cs2Event::Welcomed => println!("Welcomed again: {} items", cs2.inventory().len()),
+//!         Cs2Event::InventoryUnavailable => println!("The inventory may be old: none for now"),
+//!         Cs2Event::InventoryLoaded => {
+//!             let items = cs2.inventory()?.map_or(0, |inventory| inventory.len());
+//!             println!("The inventory is current: {} items", items);
+//!         }
 //!         _ => {}
 //!     }
 //! }
