@@ -4,6 +4,8 @@ use steam_mobile::Method;
 use steamid_parser::SteamID;
 
 use crate::errors::InternalError;
+use crate::response::rate_limit_check;
+use crate::response::status_check;
 use crate::OfferError;
 use crate::SteamCompleteAuthenticator;
 use crate::TradeError;
@@ -45,11 +47,15 @@ pub(crate) async fn check_steam_guard_error(
         .request_custom_endpoint(endpoint, Method::GET, None, None::<&u8>)
         .err_into::<InternalError>()
         .await?;
+    let status = response.status();
+    let url = response.url().clone();
+    rate_limit_check(status, &url)?;
     let text = response.text().err_into::<InternalError>().await?;
 
+    // The page's own message first: it is unknown whether Steam sends it with an error status.
     if is_steam_guard_error(&text) {
         Err(OfferError::SteamGuardRecentlyEnabled.into())
     } else {
-        Ok(())
+        status_check(status, &url, &text)
     }
 }

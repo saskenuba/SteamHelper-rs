@@ -44,12 +44,28 @@ pub(crate) struct TradeOfferGenericRequest {
     pub sessionid: SessionID,
 }
 
+/// `strError` is checked before, see `response::check_response`.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub(crate) struct TradeOfferGenericErrorResponse {
     #[serde(rename = "success")]
     pub eresult: Option<EResult>,
-    #[serde(rename = "strError")]
-    pub error_message: Option<String>,
+}
+
+/// Url: `https://steamcommunity.com/trade/new/acknowledge`
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub(crate) struct TradeProtectionAcknowledgeRequest {
+    #[serde(flatten)]
+    pub sessionid: SessionID,
+    pub message: u8,
+}
+
+impl Default for TradeProtectionAcknowledgeRequest {
+    fn default() -> Self {
+        Self {
+            sessionid: Default::default(),
+            message: 1,
+        }
+    }
 }
 
 /// Url: https://steamcommunity.com/tradeoffer/4127395150/accept
@@ -73,6 +89,9 @@ pub struct TradeOfferCreateResponse {
     pub needs_mobile_confirmation: Option<bool>,
     pub needs_email_confirmation: Option<bool>,
     pub email_domain: Option<String>,
+    /// The trade an accepted offer became, in the answer to an accept that needed no confirmation.
+    /// Ex: 695401084301346863
+    pub tradeid: Option<String>,
 }
 
 /// Response after we cancel an trade offer we've sent.
@@ -206,6 +225,7 @@ pub struct Asset {
 impl_sessionid!(TradeOfferGenericRequest);
 impl_sessionid!(TradeOfferAcceptRequest);
 impl_sessionid!(TradeOfferCreateRequest);
+impl_sessionid!(TradeProtectionAcknowledgeRequest);
 
 #[cfg(test)]
 mod tests {

@@ -41,24 +41,22 @@ impl TradeOffer {
         })
     }
 
-    /// Validates if at least one item is being traded or if it exceeds the 255 items limit;
+    /// Validates that at least one item is traded, and that neither side has more than [TRADE_MAX_ITEMS] (255) items.
     pub fn validate(
         my_items: &Option<AssetCollection>,
         their_items: &Option<AssetCollection>,
     ) -> Result<(), OfferValidationError> {
-        if my_items.is_none() && their_items.is_none() {
+        let my_length = my_items.as_ref().map(|c| c.0.len()).unwrap_or(0);
+        let their_length = their_items.as_ref().map(|c| c.0.len()).unwrap_or(0);
+        info!("Total items being traded: My: {} Their: {}", my_length, their_length);
+
+        if my_length == 0 && their_length == 0 {
             return Err(OfferValidationError::InvalidTrade(
                 "There can't be a trade offer with no items being traded.".to_string(),
             ));
         }
 
-        // TODO: more elegant, please
-
-        let my_length = my_items.as_ref().map(|c| c.0.len()).unwrap_or(0);
-        let their_length = their_items.as_ref().map(|c| c.0.len()).unwrap_or(0);
-        info!("Total items being traded: My: {} Their: {}", my_length, their_length);
-
-        if my_length >= TRADE_MAX_ITEMS as usize || their_length >= TRADE_MAX_ITEMS as usize {
+        if my_length > TRADE_MAX_ITEMS as usize || their_length > TRADE_MAX_ITEMS as usize {
             return Err(OfferValidationError::InvalidTrade(format!(
                 "Maximum number of items is: {}",
                 TRADE_MAX_ITEMS
@@ -66,5 +64,42 @@ impl TradeOffer {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn items(count: usize) -> Option<AssetCollection> {
+        let mut collection = AssetCollection::default();
+        for assetid in 0..count {
+            collection.add(crate::InventoryContext::CS2, assetid as i64 + 1);
+        }
+        Some(collection)
+    }
+
+    #[test]
+    fn no_items() {
+        assert!(TradeOffer::validate(&None, &None).is_err());
+        assert!(TradeOffer::validate(&items(0), &None).is_err());
+        assert!(TradeOffer::validate(&None, &items(0)).is_err());
+        assert!(TradeOffer::validate(&items(0), &items(0)).is_err());
+    }
+
+    #[test]
+    fn one_side() {
+        assert_eq!(TradeOffer::validate(&items(1), &None), Ok(()));
+        assert_eq!(TradeOffer::validate(&None, &items(1)), Ok(()));
+        assert_eq!(TradeOffer::validate(&items(0), &items(1)), Ok(()));
+        assert_eq!(TradeOffer::validate(&items(1), &items(0)), Ok(()));
+    }
+
+    #[test]
+    fn item_limit() {
+        assert_eq!(TradeOffer::validate(&items(255), &items(255)), Ok(()));
+        assert!(TradeOffer::validate(&items(256), &None).is_err());
+        assert!(TradeOffer::validate(&None, &items(256)).is_err());
+        assert!(TradeOffer::validate(&items(1), &items(256)).is_err());
     }
 }
