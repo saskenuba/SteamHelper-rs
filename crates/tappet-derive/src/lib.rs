@@ -78,9 +78,9 @@ pub fn derive_parameters(input: TokenStream) -> TokenStream {
     );
 
     // Build the output, possibly using quasi-quotation
+    let new_ident_stringified = new_ident.to_string();
     let expanded = quote! {
 
-        #[derive(Debug)]
         #[cfg(feature = "async")]
         pub struct #new_ident<'a> {
             pub(crate) key: &'a str,
@@ -89,13 +89,24 @@ pub fn derive_parameters(input: TokenStream) -> TokenStream {
             pub(crate) parameters: #struct_parameters_name,
         }
 
-        #[derive(Debug)]
         #[cfg(feature = "blocking")]
         pub struct #new_ident<'a> {
             pub(crate) key: &'a str,
             pub(crate) request: reqwest::blocking::Request,
             pub(crate) client: &'a reqwest::blocking::Client,
             pub(crate) parameters: #struct_parameters_name,
+        }
+
+        // Not derived: `key` is the API key.
+        impl<'a> std::fmt::Debug for #new_ident<'a> {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.debug_struct(#new_ident_stringified)
+                    .field("key", &"<redacted>")
+                    .field("request", &self.request)
+                    .field("client", &self.client)
+                    .field("parameters", &self.parameters)
+                    .finish()
+            }
         }
 
         impl<'a> #new_ident<'a> {
