@@ -35,6 +35,26 @@
 //! }
 //! ```
 //!
+//! # Access tokens
+//!
+//! Instead of an API key, requests can carry a web session access token (`access_token=` instead of `key=`), see
+//! [`Credential`]. Tokens expire, so build a `SteamAPI` per call from the current token and share one HTTP client:
+//!
+//! ```no_run
+//! use tappet::{Credential, SteamAPI, Executor};
+//! use anyhow::Result;
+//! # use tokio;
+//!
+//! # #[tokio::main]
+//! async fn main() -> Result<()> {
+//!     let http_client = reqwest::Client::new();
+//!     # let current_access_token = String::new();
+//!     let client = SteamAPI::with_client(http_client.clone(), Credential::AccessToken(current_access_token));
+//!     let summary = client.get().IEconService().GetTradeOffersSummary(None).execute().await?;
+//!     Ok(())
+//! }
+//! ```
+//!
 //! # Reuse
 //!
 //! There are some endpoints that only returns information for the account vinculated with the api key that you are using at the moment.
@@ -87,13 +107,38 @@ pub mod response_types;
 #[cfg(feature = "trading")]
 mod trading_types;
 
+#[cfg(test)]
+mod request_tests;
+
 pub type Result<T> = std::result::Result<T, SteamAPIError>;
+
+/// How requests authenticate to the Web API.
+///
+/// Its `Debug` output never shows the secret.
+#[derive(Clone, PartialEq, Eq)]
+pub enum Credential {
+    /// A Web API key, sent as `key=`.
+    ApiKey(String),
+    /// A web session access token, sent as `access_token=` instead of `key=`, as node-steam-tradeoffer-manager does
+    /// (`lib/webapi.js`). It expires (the session layer renews it about daily), so build a [`SteamAPI`] per call from
+    /// the current token with `SteamAPI::with_client`.
+    AccessToken(String),
+}
+
+impl std::fmt::Debug for Credential {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Credential::ApiKey(_) => f.write_str("ApiKey(<redacted>)"),
+            Credential::AccessToken(_) => f.write_str("AccessToken(<redacted>)"),
+        }
+    }
+}
 
 #[cfg(feature = "blocking")]
 pub mod blocking {
     use serde::de::DeserializeOwned;
 
-    use crate::Result;
+    use crate::{Credential, Result};
 
     /// Requests the endpoint and returns the raw response.
     pub trait Executor {
@@ -106,24 +151,46 @@ pub mod blocking {
         fn execute_with_response(self) -> Result<T>;
     }
 
-    #[derive(Debug)]
     pub struct SteamAPI {
         pub(crate) client: reqwest::blocking::Client,
         /// Mandatory for some operations
-        pub(crate) key: String,
+        pub(crate) credential: Credential,
+    }
+
+    impl std::fmt::Debug for SteamAPI {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.debug_struct("SteamAPI")
+                .field("client", &self.client)
+                .field("credential", &self.credential)
+                .finish()
+        }
     }
 
     impl SteamAPI {
         /// Creates a new SteamAPI Client with an API Key.
         pub fn new<T: ToString>(api_key: T) -> SteamAPI {
-            Self {
-                client: Default::default(),
-                key: api_key.to_string(),
-            }
+            Self::with_client(Default::default(), Credential::ApiKey(api_key.to_string()))
+        }
+
+        /// Creates a new SteamAPI Client that sends `access_token=` instead of `key=`.
+        pub fn with_access_token<T: ToString>(access_token: T) -> SteamAPI {
+            Self::with_client(Default::default(), Credential::AccessToken(access_token.to_string()))
+        }
+
+        /// Creates a SteamAPI Client on top of an existing HTTP client.
+        ///
+        /// Cloning a `reqwest` client is cheap and shares its connection pool, so this is the way to build a
+        /// `SteamAPI` per call, e.g. with a renewed access token.
+        pub fn with_client(client: reqwest::blocking::Client, credential: Credential) -> SteamAPI {
+            Self { client, credential }
         }
 
         pub fn set_api_key<T: ToString>(&mut self, api_key: T) {
-            self.key = api_key.to_string();
+            self.credential = Credential::ApiKey(api_key.to_string());
+        }
+
+        pub fn set_credential(&mut self, credential: Credential) {
+            self.credential = credential;
         }
 
         pub fn get(&self) -> GetQueryBuilder {
@@ -143,7 +210,7 @@ mod async_client {
     use async_trait::async_trait;
     use serde::de::DeserializeOwned;
 
-    use crate::Result;
+    use crate::{Credential, Result};
 
     #[async_trait]
     /// Requests the endpoint and returns the raw response.
@@ -158,24 +225,46 @@ mod async_client {
         async fn execute_with_response(self) -> Result<T>;
     }
 
-    #[derive(Debug)]
     pub struct SteamAPI {
         pub(crate) client: reqwest::Client,
         /// Mandatory for some operations
-        pub(crate) key: String,
+        pub(crate) credential: Credential,
+    }
+
+    impl std::fmt::Debug for SteamAPI {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.debug_struct("SteamAPI")
+                .field("client", &self.client)
+                .field("credential", &self.credential)
+                .finish()
+        }
     }
 
     impl SteamAPI {
         /// Creates a new SteamAPI Client with an API Key.
         pub fn new<T: ToString>(api_key: T) -> SteamAPI {
-            Self {
-                client: Default::default(),
-                key: api_key.to_string(),
-            }
+            Self::with_client(Default::default(), Credential::ApiKey(api_key.to_string()))
+        }
+
+        /// Creates a new SteamAPI Client that sends `access_token=` instead of `key=`.
+        pub fn with_access_token<T: ToString>(access_token: T) -> SteamAPI {
+            Self::with_client(Default::default(), Credential::AccessToken(access_token.to_string()))
+        }
+
+        /// Creates a SteamAPI Client on top of an existing HTTP client.
+        ///
+        /// Cloning a `reqwest` client is cheap and shares its connection pool, so this is the way to build a
+        /// `SteamAPI` per call, e.g. with a renewed access token.
+        pub fn with_client(client: reqwest::Client, credential: Credential) -> SteamAPI {
+            Self { client, credential }
         }
 
         pub fn set_api_key<T: ToString>(&mut self, api_key: T) {
-            self.key = api_key.to_string();
+            self.credential = Credential::ApiKey(api_key.to_string());
+        }
+
+        pub fn set_credential(&mut self, credential: Credential) {
+            self.credential = credential;
         }
 
         pub fn get(&self) -> GetQueryBuilder {

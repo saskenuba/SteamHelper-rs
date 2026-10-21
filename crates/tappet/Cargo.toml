@@ -30,7 +30,7 @@ async-trait = { version = "^0.1", optional = true }
 futures = { version = "^0.3", optional = true }
 
 serde_repr = { version = "^0.1", optional = true }
-serde_with = { version = "^1.4", features = ["json"], optional = true }
+serde_with = { version = "^1.5", features = ["json"], optional = true }
 
 [dependencies.tappet-derive]
 path = "../tappet-derive"
