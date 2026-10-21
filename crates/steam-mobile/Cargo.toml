@@ -15,6 +15,10 @@ default = ["cli"]
 # This feature is used only if we want a CLI.
 cli = ["clap", "dialoguer", "anyhow", "tokio"]
 
+# Logging in to the Steam websites through a Steam client logged on with steam-client-lib (its CM session), which
+# also renews the session's access token before it expires: `SteamAuthenticator::login_with_client`.
+cm = ["dep:steam-client-lib"]
+
 [[bin]]
 name = "steam-mobile"
 path = "src/bin/main.rs"
@@ -70,6 +74,20 @@ path = "../steam-totp"
 version = "^1"
 path = "../steamid-parser"
 
+[dependencies.steam-client-lib]
+version = "^0.1.0"
+path = "../steam-client"
+optional = true
+
 [dev-dependencies]
-tokio = { version = "^1", features = ["rt", "macros"] }
+# `rt-multi-thread`, `time` and `signal`: the examples.
+tokio = { version = "^1", features = ["rt", "rt-multi-thread", "macros", "time", "signal"] }
 tracing-subscriber = { version = "^0.3", features = ["env-filter"] }
+
+[[example]]
+name = "web_session"
+required-features = ["cm"]
+
+[[example]]
+name = "web_session_bot"
+required-features = ["cm"]

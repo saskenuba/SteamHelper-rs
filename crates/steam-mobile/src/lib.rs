@@ -22,12 +22,16 @@ pub use client::Authenticated;
 pub use client::SteamAuthenticator;
 pub use client::Unauthenticated;
 use const_format::concatcp;
+use parking_lot::RwLock;
 pub use reqwest::header::HeaderMap;
 pub use reqwest::Error as HttpError;
 pub use reqwest::Method;
+pub use reqwest::StatusCode;
 pub use reqwest::Url;
 use serde::Deserialize;
 use serde::Serialize;
+pub use session::AccessToken;
+use session::LoginMode;
 use steam_totp::Secret;
 use steamid_parser::SteamID;
 pub use utils::format_captcha_url;
@@ -46,11 +50,12 @@ use crate::errors::InternalError;
 use crate::errors::MobileAuthFileError;
 use crate::utils::read_from_disk;
 
-mod adapter;
 pub(crate) mod client;
+mod cookie_jar;
 pub mod errors;
 mod page_scraper;
 pub(crate) mod retry;
+mod session;
 mod types;
 pub mod user;
 pub(crate) mod utils;
@@ -88,13 +93,13 @@ const MOBILE_REFERER: &str = concatcp!(
 pub type AuthResult<T> = Result<T, AuthError>;
 
 /// Information that we cache after the login operation to avoid querying Steam multiple times.
-#[derive(Clone)]
 struct SteamCache {
     steamid: SteamID,
     api_key: Option<String>,
-    /// Oauth token recovered at the login.
-    oauth_token: String,
-    access_token: String,
+    /// Behind a lock so a renewal (feature `cm`) can replace it through a shared reference. Only held to read or write
+    /// it, never across an await.
+    access_token: RwLock<String>,
+    mode: LoginMode,
 }
 
 impl Debug for SteamCache {
@@ -108,7 +113,7 @@ impl Debug for SteamCache {
 
 impl SteamCache {
     fn query_tokens(&self) -> Vec<(&'static str, String)> {
-        [("access_token", self.access_token.clone())].to_vec()
+        [("access_token", self.access_token())].to_vec()
     }
 
     fn with_login_data(steamid: &str, access_token: String, refresh_token: String) -> Result<Self, InternalError> {
@@ -120,9 +125,19 @@ impl SteamCache {
         Ok(Self {
             steamid: parsed_steamid,
             api_key: None,
-            oauth_token: refresh_token,
-            access_token,
+            access_token: RwLock::new(access_token),
+            mode: LoginMode::Password { refresh_token },
         })
+    }
+
+    #[cfg(feature = "cm")]
+    fn with_client(steamid: SteamID, access_token: String, login: session::ClientLogin) -> Self {
+        Self {
+            steamid,
+            api_key: None,
+            access_token: RwLock::new(access_token),
+            mode: LoginMode::Client(login),
+        }
     }
 
     fn set_api_key(&mut self, api_key: Option<String>) {
@@ -137,8 +152,22 @@ impl SteamCache {
         self.steamid.to_steam64()
     }
 
-    fn oauth_token(&self) -> &str {
-        &self.oauth_token
+    fn access_token(&self) -> String {
+        self.access_token.read().clone()
+    }
+
+    #[cfg(feature = "cm")]
+    fn set_access_token(&self, access_token: String) {
+        *self.access_token.write() = access_token;
+    }
+
+    /// What the authenticator linker sends as its `access_token`.
+    fn oauth_token(&self) -> String {
+        match &self.mode {
+            LoginMode::Password { refresh_token } => refresh_token.clone(),
+            #[cfg(feature = "cm")]
+            LoginMode::Client(_) => self.access_token(),
+        }
     }
 }
 

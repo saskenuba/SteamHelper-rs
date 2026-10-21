@@ -76,7 +76,8 @@ Below, you can find a list of implemented and planned features:
 ### Library ###
 
  * Log in to a user account with SteamGuard enabled, captchas and parental control;
- * Log in with a web session made elsewhere, such as by steam-client, and renew it;
+ * Log in through a Steam client logged on with steam-client-lib (feature `cm`), which then renews the session by
+   itself (examples `web_session` and `web_session_bot`);
  * Add, finalize and remove SteamGuard authenticators, with or without a phone number;
  * Generate secrets;
  * Recover a maFile's missing device ID;

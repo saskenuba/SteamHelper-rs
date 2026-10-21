@@ -2,14 +2,13 @@ use std::fmt;
 use std::fmt::Debug;
 use std::fmt::Formatter;
 use std::marker::PhantomData;
-use std::ops::Deref;
 use std::sync::Arc;
 use std::time::Duration;
+use std::time::Instant;
 
 use backoff::future::retry;
 use base64::Engine;
 use cookie::Cookie;
-use cookie::CookieJar;
 use futures::TryFutureExt;
 use futures_timer::Delay;
 use parking_lot::RwLock;
@@ -21,24 +20,38 @@ use reqwest::Client;
 use reqwest::IntoUrl;
 use reqwest::Method;
 use reqwest::Response;
+use reqwest::StatusCode;
 use reqwest::Url;
 use scraper::Html;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+#[cfg(feature = "cm")]
+use steam_client::client::User;
+#[cfg(feature = "cm")]
+use steam_client::handle::SteamHandle;
+use steam_language::enums::EResult;
 use steam_protobuf::ProtobufDeserialize;
 use steam_protobuf::ProtobufSerialize;
+use steamid_parser::SteamID;
 use tracing::debug;
 use tracing::error;
 use tracing::info;
 use tracing::trace;
 use tracing::warn;
 
-use crate::adapter::SteamCookie;
+use crate::cookie_jar::CookieJar;
 use crate::errors::AuthError;
 use crate::errors::InternalError;
 use crate::errors::LinkerError;
 use crate::errors::MobileAuthFileError;
 use crate::retry::login_retry_strategy;
+#[cfg(feature = "cm")]
+use crate::session::login_secure_cookies;
+#[cfg(feature = "cm")]
+use crate::session::session_id_cookies;
+#[cfg(feature = "cm")]
+use crate::session::ClientLogin;
+use crate::session::LoginMode;
 use crate::user::AbsentMaFile;
 use crate::user::MaFileState;
 use crate::user::PendingMaFile;
@@ -70,6 +83,7 @@ use crate::web_handler::steam_guard_linker::PendingAuthenticator;
 use crate::web_handler::steam_guard_linker::QueryStatusResponse;
 use crate::web_handler::steam_guard_linker::RemoveAuthenticatorScheme;
 use crate::web_handler::steam_guard_linker::STEAM_ADD_PHONE_CATCHUP_SECS;
+use crate::AccessToken;
 use crate::ConfirmationAction;
 use crate::MobileAuthFile;
 use crate::SteamCache;
@@ -143,6 +157,59 @@ impl<M: MaFileState> SteamAuthenticator<Unauthenticated, M> {
             auth_level: PhantomData::<Unauthenticated>,
         }
     }
+
+    /// Logs in to the Steam websites through `handle`, a Steam client logged on to this account with steam-client-lib,
+    /// instead of with a password: the client generates an access token (`Authentication.GenerateAccessTokenForApp`
+    /// over its CM connection), and the session takes it, with the client's SteamID. Feature `cm`.
+    ///
+    /// Sets the session cookies, `steamLoginSecure` (the SteamID and the token) and a new random `sessionid`, on the
+    /// Steam Community, Store, Help and Checkout hosts, then checks Steam takes them. As [`SteamAuthenticator::login`]
+    /// does, it recovers a device ID the maFile lacks and caches the API key.
+    ///
+    /// The authenticator keeps `handle`, and so keeps the client running: a spawned client stops only once every
+    /// handle to it is dropped, this one too, or it logs off. It renews the token through it, which lasts about a day:
+    /// the first request with the session once the token expires within an hour ([`SteamAuthenticator::renew_before`]
+    /// sets another margin) gets a new one first, and keeps the `sessionid`. That request waits for the client's
+    /// answer, up to the client's call deadline (30 seconds); requests coming meanwhile go at once with the current
+    /// token while it is valid, and only those whose token has expired wait for that answer. Only early: a request
+    /// that fails is never retried. If a renewal fails, such as while the client is connecting again or after it
+    /// stopped, requests go on with the current token while it is valid, and the client is asked again 30 seconds
+    /// after the failure at the soonest; meanwhile a request whose token has expired fails at once with
+    /// [`InternalError::ClientToken`], without being sent. An expired token is never sent. The token's lifetime is
+    /// read from its own claims and counted from when the client was asked for it, so this machine's clock being off
+    /// doesn't matter.
+    ///
+    /// ```no_run
+    /// # use steam_client::{client::User, handle::SteamHandle};
+    /// # use steam_mobile::{MobileAuthFile, SteamAuthenticator, user::SteamUser};
+    /// # async fn f(mafile: MobileAuthFile, password: String, handle: SteamHandle<User>) {
+    /// let user = SteamUser::new("username".to_string(), password).with_mafile(mafile);
+    /// let authenticator = SteamAuthenticator::new(user)
+    ///     .login_with_client(handle.clone())
+    ///     .await
+    ///     .unwrap();
+    /// authenticator.fetch_confirmations().await.unwrap();
+    /// # }
+    /// ```
+    #[cfg(feature = "cm")]
+    pub async fn login_with_client(
+        self,
+        handle: SteamHandle<User>,
+    ) -> Result<SteamAuthenticator<Authenticated, M>, AuthError> {
+        let steam_id = handle.steam_id();
+        let (login, access_token) = ClientLogin::start(Box::new(handle), Instant::now).await?;
+        let client = self.inner.client;
+        client.set_session_cookies(steam_id, &access_token);
+        let cache = SteamCache::with_client(steam_id, access_token, login);
+
+        if client.session_is_expired().await? {
+            return Err(InternalError::SessionExpired.into());
+        }
+        info!("Logged in to Steam through the Steam client.");
+
+        finish_login(client, self.inner.user, cache).await
+    }
+
     /// Log on into Steam website and populates the inner client with cookies for the Steam Store,
     /// Steam community and Steam help domains.
     ///
@@ -160,11 +227,11 @@ impl<M: MaFileState> SteamAuthenticator<Unauthenticated, M> {
     /// If the MaFile lacks the device ID that confirmations need, it is fetched from Steam, and login fails if Steam
     /// has none.
     pub async fn login(self) -> Result<SteamAuthenticator<Authenticated, M>, AuthError> {
-        let mut user = self.inner.user;
+        let user = self.inner.user;
         let client = self.inner.client;
 
         // FIXME: Add more permanent errors, such as bad credentials
-        let mut cache = retry(login_retry_strategy(), || async {
+        let cache = retry(login_retry_strategy(), || async {
             login_and_store_cookies(&client, &user)
                 .await
                 .map_err(|error| match error {
@@ -184,37 +251,46 @@ impl<M: MaFileState> SteamAuthenticator<Unauthenticated, M> {
         //     info!("Parental unlock successfully.");
         // }
 
-        // Some maFiles lack the device ID that confirmations need, but Steam remembers the one the authenticator was
-        // added with.
-        if user.active_mafile().is_some_and(|mafile| mafile.device_id().is_none()) {
-            let status = twofactor_status(&client, &cache).await?;
-            if status.device_identifier.is_empty() {
-                return Err(MobileAuthFileError::GeneralFailure(
-                    "The maFile has no device ID, and Steam has none for this account's authenticator.".to_string(),
-                )
-                .into());
-            }
-            if let Some(mafile) = user.active_mafile_mut() {
-                mafile.set_device_id(status.device_identifier);
-                info!("Recovered the maFile's missing device ID from Steam.");
-            }
-        }
-
-        let api_key = cache_api_key(&client).await;
-        if let Some(api_key) = api_key {
-            cache.set_api_key(Some(api_key));
-            info!("Cached API Key successfully.");
-        }
-
-        Ok(SteamAuthenticator {
-            inner: InnerAuthenticator {
-                client,
-                user,
-                cache: Some(cache),
-            },
-            auth_level: PhantomData,
-        })
+        finish_login(client, user, cache).await
     }
+}
+
+/// What every login does once Steam took the session: completes the maFile, and caches the API key.
+async fn finish_login<M: MaFileState>(
+    client: MobileClient,
+    mut user: SteamUser<M>,
+    mut cache: SteamCache,
+) -> Result<SteamAuthenticator<Authenticated, M>, AuthError> {
+    // Some maFiles lack the device ID that confirmations need, but Steam remembers the one the authenticator was
+    // added with.
+    if user.active_mafile().is_some_and(|mafile| mafile.device_id().is_none()) {
+        let status = twofactor_status(&client, &cache).await?;
+        if status.device_identifier.is_empty() {
+            return Err(MobileAuthFileError::GeneralFailure(
+                "The maFile has no device ID, and Steam has none for this account's authenticator.".to_string(),
+            )
+            .into());
+        }
+        if let Some(mafile) = user.active_mafile_mut() {
+            mafile.set_device_id(status.device_identifier);
+            info!("Recovered the maFile's missing device ID from Steam.");
+        }
+    }
+
+    let api_key = cache_api_key(&client).await;
+    if let Some(api_key) = api_key {
+        cache.set_api_key(Some(api_key));
+        info!("Cached API Key successfully.");
+    }
+
+    Ok(SteamAuthenticator {
+        inner: InnerAuthenticator {
+            client,
+            user,
+            cache: Some(cache),
+        },
+        auth_level: PhantomData,
+    })
 }
 
 impl<M> SteamAuthenticator<Authenticated, M>
@@ -228,13 +304,84 @@ where
             .expect("Cache is always set in the Authenticated state.")
     }
 
+    /// The account's SteamID, from the login.
+    pub fn steam_id(&self) -> SteamID {
+        self.cache().steamid
+    }
+
     /// Returns account's API Key, if authenticator managed to cache it.
     pub fn api_key(&self) -> Option<String> {
         self.cache().api_key().map(ToString::to_string)
     }
 
+    /// Sets how long before its access token expires a login through a Steam client
+    /// ([`SteamAuthenticator::login_with_client`]) renews it: an hour by default. Feature `cm`.
+    ///
+    /// The margin is how long the session outlasts a client that can't renew it, such as while the client can't reach
+    /// Steam: requests go on with the current token till it expires, and fail unsent after. A longer one renews more
+    /// often, as Steam issues tokens for about a day; one of the token's lifetime or more makes a request renew it
+    /// whenever 30 seconds passed since the last renewal, the least time between two.
+    ///
+    /// A password login's token is never renewed, so on one this changes nothing.
+    #[cfg(feature = "cm")]
+    #[must_use]
+    pub fn renew_before(mut self, margin: Duration) -> Self {
+        if let Some(LoginMode::Client(login)) = self.inner.cache.as_mut().map(|cache| &mut cache.mode) {
+            login.set_renew_before(margin);
+        }
+        self
+    }
+
+    /// The session's access token, for Steam's Web API calls that take `access_token=`.
+    ///
+    /// Call it for each request instead of keeping the value: a login through a Steam client (feature `cm`) first
+    /// renews the token if it is due, as every request with the session does, which is why this can wait for the
+    /// client and fail ([`InternalError::ClientToken`], only once the current token has expired); a kept one stops
+    /// working when it expires. A password login's token comes as it is.
+    pub async fn access_token(&self) -> Result<AccessToken, InternalError> {
+        self.renew_session_if_expiring().await?;
+        Ok(AccessToken::new(self.cache().access_token()))
+    }
+
+    /// Renews the session's access token through the Steam client of a login through it (feature `cm`), if it is due:
+    /// what every request with the session does first, before it reads the token or sends the cookies. Password
+    /// logins have nothing to renew.
+    async fn renew_session_if_expiring(&self) -> Result<(), InternalError> {
+        self.renew_session_at(Instant::now).await
+    }
+
+    /// [`Self::renew_session_if_expiring`], with `now` reading the monotonic clock: the tests set it.
+    #[cfg_attr(not(feature = "cm"), allow(unused_variables))]
+    async fn renew_session_at(&self, now: impl Fn() -> Instant + Send) -> Result<(), InternalError> {
+        match &self.cache().mode {
+            LoginMode::Password { .. } => Ok(()),
+            #[cfg(feature = "cm")]
+            LoginMode::Client(login) => {
+                login
+                    .renew_if_due(now, |access_token| self.swap_access_token(access_token))
+                    .await
+            }
+        }
+    }
+
+    /// Replaces the session's access token with a new one Steam issued to the same account, in the cache and in the
+    /// `steamLoginSecure` cookies, and keeps the `sessionid`. Each is swapped under a short lock, never held across a
+    /// request.
+    #[cfg(feature = "cm")]
+    fn swap_access_token(&self, access_token: String) {
+        let steam_id = self.cache().steamid;
+        {
+            let mut jar = self.client().cookie_store.write();
+            for cookie in login_secure_cookies(steam_id, &access_token) {
+                jar.store_cookie(&cookie);
+            }
+        }
+        self.cache().set_access_token(access_token);
+    }
+
     /// Returns this account SteamGuard information.
     pub async fn steam_guard_status(&self) -> Result<QueryStatusResponse, AuthError> {
+        self.renew_session_if_expiring().await?;
         twofactor_status(self.client(), self.cache()).await.map_err(Into::into)
     }
 
@@ -258,6 +405,7 @@ where
         current_step: AddAuthenticatorStep,
         phone_number: &str,
     ) -> Result<AddAuthenticatorStep, AuthError> {
+        self.renew_session_if_expiring().await?;
         let user_has_phone_registered = account_has_phone(self.client()).await?;
         debug!("Has phone registered? {:?}", user_has_phone_registered);
 
@@ -291,6 +439,7 @@ where
     /// Call this method **ONLY** after saving your maFile, because otherwise you WILL lose access to your
     /// account.
     pub async fn finalize_authenticator(&self, mafile: &MobileAuthFile, sms_code: &str) -> Result<(), AuthError> {
+        self.renew_session_if_expiring().await?;
         if !check_sms(self.client(), sms_code).await? {
             return Err(LinkerError::BadSMSCode.into());
         }
@@ -318,6 +467,7 @@ where
         revocation_code: &str,
         remove_authenticator_scheme: RemoveAuthenticatorScheme,
     ) -> Result<(), AuthError> {
+        self.renew_session_if_expiring().await?;
         remove_authenticator(
             self.client(),
             self.cache(),
@@ -363,12 +513,14 @@ where
     where
         T: Serialize + Send + Sync,
     {
+        self.renew_session_if_expiring().await?;
         self.client()
             .request_with_session_guard(url, method, custom_headers, data, None::<&str>)
             .await
     }
 
-    #[allow(missing_docs)]
+    /// The value of the cookie `steam_cookie_name` on the host `steam_domain_host`, or `None` if the session has no
+    /// such cookie.
     pub fn dump_cookie(&self, steam_domain_host: &str, steam_cookie_name: &str) -> Option<String> {
         dump_cookies_by_domain_and_name(&self.client().cookie_store.read(), steam_domain_host, steam_cookie_name)
     }
@@ -388,6 +540,7 @@ impl SteamAuthenticator<Authenticated, AbsentMaFile> {
     pub async fn begin_add_authenticator(
         self,
     ) -> Result<(SteamAuthenticator<Authenticated, PendingMaFile>, ActivationCodeDelivery), AuthError> {
+        self.renew_session_if_expiring().await?;
         let PendingAuthenticator { mafile, code_delivery } =
             add_authenticator_to_account(self.client(), self.cache()).await?;
         let authenticator = self.map_user(|user| user.with_pending_mafile(mafile));
@@ -410,6 +563,9 @@ impl SteamAuthenticator<Authenticated, PendingMaFile> {
         self,
         activation_code: &str,
     ) -> Result<SteamAuthenticator<Authenticated, PresentMaFile>, (Self, AuthError)> {
+        if let Err(e) = self.renew_session_if_expiring().await {
+            return Err((self, e.into()));
+        }
         match finalize(self.client(), self.cache(), self.user().mafile(), activation_code).await {
             Ok(()) => Ok(self.map_user(SteamUser::into_present)),
             Err(e) => Err((self, e.into())),
@@ -430,6 +586,7 @@ impl SteamAuthenticator<Authenticated, PresentMaFile> {
             return Ok(api_key);
         }
 
+        self.renew_session_if_expiring().await?;
         let steamid = self.cache().steam_id();
         let api_key = api_key_register(self.client(), self.user(), steamid).await?;
         self.inner
@@ -448,6 +605,7 @@ impl SteamAuthenticator<Authenticated, PresentMaFile> {
     ///
     /// Revoking succeeds even if no key was registered, since Steam treats that as a no-op.
     pub async fn revoke_api_key(&mut self) -> Result<(), AuthError> {
+        self.renew_session_if_expiring().await?;
         api_key_revoke(self.client()).await?;
         self.inner
             .cache
@@ -468,6 +626,7 @@ impl SteamAuthenticator<Authenticated, PresentMaFile> {
 
     /// Fetch all confirmations available with the authenticator.
     pub async fn fetch_confirmations(&self) -> Result<Confirmations, AuthError> {
+        self.renew_session_if_expiring().await?;
         let steamid = self.cache().steam_id();
         let secret = (&self.inner.user).identity_secret();
         let device_id = self.user().device_id();
@@ -504,6 +663,7 @@ impl SteamAuthenticator<Authenticated, PresentMaFile> {
     where
         I: IntoIterator<Item = Confirmation> + Send,
     {
+        self.renew_session_if_expiring().await?;
         let steamid = self.cache().steam_id();
 
         send_confirmations(
@@ -540,12 +700,78 @@ fn loggable_url(url: &Url) -> String {
     url.to_string()
 }
 
+/// The header Steam's Web API reports a call's [`steam_language::enums::EResult`] in.
+const X_ERESULT: &str = "x-eresult";
+/// How much of an error page goes into [`InternalError::HttpStatus`].
+const ERROR_BODY_SNIPPET_CHARS: usize = 200;
+
+/// Passes a 2xx response through, and turns any other into an error before its body is parsed.
+///
+/// Only for responses whose body is parsed as a success: callers that inspect redirects or error bodies themselves
+/// use [`MobileClient::request`] directly.
+async fn ensure_success(response: Response) -> Result<Response, InternalError> {
+    let status = response.status();
+    if status.is_success() {
+        return Ok(response);
+    }
+    let url = response.url().clone();
+    // An error page, so it holds nothing of ours; only its start is kept.
+    let body = response.text().await.unwrap_or_default();
+    Err(status_error(status, &url, &body))
+}
+
+/// The error for a response that failed with `status`.
+fn status_error(status: StatusCode, url: &Url, body: &str) -> InternalError {
+    let url = loggable_url(url);
+    if status == StatusCode::TOO_MANY_REQUESTS {
+        return InternalError::TooManyRequests { url };
+    }
+    InternalError::HttpStatus {
+        status,
+        url,
+        body: body_snippet(body),
+    }
+}
+
+/// The start of an error page, whitespace collapsed.
+fn body_snippet(body: &str) -> String {
+    let collapsed = body.split_whitespace().collect::<Vec<_>>().join(" ");
+    match collapsed.char_indices().nth(ERROR_BODY_SNIPPET_CHARS) {
+        Some((end, _)) => format!("{}…", &collapsed[..end]),
+        None => collapsed,
+    }
+}
+
+/// Fails if the `x-eresult` header reports anything but OK. Responses without it, or with one that isn't a number,
+/// pass, as they did before it was checked.
+fn eresult_check(header: Option<&HeaderValue>, url: &Url) -> Result<(), InternalError> {
+    let Some(eresult) = header.and_then(|value| value.to_str().ok()?.trim().parse::<i32>().ok()) else {
+        return Ok(());
+    };
+    if eresult == EResult::OK as i32 {
+        return Ok(());
+    }
+    Err(InternalError::EResult {
+        eresult,
+        url: loggable_url(url),
+    })
+}
+
 impl MobileClient {
     pub(crate) fn get_cookie_value(&self, domain: &str, name: &str) -> Option<String> {
         dump_cookies_by_domain_and_name(&self.cookie_store.read(), domain, name)
     }
     pub(crate) fn set_cookie_value(&self, cookie: Cookie<'static>) {
-        self.cookie_store.write().add_original(cookie);
+        self.cookie_store.write().store_cookie(&cookie);
+    }
+
+    /// Sets the cookies of a new session on every Steam host: `steamLoginSecure`, and a new `sessionid`.
+    #[cfg(feature = "cm")]
+    fn set_session_cookies(&self, steam_id: SteamID, access_token: &str) {
+        let mut jar = self.cookie_store.write();
+        for cookie in login_secure_cookies(steam_id, access_token).chain(session_id_cookies()) {
+            jar.store_cookie(&cookie);
+        }
     }
 
     pub(crate) async fn request_proto<INPUT, OUTPUT>(
@@ -578,11 +804,17 @@ impl MobileClient {
         let response = req.send().await?;
         debug!("Response status: {}", response.status());
 
+        let response = ensure_success(response).await?;
+        eresult_check(response.headers().get(X_ERESULT), response.url())?;
+
         let res_bytes = response.bytes().await?;
         OUTPUT::from_bytes(res_bytes).map_or_else(
-            |_| {
+            |error| {
                 error!("Failed deserializing {}", std::any::type_name::<OUTPUT>());
-                Err(InternalError::GeneralFailure("asdfd".to_string()))
+                Err(InternalError::GeneralFailure(format!(
+                    "Failed to decode the {} response: {error}",
+                    std::any::type_name::<OUTPUT>()
+                )))
             },
             |res| {
                 debug!("Decoded {}", std::any::type_name::<OUTPUT>());
@@ -607,8 +839,8 @@ impl MobileClient {
     {
         // We check preemptively if the session is still working.
         if self.session_is_expired().await? {
-            warn!("Session was lost. Trying to reconnect.");
-            unimplemented!()
+            warn!("The web session expired.");
+            return Err(InternalError::SessionExpired);
         };
 
         self.request(url, method, custom_headers, data, query_params)
@@ -632,7 +864,8 @@ impl MobileClient {
             .request_with_session_guard(url, method, custom_headers, data.as_ref(), query_params)
             .await?;
 
-        let response_body = req
+        let response_body = ensure_success(req)
+            .await?
             .text()
             .inspect_ok(|s| {
                 debug!("{} response: {} bytes", std::any::type_name::<OUTPUT>(), s.len());
@@ -702,16 +935,10 @@ impl MobileClient {
 
             let mut cookie_jar = self.cookie_store.write();
             for cookie in response.cookies() {
-                let mut our_cookie = SteamCookie::from(cookie);
+                // under the host that answered, whatever its Domain says
                 let host = response.url().host().expect("Safe.").to_string();
-                our_cookie.set_domain(host);
-
-                trace!(
-                    "New cookie from: {:?}, name: {}",
-                    our_cookie.domain(),
-                    our_cookie.name()
-                );
-                cookie_jar.add_original(our_cookie.deref().clone());
+                trace!("New cookie from: {}, name: {}", host, cookie.name());
+                cookie_jar.store(&host, cookie.name(), cookie.value());
             }
         }
         res
@@ -732,7 +959,8 @@ impl MobileClient {
         U: IntoUrl + Send,
     {
         let resp = self.request(url, method, headers, form_data, query_params).await?;
-        let response_body = resp
+        let response_body = ensure_success(resp)
+            .await?
             .text()
             .inspect_ok(|s| {
                 debug!("{} response: {} bytes", std::any::type_name::<OUTPUT>(), s.len());
@@ -756,14 +984,18 @@ impl MobileClient {
             .await?;
 
         if let Some(location) = retrieve_header_location(&response) {
-            return Ok(Url::parse(location).map(Self::url_expired_check).unwrap());
+            // relative to the page, when it has no host
+            let redirect = response.url().join(location).map_err(|error| {
+                InternalError::GeneralFailure(format!("Steam redirected to an invalid URL: {error}"))
+            })?;
+            return Ok(Self::url_expired_check(&redirect));
         }
         Ok(false)
     }
 
     /// If url is redirecting to '/login' or lostauth, returns true
-    fn url_expired_check(redirect_url: Url) -> bool {
-        redirect_url.host_str().unwrap() == "lostauth" || redirect_url.path().starts_with("/login")
+    fn url_expired_check(redirect_url: &Url) -> bool {
+        redirect_url.host_str() == Some("lostauth") || redirect_url.path().starts_with("/login")
     }
 
     /// Convenience function to retrieve HTML w/ session
@@ -785,30 +1017,22 @@ impl MobileClient {
 
     /// Replace current cookie jar with a new one.
     fn reset_jar(&mut self) {
-        self.cookie_store = Arc::new(RwLock::new(CookieJar::new()));
+        self.cookie_store = Arc::new(RwLock::new(CookieJar::default()));
     }
 
-    /// Mobile cookies that makes us look like the mobile app
-    fn standard_mobile_cookies() -> Vec<Cookie<'static>> {
-        vec![
-            Cookie::build("Steam_Language", "english")
-                .domain(STEAM_COMMUNITY_HOST)
-                .finish(),
-            Cookie::build("mobileClient", "android")
-                .domain(STEAM_COMMUNITY_HOST)
-                .finish(),
-            Cookie::build("mobileClientVersion", "0 (2.1.3)")
-                .domain(STEAM_COMMUNITY_HOST)
-                .finish(),
-        ]
-    }
+    /// Mobile cookies that makes us look like the mobile app, as (name, value) on the Steam Community.
+    const STANDARD_MOBILE_COOKIES: [(&'static str, &'static str); 3] = [
+        ("Steam_Language", "english"),
+        ("mobileClient", "android"),
+        ("mobileClientVersion", "0 (2.1.3)"),
+    ];
 
-    /// Initialize cookie jar, and populates it with mobile cookies.
+    /// Initialize cookie jar, and populates it with mobile cookies, which the cookies Steam sets don't replace.
     fn init_cookie_jar() -> CookieJar {
-        let mut mobile_cookies = CookieJar::new();
-        Self::standard_mobile_cookies()
-            .into_iter()
-            .for_each(|cookie| mobile_cookies.add(cookie));
+        let mut mobile_cookies = CookieJar::default();
+        for (name, value) in Self::STANDARD_MOBILE_COOKIES {
+            mobile_cookies.add_default(STEAM_COMMUNITY_HOST, name, value);
+        }
         mobile_cookies
     }
 
@@ -856,11 +1080,16 @@ fn assert_public_futures_are_send(
     unauthenticated: SteamAuthenticator<Unauthenticated, PresentMaFile>,
     without_mafile: SteamAuthenticator<Authenticated, AbsentMaFile>,
     pending: SteamAuthenticator<Authenticated, PendingMaFile>,
+    #[cfg(feature = "cm")] client_login: SteamAuthenticator<Unauthenticated, PresentMaFile>,
+    #[cfg(feature = "cm")] handle: SteamHandle<User>,
     mafile: &MobileAuthFile,
 ) {
     fn is_send<T: Send>(_: T) {}
 
     is_send(unauthenticated.login());
+    #[cfg(feature = "cm")]
+    is_send(client_login.login_with_client(handle));
+    is_send(authenticator.access_token());
     is_send(authenticator.steam_guard_status());
     is_send(authenticator.add_authenticator(AddAuthenticatorStep::InitialStep, ""));
     is_send(authenticator.finalize_authenticator(mafile, ""));
@@ -871,4 +1100,944 @@ fn assert_public_futures_are_send(
     is_send(authenticator.process_confirmations(ConfirmationAction::Accept, Vec::new()));
     is_send(authenticator.request_custom_endpoint(String::new(), Method::GET, None, None::<u8>));
     is_send(authenticator.register_api_key());
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[cfg(feature = "cm")]
+    use crate::session::FakeClock;
+    #[cfg(feature = "cm")]
+    use crate::session::FakeIssuer;
+    #[cfg(feature = "cm")]
+    use crate::session::IssuedToken;
+    #[cfg(feature = "cm")]
+    use crate::session::DEFAULT_RENEW_BEFORE as RENEW_BEFORE;
+    #[cfg(feature = "cm")]
+    use crate::session::MIN_RENEWAL_INTERVAL;
+    #[cfg(feature = "cm")]
+    use crate::session::RETRY_AFTER_FAILURE;
+    #[cfg(feature = "cm")]
+    use crate::session::SESSION_HOSTS;
+    #[cfg(feature = "cm")]
+    use crate::utils::dump_cookies_by_domain;
+    #[cfg(feature = "cm")]
+    use steam_client::errors::ClientError;
+
+    #[cfg(feature = "cm")]
+    const STEAM_ID: u64 = 76561197960287930;
+
+    #[cfg(feature = "cm")]
+    fn cookie(client: &MobileClient, host: &str, name: &str) -> Option<String> {
+        client.cookie_store.read().get(host, name).map(ToString::to_string)
+    }
+
+    /// The cache of a login through a Steam client, with `issuer` standing in for it: `access_token` arrived at
+    /// `asked_at`, and lasts `lasts`.
+    #[cfg(feature = "cm")]
+    fn client_session_cache(
+        access_token: &str,
+        lasts: Duration,
+        issuer: Arc<FakeIssuer>,
+        asked_at: Instant,
+    ) -> SteamCache {
+        let login = ClientLogin::new(Box::new(issuer), lasts, asked_at).unwrap();
+        SteamCache::with_client(SteamID::from_steam64(STEAM_ID), access_token.to_string(), login)
+    }
+
+    /// An authenticator logged in through a Steam client, without the requests that check it: its token arrived at
+    /// `asked_at`, and lasts `lasts`, and `issuer` stands in for the client.
+    #[cfg(feature = "cm")]
+    fn with_client_login(
+        access_token: &str,
+        lasts: Duration,
+        issuer: Arc<FakeIssuer>,
+        asked_at: Instant,
+    ) -> SteamAuthenticator<Authenticated, PresentMaFile> {
+        let client = MobileClient::default();
+        client.set_session_cookies(SteamID::from_steam64(STEAM_ID), access_token);
+        let mafile = MobileAuthFile::new(String::new(), String::new(), "android:1".to_string());
+        SteamAuthenticator {
+            inner: InnerAuthenticator {
+                client,
+                user: SteamUser::new("username".to_string(), "password".to_string()).with_mafile(mafile),
+                cache: Some(client_session_cache(access_token, lasts, issuer, asked_at)),
+            },
+            auth_level: PhantomData,
+        }
+    }
+
+    /// An authenticator logged in through a Steam client whose token lasts a day, and that isn't asked for another.
+    #[cfg(feature = "cm")]
+    fn with_session(access_token: &str) -> SteamAuthenticator<Authenticated, PresentMaFile> {
+        with_client_login(access_token, DAY, FakeIssuer::answering([]), Instant::now())
+    }
+
+    #[cfg(feature = "cm")]
+    const DAY: Duration = Duration::from_secs(86400);
+
+    #[cfg(feature = "cm")]
+    fn secs(secs: u64) -> Duration {
+        Duration::from_secs(secs)
+    }
+
+    #[cfg(feature = "cm")]
+    fn issued(secret: &str, lasts: Duration) -> Result<IssuedToken, ClientError> {
+        Ok(IssuedToken {
+            secret: secret.to_string(),
+            lasts,
+        })
+    }
+
+    /// The session's token, as the Web API calls and the linker get it, and its `steamLoginSecure` cookies.
+    #[cfg(feature = "cm")]
+    fn assert_session_token(authenticator: &SteamAuthenticator<Authenticated, PresentMaFile>, access_token: &str) {
+        let cache = authenticator.cache();
+        assert_eq!(cache.access_token(), access_token);
+        assert_eq!(cache.oauth_token(), access_token);
+        for host in SESSION_HOSTS {
+            assert_eq!(
+                cookie(authenticator.client(), host, "steamLoginSecure").unwrap(),
+                format!("{STEAM_ID}%7C%7C{access_token}")
+            );
+        }
+    }
+
+    /// An authenticator logged in with a password, without the requests.
+    fn with_password_login(access_token: &str) -> SteamAuthenticator<Authenticated, PresentMaFile> {
+        let mafile = MobileAuthFile::new(String::new(), String::new(), "android:1".to_string());
+        let cache =
+            SteamCache::with_login_data("76561197960287930", access_token.to_string(), "refresh".to_string()).unwrap();
+        SteamAuthenticator {
+            inner: InnerAuthenticator {
+                client: MobileClient::default(),
+                user: SteamUser::new("username".to_string(), "password".to_string()).with_mafile(mafile),
+                cache: Some(cache),
+            },
+            auth_level: PhantomData,
+        }
+    }
+
+    #[tokio::test]
+    async fn password_logins_never_renew_their_token() {
+        let authenticator = with_password_login("first");
+        assert!(matches!(authenticator.cache().mode, LoginMode::Password { .. }));
+
+        // no request, even long after: a password login has no client to ask, so this returns before any
+        let in_a_year = Instant::now() + Duration::from_secs(365 * 86400);
+        authenticator.renew_session_at(|| in_a_year).await.unwrap();
+        assert_eq!(authenticator.access_token().await.unwrap().expose_secret(), "first");
+        assert_eq!(
+            authenticator.cache().query_tokens(),
+            vec![("access_token", "first".to_string())]
+        );
+        assert_eq!(authenticator.cache().oauth_token(), "refresh");
+    }
+
+    #[cfg(feature = "cm")]
+    #[test]
+    fn session_cookies_are_sent_to_every_steam_host() {
+        let authenticator = with_session("first");
+        let jar = authenticator.client().cookie_store.read();
+
+        for host in SESSION_HOSTS {
+            let header = dump_cookies_by_domain(&jar, host).unwrap();
+            assert!(
+                header.contains(&format!("steamLoginSecure={STEAM_ID}%7C%7Cfirst")),
+                "{}: {}",
+                host,
+                header
+            );
+            assert!(header.contains("sessionid="), "{}: {}", host, header);
+        }
+    }
+
+    #[cfg(feature = "cm")]
+    #[test]
+    fn the_sessionid_steam_trading_reads_is_set() {
+        let authenticator = with_session("first");
+        let session_id = authenticator.dump_cookie(STEAM_COMMUNITY_HOST, "sessionid").unwrap();
+        assert_eq!(session_id.len(), 24);
+    }
+
+    #[cfg(feature = "cm")]
+    #[test]
+    fn renewing_replaces_the_token_and_keeps_the_sessionid() {
+        let authenticator = with_session("first");
+        let client = authenticator.client();
+        let session_id = cookie(client, STEAM_COMMUNITY_HOST, "sessionid").unwrap();
+
+        authenticator.swap_access_token("second".to_string());
+
+        for host in SESSION_HOSTS {
+            assert_eq!(
+                cookie(client, host, "steamLoginSecure").unwrap(),
+                format!("{STEAM_ID}%7C%7Csecond")
+            );
+            assert_eq!(cookie(client, host, "sessionid").unwrap(), session_id);
+        }
+        let login_secure_cookies = client
+            .cookie_store
+            .read()
+            .iter()
+            .filter(|(_, name, _)| *name == "steamLoginSecure")
+            .count();
+        assert_eq!(login_secure_cookies, SESSION_HOSTS.len());
+
+        let cache = authenticator.cache();
+        assert_eq!(cache.query_tokens(), vec![("access_token", "second".to_string())]);
+        // the linker sends the session's access token too
+        assert_eq!(cache.oauth_token(), "second");
+    }
+
+    #[cfg(feature = "cm")]
+    #[test]
+    fn password_logins_keep_sending_the_refresh_token_to_the_linker() {
+        let cache = SteamCache::with_login_data(&STEAM_ID.to_string(), "access".into(), "refresh".into()).unwrap();
+        cache.set_access_token("renewed".to_string());
+        assert_eq!(cache.oauth_token(), "refresh");
+        assert_eq!(cache.query_tokens(), vec![("access_token", "renewed".to_string())]);
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn access_token_follows_renewals() {
+        let authenticator = with_session("first");
+        let before = authenticator.access_token().await.unwrap();
+
+        authenticator.swap_access_token("second".to_string());
+
+        let after = authenticator.access_token().await.unwrap();
+        assert_eq!(after.expose_secret(), "second");
+        // a value got before the renewal is a snapshot
+        assert_eq!(before.expose_secret(), "first");
+        assert!(!format!("{after:?}").contains("second"));
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn a_token_not_due_is_not_renewed() {
+        let start = Instant::now();
+        let issuer = FakeIssuer::answering([issued("second", DAY)]);
+        let authenticator = with_client_login("first", DAY, issuer.clone(), start);
+
+        let just_before_due = start + DAY - RENEW_BEFORE - secs(1);
+        authenticator.renew_session_at(|| just_before_due).await.unwrap();
+
+        assert_eq!(issuer.asked(), 0);
+        assert_session_token(&authenticator, "first");
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn a_due_token_is_renewed_once_and_swapped() {
+        let start = Instant::now();
+        let issuer = FakeIssuer::answering([issued("second", DAY), issued("third", DAY)]);
+        let authenticator = with_client_login("first", DAY, issuer.clone(), start);
+        let session_id = cookie(authenticator.client(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
+
+        let due = start + DAY - RENEW_BEFORE;
+        authenticator.renew_session_at(|| due).await.unwrap();
+
+        assert_eq!(issuer.asked(), 1);
+        assert_session_token(&authenticator, "second");
+        assert_eq!(authenticator.access_token().await.unwrap().expose_secret(), "second");
+        for host in SESSION_HOSTS {
+            assert_eq!(cookie(authenticator.client(), host, "sessionid").unwrap(), session_id);
+        }
+
+        // the new token's day counts from when it was asked for
+        let next_due = due + DAY - RENEW_BEFORE;
+        authenticator.renew_session_at(|| next_due - secs(1)).await.unwrap();
+        assert_eq!(issuer.asked(), 1);
+        authenticator.renew_session_at(|| next_due).await.unwrap();
+        assert_eq!(issuer.asked(), 2);
+        assert_session_token(&authenticator, "third");
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn a_failed_renewal_lets_the_request_go_with_the_valid_token() {
+        let start = Instant::now();
+        let issuer = FakeIssuer::answering([Err(ClientError::Dropped)]);
+        let authenticator = with_client_login("first", DAY, issuer.clone(), start);
+
+        let a_minute_left = start + DAY - secs(60);
+        authenticator.renew_session_at(|| a_minute_left).await.unwrap();
+
+        assert_eq!(issuer.asked(), 1);
+        assert_session_token(&authenticator, "first");
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn a_failed_renewal_of_an_expired_token_fails_the_request() {
+        let start = Instant::now();
+        let issuer = FakeIssuer::answering([Err(ClientError::Closed)]);
+        let authenticator = with_client_login("first", DAY, issuer.clone(), start);
+
+        // such as after the client was disconnected for a day
+        let expired = start + DAY;
+        let error = authenticator.renew_session_at(|| expired).await.unwrap_err();
+
+        // the source downcasts as at the login (`session::tests`)
+        assert!(matches!(client_error(&error), ClientError::Closed));
+        assert_eq!(issuer.asked(), 1);
+        assert_session_token(&authenticator, "first");
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn after_a_failure_the_client_is_asked_again_only_after_the_backoff() {
+        let start = Instant::now();
+        let lasts = RENEW_BEFORE + secs(60);
+        let issuer = FakeIssuer::answering([Err(ClientError::Dropped), Err(ClientError::Dropped)]);
+        let authenticator = with_client_login("first", lasts, issuer.clone(), start);
+
+        let failed_at = start + lasts - secs(10);
+        authenticator.renew_session_at(|| failed_at).await.unwrap();
+        assert_eq!(issuer.asked(), 1);
+
+        // within the backoff: the valid token goes without asking, then the expired one fails at once
+        authenticator.renew_session_at(|| failed_at + secs(9)).await.unwrap();
+        let error = authenticator
+            .renew_session_at(|| failed_at + secs(10))
+            .await
+            .unwrap_err();
+        assert!(matches!(error, InternalError::ClientToken(_)), "{:?}", error);
+        authenticator
+            .renew_session_at(|| failed_at + RETRY_AFTER_FAILURE - secs(1))
+            .await
+            .unwrap_err();
+        assert_eq!(issuer.asked(), 1);
+
+        authenticator
+            .renew_session_at(|| failed_at + RETRY_AFTER_FAILURE)
+            .await
+            .unwrap_err();
+        assert_eq!(issuer.asked(), 2);
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn concurrent_requests_renew_once() {
+        let start = Instant::now();
+        let issuer = FakeIssuer::answering([issued("second", DAY), issued("third", DAY)]);
+        let authenticator = with_client_login("first", DAY, issuer.clone(), start);
+
+        // the first waits for the client, which answers later, while the second comes and goes with the valid token
+        let due = start + DAY - RENEW_BEFORE;
+        let (first, second) = futures::join!(
+            authenticator.renew_session_at(|| due),
+            authenticator.renew_session_at(|| due)
+        );
+        first.unwrap();
+        second.unwrap();
+
+        assert_eq!(issuer.asked(), 1);
+        assert_session_token(&authenticator, "second");
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn a_token_issued_for_less_than_the_margin_does_not_renew_on_every_request() {
+        let start = Instant::now();
+        let short = RENEW_BEFORE - secs(60);
+        let issuer = FakeIssuer::answering([issued("second", short), issued("third", short)]);
+        let authenticator = with_client_login("first", DAY, issuer.clone(), start);
+
+        let due = start + DAY - RENEW_BEFORE;
+        authenticator.renew_session_at(|| due).await.unwrap();
+        assert_eq!(issuer.asked(), 1);
+
+        for later in [secs(1), MIN_RENEWAL_INTERVAL - secs(1)] {
+            authenticator.renew_session_at(|| due + later).await.unwrap();
+        }
+        assert_eq!(issuer.asked(), 1);
+        assert_session_token(&authenticator, "second");
+
+        authenticator
+            .renew_session_at(|| due + MIN_RENEWAL_INTERVAL)
+            .await
+            .unwrap();
+        assert_eq!(issuer.asked(), 2);
+        assert_session_token(&authenticator, "third");
+    }
+
+    /// The client's error behind an [`InternalError::ClientToken`], as its docs say to get it.
+    #[cfg(feature = "cm")]
+    fn client_error(error: &InternalError) -> &ClientError {
+        assert!(matches!(error, InternalError::ClientToken(_)), "{:?}", error);
+        let source = std::error::Error::source(error).unwrap();
+        source.downcast_ref::<Arc<ClientError>>().unwrap()
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn the_backoff_counts_from_when_the_renewal_failed() {
+        let start = Instant::now();
+        let due = start + DAY - RENEW_BEFORE;
+        let clock = FakeClock::at(due);
+        // the client doesn't answer: the call fails at its deadline
+        let issuer =
+            FakeIssuer::answering_after([Err(ClientError::Dropped), Err(ClientError::Dropped)], &clock, secs(30));
+        let authenticator = with_client_login("first", DAY, issuer.clone(), start);
+
+        authenticator.renew_session_at(|| clock.now()).await.unwrap();
+        assert_eq!(issuer.asked(), 1);
+        let failed_at = due + secs(30);
+        assert_eq!(clock.now(), failed_at);
+
+        clock.set(failed_at + RETRY_AFTER_FAILURE - secs(1));
+        authenticator.renew_session_at(|| clock.now()).await.unwrap();
+        assert_eq!(issuer.asked(), 1);
+        clock.set(failed_at + RETRY_AFTER_FAILURE);
+        authenticator.renew_session_at(|| clock.now()).await.unwrap();
+        assert_eq!(issuer.asked(), 2);
+        assert_session_token(&authenticator, "first");
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn requests_with_an_expired_token_share_a_renewal_that_timed_out() {
+        let start = Instant::now();
+        let clock = FakeClock::at(start + DAY);
+        let issuer = FakeIssuer::answering_after([Err(ClientError::Dropped)], &clock, secs(30));
+        let authenticator = with_client_login("first", DAY, issuer.clone(), start);
+
+        // the first asks the client, the others wait for its answer, which comes 30 seconds later
+        let (first, second, third) = futures::join!(
+            authenticator.renew_session_at(|| clock.now()),
+            authenticator.renew_session_at(|| clock.now()),
+            authenticator.renew_session_at(|| clock.now())
+        );
+        for result in [first, second, third] {
+            assert!(matches!(client_error(&result.unwrap_err()), ClientError::Dropped));
+        }
+        assert_eq!(issuer.asked(), 1);
+
+        // and the next ones fail at once, unsent, till the backoff ends
+        clock.advance(RETRY_AFTER_FAILURE - secs(1));
+        authenticator.renew_session_at(|| clock.now()).await.unwrap_err();
+        assert_eq!(issuer.asked(), 1);
+        assert_session_token(&authenticator, "first");
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn requests_with_an_expired_token_wait_for_the_renewal_in_flight() {
+        let start = Instant::now();
+        let clock = FakeClock::at(start + DAY);
+        let issuer = FakeIssuer::answering_after([issued("second", DAY), issued("third", DAY)], &clock, secs(10));
+        let authenticator = with_client_login("first", DAY, issuer.clone(), start);
+
+        let (first, second, third) = futures::join!(
+            authenticator.renew_session_at(|| clock.now()),
+            authenticator.renew_session_at(|| clock.now()),
+            authenticator.renew_session_at(|| clock.now())
+        );
+        first.unwrap();
+        second.unwrap();
+        third.unwrap();
+
+        assert_eq!(issuer.asked(), 1);
+        assert_session_token(&authenticator, "second");
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn a_valid_token_does_not_wait_for_the_renewal_in_flight() {
+        use futures::FutureExt;
+
+        let start = Instant::now();
+        let due = start + DAY - RENEW_BEFORE;
+        let issuer = FakeIssuer::answering([issued("second", DAY)]);
+        let authenticator = with_client_login("first", DAY, issuer.clone(), start);
+
+        let mut renewing = std::pin::pin!(authenticator.renew_session_at(|| due));
+        assert!(futures::poll!(&mut renewing).is_pending());
+        assert_eq!(issuer.asked(), 1);
+
+        // due too, but valid: goes at once with the current token, and doesn't ask again
+        let meanwhile = authenticator.renew_session_at(|| due + secs(1)).now_or_never();
+        assert!(matches!(meanwhile, Some(Ok(()))), "{:?}", meanwhile);
+        assert_session_token(&authenticator, "first");
+
+        // an expired one waits
+        let expired = authenticator.renew_session_at(|| start + DAY).now_or_never();
+        assert!(expired.is_none(), "{:?}", expired);
+
+        renewing.await.unwrap();
+        assert_eq!(issuer.asked(), 1);
+        assert_session_token(&authenticator, "second");
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn an_expired_token_is_renewed_within_the_least_interval() {
+        let start = Instant::now();
+        let issuer = FakeIssuer::answering([issued("second", DAY)]);
+        let authenticator = with_client_login("first", secs(10), issuer.clone(), start);
+
+        authenticator.renew_session_at(|| start + secs(9)).await.unwrap();
+        assert_eq!(issuer.asked(), 0);
+        // expired, though less than the least interval after it was asked for: renewed, not sent
+        authenticator.renew_session_at(|| start + secs(15)).await.unwrap();
+        assert_eq!(issuer.asked(), 1);
+        assert_session_token(&authenticator, "second");
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn an_expired_token_whose_renewal_fails_within_the_least_interval_is_not_sent() {
+        let start = Instant::now();
+        let issuer = FakeIssuer::answering([Err(ClientError::Closed)]);
+        let authenticator = with_client_login("first", secs(10), issuer.clone(), start);
+
+        let error = authenticator.renew_session_at(|| start + secs(15)).await.unwrap_err();
+        assert!(matches!(client_error(&error), ClientError::Closed));
+        assert_eq!(issuer.asked(), 1);
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn a_renewed_tokens_lifetime_counts_from_the_ask_not_the_answer() {
+        let start = Instant::now();
+        let due = start + DAY - RENEW_BEFORE;
+        let clock = FakeClock::at(due);
+        let issuer = FakeIssuer::answering_after([issued("second", DAY), issued("third", DAY)], &clock, secs(10));
+        let authenticator = with_client_login("first", DAY, issuer.clone(), start);
+
+        authenticator.renew_session_at(|| clock.now()).await.unwrap();
+        assert_eq!(issuer.asked(), 1);
+        assert_eq!(clock.now(), due + secs(10));
+
+        // due a day less the margin after the ask, 10 seconds before that after the answer
+        clock.set(due + DAY - RENEW_BEFORE - secs(1));
+        authenticator.renew_session_at(|| clock.now()).await.unwrap();
+        assert_eq!(issuer.asked(), 1);
+        clock.set(due + DAY - RENEW_BEFORE);
+        authenticator.renew_session_at(|| clock.now()).await.unwrap();
+        assert_eq!(issuer.asked(), 2);
+        assert_session_token(&authenticator, "third");
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn a_renewal_after_a_failed_one_clears_the_failure() {
+        let start = Instant::now();
+        let due = start + DAY - RENEW_BEFORE;
+        let issuer = FakeIssuer::answering([Err(ClientError::Dropped), issued("second", DAY)]);
+        let authenticator = with_client_login("first", DAY, issuer.clone(), start);
+
+        authenticator.renew_session_at(|| due).await.unwrap();
+        let renewed_at = due + RETRY_AFTER_FAILURE;
+        authenticator.renew_session_at(|| renewed_at).await.unwrap();
+        assert_eq!(issuer.asked(), 2);
+        assert_session_token(&authenticator, "second");
+
+        // the new token isn't due: no request asks again
+        authenticator.renew_session_at(|| renewed_at + secs(1)).await.unwrap();
+        authenticator
+            .renew_session_at(|| renewed_at + DAY - RENEW_BEFORE - secs(1))
+            .await
+            .unwrap();
+        assert_eq!(issuer.asked(), 2);
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn a_renewal_whose_lifetime_is_past_the_clock_fails() {
+        let start = Instant::now();
+        let issuer = FakeIssuer::answering([issued("second", Duration::MAX), issued("third", Duration::MAX)]);
+        let authenticator = with_client_login("first", DAY, issuer.clone(), start);
+
+        // valid: the request goes with the current token
+        authenticator.renew_session_at(|| start + DAY - secs(60)).await.unwrap();
+        assert_session_token(&authenticator, "first");
+        // expired: it fails, unsent
+        let error = authenticator
+            .renew_session_at(|| start + DAY + secs(60))
+            .await
+            .unwrap_err();
+        assert!(matches!(client_error(&error), ClientError::InvalidToken(_)));
+        assert_eq!(issuer.asked(), 2);
+        assert_session_token(&authenticator, "first");
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn access_token_renews_a_due_token_first() {
+        // expired as soon as it arrived, by the real clock that `access_token` reads
+        let issuer = FakeIssuer::answering([issued("second", DAY)]);
+        let authenticator = with_client_login("first", Duration::ZERO, issuer.clone(), Instant::now());
+
+        assert_eq!(authenticator.access_token().await.unwrap().expose_secret(), "second");
+        assert_eq!(issuer.asked(), 1);
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn fetch_confirmations_renews_a_due_token_first() {
+        // the renewal fails and the token has expired, so nothing is sent
+        let issuer = FakeIssuer::answering([]);
+        let authenticator = with_client_login("first", Duration::ZERO, issuer.clone(), Instant::now());
+
+        let error = authenticator.fetch_confirmations().await.unwrap_err();
+        match error {
+            AuthError::InternalError(error) => assert!(matches!(client_error(&error), ClientError::Closed)),
+            other => panic!("{:?}", other),
+        }
+        assert_eq!(issuer.asked(), 1);
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn renew_before_sets_the_margin() {
+        let start = Instant::now();
+        let issuer = FakeIssuer::answering([issued("second", DAY)]);
+        let authenticator = with_client_login("first", DAY, issuer.clone(), start).renew_before(DAY);
+
+        // a margin of the token's lifetime: due once the least interval passed
+        authenticator
+            .renew_session_at(|| start + MIN_RENEWAL_INTERVAL - secs(1))
+            .await
+            .unwrap();
+        assert_eq!(issuer.asked(), 0);
+        authenticator
+            .renew_session_at(|| start + MIN_RENEWAL_INTERVAL)
+            .await
+            .unwrap();
+        assert_eq!(issuer.asked(), 1);
+        assert_session_token(&authenticator, "second");
+    }
+
+    #[cfg(feature = "cm")]
+    #[test]
+    fn the_default_margin_is_an_hour() {
+        assert_eq!(RENEW_BEFORE, Duration::from_secs(3600));
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn renew_before_changes_nothing_on_a_password_login() {
+        let authenticator = with_password_login("first").renew_before(Duration::MAX);
+        assert!(matches!(authenticator.cache().mode, LoginMode::Password { .. }));
+        assert_eq!(authenticator.access_token().await.unwrap().expose_secret(), "first");
+    }
+
+    #[cfg(feature = "cm")]
+    #[test]
+    fn a_missing_cookie_is_none() {
+        let authenticator = with_session("first");
+        assert_eq!(authenticator.dump_cookie(STEAM_COMMUNITY_HOST, "steamparental"), None);
+        // the jar has other cookies on that host
+        assert!(authenticator
+            .dump_cookie(STEAM_COMMUNITY_HOST, "mobileClient")
+            .is_some());
+    }
+
+    #[cfg(feature = "cm")]
+    const MOBILE_COOKIES: &str = "Steam_Language=english; mobileClient=android; mobileClientVersion=0 (2.1.3)";
+
+    #[cfg(feature = "cm")]
+    #[test]
+    fn every_session_cookie_survives_in_a_thousand_fresh_jars() {
+        // the old jar lost one in about 9% of jars, so 1,000 of them all passing by chance is about 0.909^1000
+        let http = MobileClient::init_mobile_client();
+        for _ in 0..1000 {
+            let client = MobileClient {
+                inner_http_client: http.clone(),
+                cookie_store: Arc::new(RwLock::new(MobileClient::init_cookie_jar())),
+            };
+            client.set_session_cookies(SteamID::from_steam64(STEAM_ID), "first");
+
+            let jar = client.cookie_store.read();
+            let session_id = jar.get(STEAM_COMMUNITY_HOST, "sessionid").unwrap();
+            let session_cookies = format!("steamLoginSecure={STEAM_ID}%7C%7Cfirst; sessionid={session_id}");
+            assert_eq!(
+                dump_cookies_by_domain(&jar, STEAM_COMMUNITY_HOST).unwrap(),
+                format!("{MOBILE_COOKIES}; {session_cookies}")
+            );
+            for host in &SESSION_HOSTS[1..] {
+                assert_eq!(dump_cookies_by_domain(&jar, host).unwrap(), session_cookies);
+            }
+            assert_eq!(jar.iter().count(), 3 + 2 * SESSION_HOSTS.len());
+        }
+    }
+
+    #[cfg(feature = "cm")]
+    /// A loopback server standing in for Steam's hosts. A request for `/set/<name>=<value>/…` gets those cookies in
+    /// Set-Cookie headers; the host and the Cookie header of each request are sent back to the test.
+    fn fake_steam() -> (u16, std::sync::mpsc::Receiver<(String, Option<String>)>) {
+        use std::io::BufRead;
+        use std::io::BufReader;
+        use std::io::Write;
+
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let (sender, receiver) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            for stream in listener.incoming() {
+                let mut stream = stream.unwrap();
+                let mut reader = BufReader::new(stream.try_clone().unwrap());
+                let mut line = String::new();
+                reader.read_line(&mut line).unwrap();
+                let path = line.split(' ').nth(1).unwrap().to_string();
+                let (mut host, mut cookie) = (String::new(), None);
+                loop {
+                    line.clear();
+                    reader.read_line(&mut line).unwrap();
+                    let Some((name, value)) = line.trim_end().split_once(':') else {
+                        break;
+                    };
+                    match name.to_ascii_lowercase().as_str() {
+                        "host" => host = value.trim().split(':').next().unwrap().to_string(),
+                        "cookie" => cookie = Some(value.trim().to_string()),
+                        _ => {}
+                    }
+                }
+                // a Domain that reqwest's own cookie store would share with every steampowered.com host
+                let domain = if host.ends_with("steampowered.com") {
+                    "; Domain=steampowered.com"
+                } else {
+                    ""
+                };
+                let set_cookies: String = path
+                    .strip_prefix("/set/")
+                    .unwrap_or_default()
+                    .split('/')
+                    .filter(|pair| !pair.is_empty())
+                    .map(|pair| format!("Set-Cookie: {pair}{domain}; Path=/\r\n"))
+                    .collect();
+                write!(
+                    stream,
+                    "HTTP/1.1 200 OK\r\n{set_cookies}Content-Length: 0\r\nConnection: close\r\n\r\n"
+                )
+                .unwrap();
+                sender.send((host, cookie)).unwrap();
+            }
+        });
+        (port, receiver)
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn the_cookie_header_each_host_gets() {
+        const STORE: &str = "store.steampowered.com";
+        const HELP: &str = "help.steampowered.com";
+        let (port, server) = fake_steam();
+        let address = std::net::SocketAddr::from(([127, 0, 0, 1], port));
+        // reqwest's own store on, as in the real client: the Cookie header `request` always sets keeps it out
+        let http = Client::builder()
+            .cookie_store(true)
+            .no_proxy()
+            .resolve(STEAM_COMMUNITY_HOST, address)
+            .resolve(STORE, address)
+            .resolve(HELP, address)
+            .build()
+            .unwrap();
+        let mafile = MobileAuthFile::new(String::new(), String::new(), "android:1".to_string());
+        let authenticator = SteamAuthenticator::<Authenticated, PresentMaFile> {
+            inner: InnerAuthenticator {
+                client: MobileClient {
+                    inner_http_client: http,
+                    cookie_store: Arc::new(RwLock::new(MobileClient::init_cookie_jar())),
+                },
+                user: SteamUser::new("username".to_string(), "password".to_string()).with_mafile(mafile),
+                cache: Some(client_session_cache(
+                    "first",
+                    DAY,
+                    FakeIssuer::answering([]),
+                    Instant::now(),
+                )),
+            },
+            auth_level: PhantomData,
+        };
+        let client = authenticator.client();
+        let sent = |host: &'static str, path: &'static str| {
+            let server = &server;
+            async move {
+                client
+                    .request(
+                        format!("http://{host}:{port}{path}"),
+                        Method::GET,
+                        None,
+                        None::<u8>,
+                        None::<u8>,
+                    )
+                    .await
+                    .unwrap();
+                let (seen_host, cookie) = server.recv_timeout(Duration::from_secs(5)).unwrap();
+                assert_eq!(seen_host, host);
+                cookie.expect("every request has a Cookie header")
+            }
+        };
+
+        // a host with no cookies still gets the header, empty
+        assert_eq!(sent(HELP, "/").await, "");
+        assert_eq!(sent(STEAM_COMMUNITY_HOST, "/").await, MOBILE_COOKIES);
+
+        // Set-Cookie: stored under the host that answered; the mobile cookies win
+        sent(STEAM_COMMUNITY_HOST, "/set/sessionid=c1/mobileClient=web/browserid=b1").await;
+        sent(STORE, "/set/sessionid=s1/steamCountry=BR").await;
+        assert_eq!(
+            sent(STEAM_COMMUNITY_HOST, "/").await,
+            format!("{MOBILE_COOKIES}; sessionid=c1; browserid=b1")
+        );
+        assert_eq!(sent(STORE, "/").await, "sessionid=s1; steamCountry=BR");
+        assert_eq!(sent(HELP, "/").await, "");
+
+        // a session: steamLoginSecure and a new sessionid on every host
+        client.set_session_cookies(SteamID::from_steam64(STEAM_ID), "first");
+        let session_id = cookie(client, STEAM_COMMUNITY_HOST, "sessionid").unwrap();
+        let login_secure = |token: &str| format!("steamLoginSecure={STEAM_ID}%7C%7C{token}");
+        assert_eq!(
+            sent(STEAM_COMMUNITY_HOST, "/").await,
+            format!(
+                "{MOBILE_COOKIES}; sessionid={session_id}; browserid=b1; {}",
+                login_secure("first")
+            )
+        );
+        assert_eq!(
+            sent(STORE, "/").await,
+            format!("sessionid={session_id}; steamCountry=BR; {}", login_secure("first"))
+        );
+        assert_eq!(
+            sent(HELP, "/").await,
+            format!("{}; sessionid={session_id}", login_secure("first"))
+        );
+
+        // renewing replaces steamLoginSecure in place
+        authenticator.swap_access_token("second".to_string());
+        assert_eq!(
+            sent(HELP, "/").await,
+            format!("{}; sessionid={session_id}", login_secure("second"))
+        );
+
+        // a later Set-Cookie replaces the value on that host only
+        sent(STEAM_COMMUNITY_HOST, "/set/sessionid=c2").await;
+        // parental unlock: the community gets steamparental, the store doesn't (its host has a leading dot)
+        crate::web_handler::store_parental_cookie(&mut client.cookie_store.write(), "pin");
+        assert_eq!(
+            sent(STEAM_COMMUNITY_HOST, "/").await,
+            format!(
+                "{MOBILE_COOKIES}; sessionid=c2; browserid=b1; {}; steamparental=pin",
+                login_secure("second")
+            )
+        );
+        assert_eq!(
+            sent(STORE, "/").await,
+            format!("sessionid={session_id}; steamCountry=BR; {}", login_secure("second"))
+        );
+    }
+
+    #[tokio::test]
+    async fn http_errors_never_show_the_query() {
+        // nothing listens there, so the request fails without leaving the machine
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        drop(listener);
+
+        let error = Client::new()
+            .get(format!(
+                "http://{address}/mobileconf/getlist?p=android%3A1&a=1&k=SECRET-HASH&input_protobuf_encoded=SECRET-PROTO"
+            ))
+            .send()
+            .await
+            .unwrap_err();
+        assert!(
+            error.to_string().contains("SECRET"),
+            "the test needs an error that shows its URL"
+        );
+
+        let error = InternalError::from(error);
+        assert!(matches!(error, InternalError::HttpError(_)), "{:?}", error);
+        for text in [
+            error.to_string(),
+            format!("{error:?}"),
+            AuthError::from(error).to_string(),
+        ] {
+            assert!(!text.contains("SECRET"), "{}", text);
+            assert!(text.contains("/mobileconf/getlist"), "{}", text);
+        }
+    }
+
+    fn url() -> Url {
+        Url::parse("https://steamcommunity.com/mobileconf/getlist?p=android%3A1&k=hash").unwrap()
+    }
+
+    #[test]
+    fn http_429_is_too_many_requests() {
+        let error = status_error(StatusCode::TOO_MANY_REQUESTS, &url(), "<html>Access Denied</html>");
+        match error {
+            InternalError::TooManyRequests { url } => assert_eq!(url, "https://steamcommunity.com/mobileconf/getlist"),
+            other => panic!("{:?}", other),
+        }
+    }
+
+    #[test]
+    fn other_http_errors_keep_the_status_and_the_start_of_the_page() {
+        let page = format!("<html>\n  <head>   <title>Error</title>\n{}</html>", "x".repeat(1000));
+        let error = status_error(StatusCode::FORBIDDEN, &url(), &page);
+        let message = error.to_string();
+        match error {
+            InternalError::HttpStatus { status, url, body } => {
+                assert_eq!(status, StatusCode::FORBIDDEN);
+                // no query string: it carries the confirmation hash
+                assert_eq!(url, "https://steamcommunity.com/mobileconf/getlist");
+                assert!(body.starts_with("<html> <head> <title>Error</title> xxx"), "{}", body);
+                assert_eq!(body.chars().count(), ERROR_BODY_SNIPPET_CHARS + 1);
+                assert!(body.ends_with('…'));
+            }
+            other => panic!("{:?}", other),
+        }
+        assert!(message.contains("403"), "{}", message);
+        assert!(!message.contains("hash"), "{}", message);
+    }
+
+    #[test]
+    fn short_error_pages_are_kept_whole() {
+        assert_eq!(body_snippet(""), "");
+        assert_eq!(body_snippet(" Too\n many "), "Too many");
+        // cut on a char boundary
+        assert_eq!(
+            body_snippet(&"é".repeat(300)).chars().count(),
+            ERROR_BODY_SNIPPET_CHARS + 1
+        );
+    }
+
+    #[test]
+    fn x_eresult_other_than_ok_is_an_error() {
+        let header = |value: &str| HeaderValue::from_str(value).unwrap();
+
+        assert!(eresult_check(None, &url()).is_ok());
+        assert!(eresult_check(Some(&header("1")), &url()).is_ok());
+        // not a number: passes, as before the check
+        assert!(eresult_check(Some(&header("OK")), &url()).is_ok());
+
+        match eresult_check(Some(&header("5")), &url()) {
+            Err(error @ InternalError::EResult { eresult: 5, .. }) => {
+                let message = error.to_string();
+                assert!(message.contains("InvalidPassword"), "{}", message);
+                assert!(!message.contains("hash"), "{}", message);
+            }
+            other => panic!("{:?}", other),
+        }
+        // a number steam-language doesn't know
+        match eresult_check(Some(&header("100000")), &url()) {
+            Err(error @ InternalError::EResult { eresult: 100_000, .. }) => {
+                assert!(error.to_string().contains("unknown"));
+            }
+            other => panic!("{:?}", other),
+        }
+    }
+
+    #[test]
+    fn redirects_to_login_mean_the_session_expired() {
+        let expired = |url: &str| MobileClient::url_expired_check(&Url::parse(url).unwrap());
+        assert!(expired("https://store.steampowered.com/login/?redir=account"));
+        assert!(expired("steammobile://lostauth"));
+        assert!(!expired("https://store.steampowered.com/account/"));
+    }
 }
