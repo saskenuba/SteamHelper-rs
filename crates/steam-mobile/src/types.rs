@@ -1,10 +1,14 @@
 use std::borrow::Cow;
 
+use serde::de::value::I32Deserializer;
+use serde::de::IntoDeserializer;
 use serde::Deserialize;
+use serde::Deserializer;
 use serde::Serialize;
 use serde_with::serde_as;
 use serde_with::Map;
 use steam_language::enums::EResult;
+use tracing::warn;
 
 use crate::web_handler::confirmation::Confirmation;
 use crate::STEAM_COMMUNITY_BASE;
@@ -63,10 +67,58 @@ pub struct ConfirmationResponseBase {
     pub conf: Vec<Confirmation>,
 }
 
+/// The [`EResult`] with this number, if steam-language knows it.
+pub(crate) fn eresult_from_i32(value: i32) -> Option<EResult> {
+    let deserializer: I32Deserializer<serde::de::value::Error> = value.into_deserializer();
+    EResult::deserialize(deserializer).ok()
+}
+
+/// An [`EResult`] as Steam sent it. A number steam-language doesn't know yet reads as [`EResult::Invalid`] instead of
+/// failing the whole response, as [`crate::EConfirmationType`] does with its `Unknown`; `raw` keeps the number for
+/// error messages.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct ReceivedEResult {
+    pub(crate) eresult: EResult,
+    pub(crate) raw: i32,
+}
+
+impl PartialEq<EResult> for ReceivedEResult {
+    fn eq(&self, other: &EResult) -> bool {
+        self.eresult == *other
+    }
+}
+
+/// `AccessDenied (15)`, or `unknown (100000)`.
+impl std::fmt::Display for ReceivedEResult {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match eresult_from_i32(self.raw) {
+            Some(known) => write!(f, "{known:?} ({})", self.raw),
+            None => write!(f, "unknown ({})", self.raw),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for ReceivedEResult {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let raw = i32::deserialize(deserializer)?;
+        let eresult = eresult_from_i32(raw).unwrap_or_else(|| {
+            warn!("Steam sent an unknown EResult {raw}, read as Invalid.");
+            EResult::Invalid
+        });
+        Ok(Self { eresult, raw })
+    }
+}
+
+impl Serialize for ReceivedEResult {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_i32(self.raw)
+    }
+}
+
 #[derive(Deserialize, Debug, Clone)]
 pub struct ParentalUnlockResponse {
     pub success: bool,
-    pub eresult: EResult,
+    pub eresult: ReceivedEResult,
     pub error_message: bool,
 }
 
@@ -202,5 +254,52 @@ impl std::fmt::Debug for DomainTokenData {
         f.debug_struct("DomainTokenData")
             .field("steam_id", &self.steam_id)
             .finish_non_exhaustive()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::web_handler::api_key::NewAPIKeyResponse;
+
+    #[test]
+    fn known_eresults_parse_as_before() {
+        let response: ParentalUnlockResponse =
+            serde_json::from_str(r#"{"success":false,"eresult":15,"error_message":false}"#).unwrap();
+        assert_eq!(response.eresult, EResult::AccessDenied);
+        assert_eq!(response.eresult.to_string(), "AccessDenied (15)");
+
+        let response: NewAPIKeyResponse =
+            serde_json::from_str(r#"{"success":1,"requires_confirmation":0,"api_key":"key"}"#).unwrap();
+        assert_eq!(response.success, EResult::OK);
+        assert_eq!(
+            serde_json::to_string(&response).unwrap(),
+            r#"{"success":1,"requires_confirmation":0,"api_key":"key","request_id":null}"#
+        );
+
+        assert_eq!(eresult_from_i32(1), Some(EResult::OK));
+        assert_eq!(eresult_from_i32(0), Some(EResult::Invalid));
+    }
+
+    #[test]
+    fn unknown_eresults_read_as_invalid() {
+        assert_eq!(eresult_from_i32(100_000), None);
+
+        let response: ParentalUnlockResponse =
+            serde_json::from_str(r#"{"success":false,"eresult":100000,"error_message":false}"#).unwrap();
+        assert_eq!(response.eresult, EResult::Invalid);
+        assert_eq!(response.eresult.raw, 100_000);
+        assert_eq!(response.eresult.to_string(), "unknown (100000)");
+
+        let response: NewAPIKeyResponse =
+            serde_json::from_str(r#"{"success":100000,"requires_confirmation":0}"#).unwrap();
+        assert_eq!(response.success, EResult::Invalid);
+        assert_eq!(response.success.to_string(), "unknown (100000)");
+    }
+
+    #[test]
+    fn eresults_that_are_not_numbers_still_fail() {
+        assert!(serde_json::from_str::<NewAPIKeyResponse>(r#"{"success":"1","requires_confirmation":0}"#).is_err());
+        assert!(serde_json::from_str::<NewAPIKeyResponse>(r#"{"success":1.5,"requires_confirmation":0}"#).is_err());
     }
 }

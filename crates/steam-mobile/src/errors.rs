@@ -8,6 +8,8 @@
 //! For a general explanation of EResults, check: [steam errors website](https://steamerrors.com/).
 use thiserror::Error;
 
+use crate::types::eresult_from_i32;
+
 #[allow(missing_docs)]
 #[derive(Error, Debug)]
 pub enum AuthError {
@@ -107,12 +109,58 @@ pub enum InternalError {
     #[error("`{0}`")]
     GeneralFailure(String),
 
+    /// Its URL has no query string, which may carry tokens or confirmation hashes.
     #[error(transparent)]
-    HttpError(#[from] reqwest::Error),
+    HttpError(reqwest::Error),
+
+    #[error("The web session expired. Log in again, or renew the session.")]
+    SessionExpired,
+
+    /// The Steam client of a login through it (feature `cm`, `SteamAuthenticator::login_with_client`) failed to issue
+    /// the session an access token: at the login, or before a request once the session's token has expired, which
+    /// then wasn't sent (while the token is still valid, a failed renewal lets the request go with it). Within 30
+    /// seconds of a failed renewal the client isn't asked again, and this is the error it failed with then.
+    ///
+    /// The source is the client's error shared behind an `Arc`, at the login as after a renewal: downcast it to
+    /// `Arc<steam_client::errors::ClientError>`, such as `Closed` once the client stopped, or `InvalidToken` for a
+    /// token whose expiry is out of range. Every request failing with the same renewal's error gets the same one.
+    #[error("The Steam client failed to issue the web session an access token.")]
+    ClientToken(#[source] Box<dyn std::error::Error + Send + Sync>),
+
+    /// Steam answered HTTP 429, as its firewall does to requests it suspects come from a bot. Retry later, and more slowly.
+    #[error("Steam rate limited the request to {url} (HTTP 429 Too Many Requests).")]
+    TooManyRequests { url: String },
+
+    /// Steam answered another HTTP error status. `body` is the start of its error page, whitespace collapsed.
+    #[error("Steam answered HTTP {status} to {url}: `{body}`")]
+    HttpStatus {
+        status: reqwest::StatusCode,
+        url: String,
+        body: String,
+    },
+
+    /// Steam's Web API reported a failure in the `x-eresult` header. `eresult` is the raw number, since Steam may
+    /// send one [`EResult`](steam_language::enums::EResult) doesn't know yet.
+    #[error("Steam answered {url} with EResult {eresult} ({}).", eresult_name(*.eresult))]
+    EResult { eresult: i32, url: String },
 
     #[error(
         "A deserialization error has occurred. This indicates a change in the response or an unexpected situation. \
          Please report this issue."
     )]
     DeserializationError(#[from] serde_json::Error),
+}
+
+/// `reqwest::Error` shows its URL in `Display` and `Debug`: the query is removed, as [`InternalError`]'s other URLs.
+impl From<reqwest::Error> for InternalError {
+    fn from(mut error: reqwest::Error) -> Self {
+        if let Some(url) = error.url_mut() {
+            url.set_query(None);
+        }
+        InternalError::HttpError(error)
+    }
+}
+
+fn eresult_name(eresult: i32) -> String {
+    eresult_from_i32(eresult).map_or_else(|| "unknown".to_string(), |known| format!("{known:?}"))
 }

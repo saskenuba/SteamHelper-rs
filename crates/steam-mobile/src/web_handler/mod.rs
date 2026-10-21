@@ -1,7 +1,6 @@
 use std::time::Duration;
 
 use const_format::concatcp;
-use cookie::Cookie;
 use futures_timer::Delay;
 use reqwest::Method;
 use steam_language::enums::EResult;
@@ -12,6 +11,7 @@ use tracing::info;
 use tracing::warn;
 
 use crate::client::MobileClient;
+use crate::cookie_jar::CookieJar;
 use crate::errors::ApiKeyError;
 use crate::errors::InternalError;
 use crate::errors::LoginError;
@@ -68,6 +68,16 @@ pub async fn parental_unlock(client: &MobileClient, parental_code: &str) -> Resu
     Ok(())
 }
 
+const PARENTAL_COOKIE: &str = "steamparental";
+
+/// Stores the `steamparental` cookie a parental unlock got, for the community and the store.
+pub(crate) fn store_parental_cookie(jar: &mut CookieJar, value: &str) {
+    // STEAM_STORE_HOST has a leading dot, so no request host matches it and the store never gets this cookie. Sending
+    // it would change what Steam sees: left for a separate decision (steam-mobile workingcontext.md, "Cookie jar bug").
+    jar.store(STEAM_STORE_HOST, PARENTAL_COOKIE, value);
+    jar.store(STEAM_COMMUNITY_HOST, PARENTAL_COOKIE, value);
+}
+
 /// Try to unlock account with parental controls (Family Sharing).
 async fn parental_unlock_by_service(
     client: &MobileClient,
@@ -76,7 +86,9 @@ async fn parental_unlock_by_service(
     cookie_host: &str,
 ) -> Result<(), LoginError> {
     let unlock_url = format!("{url}/parental/ajaxunlock");
-    let session_id = dump_cookies_by_domain_and_name(&client.cookie_store.read(), cookie_host, "sessionid").unwrap();
+    // empty if the jar has none, as it always was
+    let session_id =
+        dump_cookies_by_domain_and_name(&client.cookie_store.read(), cookie_host, "sessionid").unwrap_or_default();
 
     let request = ParentalUnlockRequest {
         pin: parental_control_code,
@@ -86,21 +98,8 @@ async fn parental_unlock_by_service(
         .request(unlock_url, Method::POST, None, Some(&request), None::<u8>)
         .await?;
 
-    let parental_cookie_name = "steamparental";
-    if let Some(cookie) = dump_cookie_from_header(&response, parental_cookie_name) {
-        let mut cookie_jar = client.cookie_store.write();
-        cookie_jar.add_original(
-            Cookie::build(parental_cookie_name, cookie.clone())
-                .domain(STEAM_STORE_HOST)
-                .path("/")
-                .finish(),
-        );
-        cookie_jar.add_original(
-            Cookie::build(parental_cookie_name, cookie)
-                .domain(STEAM_COMMUNITY_HOST)
-                .path("/")
-                .finish(),
-        );
+    if let Some(cookie) = dump_cookie_from_header(&response, PARENTAL_COOKIE) {
+        store_parental_cookie(&mut client.cookie_store.write(), &cookie);
     }
 
     // FIXME: Sometimes this fails, when consecutively logging in. Happened when tried 3 times.
@@ -112,7 +111,7 @@ async fn parental_unlock_by_service(
         .unwrap();
 
     if response.eresult != EResult::OK {
-        let error = format!("EResult: {:?} {}", response.eresult, response.error_message);
+        let error = format!("EResult: {} {}", response.eresult, response.error_message);
         return Err(LoginError::ParentalUnlock(error));
     }
 
@@ -305,7 +304,7 @@ pub(crate) async fn api_key_register(
             }
         }
         return Err(ApiKeyError::GeneralError(format!(
-            "Failed to register API Key. EResult: {:?}",
+            "Failed to register API Key. EResult: {}",
             response.success
         )));
     }
@@ -353,7 +352,7 @@ pub(crate) async fn api_key_register(
             Ok(api_key)
         }
         _ => Err(ApiKeyError::GeneralError(format!(
-            "Failed to register API Key. EResult: {:?}",
+            "Failed to register API Key. EResult: {}",
             second_response.success
         ))),
     }

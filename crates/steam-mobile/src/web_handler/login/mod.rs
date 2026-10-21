@@ -5,11 +5,11 @@ use const_format::concatcp;
 use futures_timer::Delay;
 use futures_util::future::try_join_all;
 use rand::thread_rng;
-use reqwest::Client;
 use reqwest::Method;
 use rsa::BigUint;
 use rsa::Pkcs1v15Encrypt;
 use rsa::RsaPublicKey;
+use steam_language::enums::EResult;
 use steam_protobuf::protobufs::enums::ESessionPersistence;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_BeginAuthSessionViaCredentials_Request;
 use steam_protobuf::protobufs::steammessages_auth_steamclient::CAuthentication_BeginAuthSessionViaCredentials_Response;
@@ -33,7 +33,6 @@ use crate::types::FinalizeLoginRequest;
 use crate::types::FinalizeLoginResponseBase;
 use crate::user::MaFileState;
 use crate::user::SteamUser;
-use crate::AuthResult;
 use crate::SteamCache;
 use crate::STEAM_API_BASE;
 use crate::STEAM_COMMUNITY_HOST;
@@ -75,25 +74,13 @@ where
     base64::engine::general_purpose::STANDARD.encode(encrypted)
 }
 
-/// Logs in Steam through Steam `ISteamAuthUser` interface.
-///
-/// `Webapi_nonce` is received by connecting to the Steam Network.
-///
-/// Currently not possible without the implementation of the [steam-client] crate.
-/// For website that currently works, check [login_and_store_cookies] method.
-async fn login_isteam_user_auth<U>(_client: &Client, _user: SteamUser<U>, _webapi_nonce: &[u8]) -> AuthResult<()> {
-    unimplemented!();
-}
-
 /// Logs in through the Steam website, caching the user's SteamID,
 /// and storing session cookies for steamcommunity and steampowered domains.
 ///
-/// Additionally, there is a method for logging in through an API interface called ISteamUserAuth.
-/// For more details, refer to [`login_isteam_user_auth`].
+/// A Steam client logged on with steam-client-lib logs in through `SteamAuthenticator::login_with_client` (feature
+/// `cm`) instead.
 ///
 /// For the implementation details, you can check the original C# source code [here](https://github.com/Jessecar96/SteamBot/blob/e8e9e5fcd64ae35b201e2597068849c10a667b60/SteamTrade/SteamWeb.cs#L325).
-///
-/// [login_isteam_user_auth]: #method.login_isteam_user_auth
 #[allow(clippy::too_many_lines)]
 pub async fn login_and_store_cookies<M: MaFileState>(
     client: &MobileClient,
@@ -133,7 +120,13 @@ pub async fn login_and_store_cookies<M: MaFileState>(
             payload,
             None,
         )
-        .await?;
+        .await
+        .map_err(|error| match error {
+            InternalError::EResult { eresult, .. } if eresult == EResult::InvalidPassword as i32 => {
+                LoginError::IncorrectCredentials
+            }
+            error => error.into(),
+        })?;
 
     Delay::new(Duration::from_millis(STEAM_DELAY_MS)).await;
 
@@ -159,14 +152,22 @@ pub async fn login_and_store_cookies<M: MaFileState>(
         payload.set_code_type(EAuthSessionGuardType::k_EAuthSessionGuardType_None);
     }
 
-    let _updateauth_response = client
+    // An EResult failure here doesn't fail the login: the poll below decides, as it always did (accounts logging in
+    // without a code send this update too).
+    let updateauth_response = client
         .request_proto::<_, CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response>(
             LOGIN_UPDATE_STEAM_GUARD_ENDPOINT.to_owned(),
             Method::POST,
             payload,
             None,
         )
-        .await?;
+        .await;
+    match updateauth_response {
+        Err(InternalError::EResult { eresult, .. }) => debug!("Steam Guard code update answered EResult {eresult}."),
+        response => {
+            response?;
+        }
+    }
 
     let mut payload = CAuthentication_PollAuthSessionStatus_Request::new();
     payload.set_client_id(client_id);
@@ -191,10 +192,11 @@ pub async fn login_and_store_cookies<M: MaFileState>(
     let refresh_token = poll_session_response.refresh_token.expect("Safe to unwrap");
     let access_token = poll_session_response.access_token.expect("Safe to unwrap");
 
-    // We should have the session_id cookie by now
+    // The jar has no session_id cookie yet (only `request` stores cookies, and nothing above used it), so this sends an
+    // empty one, as it always did.
     let session_id = client
         .get_cookie_value(STEAM_COMMUNITY_HOST, SESSION_ID_COOKIE)
-        .unwrap();
+        .unwrap_or_default();
     let finalize_payload = FinalizeLoginRequest::new(refresh_token.clone(), session_id);
 
     let finalize_login_response = client

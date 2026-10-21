@@ -122,8 +122,8 @@ pub(crate) async fn twofactor_status(client: &MobileClient, cache: &SteamCache) 
 /// Queries the `/steamguard/phoneajax` to check if the user has a phone number.
 /// Returns true if user has already a phone registered.
 pub async fn account_has_phone(client: &MobileClient) -> LinkerResult<bool> {
-    let session_id =
-        dump_cookies_by_domain_and_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
+    let session_id = dump_cookies_by_domain_and_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid")
+        .unwrap_or_default();
     let payload = PhoneAjaxRequest::has_phone(&session_id);
 
     let response: HasPhoneResponse = client
@@ -141,8 +141,8 @@ pub async fn account_has_phone(client: &MobileClient) -> LinkerResult<bool> {
 }
 
 pub async fn check_sms(client: &MobileClient, sms_code: &str) -> LinkerResult<bool> {
-    let session_id =
-        dump_cookies_by_domain_and_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
+    let session_id = dump_cookies_by_domain_and_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid")
+        .unwrap_or_default();
     let payload = PhoneAjaxRequest::check_sms(&session_id, sms_code);
 
     let response = client
@@ -161,8 +161,8 @@ pub async fn check_sms(client: &MobileClient, sms_code: &str) -> LinkerResult<bo
 /// Signals Steam that the user confirmed the phone add request email, and is ready for the next step.
 /// Confirming the email allows `SteamAuthenticator` to register a new phone number to account.
 pub async fn check_email_confirmation(client: &MobileClient) -> LinkerResult<bool> {
-    let session_id =
-        dump_cookies_by_domain_and_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
+    let session_id = dump_cookies_by_domain_and_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid")
+        .unwrap_or_default();
     let payload = PhoneAjaxRequest::check_email_confirmation(&*session_id);
 
     let response: GenericSuccessResponse = client
@@ -179,8 +179,8 @@ pub async fn check_email_confirmation(client: &MobileClient) -> LinkerResult<boo
 }
 
 pub async fn add_phone_to_account(client: &MobileClient, phone_number: &str) -> LinkerResult<bool> {
-    let session_id =
-        dump_cookies_by_domain_and_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid").unwrap();
+    let session_id = dump_cookies_by_domain_and_name(&client.cookie_store.read(), STEAM_COMMUNITY_HOST, "sessionid")
+        .unwrap_or_default();
 
     let payload = PhoneAjaxRequest::add_phone(&*session_id, phone_number);
 
@@ -218,7 +218,7 @@ pub(crate) async fn finalize(
 
     let mut initial_payload = FinalizeAddAuthenticatorRequest {
         steamid: &*steamid,
-        oauth_token,
+        oauth_token: &oauth_token,
         sms_activation_code: sms_code,
         ..Default::default()
     };
@@ -289,7 +289,7 @@ pub(crate) async fn add_authenticator_to_account(
     let steamid = cached_data.steam_id().to_string();
     let time = steam_totp::time::Time::with_offset().await?.to_string();
 
-    let payload = AddAuthenticatorRequest::new(oauth_token, &steamid, time.parse().unwrap());
+    let payload = AddAuthenticatorRequest::new(&oauth_token, &steamid, time.parse().unwrap());
 
     let response_text = client
         .request_with_session_guard(add_auth_url, Method::POST, None, Some(payload), None::<&str>)
@@ -359,7 +359,7 @@ pub(crate) async fn remove_authenticator(
 
     let steamid = cached_data.steam_id().to_string();
     let oauth_token = cached_data.oauth_token();
-    let payload = RemoveAuthenticatorRequest::new(oauth_token, steamid, revocation_token, remove_authenticator_scheme);
+    let payload = RemoveAuthenticatorRequest::new(&oauth_token, steamid, revocation_token, remove_authenticator_scheme);
 
     let response = client
         .request_with_session_guard_and_decode::<_, _, RemoveAuthenticatorResponseBase>(

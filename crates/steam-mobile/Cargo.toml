@@ -57,9 +57,10 @@ tokio = { version = "1.0.2", features = ["rt-multi-thread", "macros", "fs"], opt
 steam-protobuf = { workspace = true, features = ["enums", "steammessages_auth_steamclient"] }
 steam-language.workspace = true
 
+# Only the cookie type; the jar is our own (src/cookie_jar.rs). 0.17 is the version reqwest's cookie store already
+# pulls in.
 [dependencies.cookie]
-version = "0.16.0-rc.1"
-package = "cookie-hashed-domain"
+version = "0.17"
 
 [dependencies.steam-totp]
 version = "^0.2.3"

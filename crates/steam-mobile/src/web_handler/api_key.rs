@@ -1,6 +1,7 @@
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
-use steam_language::enums::EResult;
+
+use crate::types::ReceivedEResult;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NewAPIKeyRequest {
@@ -48,7 +49,7 @@ impl RevokeAPIKeyRequest {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NewAPIKeyResponse {
-    pub success: EResult,
+    pub success: ReceivedEResult,
     /// Requires confirming through Steam Mobile Authenticator
     pub requires_confirmation: i64,
     pub api_key: Option<String>,
