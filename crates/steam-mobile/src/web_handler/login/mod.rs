@@ -192,8 +192,8 @@ pub async fn login_and_store_cookies<M: MaFileState>(
     let refresh_token = poll_session_response.refresh_token.expect("Safe to unwrap");
     let access_token = poll_session_response.access_token.expect("Safe to unwrap");
 
-    // The jar has no session_id cookie yet (only `request` stores cookies, and nothing above used it), so this sends an
-    // empty one, as it always did.
+    // The jar has no session_id cookie on the community host yet (every call above went to api.steampowered.com, and a
+    // Set-Cookie is stored under the host that answered it), so this sends an empty one, as it always did.
     let session_id = client
         .get_cookie_value(STEAM_COMMUNITY_HOST, SESSION_ID_COOKIE)
         .unwrap_or_default();

@@ -17,6 +17,7 @@ use reqwest::header::HeaderValue;
 use reqwest::header::CONTENT_TYPE;
 use reqwest::redirect::Policy;
 use reqwest::Client;
+use reqwest::ClientBuilder;
 use reqwest::IntoUrl;
 use reqwest::Method;
 use reqwest::Response;
@@ -36,9 +37,10 @@ use steamid_parser::SteamID;
 use tracing::debug;
 use tracing::error;
 use tracing::info;
-use tracing::trace;
 use tracing::warn;
 
+use crate::cookie_jar::cookie_header;
+use crate::cookie_jar::ClientJar;
 use crate::cookie_jar::CookieJar;
 use crate::errors::AuthError;
 use crate::errors::InternalError;
@@ -57,7 +59,6 @@ use crate::user::MaFileState;
 use crate::user::PendingMaFile;
 use crate::user::PresentMaFile;
 use crate::user::SteamUser;
-use crate::utils::dump_cookies_by_domain;
 use crate::utils::dump_cookies_by_domain_and_name;
 use crate::utils::retrieve_header_location;
 use crate::web_handler::api_key_register;
@@ -680,9 +681,10 @@ impl SteamAuthenticator<Authenticated, PresentMaFile> {
 }
 
 pub struct MobileClient {
-    /// Standard HTTP Client to make requests.
+    /// Standard HTTP Client to make requests. Its cookie store is `cookie_store`.
     pub inner_http_client: Client,
-    /// Cookie jar that manually handle cookies, because reqwest doesn't let us handle its cookies.
+    /// The session's cookies, the only jar: [`MobileClient::request`] sends them, and the HTTP client sends them on
+    /// redirects and stores every response's Set-Cookie here (see [`ClientJar`]).
     pub cookie_store: Arc<RwLock<CookieJar>>,
 }
 
@@ -768,10 +770,7 @@ impl MobileClient {
     /// Sets the cookies of a new session on every Steam host: `steamLoginSecure`, and a new `sessionid`.
     #[cfg(feature = "cm")]
     fn set_session_cookies(&self, steam_id: SteamID, access_token: &str) {
-        let mut jar = self.cookie_store.write();
-        for cookie in login_secure_cookies(steam_id, access_token).chain(session_id_cookies()) {
-            jar.store_cookie(&cookie);
-        }
+        store_session_cookies(&mut self.cookie_store.write(), steam_id, access_token);
     }
 
     pub(crate) async fn request_proto<INPUT, OUTPUT>(
@@ -894,10 +893,12 @@ impl MobileClient {
             .map_err(|_| InternalError::GeneralFailure("Couldn't parse passed URL. Insert a valid one.".to_string()))?;
         let mut header_map = headers.unwrap_or_default();
 
-        let domain_cookies = dump_cookies_by_domain(&self.cookie_store.read(), parsed_url.host_str().unwrap());
+        // Always set, empty when the jar has none for the host. The HTTP client then leaves its cookie store (the same
+        // jar) out of this request, and asks it on a redirect.
+        let cookies = cookie_header(&self.cookie_store.read(), parsed_url.host_str().unwrap());
         header_map.insert(
             reqwest::header::COOKIE,
-            domain_cookies.unwrap_or_default().parse().unwrap(),
+            cookies.unwrap_or_else(|| HeaderValue::from_static("")),
         );
 
         let req_builder = self
@@ -929,17 +930,10 @@ impl MobileClient {
         };
         debug!("{} {}", request.method(), loggable_url(request.url()));
 
+        // the Set-Cookie of each response, redirects included, is stored by the HTTP client's cookie store
         let res = self.inner_http_client.execute(request).err_into().await;
         if let Ok(ref response) = res {
             debug!("Response status: {:?}", response.status());
-
-            let mut cookie_jar = self.cookie_store.write();
-            for cookie in response.cookies() {
-                // under the host that answered, whatever its Domain says
-                let host = response.url().host().expect("Safe.").to_string();
-                trace!("New cookie from: {}, name: {}", host, cookie.name());
-                cookie_jar.store(&host, cookie.name(), cookie.value());
-            }
         }
         res
     }
@@ -1015,11 +1009,6 @@ impl MobileClient {
             .map(|s| Html::parse_document(&s))
     }
 
-    /// Replace current cookie jar with a new one.
-    fn reset_jar(&mut self) {
-        self.cookie_store = Arc::new(RwLock::new(CookieJar::default()));
-    }
-
     /// Mobile cookies that makes us look like the mobile app, as (name, value) on the Steam Community.
     const STANDARD_MOBILE_COOKIES: [(&'static str, &'static str); 3] = [
         ("Steam_Language", "english"),
@@ -1036,8 +1025,19 @@ impl MobileClient {
         mobile_cookies
     }
 
-    /// Initiate mobile client with default headers
-    fn init_mobile_client() -> Client {
+    /// A client with a new jar (the mobile cookies only), and an HTTP client built by `configure` from the mobile app's
+    /// with that jar as its cookie store.
+    fn with_http_client(configure: impl FnOnce(ClientBuilder) -> ClientBuilder) -> Self {
+        let cookie_store = Arc::new(RwLock::new(Self::init_cookie_jar()));
+        let builder = Self::mobile_client_builder().cookie_provider(Arc::new(ClientJar(Arc::clone(&cookie_store))));
+        Self {
+            inner_http_client: configure(builder).build().unwrap(),
+            cookie_store,
+        }
+    }
+
+    /// The HTTP client of the mobile app, with its default headers, without a cookie store.
+    fn mobile_client_builder() -> ClientBuilder {
         let user_agent = "Dalvik/2.1.0 (Linux; U; Android 9; Valve Steam App Version/3)";
         let mut default_headers = HeaderMap::new();
         default_headers.insert(
@@ -1054,21 +1054,23 @@ impl MobileClient {
 
         Client::builder()
             .user_agent(user_agent)
-            .cookie_store(true)
             .redirect(Policy::limited(5))
             .default_headers(default_headers)
             .referer(false)
-            .build()
-            .unwrap()
+    }
+}
+
+/// Stores the cookies of a new session on every Steam host: `steamLoginSecure`, and a new `sessionid`.
+#[cfg(feature = "cm")]
+fn store_session_cookies(jar: &mut CookieJar, steam_id: SteamID, access_token: &str) {
+    for cookie in login_secure_cookies(steam_id, access_token).chain(session_id_cookies()) {
+        jar.store_cookie(&cookie);
     }
 }
 
 impl Default for MobileClient {
     fn default() -> Self {
-        Self {
-            inner_http_client: Self::init_mobile_client(),
-            cookie_store: Arc::new(RwLock::new(Self::init_cookie_jar())),
-        }
+        Self::with_http_client(|builder| builder)
     }
 }
 
@@ -1737,22 +1739,18 @@ mod tests {
             .is_some());
     }
 
-    #[cfg(feature = "cm")]
     const MOBILE_COOKIES: &str = "Steam_Language=english; mobileClient=android; mobileClientVersion=0 (2.1.3)";
+    const STORE: &str = "store.steampowered.com";
+    const HELP: &str = "help.steampowered.com";
 
     #[cfg(feature = "cm")]
     #[test]
     fn every_session_cookie_survives_in_a_thousand_fresh_jars() {
         // the old jar lost one in about 9% of jars, so 1,000 of them all passing by chance is about 0.909^1000
-        let http = MobileClient::init_mobile_client();
         for _ in 0..1000 {
-            let client = MobileClient {
-                inner_http_client: http.clone(),
-                cookie_store: Arc::new(RwLock::new(MobileClient::init_cookie_jar())),
-            };
-            client.set_session_cookies(SteamID::from_steam64(STEAM_ID), "first");
+            let mut jar = MobileClient::init_cookie_jar();
+            store_session_cookies(&mut jar, SteamID::from_steam64(STEAM_ID), "first");
 
-            let jar = client.cookie_store.read();
             let session_id = jar.get(STEAM_COMMUNITY_HOST, "sessionid").unwrap();
             let session_cookies = format!("steamLoginSecure={STEAM_ID}%7C%7Cfirst; sessionid={session_id}");
             assert_eq!(
@@ -1766,10 +1764,19 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "cm")]
+    /// What a request to [`fake_steam`] carried.
+    #[derive(Debug)]
+    struct Seen {
+        host: String,
+        path: String,
+        cookie: Option<String>,
+    }
+
     /// A loopback server standing in for Steam's hosts. A request for `/set/<name>=<value>/…` gets those cookies in
-    /// Set-Cookie headers; the host and the Cookie header of each request are sent back to the test.
-    fn fake_steam() -> (u16, std::sync::mpsc::Receiver<(String, Option<String>)>) {
+    /// Set-Cookie headers. One for `/redirect/<host>/<name>=<value>/…` gets them too, in a 302 to `/landed` on `<host>`
+    /// (same port), as Steam's `market/eligibilitycheck` redirect sets `sessionid` and `webTradeEligibility` (seen live
+    /// on 2026-10-22). What each request carried is sent back to the test.
+    fn fake_steam() -> (u16, std::sync::mpsc::Receiver<Seen>) {
         use std::io::BufRead;
         use std::io::BufReader;
         use std::io::Write;
@@ -1797,53 +1804,272 @@ mod tests {
                         _ => {}
                     }
                 }
-                // a Domain that reqwest's own cookie store would share with every steampowered.com host
+                // a Domain that an RFC 6265 jar would share with every steampowered.com host
                 let domain = if host.ends_with("steampowered.com") {
                     "; Domain=steampowered.com"
                 } else {
                     ""
                 };
-                let set_cookies: String = path
-                    .strip_prefix("/set/")
-                    .unwrap_or_default()
+                let (status, location, pairs) = if let Some(pairs) = path.strip_prefix("/set/") {
+                    ("200 OK", String::new(), pairs)
+                } else if let Some(rest) = path.strip_prefix("/redirect/") {
+                    let (to, pairs) = rest.split_once('/').unwrap();
+                    ("302 Found", format!("Location: http://{to}:{port}/landed\r\n"), pairs)
+                } else {
+                    ("200 OK", String::new(), "")
+                };
+                let set_cookies: String = pairs
                     .split('/')
                     .filter(|pair| !pair.is_empty())
                     .map(|pair| format!("Set-Cookie: {pair}{domain}; Path=/\r\n"))
                     .collect();
                 write!(
                     stream,
-                    "HTTP/1.1 200 OK\r\n{set_cookies}Content-Length: 0\r\nConnection: close\r\n\r\n"
+                    "HTTP/1.1 {status}\r\n{location}{set_cookies}Content-Length: 0\r\nConnection: close\r\n\r\n"
                 )
                 .unwrap();
-                sender.send((host, cookie)).unwrap();
+                sender.send(Seen { host, path, cookie }).unwrap();
             }
         });
         (port, receiver)
     }
 
+    /// The real client, with the Steam hosts it requests resolved to [`fake_steam`] on `port`.
+    fn fake_steam_client(port: u16) -> MobileClient {
+        let address = std::net::SocketAddr::from(([127, 0, 0, 1], port));
+        MobileClient::with_http_client(|builder| {
+            builder
+                .no_proxy()
+                .resolve(STEAM_COMMUNITY_HOST, address)
+                .resolve(STORE, address)
+                .resolve(HELP, address)
+        })
+    }
+
+    /// GETs `path` on `host` through `request`, and returns what the server saw.
+    async fn get(
+        client: &MobileClient,
+        server: &std::sync::mpsc::Receiver<Seen>,
+        port: u16,
+        host: &str,
+        path: &str,
+    ) -> Seen {
+        client
+            .request(
+                format!("http://{host}:{port}{path}"),
+                Method::GET,
+                None,
+                None::<u8>,
+                None::<u8>,
+            )
+            .await
+            .unwrap();
+        let seen = server.recv_timeout(Duration::from_secs(5)).unwrap();
+        assert_eq!(seen.host, host);
+        seen
+    }
+
+    /// GETs `path` on `host`, which redirects, and returns what the server saw of the request and of the redirected
+    /// one.
+    async fn redirected(
+        client: &MobileClient,
+        server: &std::sync::mpsc::Receiver<Seen>,
+        port: u16,
+        host: &str,
+        path: &str,
+    ) -> (Seen, Seen) {
+        let response = client
+            .request(
+                format!("http://{host}:{port}{path}"),
+                Method::GET,
+                None,
+                None::<u8>,
+                None::<u8>,
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.url().path(), "/landed");
+        let first = server.recv_timeout(Duration::from_secs(5)).unwrap();
+        let second = server.recv_timeout(Duration::from_secs(5)).unwrap();
+        assert_eq!((first.host.as_str(), first.path.as_str()), (host, path));
+        assert_eq!(second.path, "/landed");
+        (first, second)
+    }
+
+    #[cfg(feature = "cm")]
+    #[tokio::test]
+    async fn a_client_logins_cookies_go_through_a_redirect() {
+        let (port, server) = fake_steam();
+        let client = fake_steam_client(port);
+        // as `login_with_client`: the session cookies are set here, Steam never sent them
+        client.set_session_cookies(SteamID::from_steam64(STEAM_ID), "first");
+        let session_id = cookie(&client, STEAM_COMMUNITY_HOST, "sessionid").unwrap();
+        let session = format!("{MOBILE_COOKIES}; steamLoginSecure={STEAM_ID}%7C%7Cfirst; sessionid={session_id}");
+
+        let (first, second) = redirected(
+            &client,
+            &server,
+            port,
+            STEAM_COMMUNITY_HOST,
+            "/redirect/steamcommunity.com/webTradeEligibility=e1",
+        )
+        .await;
+        assert_eq!(first.cookie.unwrap(), session);
+        // live, after this login, it carried only `browserid`
+        assert_eq!(second.cookie.unwrap(), format!("{session}; webTradeEligibility=e1"));
+    }
+
+    #[tokio::test]
+    async fn a_password_logins_cookies_go_through_a_redirect() {
+        let (port, server) = fake_steam();
+        let client = fake_steam_client(port);
+        // as the password login: Steam sets the session cookies (settoken, then a page)
+        get(
+            &client,
+            &server,
+            port,
+            STEAM_COMMUNITY_HOST,
+            "/set/steamLoginSecure=token/sessionid=s1",
+        )
+        .await;
+        let session = format!("{MOBILE_COOKIES}; steamLoginSecure=token; sessionid=s1");
+
+        let (first, second) = redirected(
+            &client,
+            &server,
+            port,
+            STEAM_COMMUNITY_HOST,
+            "/redirect/steamcommunity.com/webTradeEligibility=e1",
+        )
+        .await;
+        assert_eq!(first.cookie.unwrap(), session);
+        // the mobile cookies too, which reqwest's own jar didn't have
+        assert_eq!(second.cookie.unwrap(), format!("{session}; webTradeEligibility=e1"));
+    }
+
+    #[tokio::test]
+    async fn a_redirects_set_cookie_is_kept_as_any_other() {
+        let (port, server) = fake_steam();
+        let client = fake_steam_client(port);
+        get(&client, &server, port, STEAM_COMMUNITY_HOST, "/set/sessionid=s1").await;
+
+        // a new value replaces the old one in its place, a new cookie comes last
+        let (_, second) = redirected(
+            &client,
+            &server,
+            port,
+            STEAM_COMMUNITY_HOST,
+            "/redirect/steamcommunity.com/sessionid=s2/webTradeEligibility=e1",
+        )
+        .await;
+        let after = format!("{MOBILE_COOKIES}; sessionid=s2; webTradeEligibility=e1");
+        assert_eq!(second.cookie.unwrap(), after);
+        assert_eq!(
+            client.cookie_store.read().get(STEAM_COMMUNITY_HOST, "sessionid"),
+            Some("s2")
+        );
+        assert_eq!(
+            get(&client, &server, port, STEAM_COMMUNITY_HOST, "/")
+                .await
+                .cookie
+                .unwrap(),
+            after
+        );
+    }
+
+    #[tokio::test]
+    async fn a_redirects_cookie_is_sent_until_its_max_age_runs_out() {
+        let (port, server) = fake_steam();
+        let client = fake_steam_client(port);
+        get(
+            &client,
+            &server,
+            port,
+            STEAM_COMMUNITY_HOST,
+            "/set/steamLoginSecure=token/sessionid=s1",
+        )
+        .await;
+        let session = format!("{MOBILE_COOKIES}; steamLoginSecure=token; sessionid=s1");
+
+        // as `market/eligibilitycheck` set it live on a redirect that carried only `browserid` (2026-10-22)
+        let (_, second) = redirected(
+            &client,
+            &server,
+            port,
+            STEAM_COMMUNITY_HOST,
+            "/redirect/steamcommunity.com/webTradeEligibility=e1;Max-Age=30",
+        )
+        .await;
+        let eligible = format!("{session}; webTradeEligibility=e1");
+        assert_eq!(second.cookie.unwrap(), eligible);
+        assert_eq!(
+            get(&client, &server, port, STEAM_COMMUNITY_HOST, "/")
+                .await
+                .cookie
+                .unwrap(),
+            eligible
+        );
+
+        client.cookie_store.write().advance_clock(Duration::from_secs(30));
+        // as before the redirect
+        assert_eq!(
+            get(&client, &server, port, STEAM_COMMUNITY_HOST, "/")
+                .await
+                .cookie
+                .unwrap(),
+            session
+        );
+    }
+
+    #[tokio::test]
+    async fn a_redirect_to_another_host_sends_that_hosts_cookies() {
+        let (port, server) = fake_steam();
+        let client = fake_steam_client(port);
+        get(&client, &server, port, STEAM_COMMUNITY_HOST, "/set/sessionid=c1").await;
+        get(&client, &server, port, STORE, "/set/sessionid=s1").await;
+
+        let (first, second) = redirected(
+            &client,
+            &server,
+            port,
+            STEAM_COMMUNITY_HOST,
+            &format!("/redirect/{STORE}/browserid=b1"),
+        )
+        .await;
+        assert_eq!(first.cookie.unwrap(), format!("{MOBILE_COOKIES}; sessionid=c1"));
+        assert_eq!(second.host, STORE);
+        assert_eq!(second.cookie.unwrap(), "sessionid=s1");
+        // stored under the host that answered
+        assert_eq!(
+            client.cookie_store.read().get(STEAM_COMMUNITY_HOST, "browserid"),
+            Some("b1")
+        );
+        assert_eq!(client.cookie_store.read().get(STORE, "browserid"), None);
+    }
+
+    #[tokio::test]
+    async fn a_host_without_cookies_gets_an_empty_cookie_header() {
+        let (port, server) = fake_steam();
+        let client = fake_steam_client(port);
+        // so the HTTP client's cookie store isn't asked
+        assert_eq!(get(&client, &server, port, HELP, "/").await.cookie.unwrap(), "");
+        assert_eq!(
+            get(&client, &server, port, STEAM_COMMUNITY_HOST, "/")
+                .await
+                .cookie
+                .unwrap(),
+            MOBILE_COOKIES
+        );
+    }
+
     #[cfg(feature = "cm")]
     #[tokio::test]
     async fn the_cookie_header_each_host_gets() {
-        const STORE: &str = "store.steampowered.com";
-        const HELP: &str = "help.steampowered.com";
         let (port, server) = fake_steam();
-        let address = std::net::SocketAddr::from(([127, 0, 0, 1], port));
-        // reqwest's own store on, as in the real client: the Cookie header `request` always sets keeps it out
-        let http = Client::builder()
-            .cookie_store(true)
-            .no_proxy()
-            .resolve(STEAM_COMMUNITY_HOST, address)
-            .resolve(STORE, address)
-            .resolve(HELP, address)
-            .build()
-            .unwrap();
         let mafile = MobileAuthFile::new(String::new(), String::new(), "android:1".to_string());
         let authenticator = SteamAuthenticator::<Authenticated, PresentMaFile> {
             inner: InnerAuthenticator {
-                client: MobileClient {
-                    inner_http_client: http,
-                    cookie_store: Arc::new(RwLock::new(MobileClient::init_cookie_jar())),
-                },
+                client: fake_steam_client(port),
                 user: SteamUser::new("username".to_string(), "password".to_string()).with_mafile(mafile),
                 cache: Some(client_session_cache(
                     "first",
@@ -1858,22 +2084,12 @@ mod tests {
         let sent = |host: &'static str, path: &'static str| {
             let server = &server;
             async move {
-                client
-                    .request(
-                        format!("http://{host}:{port}{path}"),
-                        Method::GET,
-                        None,
-                        None::<u8>,
-                        None::<u8>,
-                    )
+                get(client, server, port, host, path)
                     .await
-                    .unwrap();
-                let (seen_host, cookie) = server.recv_timeout(Duration::from_secs(5)).unwrap();
-                assert_eq!(seen_host, host);
-                cookie.expect("every request has a Cookie header")
+                    .cookie
+                    .expect("every request has a Cookie header")
             }
         };
-
         // a host with no cookies still gets the header, empty
         assert_eq!(sent(HELP, "/").await, "");
         assert_eq!(sent(STEAM_COMMUNITY_HOST, "/").await, MOBILE_COOKIES);
