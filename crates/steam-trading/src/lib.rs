@@ -920,8 +920,8 @@ impl SteamTradeManager {
     ///
     /// New items not in `known_ids` may have come another way, so an item without a fingerprint (every commodity) is
     /// only placed on a new item read to be of its kind: [`Located::Kind`], or [`Located::Guessed`] among those of its
-    /// kind, never [`Located::Only`]. With no such item, or a web read that failed (logged) or didn't list it yet
-    /// (Steam serves it from a cache), it is [`Located::NotFound`]: look again later. An item with a fingerprint is
+    /// kind, never [`Located::Only`]. With no such item, or a web read that didn't list it yet (Steam serves it from a
+    /// cache), it is [`Located::NotFound`]: look again later. An item with a fingerprint is
     /// only ever placed on a new item that matches it, also as [`Located::Only`] or [`Located::Guessed`].
     ///
     /// **Not verified against live Steam yet.**
@@ -930,8 +930,9 @@ impl SteamTradeManager {
     ///
     /// [`TradeError::Cs2InventoryUnavailable`] while the game coordinator's inventory isn't current (it can't tell
     /// what is there): nothing was looked up, try again once it is. Not when the offer has no CS2 item to receive:
-    /// those are [`Located::NotFound`] without a look. [`TradeError::GameCoordinatorError`] if the client stopped.
-    /// Items not found are no error: [`Located::NotFound`].
+    /// those are [`Located::NotFound`] without a look. [`TradeError::GameCoordinatorError`] if the client stopped. The
+    /// error of a web inventory read that failed, such as a rate limited one ([`TradeError::is_too_many_requests`]):
+    /// nothing is placed, try again later. Items not found are no error: [`Located::NotFound`].
     pub async fn find_received_items(
         &self,
         offer: &TradeOffer_Trade,

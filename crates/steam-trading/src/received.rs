@@ -496,7 +496,14 @@ where
         wait_for_new_items(source, before, expected, wait).await?
     };
     let reads = [InventoryContext::CS2_TRADE_PROTECTED; KIND_READS];
-    Ok(place(wanted, &new, &mut |_| own_inventory(), &reads, wait.kind_read_interval).await)
+    let (located, failed_read) = place(wanted, &new, &mut |_| own_inventory(), &reads, wait.kind_read_interval).await;
+    if let Some(error) = failed_read {
+        warn!(
+            "Could not read our inventory for the kinds of the received items: {}",
+            error
+        );
+    }
+    Ok(located)
 }
 
 /// The steps of `find_received_items`: where `received` (an accepted offer's items to receive) went among the items
@@ -504,7 +511,7 @@ where
 /// `own_inventory(context)` reads one of our CS2 contexts, each once at most.
 ///
 /// Fails with [`TradeError::Cs2InventoryUnavailable`] while the inventory isn't current, unless no CS2 item is to be
-/// found; otherwise only if the game coordinator does.
+/// found; with the error of a read of our web inventory that failed; otherwise only if the game coordinator does.
 pub(crate) async fn find_and_locate<S, O, OF>(
     received: Vec<CEcon_Asset>,
     known: &HashSet<u64>,
@@ -531,7 +538,7 @@ where
     } else {
         Vec::new()
     };
-    let located = place(
+    let (located, failed_read) = place(
         &wanted,
         &new,
         &mut own_inventory,
@@ -539,28 +546,32 @@ where
         Duration::ZERO,
     )
     .await;
-    Ok(received_items(received, located))
+    match failed_read {
+        Some(error) => Err(error),
+        None => Ok(received_items(received, located)),
+    }
 }
 
-/// [`locate`], with the kinds it needs read from our own web inventory: in `kind_reads`, one context per read.
+/// [`locate`], with the kinds it needs read from our own web inventory: in `kind_reads`, one context per read. A read
+/// that failed ends the reads; its error comes with what the kinds read before it placed.
 async fn place<O, OF>(
     wanted: &[Wanted],
     new: &[GcItem],
     own_inventory: &mut O,
     kind_reads: &[InventoryContext],
     kind_read_interval: Duration,
-) -> Vec<Located>
+) -> (Vec<Located>, Option<TradeError>)
 where
     O: FnMut(InventoryContext) -> OF,
     OF: Future<Output = Result<Inventory, TradeError>>,
 {
     let needing = ids_needing_kinds(wanted, new);
-    let kinds = if needing.is_empty() {
-        HashMap::new()
+    let (kinds, failed_read) = if needing.is_empty() {
+        (HashMap::new(), None)
     } else {
         kinds_of(&needing, own_inventory, kind_reads, kind_read_interval).await
     };
-    locate(wanted, new, &kinds)
+    (locate(wanted, new, &kinds), failed_read)
 }
 
 /// Each of `received` with where it went.
@@ -623,13 +634,14 @@ where
 }
 
 /// The `classid` of the items `ids` from our own web inventory, read in each context of `reads` in turn while some are
-/// missing (Steam serves it from a cache, and a context may not hold them). A failed read is logged and ends the reads.
+/// missing (Steam serves it from a cache, and a context may not hold them). A failed read ends the reads: its error
+/// comes with the kinds read before it.
 async fn kinds_of<O, OF>(
     ids: &[u64],
     own_inventory: &mut O,
     reads: &[InventoryContext],
     interval: Duration,
-) -> HashMap<u64, i64>
+) -> (HashMap<u64, i64>, Option<TradeError>)
 where
     O: FnMut(InventoryContext) -> OF,
     OF: Future<Output = Result<Inventory, TradeError>>,
@@ -651,13 +663,7 @@ where
                     }
                 }
             }
-            Err(error) => {
-                warn!(
-                    "Could not read our inventory for the kinds of the received items: {}",
-                    error
-                );
-                break;
-            }
+            Err(error) => return (kinds, Some(error)),
         }
         if kinds.len() == ids.len() {
             break;
@@ -670,7 +676,7 @@ where
             reads.len()
         );
     }
-    kinds
+    (kinds, None)
 }
 
 #[cfg(test)]
@@ -1230,6 +1236,32 @@ mod tests {
         assert_eq!(accepted.received[0].located, Located::NotFound);
     }
 
+    #[test]
+    fn after_the_accept_an_unreadable_web_inventory_places_without_kinds() {
+        let new = vec![skin(901, 302, 0.37), commodity(902)];
+        let mut source = Script::new(&[1], vec![Some(new)]);
+        let reads = Cell::new(0);
+        let accepted = block_on(accept_and_locate(
+            7,
+            vec![
+                asset(InventoryContext::CS2, 100, AUG),
+                asset(InventoryContext::CS2, 101, CASE),
+            ],
+            &mut source,
+            |_| no_inventory(),
+            || ready(Ok(Some(42))),
+            || {
+                reads.set(reads.get() + 1);
+                ready(Err(too_many_requests()))
+            },
+            fast(Duration::from_secs(10)),
+        ))
+        .unwrap();
+        assert_eq!(reads.get(), 1, "the failed read ends the reads");
+        let located: Vec<Located> = accepted.received.iter().map(|item| item.located).collect();
+        assert_eq!(located, vec![Located::Guessed(901), Located::Guessed(902)]);
+    }
+
     /// Fails after the accept, as a stopped client does.
     struct FailsAfter(usize);
 
@@ -1525,8 +1557,12 @@ mod tests {
         assert_eq!(reads, vec![InventoryContext::CS2_TRADE_PROTECTED]);
     }
 
+    fn too_many_requests() -> TradeError {
+        tappet::errors::SteamAPIError::SteamHttpError("429".to_string()).into()
+    }
+
     #[test]
-    fn partner_accepted_with_an_unreadable_web_inventory_is_not_found() {
+    fn partner_accepted_with_an_unreadable_web_inventory_fails_with_the_read() {
         let mut source = Now::current(vec![commodity(12), commodity(11)]);
         let (result, reads) = find(
             vec![
@@ -1536,10 +1572,37 @@ mod tests {
             &[],
             &[],
             &mut source,
-            |_| Err(TradeError::GeneralError("HTTP 429".to_string())),
+            |_| Err(too_many_requests()),
         );
-        assert_eq!(located(result.unwrap()), vec![Located::NotFound, Located::NotFound]);
+        match result {
+            Err(error) => assert!(error.is_too_many_requests(), "{:?}", error),
+            other => panic!("{:?}", other),
+        }
         assert_eq!(reads, vec![InventoryContext::CS2_TRADE_PROTECTED]);
+    }
+
+    #[test]
+    fn partner_accepted_with_a_failed_second_read_fails_too() {
+        // context 16 lists one of the two new cases; context 2 fails
+        let mut source = Now::current(vec![commodity(12), commodity(11)]);
+        let (result, reads) = find(
+            vec![
+                asset(InventoryContext::CS2, 100, CASE),
+                asset(InventoryContext::CS2, 101, CASE),
+            ],
+            &[],
+            &[],
+            &mut source,
+            |context| match context {
+                InventoryContext::CS2_TRADE_PROTECTED => kinds_page(context, &[(12, CASE)]),
+                _ => Err(TradeError::GeneralError("timeout".to_string())),
+            },
+        );
+        assert!(matches!(result, Err(TradeError::GeneralError(_))), "{:?}", result);
+        assert_eq!(
+            reads,
+            vec![InventoryContext::CS2_TRADE_PROTECTED, InventoryContext::CS2]
+        );
     }
 
     #[test]
