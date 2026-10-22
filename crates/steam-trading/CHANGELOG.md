@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-21ec6420cd94a1c59c62dd49b3e9a307fe9ed1c1/> where the items of an offer the partner accepted went
+   SteamTradeManager::find_received_items(&offer, &known_ids, &fingerprints,
+   &mut Cs2) (feature cs2), for an offer this account sent and learns later
+   was accepted: no snapshot from before the trade, no partner read.
+   
+   - looks once at Cs2::inventory: the new items are those whose id isn't in
+     known_ids; nothing is accepted, nothing is waited for
+   - fingerprints: the partner's copies' pattern and wear by their asset id
+     in the offer, as the caller read them before the trade; any may be
+     missing
+   - places items with the rules of accept_offer_and_find_items
+     (Located::Only, PatternAndWear, Kind, Guessed, NotFound); our own web
+     inventory is read once at most, only when kinds can't be told apart
+   - TradeError::Cs2InventoryUnavailable while the game coordinator's
+     inventory isn't current (nothing looked up)
+   - Fingerprint is public: Fingerprint::new(pattern, wear_bits),
+     Fingerprint::of(&InventoryItem), pattern(), wear_bits()
+   
+   Not verified against live Steam.
+ - <csr-id-832c3617f05a144c63cebfc15445b7082064f6f3/> Inventory::total_inventory_count
+   The count Steam sends on every inventory page, to tell a complete read:
+   Inventory::total_inventory_count() (the first page's) and
+   InventoryPage::total_inventory_count(). None when Steam doesn't send it,
+   or not as a count.
+
+### Refactor
+
+ - <csr-id-e543c5532288e1700f8dd71af80f1685275ccc37/> one placing core for received items
+   accept_offer_and_find_items behaves as before.
+
 ## v0.7.0 (2026-10-21)
 
 ### Chore
