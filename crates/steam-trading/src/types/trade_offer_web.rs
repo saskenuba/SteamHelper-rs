@@ -4,8 +4,8 @@ use steam_language::enums::EResult;
 
 use crate::types::sessionid::HasSessionID;
 use crate::types::sessionid::SessionID;
-use crate::AssetCollection;
-use crate::TradeOffer;
+use crate::Asset;
+use crate::OfferRequest;
 
 macro_rules! impl_sessionid {
     ($name:ident) => {
@@ -123,20 +123,20 @@ pub(crate) struct TradeOfferCreateRequest {
 }
 
 impl TradeOfferCreateRequest {
-    pub(crate) fn new<T: Into<Option<TradeOfferParams>>>(
-        their_steamid64: u64,
-        tradeoffer: TradeOffer,
-        trade_token: T,
-    ) -> TradeOfferCreateRequest {
+    /// The form of `offer`: to the partner and with the token of its trade link.
+    pub(crate) fn new(offer: &OfferRequest) -> TradeOfferCreateRequest {
+        let partner = offer.partner();
         Self {
             sessionid: Default::default(),
             common: TradeOfferCommonParameters {
-                their_steamid: their_steamid64,
+                their_steamid: partner.partner().to_steam64(),
                 ..Default::default()
             },
-            message: tradeoffer.message.clone(),
-            json_tradeoffer: tradeoffer.into(),
-            trade_offer_create_params: trade_token.into(),
+            message: offer.message_text().to_string(),
+            json_tradeoffer: JsonTradeOffer::new(offer),
+            trade_offer_create_params: Some(TradeOfferParams {
+                trade_offer_access_token: partner.token().to_string(),
+            }),
         }
     }
 }
@@ -159,21 +159,11 @@ pub(crate) struct JsonTradeOffer {
     pub their_account: AssetList,
 }
 
-impl From<TradeOffer> for JsonTradeOffer {
-    fn from(tradeoffer: TradeOffer) -> Self {
-        let my_account = tradeoffer
-            .my_assets
-            .unwrap_or_else(|| AssetCollection::default())
-            .dump_to_asset_list();
-
-        let their_account = tradeoffer
-            .their_assets
-            .unwrap_or_else(|| AssetCollection::default())
-            .dump_to_asset_list();
-
+impl JsonTradeOffer {
+    fn new(offer: &OfferRequest) -> Self {
         Self {
-            my_account,
-            their_account,
+            my_account: AssetList::new(offer.gives()),
+            their_account: AssetList::new(offer.takes()),
             ..Default::default()
         }
     }
@@ -193,9 +183,21 @@ impl Default for JsonTradeOffer {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 /// The correct format for assets inside the trade offer.
 pub(crate) struct AssetList {
-    pub assets: Vec<Asset>,
+    pub assets: Vec<JsonAsset>,
     pub currency: Vec<String>,
     pub ready: bool,
+}
+
+impl AssetList {
+    fn new(items: &[(Asset, u32)]) -> Self {
+        Self {
+            assets: items
+                .iter()
+                .map(|&(asset, amount)| JsonAsset::new(asset, amount))
+                .collect(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Default for AssetList {
@@ -209,63 +211,29 @@ impl Default for AssetList {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-/// An unique item at this particular time, of any kind.
-pub struct Asset {
+/// An item of an offer, as the form sends it: ids as strings, the amount as a number.
+pub(crate) struct JsonAsset {
     /// Game APPID.
     pub appid: u32,
     /// Inventory ContextID. A game may have one or more.
-    // u32
     pub contextid: String,
     /// Amount if the item is stackable.
-    pub(crate) amount: i64,
-    // u64
+    pub amount: u32,
     pub assetid: String,
+}
+
+impl JsonAsset {
+    fn new(asset: Asset, amount: u32) -> Self {
+        Self {
+            appid: asset.context.appid(),
+            contextid: asset.context.contextid().to_string(),
+            amount,
+            assetid: asset.id.to_string(),
+        }
+    }
 }
 
 impl_sessionid!(TradeOfferGenericRequest);
 impl_sessionid!(TradeOfferAcceptRequest);
 impl_sessionid!(TradeOfferCreateRequest);
 impl_sessionid!(TradeProtectionAcknowledgeRequest);
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn get_offer() -> JsonTradeOffer {
-        let json_request = r#"{
-  "newversion":true,
-  "version":4,
-  "me":{
-    "assets":[
-      {
-        "appid":730,
-        "contextid":"2",
-        "amount":1,
-        "assetid":"17034419698"
-      },
-      {
-        "appid":730,
-        "contextid":"2",
-        "amount":1,
-        "assetid":"16889698077"
-      }
-    ],
-    "currency":[],
-    "ready":false
-  },
-  "them":{
-    "assets":[
-      {
-        "appid":730,
-        "contextid":"2",
-        "amount":1,
-        "assetid":"18116227588"
-      }
-    ],
-    "currency":[],
-    "ready":false
-  }
-}"#;
-        serde_json::from_str::<JsonTradeOffer>(json_request).unwrap()
-    }
-}

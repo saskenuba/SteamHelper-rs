@@ -13,8 +13,10 @@
 //!   [`InventoryContext::CS2_TRADE_PROTECTED`]), with pattern, wear and lock; then their last trades.
 //! - `trade`: A's tradable items, to pick one.
 //! - `trade <assetid>`: A sends B that item (to B's trade link, from `my_trade_link`); B reads its pattern and wear
-//!   from A's inventory, as a bot does before a trade, and accepts with `accept_offer_and_find_items`. Ends on one
-//!   line: `A's <old id> → B's <new id> · found by <how> · unlocks <time> (in Nd Nh)`.
+//!   from A's inventory, as a bot does before a trade, reads the offer among its received ones (`offers`) and accepts
+//!   it with
+//!   `accept_and_find_items`. Ends on one line:
+//!   `A's <old id> → B's <new id> · found by <how> · unlocks <time> (in Nd Nh)`.
 //!
 //! ```sh
 //! cargo run -p steam-trading --features cs2 --example full_trade
@@ -49,14 +51,17 @@ use steam_mobile::user::SteamUser;
 use steam_mobile::Authenticated;
 use steam_mobile::MobileAuthFile;
 use steam_mobile::SteamAuthenticator;
-use steam_trading::AssetCollection;
+use steam_trading::Asset;
+use steam_trading::AssetId;
 use steam_trading::Inventory;
 use steam_trading::InventoryContext;
 use steam_trading::InventoryItem;
 use steam_trading::Located;
+use steam_trading::OfferQuery;
+use steam_trading::OfferRequest;
 use steam_trading::SteamID;
 use steam_trading::SteamTradeManager;
-use steam_trading::TradeOffer;
+use steam_trading::TradeQuery;
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 type Web = SteamAuthenticator<Authenticated, PresentMaFile>;
@@ -209,24 +214,27 @@ async fn print_inventory(name: &str, trades: &SteamTradeManager) -> Result<()> {
 
 /// An account's last [`RECENT_TRADES`] trades, failed ones too, with what moved and when it unlocks.
 async fn print_recent_trades(name: &str, trades: &SteamTradeManager) -> Result<()> {
-    let include_failed = true;
+    let query = TradeQuery {
+        max: RECENT_TRADES,
+        include_failed: true,
+    };
     println!("{name}: last trades");
-    for trade in trades.trade_history(Some(RECENT_TRADES), include_failed).await? {
-        let lock = trade.time_settlement.map(when).unwrap_or_else(|| "none".to_string());
-        println!("  trade {} {:?}, lock ends {lock}", trade.tradeid, trade.status);
-        let received = trade.assets_received.iter().flatten().map(|asset| ("received", asset));
-        let given = trade.assets_given.iter().flatten().map(|asset| ("gave", asset));
-        for (side, asset) in received.chain(given) {
-            match asset.new_assetid {
-                Some(new) => println!("    {side} {}, now {new}", asset.assetid),
-                None => println!("    {side} {}, no new id from Steam (CS2 since 2026-04)", asset.assetid),
+    for trade in trades.trades(query).await? {
+        let lock = trade.protected_until.map(when).unwrap_or_else(|| "none".to_string());
+        println!("  trade {} {:?}, lock ends {lock}", trade.id, trade.status);
+        let received = trade.received.iter().map(|item| ("received", item));
+        let given = trade.given.iter().map(|item| ("gave", item));
+        for (side, item) in received.chain(given) {
+            match item.new_asset {
+                Some(new) => println!("    {side} {}, now {}", item.asset.id, new.id),
+                None => println!("    {side} {}, no new id from Steam (CS2 since 2026-04)", item.asset.id),
             }
         }
     }
     Ok(())
 }
 
-/// How `accept_offer_and_find_items` told the item apart.
+/// How `accept_and_find_items` told the item apart.
 fn how(located: Located) -> &'static str {
     match located {
         Located::Exact(_) => "pattern and wear",
@@ -256,7 +264,7 @@ async fn trade(
     a_id: SteamID,
     b: &LoggedOn,
     b_trades: &SteamTradeManager,
-    assetid: i64,
+    assetid: AssetId,
 ) -> Result<()> {
     let a_items = a_trades.own_inventory(InventoryContext::CS2).await?;
     let name = a_items
@@ -274,14 +282,14 @@ async fn trade(
     let fingerprints = b_trades.inventory(a_id, InventoryContext::CS2).await?.fingerprints();
 
     let b_link = b_trades.my_trade_link().await?;
-    let mut offered = AssetCollection::default();
-    offered.add(InventoryContext::CS2, assetid);
-    let offer = TradeOffer::new(b_link.link, offered, None, OFFER_MESSAGE.to_string())?;
+    let offer = OfferRequest::to(b_link)
+        .give(Asset::new(InventoryContext::CS2, assetid))
+        .message(OFFER_MESSAGE);
     if !confirm("send", &format!("A sends B {name} ({assetid})."))? {
         return Ok(());
     }
     // trade protection is acknowledged before the first confirmation, by the manager
-    let offer_id = a_trades.create_offer_and_confirm(offer).await?;
+    let offer_id = a_trades.send(&offer).await?;
     println!("A: sent and confirmed offer {offer_id}");
 
     if !confirm("accept", &format!("B accepts offer {offer_id}; this can't be undone."))? {
@@ -289,11 +297,16 @@ async fn trade(
         println!("A: canceled offer {offer_id}");
         return Ok(());
     }
-    let accepted = b_trades
-        .accept_offer_and_find_items(offer_id, &fingerprints, &mut cs2)
-        .await?;
-    match accepted.tradeid {
-        Some(tradeid) => println!("B: accepted offer {offer_id}: trade {tradeid}"),
+    // B reads the offer, as a bot does before accepting it: from `GetTradeOffers`, which was seen live
+    let offer = b_trades
+        .offers(OfferQuery::ACTIVE_RECEIVED)
+        .await?
+        .into_iter()
+        .find(|offer| offer.id == offer_id)
+        .ok_or("B: Steam lists no such offer")?;
+    let accepted = b_trades.accept_and_find_items(&offer, &fingerprints, &mut cs2).await?;
+    match accepted.trade_id {
+        Some(trade_id) => println!("B: accepted offer {offer_id}: trade {trade_id}"),
         None => println!("B: accepted offer {offer_id} after a confirmation; Steam gave no trade id"),
     }
 
@@ -306,13 +319,13 @@ async fn trade(
     // else the trade's from Steam's trade history
     let item_lock = cs2
         .inventory()?
-        .and_then(|inventory| inventory.get(new_id))
+        .and_then(|inventory| inventory.get(new_id.0))
         .and_then(|item| item.tradable_after())
         .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
         .map(|since| since.as_secs() as i64);
-    let lock = match (item_lock, accepted.tradeid) {
+    let lock = match (item_lock, accepted.trade_id) {
         (Some(end), _) => Some(end),
-        (None, Some(tradeid)) => b_trades.trade_lock_end(tradeid).await?,
+        (None, Some(trade_id)) => b_trades.trade(trade_id).await?.and_then(|trade| trade.protected_until),
         (None, None) => None,
     };
     let unlocks = lock.map(when).unwrap_or_else(|| "not locked".to_string());

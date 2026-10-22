@@ -16,8 +16,9 @@
 //!   (9), their details as JSON in `body_data`.
 //!
 //! Either is only a trigger: it carries no offer, and likely nothing about offers we sent. On each, fetch the offers
-//! over HTTP with steam-trading (`SteamTradeManager::get_trade_offers`, with the authenticator that steam-mobile's
-//! `SteamAuthenticator::login_with_client` gives, as its `web_session_bot` example sets up), and poll slowly as well.
+//! over HTTP with steam-trading (`SteamTradeManager::offers(OfferQuery::ACTIVE)`, with the authenticator that
+//! steam-mobile's `SteamAuthenticator::login_with_client` gives, as its `web_session_bot` example sets up), and poll
+//! slowly as well.
 //! Notifications sent while the connection was lost are lost too: fetch once after each `Reconnected`. The design:
 //! "Event-driven offers and access tokens" in `crates/steam-trading/workingcontext.md`.
 //!

@@ -1,13 +1,39 @@
-//! Steam trade manager is the module that allows you to automate trade offers, by extending `SteamAuthenticator`.
-//!
-//! It inherently needs `SteamAuthenticator` as a dependency, since we need cookies from Steam Community and Steam Store
-//! to be able to create and accept trade offers, along with mobile confirmations.
+//! Trade offers of a Steam account: create, confirm, accept, decline and cancel them, and read offers, trades and
+//! inventories, through the account's `SteamAuthenticator` (steam-mobile): its cookies, its access token and its
+//! mobile confirmations.
 //!
 //! **IT IS VERY IMPORTANT THAT STEAM GUARD IS ENABLED ON THE ACCOUNT BEING USED, WITH MOBILE CONFIRMATIONS.**
 //!
 //! A [`SteamTradeManager`] owns the account's `SteamAuthenticator`: make one per account, and share it. The manager
-//! reacts to no events, in comparison of alternatives such as Node.js: you keep track of trades and poll yourself, but
-//! it won't be much work, since there are convenience functions for almost every need.
+//! reacts to no events, in comparison of alternatives such as Node.js: you keep track of offers and poll yourself.
+//!
+//! Its methods come in two layers. Steps are one Steam step each: one request, or a confirmation round (getlist, then
+//! one multiajaxop), or every page of a paged list (offers, an inventory):
+//! [`create_offer`](SteamTradeManager::create_offer), [`confirm_offers`](SteamTradeManager::confirm_offers),
+//! [`post_accept`](SteamTradeManager::post_accept), [`decline_offer`](SteamTradeManager::decline_offer),
+//! [`cancel_offer`](SteamTradeManager::cancel_offer), [`offers`](SteamTradeManager::offers),
+//! [`offer`](SteamTradeManager::offer), [`trades`](SteamTradeManager::trades), [`trade`](SteamTradeManager::trade),
+//! [`trade_hold`](SteamTradeManager::trade_hold), [`inventory`](SteamTradeManager::inventory) and
+//! [`my_trade_link`](SteamTradeManager::my_trade_link). Convenience methods only chain steps:
+//! [`send`](SteamTradeManager::send) (create, then confirm), [`accept`](SteamTradeManager::accept) (accept, then
+//! confirm when Steam asks), and with feature `cs2` `accept_and_find_items` and `find_received_items`.
+//!
+//! ```no_run
+//! use steam_trading::{
+//!     Asset, AssetId, InventoryContext, OfferQuery, OfferRequest, SteamTradeManager, TradeError, TradeLink,
+//! };
+//!
+//! async fn trade(manager: &SteamTradeManager, link: TradeLink) -> Result<(), TradeError> {
+//!     let request = OfferRequest::to(link).give(Asset::new(InventoryContext::CS2, AssetId(1)));
+//!     let sent = manager.send(&request).await?;
+//!     println!("sent offer {}", sent);
+//!
+//!     for offer in manager.offers(OfferQuery::ACTIVE_RECEIVED).await? {
+//!         manager.decline_offer(offer.id).await?;
+//!     }
+//!     Ok(())
+//! }
+//! ```
 //!
 //! An authenticator logged in with a password needs nothing running beside it. One logged in through a Steam client
 //! (steam-mobile's `login_with_client`, which feature `cs2` turns on) keeps that client running, and needs it
@@ -17,11 +43,14 @@
 //! go on with the current token until it expires. After, none is sent: requests wait for another attempt (up to the
 //! same 30 seconds), and fail if it fails, or fail at once while the last one failed less than 30 seconds before.
 //!
-//! Perhaps the event based trading experience will be an extension someday, but for now this works fine.
+//! A Steam Community request (a page, an inventory, a form) that Steam redirects to its login page (a final URL on
+//! `steamcommunity.com` whose path starts with `/login`, seen live as `login/home/?goto=…`) fails with steam-mobile's
+//! `InternalError::SessionExpired` (in [`TradeError::InternalError`]): the session is gone, log in again. Checking the
+//! final URL is this crate's rule. node-steamcommunity and aiosteampy check the `Location` of a redirect they didn't
+//! follow (`components/http.js:106-111`, `transport/base.py:239`).
 //!
 //! Compiles on stable Rust.
 
-#![allow(dead_code)]
 // #![warn(missing_docs, missing_doc_code_examples)]
 #![deny(
     missing_debug_implementations,
@@ -44,19 +73,32 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use const_format::concatcp;
-pub use errors::ConfirmationError;
 pub use errors::InternalError;
-pub use errors::OfferError;
 pub use errors::TradeError;
-pub use errors::TradelinkError;
+pub use errors::TradeLinkError;
+pub use errors::WebApiError;
 use futures::lock::Mutex;
 use futures::TryFutureExt;
 use futures_timer::Delay;
+pub use ids::Asset;
+pub use ids::AssetId;
+pub use ids::OfferId;
+pub use ids::TradeId;
 pub use inventory::AssetProperty;
 pub use inventory::Inventory;
 pub use inventory::InventoryItem;
 pub use inventory::InventoryPage;
 pub use inventory::PropertyValue;
+pub use offer::Accepted;
+pub use offer::Confirmed;
+pub use offer::CreatedOffer;
+pub use offer::Needs;
+pub use offer::Offer;
+pub use offer::OfferQuery;
+pub use offer::OfferRequest;
+pub use offer::OfferState;
+pub use offer::OfferedItem;
+pub use offer::PostedAccept;
 #[cfg(feature = "cs2")]
 pub use received::AcceptedOffer;
 #[cfg(feature = "cs2")]
@@ -65,10 +107,12 @@ pub use received::Fingerprint;
 pub use received::Located;
 #[cfg(feature = "cs2")]
 pub use received::ReceivedItem;
+use reqwest::Response;
 use serde::de::DeserializeOwned;
 #[cfg(feature = "cs2")]
 use steam_client::gc::cs2::Cs2;
-use steam_language::enums::ETradeOfferState;
+/// Steam's result codes, as [`TradeError::eresult`] returns them.
+pub use steam_language::enums::EResult;
 use steam_mobile::user::PresentMaFile;
 use steam_mobile::Authenticated;
 use steam_mobile::Confirmation;
@@ -80,35 +124,33 @@ use steam_mobile::SteamAuthenticator;
 use steam_mobile::Url;
 use steam_mobile::STEAM_COMMUNITY_HOST;
 pub use steamid_parser::SteamID;
+use tappet::endpoints::ieconservice::get::GetTradeHoldDurations;
+use tappet::endpoints::ieconservice::get::GetTradeOffer;
 use tappet::endpoints::ieconservice::get::GetTradeOffers;
-#[cfg(feature = "cs2")]
-use tappet::response_types::CEcon_Asset;
+use tappet::errors::SteamAPIError;
 use tappet::response_types::GetTradeHistoryResponse;
+use tappet::response_types::GetTradeHoldDurationsResponseBase;
+use tappet::response_types::GetTradeOfferResponse;
 use tappet::response_types::GetTradeOffersResponse;
 use tappet::response_types::MalformedOffer;
-#[cfg(feature = "cs2")]
-use tappet::response_types::OfferItem;
-use tappet::response_types::TradeHistory_Trade;
 use tappet::response_types::TradeOffer_Trade;
 use tappet::Credential;
 use tappet::ExecutorResponse;
 use tappet::SteamAPI;
-use tracing::debug;
 use tracing::warn;
-pub use types::asset_collection::AssetCollection;
+pub use trade::Trade;
+pub use trade::TradeQuery;
+pub use trade::TradeStatus;
+pub use trade::TradedItem;
 pub use types::context::InventoryContext;
-pub use types::trade_link::Tradelink;
-pub use types::trade_offer::TradeOffer;
+pub use types::trade_link::TradeLink;
 
-#[cfg(feature = "additional-checks")]
-use crate::additional_checks::check_steam_guard_error;
-use crate::api_extensions::FilterBy;
-use crate::api_extensions::HasAssets;
-use crate::errors::tradeoffer_error_from_eresult;
-use crate::errors::TradeError::GeneralError;
+use crate::errors::web_api_error;
 use crate::inventory::inventory_url;
 use crate::inventory::read_all_inventory_pages;
+use crate::offer::number;
 use crate::response::check_response;
+use crate::response::login_redirect_check;
 use crate::response::status_check;
 use crate::types::sessionid::HasSessionID;
 use crate::types::trade_offer_web::TradeOfferAcceptRequest;
@@ -118,39 +160,32 @@ use crate::types::trade_offer_web::TradeOfferCreateRequest;
 use crate::types::trade_offer_web::TradeOfferCreateResponse;
 use crate::types::trade_offer_web::TradeOfferGenericErrorResponse;
 use crate::types::trade_offer_web::TradeOfferGenericRequest;
-use crate::types::trade_offer_web::TradeOfferParams;
 use crate::types::trade_offer_web::TradeProtectionAcknowledgeRequest;
 use crate::types::TradeKind;
 
-#[cfg(feature = "additional-checks")]
-mod additional_checks;
-pub mod api_extensions;
 mod errors;
+mod ids;
 mod inventory;
+mod offer;
 #[cfg(feature = "cs2")]
 mod received;
 mod response;
+mod trade;
 mod types;
 
 const TRADEOFFER_BASE: &str = "https://steamcommunity.com/tradeoffer/";
 const TRADEOFFER_NEW_URL: &str = concatcp!(TRADEOFFER_BASE, "new/send");
+/// The `Referer` of a create.
+const TRADEOFFER_NEW_REFERER: &str = concatcp!(TRADEOFFER_BASE, "new");
 const TRADE_PROTECTION_ACKNOWLEDGE_URL: &str = "https://steamcommunity.com/trade/new/acknowledge";
-const TRADE_OFFER_ACCESS_TOKEN_URL: &str = "https://api.steampowered.com/IEconService/GetTradeOfferAccessToken/v1/";
 
-/// This is decided upon various factors, mainly stability of Steam servers when dealing with huge
-/// trade offers.
-///
-/// Consider this when creating trade websites.
+/// At most this many items on a side of an offer, as ArchiSteamFarm (`ArchiSteamFarm/Steam/Exchange/Trading.cs:44`,
+/// `MaxItemsPerTrade = byte.MaxValue`): decided upon various factors, mainly stability of Steam servers when dealing
+/// with huge trade offers.
 pub const TRADE_MAX_ITEMS: u8 = u8::MAX;
 
-/// Max trade offers to a single account.
-pub const TRADE_MAX_TRADES_PER_SINGLE_USER: u8 = 5;
-
-/// Max total sent trade offers.
-pub const TRADE_MAX_ONGOING_TRADES: u8 = 30;
-
-/// Standard delay, in milliseconds
-const STANDARD_DELAY: u64 = 1000;
+/// How long [`SteamTradeManager::send`] waits between the create and the confirmation.
+const STANDARD_DELAY: Duration = Duration::from_secs(1);
 
 const MAX_HISTORICAL_CUTOFF: u32 = u32::MAX;
 
@@ -173,7 +208,7 @@ pub struct SteamTradeManager {
     acknowledged: AtomicBool,
     /// Held while accepting an offer: one accept at a time, so that the items one brings are told from another's.
     accepting: Mutex<()>,
-    /// How long `accept_offer_and_find_items` waits for the received items.
+    /// How long `accept_and_find_items` waits for the received items.
     #[cfg(feature = "cs2")]
     received_items_timeout: Duration,
 }
@@ -190,15 +225,92 @@ struct PreparedRequest {
     form: Box<dyn HasSessionID>,
 }
 
+impl PreparedRequest {
+    /// The create of `offer`.
+    fn create(offer: &OfferRequest) -> Self {
+        Self {
+            url: TradeKind::Create.endpoint(None),
+            headers: Some(referer(TRADEOFFER_NEW_REFERER.to_string())),
+            form: Box::new(TradeOfferCreateRequest::new(offer)),
+        }
+    }
+
+    /// The accept of the offer `offer_id`, with `partner` in its form.
+    fn accept(offer_id: OfferId, partner: u64) -> Self {
+        Self {
+            url: TradeKind::Accept.endpoint(Some(offer_id)),
+            headers: Some(referer(format!("{}{}/", TRADEOFFER_BASE, offer_id))),
+            form: Box::new(TradeOfferAcceptRequest {
+                common: TradeOfferCommonParameters {
+                    their_steamid: partner,
+                    ..Default::default()
+                },
+                tradeofferid: offer_id.0,
+                ..Default::default()
+            }),
+        }
+    }
+
+    /// The decline of the offer `offer_id`.
+    fn decline(offer_id: OfferId) -> Self {
+        Self::without_referer(TradeKind::Decline.endpoint(Some(offer_id)))
+    }
+
+    /// The cancel of the offer `offer_id`.
+    fn cancel(offer_id: OfferId) -> Self {
+        Self::without_referer(TradeKind::Cancel.endpoint(Some(offer_id)))
+    }
+
+    fn without_referer(url: String) -> Self {
+        Self {
+            url,
+            headers: None,
+            form: Box::<TradeOfferGenericRequest>::default(),
+        }
+    }
+
+    fn acknowledge() -> Self {
+        Self {
+            url: TRADE_PROTECTION_ACKNOWLEDGE_URL.to_string(),
+            headers: None,
+            form: Box::<TradeProtectionAcknowledgeRequest>::default(),
+        }
+    }
+}
+
+/// Headers with the `Referer` `url`.
+fn referer(url: String) -> HeaderMap {
+    let mut headers = HeaderMap::new();
+    headers.insert("Referer", url.parse().expect("a URL is a valid header value"));
+    headers
+}
+
+/// How [`SteamTradeManager::confirm_offers`] failed: [`SteamTradeManager::send`] tells the two apart.
+#[derive(Debug)]
+enum ConfirmFailed {
+    /// The account's confirmations could not be fetched: nothing was confirmed.
+    Fetch(TradeError),
+    /// Steam refused to accept the confirmations found, or the request failed.
+    Process(TradeError),
+}
+
+impl From<ConfirmFailed> for TradeError {
+    fn from(failed: ConfirmFailed) -> Self {
+        match failed {
+            ConfirmFailed::Fetch(error) | ConfirmFailed::Process(error) => error,
+        }
+    }
+}
+
 impl SteamTradeManager {
     /// Returns a new `[SteamTradeManager]` for the account `authenticator` is logged in to, which it owns: get it back
     /// with [`SteamTradeManager::authenticator`], [`SteamTradeManager::authenticator_mut`] or
     /// [`SteamTradeManager::into_authenticator`].
     ///
-    /// Its Web API calls (`GetTradeOffers`, `GetTradeHistory`) send the session's access token (`access_token=`), read
-    /// from `authenticator` for every call, never kept: an authenticator logged in through a Steam client
-    /// (steam-mobile's `login_with_client`) renews it about daily, when a call comes within its renewal margin (an
-    /// hour by default, steam-mobile's `renew_before`).
+    /// Its Web API calls (`GetTradeOffers`, `GetTradeOffer`, `GetTradeHistory`, `GetTradeHoldDurations`) send the
+    /// session's access token (`access_token=`), read from `authenticator` for every call, never kept: an
+    /// authenticator logged in through a Steam client (steam-mobile's `login_with_client`) renews it about daily, when
+    /// a call comes within its renewal margin (an hour by default, steam-mobile's `renew_before`).
     /// No API key is needed or used: with one, Steam leaves CS2 offers and trades out (seen live 2026-10-20). Steam
     /// Community requests (create, accept, decline, cancel, confirmations) use the session cookies.
     pub fn new(authenticator: SteamAuthenticator<Authenticated, PresentMaFile>) -> SteamTradeManager {
@@ -239,84 +351,205 @@ impl SteamTradeManager {
         ))
     }
 
-    /// Checks whether the user of `tradelink` has recently activated his mobile SteamGuard.
-    #[cfg(feature = "additional-checks")]
-    pub async fn check_steam_guard_recently_activated(&self, tradelink: Tradelink) -> Result<(), TradeError> {
-        let Tradelink { partner_id, token, .. } = tradelink;
-
-        check_steam_guard_error(&self.authenticator, partner_id, &token)
-            .err_into()
-            .await
+    /// Creates the offer `offer`: `POST https://steamcommunity.com/tradeoffer/new/send`. Its id, and what it waits
+    /// for: a mobile confirmation ([`SteamTradeManager::confirm_offers`]) when this account gives items.
+    ///
+    /// # Errors
+    ///
+    /// Before anything is sent: [`TradeError::EmptyOffer`], [`TradeError::TooManyItems`],
+    /// [`TradeError::InvalidAmount`] (see [`OfferRequest`]). [`TradeError::Steam`] when Steam refused with a code,
+    /// [`TradeError::UnexpectedResponse`] for an answer without the offer's id.
+    pub async fn create_offer(&self, offer: &OfferRequest) -> Result<CreatedOffer, TradeError> {
+        offer.check()?;
+        let answer: TradeOfferCreateResponse = self.send_request(PreparedRequest::create(offer)).await?;
+        created_offer(&answer)
     }
 
-    /// Call to GetTradeOffers endpoint.
+    /// Accepts the mobile confirmations of the offers `offer_ids`, those this account created or accepted.
     ///
-    /// Convenience function that fetches information about active trades for the current logged in account.
+    /// Fetches the account's confirmations (`GET https://steamcommunity.com/mobileconf/getlist`) and, if any is of one
+    /// of these offers, acknowledges trade protection (once per manager, see
+    /// [`SteamTradeManager::acknowledge_trade_protection`]) and accepts them all in one request (`POST
+    /// https://steamcommunity.com/mobileconf/multiajaxop`), as ArchiSteamFarm
+    /// (`ArchiSteamFarm/Steam/Integration/ArchiWebHandler.cs:2073-2093`) and node-steamcommunity
+    /// (`components/confirmations.js:223-243`) do. Sends nothing for no offer.
+    ///
+    /// # Errors
+    ///
+    /// The error of either request: Steam refusing the batch fails it for every offer.
+    pub async fn confirm_offers(&self, offer_ids: &[OfferId]) -> Result<Confirmed, TradeError> {
+        self.confirm(offer_ids).err_into().await
+    }
+
+    /// [`SteamTradeManager::confirm_offers`], telling a failed fetch from a failed accept: [`confirm_steps`] with
+    /// Steam's requests.
+    async fn confirm(&self, offer_ids: &[OfferId]) -> Result<Confirmed, ConfirmFailed> {
+        confirm_steps(
+            offer_ids,
+            || {
+                self.authenticator
+                    .fetch_confirmations()
+                    .map_ok(|confirmations| confirmations.0)
+                    .err_into()
+            },
+            |confirmation: &Confirmation, offer_id| confirmation.has_trade_offer_id(offer_id.0),
+            || acknowledge_once(&self.acknowledged, || self.acknowledge_trade_protection()),
+            |found| {
+                self.authenticator
+                    .process_confirmations(ConfirmationAction::Accept, found)
+                    .err_into()
+            },
+        )
+        .await
+    }
+
+    /// Accepts `offer`, an offer made to this account: `POST https://steamcommunity.com/tradeoffer/{id}/accept`.
+    /// Steam's answer: the trade's id when it needs nothing more, else what it waits for.
+    /// [`SteamTradeManager::accept`] confirms too.
+    ///
+    /// **Note: This is irreversable, be extra careful when accepting any trade offer.**
+    ///
+    /// The form's `partner` is built from the offer's id, not from its partner, as this crate always sent it: wrong by
+    /// reading, but Steam takes it. Changing it needs a live check.
+    ///
+    /// One accept at a time per manager: a call waits for the accept in progress (also of
+    /// [`SteamTradeManager::accept`] and, with feature `cs2`, `accept_and_find_items`).
+    pub async fn post_accept(&self, offer: &Offer) -> Result<PostedAccept, TradeError> {
+        let _accepting = self.accepting.lock().await;
+        self.post_accept_unlocked(offer).await
+    }
+
+    /// [`SteamTradeManager::post_accept`]. The caller holds the accept lock.
+    async fn post_accept_unlocked(&self, offer: &Offer) -> Result<PostedAccept, TradeError> {
+        let request = PreparedRequest::accept(offer.id, accept_partner(offer.id));
+        let answer: TradeOfferCreateResponse = self.send_request(request).await?;
+        Ok(posted_accept(&answer))
+    }
+
+    /// Declines `offer_id`, an offer made to this account: `POST https://steamcommunity.com/tradeoffer/{id}/decline`.
+    ///
+    /// # Errors
+    ///
+    /// [`TradeError::UnexpectedResponse`] if Steam's answer isn't about this offer, as node-steam-tradeoffer-manager
+    /// (`lib/classes/TradeOffer.js` ~531) and aiosteampy (`client/components/trade/trade.py:520-585`) check.
+    pub async fn decline_offer(&self, offer_id: OfferId) -> Result<(), TradeError> {
+        let answer: TradeOfferCancelResponse = self.send_request(PreparedRequest::decline(offer_id)).await?;
+        answer_about(offer_id, &answer)
+    }
+
+    /// Cancels `offer_id`, an offer this account sent: `POST https://steamcommunity.com/tradeoffer/{id}/cancel`.
+    ///
+    /// # Errors
+    ///
+    /// As [`SteamTradeManager::decline_offer`].
+    pub async fn cancel_offer(&self, offer_id: OfferId) -> Result<(), TradeError> {
+        let answer: TradeOfferCancelResponse = self.send_request(PreparedRequest::cancel(offer_id)).await?;
+        answer_about(offer_id, &answer)
+    }
+
+    /// Acknowledges Steam's trade protection notice for this account: `POST /trade/new/acknowledge`, as the
+    /// browser does when the notice is dismissed.
+    ///
+    /// The manager calls it before its first confirmation ([`SteamTradeManager::confirm_offers`]); it is public for
+    /// bots that confirm through steam-mobile directly. Once per account is enough. Steam requires it to confirm trades
+    /// of trade-protected items: live (2026-10-20, CS2), confirming such an offer answered `{"success":false}` until
+    /// the account acknowledged, then `{"success":true}`. Steam answered `[]`; any 2xx answer without a `strError` is
+    /// taken as success. ArchiSteamFarm sends it before trading items of other games than Steam's own (appid 753);
+    /// node-steamcommunity has it as `acknowledgeTradeProtection()`.
+    pub async fn acknowledge_trade_protection(&self) -> Result<(), TradeError> {
+        let (status, url, text) = self.post_community_form(PreparedRequest::acknowledge()).await?;
+        check_response(status, &url, &text)
+    }
+
+    /// The offers of this account that `query` asks for, from `GetTradeOffers`: sent ones first, then received ones.
     ///
     /// Steam pages this endpoint: every page is read, and the offers of all pages are merged. The call fails rather
     /// than return an incomplete list, like node-steam-tradeoffer-manager: with a page's error,
     /// [`TradeError::TradeOffersIncomplete`] when Steam repeats a cursor or sends more than 100 pages, and
     /// [`TradeError::MalformedOffers`] when Steam sent an offer that could not be read (`lib/index.js:606-609` fails
-    /// on an offer without `accountid_other`). The response's `malformed_offers_*` lists are then always empty.
+    /// on an offer without `accountid_other`). An offer whose items couldn't all be read is listed, with
+    /// [`Offer::has_malformed_items`].
     ///
     /// Every call fails while Steam keeps sending an offer that can't be read: see [`TradeError::MalformedOffers`]
     /// for how to get past it.
-    pub async fn get_trade_offers(
-        &self,
-        sent: bool,
-        received: bool,
-        active_only: bool,
-    ) -> Result<GetTradeOffersResponse, TradeError> {
-        let offers = self.fetch_trade_offers(sent, received, active_only).await?;
-        fail_on_malformed_offers(&offers)?;
-        Ok(offers)
-    }
-
-    /// Every page of `GetTradeOffers`, offers that could not be read included.
-    async fn fetch_trade_offers(
-        &self,
-        sent: bool,
-        received: bool,
-        active_only: bool,
-    ) -> Result<GetTradeOffersResponse, TradeError> {
-        fetch_all_trade_offer_pages(|cursor| async move {
+    pub async fn offers(&self, query: OfferQuery) -> Result<Vec<Offer>, TradeError> {
+        let pages = fetch_all_trade_offer_pages(|cursor| async move {
             let api_client = self.web_api().await?;
-            trade_offers_page(&api_client, sent, received, active_only, cursor).await
+            trade_offers_request(&api_client, query, cursor)
+                .execute_with_response()
+                .map_err(web_api_error)
+                .await
         })
-        .await
+        .await?;
+        fail_on_malformed_offers(&pages)?;
+        offers_of(pages)
     }
 
-    /// Returns `[GetTradeHistoryResponse]` after a call to `GetTradeHistory` endpoint.
-    /// `max_trades` If not set will default to a maximum of 500 trade offers.
+    /// The offer `offer_id`, in any state, from `GetTradeOffer`
+    /// (`GET https://api.steampowered.com/IEconService/GetTradeOffer/v1?access_token=…&tradeofferid=…`), as
+    /// node-steam-tradeoffer-manager (`lib/index.js:525`) and aiosteampy (`webapi/services/econ.py:15-26`) ask for it.
+    /// `None` when Steam has no such offer: an answer without one, or `X-eresult` NoMatch, which aiosteampy reads as
+    /// none (`client/components/trade/trade.py:175-198`).
     ///
-    /// Contains Information about completed trades and recovery of the new asset ids that were generated after the
-    /// trade.
-    async fn get_trade_offers_history(
-        &self,
-        max_trades: Option<u32>,
-        include_failed: bool,
-    ) -> Result<GetTradeHistoryResponse, TradeError> {
-        let max_trades = max_trades.unwrap_or(500);
+    /// Seen live (2026-10-22): an id with no offer got HTTP 200, `x-eresult: 42` (NoMatch) and `{"response":{}}`.
+    ///
+    /// # Errors
+    ///
+    /// [`TradeError::MalformedOffer`] if Steam sent the offer but it could not be read. An offer whose items couldn't
+    /// all be read is returned, with [`Offer::has_malformed_items`].
+    pub async fn offer(&self, offer_id: OfferId) -> Result<Option<Offer>, TradeError> {
+        let api_client = self.web_api().await?;
+        let answer = trade_offer_request(&api_client, offer_id).execute_with_response().await;
+        offer_of(offer_id, answer)
+    }
 
-        self.web_api()
+    /// This account's trades that `query` asks for, newest first, from `GetTradeHistory`.
+    ///
+    /// # Errors
+    ///
+    /// [`TradeError::UnexpectedResponse`] if a trade could not be read: never a list that leaves one out.
+    pub async fn trades(&self, query: TradeQuery) -> Result<Vec<Trade>, TradeError> {
+        let history: GetTradeHistoryResponse = self
+            .web_api()
             .await?
             .get()
             .IEconService()
-            .GetTradeHistory(max_trades, include_failed, false, None, None, None, None, None)
+            .GetTradeHistory(query.max, query.include_failed, false, None, None, None, None, None)
             .execute_with_response()
-            .err_into()
-            .await
+            .map_err(web_api_error)
+            .await?;
+        trades_of(history)
     }
 
-    /// The last `max_trades` trades of this account (500 if `None`), newest first, from `GetTradeHistory`: the
-    /// request [`SteamTradeManager::trade_lock_end`] and [`SteamTradeManager::get_new_assetids`] make.
-    pub async fn trade_history(
-        &self,
-        max_trades: Option<u32>,
-        include_failed: bool,
-    ) -> Result<Vec<TradeHistory_Trade>, TradeError> {
-        let history = self.get_trade_offers_history(max_trades, include_failed).await?;
-        Ok(history.response.trades)
+    /// The trade `trade_id`, among the last trades Steam returns ([`TradeQuery::default`]: up to 500 asked, failed
+    /// ones left out). aiosteampy notes that Steam returns at most 100 with an access token
+    /// (`webapi/services/econ.py:7`); not verified: live, all 34 trades of an account came.
+    pub async fn trade(&self, trade_id: TradeId) -> Result<Option<Trade>, TradeError> {
+        let trades = self.trades(TradeQuery::default()).await?;
+        Ok(trades.into_iter().find(|trade| trade.id == trade_id))
+    }
+
+    /// How long a trade with the owner of `link` would be held, from `GetTradeHoldDurations` as ArchiSteamFarm asks
+    /// (`ArchiSteamFarm/Steam/Integration/ArchiWebHandler.cs:1771-1837`): Steam's `both_escrow`, zero when there is no
+    /// hold. `GET https://api.steampowered.com/IEconService/GetTradeHoldDurations/v1` with `access_token`,
+    /// `steamid_target` and `trade_offer_access_token`.
+    ///
+    /// Seen live (2026-10-22): two accounts without a hold got `both_escrow` 0 (`Ok` of zero). A link whose token
+    /// isn't the partner's got HTTP 200, `x-eresult: 15` and `{"response":{}}`: [`TradeError::Steam`] with
+    /// `EResult::AccessDenied`.
+    ///
+    /// # Errors
+    ///
+    /// [`TradeError::Steam`] with Steam's `x-eresult` (`AccessDenied` for a wrong token).
+    /// [`TradeError::TradeHoldUnknown`] when an answer without an error code has no `both_escrow`; not seen live,
+    /// ArchiSteamFarm treats it as a failure (`ArchiWebHandler.cs:1829-1835`).
+    pub async fn trade_hold(&self, link: &TradeLink) -> Result<Duration, TradeError> {
+        let api_client = self.web_api().await?;
+        let answer = trade_hold_request(&api_client, link)
+            .execute_with_response()
+            .map_err(web_api_error)
+            .await?;
+        hold_of(answer)
     }
 
     /// `steamid`'s inventory in `context`, every page of it, as Steam sent it: read its items with
@@ -331,9 +564,9 @@ impl SteamTradeManager {
     ///
     /// # Errors
     ///
-    /// HTTP 429 and other non-2xx answers as for every Steam Community request; [`TradeError::GeneralError`] if the
-    /// answer isn't an inventory with `success: 1`, or a page can't be followed (a repeated one, or more than 100):
-    /// never an incomplete list.
+    /// HTTP 429, other non-2xx answers and a redirect to the login page, as for every Steam Community request;
+    /// [`TradeError::UnexpectedResponse`] if the answer isn't an inventory with `success: 1`, or a page can't be
+    /// followed (a repeated one, or more than 100): never an incomplete list.
     pub async fn inventory(&self, steamid: SteamID, context: InventoryContext) -> Result<Inventory, TradeError> {
         let steam64 = steamid.to_steam64();
         read_all_inventory_pages(|start| async move {
@@ -348,458 +581,107 @@ impl SteamTradeManager {
         self.inventory(self.authenticator.steam_id(), context).await
     }
 
-    /// This account's trade link, which others send it offers with.
+    /// This account's trade link, which others send it offers with, read from its trade offer privacy page
+    /// (`GET https://steamcommunity.com/profiles/{steamid}/tradeoffers/privacy`), as node-steamcommunity
+    /// (`index.js:310-325`, `getTradeURL`) and aiosteampy (`aiosteampy/client/state.py:280-293`, `sync_trade_token`)
+    /// do.
     ///
-    /// Asks the Web API for the account's trade offer token, as ArchiSteamFarm asks over CM
-    /// (`ArchiSteamFarm/Steam/Integration/ArchiHandler.cs:489-511`, `IEconService.GetTradeOfferAccessToken`):
-    /// `GET https://api.steampowered.com/IEconService/GetTradeOfferAccessToken/v1/?access_token=…`, with the session's
-    /// access token. If that fails, reads the link from the account's trade offer
-    /// privacy page (`GET https://steamcommunity.com/profiles/{steamid}/tradeoffers/privacy`), as node-steamcommunity
-    /// (`index.js:310-324`, `getTradeURL`) and aiosteampy (`client/state.py:279-292`, `sync_trade_token`) do.
+    /// The Web API has no `IEconService/GetTradeOfferAccessToken`: it answered HTTP 404 with an access token (seen
+    /// live on 2026-10-22). ArchiSteamFarm asks for the token over CM instead
+    /// (`ArchiSteamFarm/Steam/Integration/ArchiHandler.cs:488-511`).
     ///
-    /// **New requests, not verified against live Steam** through this method: the Web API call has never been sent by
-    /// us; the privacy page was read live by the full_trade example on 2026-10-20 (not kept in the fixtures).
+    /// Seen live (2026-10-22, after `login_with_client`): the page redirects to `market/eligibilitycheck/` and back,
+    /// then answers with the link.
     ///
     /// # Errors
     ///
-    /// The privacy page's error when both fail (the Web API's is logged), [`TradeError::GeneralError`] if the page
-    /// has no trade link of this account.
-    pub async fn my_trade_link(&self) -> Result<Tradelink, TradeError> {
+    /// Those of every Steam Community request (see the crate docs), [`TradeError::UnexpectedResponse`] if the page has
+    /// no trade link of this account.
+    pub async fn my_trade_link(&self) -> Result<TradeLink, TradeError> {
         let steam_id = self.authenticator.steam_id();
-        let access_token = self.authenticator.access_token().await.map_err(InternalError::from)?;
-        let token = self
-            .get_body(format!(
-                "{}?access_token={}",
-                TRADE_OFFER_ACCESS_TOKEN_URL,
-                access_token.expose_secret()
-            ))
-            .await
-            .and_then(|body| trade_offer_access_token(&body));
-        match token {
-            Ok(token) => trade_link_of(steam_id, &token),
-            Err(error) => {
-                warn!(
-                    "GetTradeOfferAccessToken failed, reading the trade offer privacy page instead: {}",
-                    error
-                );
-                let url = format!(
-                    "https://steamcommunity.com/profiles/{}/tradeoffers/privacy",
-                    steam_id.to_steam64()
-                );
-                trade_link_on_privacy_page(&self.get_body(url).await?, steam_id)
-            }
-        }
+        let url = format!(
+            "https://steamcommunity.com/profiles/{}/tradeoffers/privacy",
+            steam_id.to_steam64()
+        );
+        trade_link_on_privacy_page(&self.get_body(url).await?, steam_id)
     }
 
-    /// The body of a GET of `url` with the session's cookies, if Steam answered 2xx.
+    /// Creates `offer` and confirms it: [`SteamTradeManager::create_offer`], a second's wait, then
+    /// [`SteamTradeManager::confirm_offers`] with its id. Returns its id.
+    ///
+    /// A confirmation found is always accepted, whatever Steam's answer to the create said. Without one, that answer
+    /// decides, as node-steam-tradeoffer-manager reads it (`lib/classes/TradeOffer.js:452-475`): [`Needs::Nothing`]
+    /// is a sent offer, even when the confirmations could not be fetched.
+    ///
+    /// The offer isn't accepted by this account after the create, as no sibling library does (node-steam-tradeoffer-
+    /// manager refuses, `lib/classes/TradeOffer.js` ~558-561): this crate did until 0.7.
+    ///
+    /// # Errors
+    ///
+    /// Those of `create_offer`. Once the offer exists, every error carries its id:
+    /// [`TradeError::ConfirmationNotFound`] if Steam said it needs a mobile confirmation and none was found,
+    /// [`TradeError::OfferCreatedButNotConfirmed`] for any other failure (with [`TradeError::NeedsEmailConfirmation`]
+    /// inside if Steam waits for an email one).
+    pub async fn send(&self, offer: &OfferRequest) -> Result<OfferId, TradeError> {
+        let created = self.create_offer(offer).await?;
+        Delay::new(STANDARD_DELAY).await;
+        sent_offer(created, self.confirm(&[created.id]).await)
+    }
+
+    /// Accepts `offer`, an offer made to this account, and confirms the accept when Steam asks for a mobile
+    /// confirmation: [`SteamTradeManager::post_accept`], then [`SteamTradeManager::confirm_offers`].
+    ///
+    /// **Note: This is irreversable, be extra careful when accepting any trade offer.**
+    ///
+    /// Returns the trade's id from Steam's answer to the accept (`{"tradeid": "…"}`, seen live on 2026-10-20); `None`
+    /// after a mobile confirmation (see [`Accepted::trade_id`]).
+    ///
+    /// One accept at a time per manager, as [`SteamTradeManager::post_accept`].
+    ///
+    /// # Errors
+    ///
+    /// [`TradeError::NeedsEmailConfirmation`] if Steam waits for an email confirmation instead,
+    /// [`TradeError::ConfirmationNotFound`] if it asked for a mobile one and none was found.
+    pub async fn accept(&self, offer: &Offer) -> Result<Accepted, TradeError> {
+        let _accepting = self.accepting.lock().await;
+        let posted = self.post_accept_unlocked(offer).await?;
+        let trade_id = accept_steps(offer.id, posted, || {
+            self.confirm_offers(std::slice::from_ref(&offer.id))
+        })
+        .await?;
+        Ok(Accepted { trade_id })
+    }
+
+    /// The body of a GET of `url` with the session's cookies, if Steam answered 2xx and didn't redirect to its login
+    /// page.
     async fn get_body(&self, url: String) -> Result<String, TradeError> {
         let response = self
             .authenticator
             .request_custom_endpoint(url, Method::GET, None, None::<()>)
             .err_into::<InternalError>()
             .await?;
-        let status = response.status();
-        let url = response.url().clone();
-        let body = response.text().err_into::<InternalError>().await?;
+        let (status, url, body) = community_answer(response).await?;
         status_check(status, &url, &body)?;
         Ok(body)
     }
 
-    /// Returns a single trade offer, among the active ones.
-    ///
-    /// # Errors
-    ///
-    /// Fails like [`SteamTradeManager::get_trade_offers`], except for offers that could not be read: only one that
-    /// may be this offer fails the call, with [`TradeError::MalformedOffer`] if it has this id, or
-    /// [`TradeError::MalformedOffers`] if its id could not be read and this offer is not among the others. An offer
-    /// whose items can't be trusted is returned: check `offer.has_malformed_items()` before acting on its items.
-    pub async fn get_tradeoffer_by_id(&self, tradeoffer_id: u64) -> Result<Vec<TradeOffer_Trade>, TradeError> {
-        let offers = self.fetch_trade_offers(true, true, true).await?;
-        offers_with_id(offers, tradeoffer_id)
-    }
-
-    /// Returns the new asset ids for a trade of `tradeid`.
-    ///
-    /// Convenience function that internally calls `get_trade_offers_history` but filters it directly.
-    ///
-    /// # Errors
-    ///
-    /// [`TradeError::TradeNotInHistory`] if the trade is not among the last 500 trades, and
-    /// [`TradeError::TradeNotSettled`] if an asset has no new asset id yet: never a list that leaves an asset out.
-    pub async fn get_new_assetids(&self, tradeid: i64) -> Result<Vec<i64>, TradeError> {
-        let history = self.get_trade_offers_history(None, false).await?;
-        new_assetids(history, tradeid)
-    }
-
-    /// Returns when the items of trade `tradeid` stop being trade protected, as Unix time, or `None` if Steam sends
-    /// no such time for the trade.
-    ///
-    /// The time is Steam's own (`time_settlement` in `GetTradeHistory`), not an estimate. Seen live on 2026-10-20: a
-    /// CS2 trade accepted at 15:34:44 UTC ended at 16:00 UTC seven days later, the time its item's inventory
-    /// description gave ("until 27 Oct @ 9:00am", US Pacific); trades from 2023 had no time. Whether Steam keeps the
-    /// time once the protection is over is not checked yet.
-    ///
-    /// # Errors
-    ///
-    /// [`TradeError::TradeNotInHistory`] if the trade is not among the last 500 trades.
-    pub async fn trade_lock_end(&self, tradeid: i64) -> Result<Option<i64>, TradeError> {
-        let history = self.get_trade_offers_history(None, false).await?;
-        lock_end(history, tradeid)
-    }
-
-    /// Convenience function to auto decline *received* offers.
-    ///
-    /// Helps to keep the trade offers log clean of the total trade offer limit, if there is one.
-    ///
-    /// Declines one offer at a time, waiting a second between them. Returns each declined offer's id with its
-    /// result: a failed decline doesn't stop the others.
-    ///
-    /// Offers whose items can't be trusted are declined like any other.
-    ///
-    /// # Errors
-    ///
-    /// Only if the offers could not be fetched, as with [`SteamTradeManager::get_trade_offers`]: also when Steam sent
-    /// an offer that could not be read, rather than decline the others and leave an unknown one pending unreported.
-    /// It then fails every time until that offer is gone: see [`TradeError::MalformedOffers`].
-    pub async fn decline_received_offers(&self) -> Result<Vec<(u64, Result<(), TradeError>)>, TradeError> {
-        let active_received_offers: Vec<TradeOffer_Trade> = self
-            .get_trade_offers(true, true, true)
-            .map_ok(|tradeoffers| {
-                tradeoffers.filter_by(|offer| offer.state == ETradeOfferState::Active && !offer.is_our_offer)
-            })
-            .await?;
-
-        let mut results = Vec::with_capacity(active_received_offers.len());
-        for (index, tradeoffer_id) in active_received_offers.iter().map(|x| x.tradeofferid).enumerate() {
-            if index > 0 {
-                Delay::new(Duration::from_millis(STANDARD_DELAY)).await;
-            }
-            results.push((tradeoffer_id, self.deny_offer(tradeoffer_id).await));
-        }
-
-        debug!(
-            "Successfully denied {} of {} received offers.",
-            results.iter().filter(|(_, result)| result.is_ok()).count(),
-            results.len()
-        );
-
-        Ok(results)
-    }
-
-    /// Creates a new trade offer, and confirms it with the inner [`SteamAuthenticator`].
-    ///
-    /// Returns the `tradeoffer_id` on success.
-    ///
-    /// After creating the offer, it still POSTs an accept of it, as it always did, but a failure there is only logged.
-    /// It then looks for the offer's mobile confirmation and accepts it if found. When Steam's answer to the creation
-    /// asks for no confirmation, the offer is live: it is returned as created even if confirmations could not be
-    /// fetched.
-    ///
-    /// # Errors
-    ///
-    /// Once the offer exists, every error carries its id: [`ConfirmationError::NotFoundButTradeCreated`] if Steam
-    /// said the offer needs a mobile confirmation and none was found, [`TradeError::OfferCreatedButNotConfirmed`] for
-    /// any other failure (with [`TradeError::NeedsEmailConfirmation`] inside if Steam waits for an email one).
-    pub async fn create_offer_and_confirm(&self, tradeoffer: TradeOffer) -> Result<u64, TradeError> {
-        let created: TradeOfferCreateResponse = self.request(TradeKind::Create(tradeoffer), None).await?;
-        let tradeoffer_id = created_offer_id(&created)?;
-        Delay::new(Duration::from_millis(STANDARD_DELAY)).await;
-        self.confirm_created_offer(tradeoffer_id, &created)
-            .await
-            .map_err(|error| offer_created_error(tradeoffer_id, error))?;
-        Ok(tradeoffer_id)
-    }
-
-    /// Confirms an offer this account just created, as [`confirm_created_offer_steps`] describes.
-    async fn confirm_created_offer(
-        &self,
-        tradeoffer_id: u64,
-        created: &TradeOfferCreateResponse,
-    ) -> Result<(), TradeError> {
-        confirm_created_offer_steps(
-            tradeoffer_id,
-            created,
-            self.request::<TradeOfferCreateResponse>(TradeKind::Accept, Some(tradeoffer_id)),
-            self.find_trade_confirmation(tradeoffer_id),
-            |confirmation| self.accept_confirmation(confirmation),
-        )
-        .await
-    }
-
-    /// The mobile confirmation of the trade offer `tradeoffer_id`, if there is one.
-    async fn find_trade_confirmation(&self, tradeoffer_id: u64) -> Result<Option<Confirmation>, TradeError> {
-        Ok(self
-            .authenticator
-            .fetch_confirmations()
-            .inspect_ok(|_| debug!("Confirmations fetched successfully."))
-            .await?
-            .into_iter()
-            .find(|c| c.has_trade_offer_id(tradeoffer_id)))
-    }
-
-    /// Accepts `confirmation`, after acknowledging trade protection if this manager hasn't yet: Steam refuses to
-    /// confirm trades of trade-protected items before (seen live 2026-10-20).
-    async fn accept_confirmation(&self, confirmation: Confirmation) -> Result<(), TradeError> {
-        acknowledge_once(&self.acknowledged, || self.acknowledge_trade_protection()).await;
-        self.authenticator
-            .process_confirmations(ConfirmationAction::Accept, std::iter::once(confirmation))
-            .err_into()
-            .await
-    }
-
-    /// Creates a new trade offer and return its `tradeoffer_id`.
-    pub async fn create_offer(&self, tradeoffer: TradeOffer) -> Result<u64, TradeError> {
-        let response: TradeOfferCreateResponse = self.request(TradeKind::Create(tradeoffer), None).await?;
-        created_offer_id(&response)
-    }
-
-    /// Accepts a trade offer made to this account and confirms it with inner [SteamAuthenticator]
-    ///
-    /// **Note: This is irreversable, be extra careful when accepting any trade offer.**
-    ///
-    /// Confirms only when Steam answers `needs_mobile_confirmation: true`; without it, the accept is done.
-    ///
-    /// Returns the id of the trade the offer became, from Steam's answer to the accept (`{"tradeid": "…"}`, seen live
-    /// on 2026-10-20). `None` when Steam asked for a mobile confirmation: that answer has no trade id, and neither has
-    /// the confirmation's. The offer has it then: `get_trade_offers(false, true, false)` lists accepted offers too.
-    ///
-    /// One accept at a time per manager: a call waits for the accept in progress, also one of
-    /// `accept_offer_and_find_items` (feature `cs2`). Use one manager per account.
-    ///
-    /// # Errors
-    ///
-    /// [`TradeError::NeedsEmailConfirmation`] if Steam waits for an email confirmation instead.
-    pub async fn accept_offer(&self, tradeoffer_id: u64) -> Result<Option<i64>, TradeError> {
-        let _accepting = self.accepting.lock().await;
-        let partner = self.accept_partner(tradeoffer_id).await?;
-        self.accept_with_partner(tradeoffer_id, partner).await
-    }
-
-    /// The `partner` sent to accept the offer `tradeoffer_id`, from a lookup among the active offers.
-    async fn accept_partner(&self, tradeoffer_id: u64) -> Result<u64, TradeError> {
-        Ok(self
-            .get_tradeoffer_by_id(tradeoffer_id)
-            .await?
-            .first()
-            .map(accept_partner_of)
-            .ok_or(OfferError::NoMatch)?)
-    }
-
-    /// [`SteamTradeManager::accept_offer`] once the offer was looked up. The caller holds the accept lock.
-    async fn accept_with_partner(&self, tradeoffer_id: u64, partner: u64) -> Result<Option<i64>, TradeError> {
-        let resp = self.send_accept(tradeoffer_id, partner).await?;
-        self.confirm_accept(tradeoffer_id, &resp).await
-    }
-
-    /// Sends the accept of the offer `tradeoffer_id`: Steam's answer.
-    async fn send_accept(&self, tradeoffer_id: u64, partner: u64) -> Result<TradeOfferCreateResponse, TradeError> {
-        self.send_request(TradeKind::Accept, Some(tradeoffer_id), Some(partner))
-            .await
-    }
-
-    /// Confirms the accept Steam answered with `resp`, if it asks for a mobile confirmation. Returns the trade id, as
-    /// [`SteamTradeManager::accept_offer`] does.
-    async fn confirm_accept(
-        &self,
-        tradeoffer_id: u64,
-        resp: &TradeOfferCreateResponse,
-    ) -> Result<Option<i64>, TradeError> {
-        match accept_outcome(resp) {
-            AcceptOutcome::Done => return Ok(accepted_trade_id(resp)),
-            AcceptOutcome::NeedsEmailConfirmation => {
-                return Err(TradeError::NeedsEmailConfirmation { tradeoffer_id });
-            }
-            AcceptOutcome::NeedsMobileConfirmation => {}
-        }
-
-        let confirmation = self
-            .find_trade_confirmation(tradeoffer_id)
-            .await?
-            .ok_or_else(|| TradeError::from(ConfirmationError::NotFound))?;
-        self.accept_confirmation(confirmation).await.map(|()| None)
-    }
-
-    /// Denies a trade offer sent to this account.
-    ///
-    /// # Errors
-    ///
-    /// Will error if couldn't deny the trade offer.
-    pub async fn deny_offer(&self, tradeoffer_id: u64) -> Result<(), TradeError> {
-        self.request::<TradeOfferCancelResponse>(TradeKind::Decline, Some(tradeoffer_id))
-            .await
-            .map(|_| ())
-    }
-
-    /// Cancel a trade offer sent by this account.
-    ///
-    /// # Errors
-    ///
-    /// Will error if couldn't cancel the tradeoffer.
-    pub async fn cancel_offer(&self, tradeoffer_id: u64) -> Result<(), TradeError> {
-        self.request::<TradeOfferCancelResponse>(TradeKind::Cancel, Some(tradeoffer_id))
-            .await
-            .map(|_| ())
-    }
-
-    /// Acknowledges Steam's trade protection notice for this account: `POST /trade/new/acknowledge`, as the
-    /// browser does when the notice is dismissed.
-    ///
-    /// The manager calls it before its first confirmation (in [`SteamTradeManager::create_offer_and_confirm`] and
-    /// when an accept needs one); it is public for bots that confirm through steam-mobile directly. Once per account
-    /// is enough. Steam requires it to confirm trades of trade-protected items: live (2026-10-20, CS2), confirming
-    /// such an offer answered `{"success":false}` until the account acknowledged, then `{"success":true}`. Steam
-    /// answered `[]`; any 2xx answer without a `strError` is taken as success. ArchiSteamFarm sends it before trading
-    /// items of other games than Steam's own (appid 753); node-steamcommunity has it as
-    /// `acknowledgeTradeProtection()`.
-    pub async fn acknowledge_trade_protection(&self) -> Result<(), TradeError> {
-        let (status, url, text) = self.post_community_form(Self::acknowledge_request()).await?;
-        check_response(status, &url, &text)
-    }
-
-    fn acknowledge_request() -> PreparedRequest {
-        PreparedRequest {
-            url: TRADE_PROTECTION_ACKNOWLEDGE_URL.to_string(),
-            headers: None,
-            form: Box::<TradeProtectionAcknowledgeRequest>::default(),
-        }
-    }
-
-    /// Check current session health, injects SessionID cookie, and send the request.
-    async fn request<OUTPUT>(&self, operation: TradeKind, tradeoffer_id: Option<u64>) -> Result<OUTPUT, TradeError>
+    /// Posts `request` and reads Steam's answer as an `OUTPUT`, see [`answer_of`].
+    async fn send_request<OUTPUT>(&self, request: PreparedRequest) -> Result<OUTPUT, TradeError>
     where
-        OUTPUT: DeserializeOwned + Send + Sync,
+        OUTPUT: DeserializeOwned,
     {
-        let accept_partner = match &operation {
-            TradeKind::Accept => Some(self.accept_partner(tradeoffer_id.unwrap()).await?),
-            _ => None,
-        };
-        self.send_request(operation, tradeoffer_id, accept_partner).await
+        let (status, url, body) = self.post_community_form(request).await?;
+        check_response(status, &url, &body)?;
+        answer_of(&body)
     }
 
-    /// [`SteamTradeManager::request`] once the offer to accept was looked up: `accept_partner` is the `partner` sent
-    /// to accept.
-    async fn send_request<OUTPUT>(
-        &self,
-        operation: TradeKind,
-        tradeoffer_id: Option<u64>,
-        accept_partner: Option<u64>,
-    ) -> Result<OUTPUT, TradeError>
-    where
-        OUTPUT: DeserializeOwned + Send + Sync,
-    {
-        #[cfg(feature = "additional-checks")]
-        let partner_id_and_token = match &operation {
-            TradeKind::Create(offer) => Some((offer.their_tradelink.partner_id, offer.their_tradelink.token.clone())),
-            _ => None,
-        };
-
-        let request = Self::prepare_request(operation, tradeoffer_id, accept_partner)?;
-        let (status, url, response_text) = self.post_community_form(request).await?;
-        check_response(status, &url, &response_text)?;
-
-        match serde_json::from_str::<OUTPUT>(&response_text) {
-            Ok(response) => Ok(response),
-            Err(_) => {
-                // try to match into a generic message
-                if let Ok(resp) = serde_json::from_str::<TradeOfferGenericErrorResponse>(&response_text) {
-                    if let Some(eresult) = resp.eresult {
-                        Err(tradeoffer_error_from_eresult(eresult).into())
-                    } else {
-                        tracing::error!("Unable to understand Steam Response. Please report it as bug.");
-                        Err(OfferError::GeneralFailure(format!(
-                            "Steam Response: {}\nThis is a bug, please report it.",
-                            response_text
-                        ))
-                        .into())
-                    }
-                } else {
-                    #[cfg(feature = "additional-checks")]
-                    if let Some((steamid, token)) = partner_id_and_token {
-                        match check_steam_guard_error(&self.authenticator, steamid, &token).await {
-                            Err(error @ TradeError::TradeOfferError(OfferError::SteamGuardRecentlyEnabled)) => {
-                                return Err(error)
-                            }
-                            // The check is a second request; its own failure is not why the first one failed.
-                            Err(error) => warn!("Could not check the partner's Steam Guard: {}", error),
-                            Ok(()) => {}
-                        }
-                    }
-
-                    tracing::error!(
-                        "Failure to deserialize a valid response Steam Offer response. Maybe Steam Servers are \
-                         offline."
-                    );
-                    Err(OfferError::GeneralFailure(format!("Steam Response: {}", response_text)).into())
-                }
-            }
-        }
-    }
-
-    /// The URL, headers and form of a trade offer operation. `accept_partner` is the `partner` sent to accept.
-    fn prepare_request(
-        operation: TradeKind,
-        tradeoffer_id: Option<u64>,
-        accept_partner: Option<u64>,
-    ) -> Result<PreparedRequest, TradeError> {
-        let tradeoffer_endpoint = operation.endpoint(tradeoffer_id);
-
-        let mut header: Option<HeaderMap> = None;
-
-        match &operation {
-            TradeKind::Create(_) => {
-                header.replace(HeaderMap::new());
-                header
-                    .as_mut()
-                    .unwrap()
-                    .insert("Referer", (TRADEOFFER_BASE.to_owned() + "new").parse().unwrap());
-            }
-            TradeKind::Accept => {
-                header.replace(HeaderMap::new());
-                header.as_mut().unwrap().insert(
-                    "Referer",
-                    format!("{}{}/", TRADEOFFER_BASE, tradeoffer_id.unwrap())
-                        .parse()
-                        .unwrap(),
-                );
-            }
-            _ => {}
-        };
-
-        let request: Box<dyn HasSessionID> = match operation {
-            TradeKind::Accept => {
-                let trade_request_data = TradeOfferAcceptRequest {
-                    common: TradeOfferCommonParameters {
-                        their_steamid: accept_partner.ok_or(OfferError::NoMatch)?,
-                        ..Default::default()
-                    },
-                    tradeofferid: tradeoffer_id.unwrap(),
-                    ..Default::default()
-                };
-
-                debug!("{:#}", serde_json::to_string_pretty(&trade_request_data).unwrap());
-                Box::new(trade_request_data)
-            }
-
-            TradeKind::Cancel | TradeKind::Decline => Box::<TradeOfferGenericRequest>::default(),
-            TradeKind::Create(offer) => Box::new(Self::prepare_offer(offer)?),
-        };
-
-        Ok(PreparedRequest {
-            url: tradeoffer_endpoint,
-            headers: header,
-            form: request,
-        })
-    }
-
-    /// Adds the session's `sessionid` to the form, posts it, and returns the answer's status, URL and body.
+    /// Adds the session's `sessionid` to the form, posts it, and returns the answer's status, URL and body, unless
+    /// Steam redirected to its login page.
     async fn post_community_form(&self, request: PreparedRequest) -> Result<(StatusCode, Url, String), TradeError> {
-        // TODO: Check if session is ok, then inject cookie
         let session_id_cookie = self
             .authenticator
             .dump_cookie(STEAM_COMMUNITY_HOST, "sessionid")
-            .ok_or_else(|| {
-                GeneralError("Somehow you don't have a sessionid cookie. You need to login first.".to_string())
-            })?;
+            .ok_or(TradeError::NoSessionId)?;
 
         let form = with_session_id(request.form, session_id_cookie);
 
@@ -808,44 +690,31 @@ impl SteamTradeManager {
             .request_custom_endpoint(request.url, Method::POST, request.headers, Some(form))
             .err_into::<InternalError>()
             .await?;
-        let status = response.status();
-        let url = response.url().clone();
-        let response_text = response.text().err_into::<InternalError>().await?;
-
-        Ok((status, url, response_text))
+        community_answer(response).await
     }
+}
 
-    /// Checks that the tradeoffer is valid, and process it, getting the trade token and steamid3, into a
-    /// `TradeOfferCreateRequest`, ready to send it.
-    fn prepare_offer(tradeoffer: TradeOffer) -> Result<TradeOfferCreateRequest, TradeError> {
-        TradeOffer::validate(&tradeoffer.my_assets, &tradeoffer.their_assets)?;
-
-        let tradelink = tradeoffer.their_tradelink.clone();
-
-        let their_steamid64 = tradelink.partner_id.to_steam64();
-        let trade_offer_params = TradeOfferParams {
-            trade_offer_access_token: tradelink.token,
-        };
-
-        Ok(TradeOfferCreateRequest::new(
-            their_steamid64,
-            tradeoffer,
-            trade_offer_params,
-        ))
-    }
+/// The status, URL (after redirects) and body of Steam's answer to a Steam Community request, unless Steam redirected
+/// it to its login page ([`login_redirect_check`]).
+async fn community_answer(response: Response) -> Result<(StatusCode, Url, String), TradeError> {
+    let status = response.status();
+    let url = response.url().clone();
+    login_redirect_check(&url)?;
+    let body = response.text().err_into::<InternalError>().await?;
+    Ok((status, url, body))
 }
 
 #[cfg(feature = "cs2")]
 impl SteamTradeManager {
-    /// Makes [`SteamTradeManager::accept_offer_and_find_items`] wait up to `timeout` for the received items, instead
-    /// of 60 s.
+    /// Makes [`SteamTradeManager::accept_and_find_items`] wait up to `timeout` for the received items, instead of
+    /// 60 s.
     pub fn with_received_items_timeout(mut self, timeout: Duration) -> Self {
         self.received_items_timeout = timeout;
         self
     }
 
-    /// Accepts and finds where the items received went, through CS2's game coordinator: since 2026-04 Steam's trade
-    /// history doesn't say for CS2 trades. Use it instead of [`SteamTradeManager::accept_offer`] when the received
+    /// Accepts `offer` and finds where the items received went, through CS2's game coordinator: since 2026-04 Steam's
+    /// trade history doesn't say for CS2 trades. Use it instead of [`SteamTradeManager::accept`] when the received
     /// items matter. Feature `cs2`.
     ///
     /// **Note: This is irreversable, be extra careful when accepting any trade offer.**
@@ -858,11 +727,11 @@ impl SteamTradeManager {
     /// the call only looks at [`Cs2::inventory`], which reads what came and leaves them as events (kept up to `Cs2`'s
     /// event capacity, then counted as `Lagged`). Steps:
     ///
-    /// 1. Looks the offer up, as `accept_offer` does, and takes the items to receive. Entries that can't be read are
-    ///    left out (check `has_malformed_items()` first); stackable items (`amount` > 1) count as one.
+    /// 1. Takes the offer's items to receive ([`Offer::take`]). Entries that couldn't be read are left out (check
+    ///    [`Offer::has_malformed_items`] first); stackable items (`amount` > 1) count as one.
     /// 2. Notes the game coordinator's item ids. Fails with [`TradeError::Cs2InventoryUnavailable`] if its inventory
     ///    isn't current: nothing is accepted.
-    /// 3. Accepts, as `accept_offer`.
+    /// 3. Accepts, as [`SteamTradeManager::accept`].
     /// 4. Waits for the new ids, looking at the local inventory every 250 ms (no request), until each CS2 item with a
     ///    fingerprint has a new item that matches it and the new items left are at least as many as the CS2 items
     ///    without one, or 60 s passed ([`SteamTradeManager::with_received_items_timeout`]). Items from elsewhere
@@ -877,9 +746,10 @@ impl SteamTradeManager {
     ///
     /// Web reads: none when every CS2 item received has a fingerprint, else one of our own. Steam rate limits them.
     ///
-    /// One accept at a time per manager: this holds the accept lock of `accept_offer` until the items are placed.
+    /// One accept at a time per manager: this holds the accept lock of `accept` until the items are placed.
     ///
-    /// **Not verified against live Steam yet.**
+    /// Seen live once (2026-10-22): an offer needing a mobile confirmation, one CS2 item received, placed
+    /// [`Located::Exact`] from the game coordinator alone. [`Located::AnyOfKind`] and the timeout here were not.
     ///
     /// # Errors
     ///
@@ -889,35 +759,28 @@ impl SteamTradeManager {
     /// ids to `find_received_items`. Once accepted, [`TradeError::AcceptedButItemsNotFound`] with the trade id and
     /// those ids, for a failure of the game coordinator (the client stopped) or of the read of our web inventory: pass
     /// them to `find_received_items` later. Items not found in time are no error: [`Located::NotFound`].
-    pub async fn accept_offer_and_find_items(
+    pub async fn accept_and_find_items(
         &self,
-        tradeoffer_id: u64,
-        fingerprints: &HashMap<u64, Fingerprint>,
+        offer: &Offer,
+        fingerprints: &HashMap<AssetId, Fingerprint>,
         cs2: &mut Cs2,
     ) -> Result<AcceptedOffer, TradeError> {
         let _accepting = self.accepting.lock().await;
-        let offer = self
-            .get_tradeoffer_by_id(tradeoffer_id)
-            .await?
-            .into_iter()
-            .next()
-            .ok_or(OfferError::NoMatch)?;
-        let accept_partner = accept_partner_of(&offer);
-        let received = received_assets(&offer);
-
         received::accept_and_locate(
-            tradeoffer_id,
-            received,
+            offer.id,
+            offer.take.clone(),
             fingerprints,
             cs2,
             move || async move {
-                let resp = self
-                    .send_accept(tradeoffer_id, accept_partner)
+                let posted = self
+                    .post_accept_unlocked(offer)
                     .await
                     .map_err(received::AcceptFailed::NotSent)?;
-                self.confirm_accept(tradeoffer_id, &resp)
-                    .await
-                    .map_err(received::AcceptFailed::NotConfirmed)
+                accept_steps(offer.id, posted, || {
+                    self.confirm_offers(std::slice::from_ref(&offer.id))
+                })
+                .await
+                .map_err(received::AcceptFailed::NotConfirmed)
             },
             move || self.own_inventory(InventoryContext::CS2_TRADE_PROTECTED),
             received::Wait::new(self.received_items_timeout),
@@ -928,9 +791,10 @@ impl SteamTradeManager {
     /// Finds where the items received went in an offer the partner accepted, such as one this account sent, through
     /// CS2's game coordinator. Nothing is accepted and nothing is waited for. Feature `cs2`.
     ///
-    /// `offer` is the accepted offer as Steam lists it (`get_trade_offers` lists accepted offers with `active_only:
-    /// false`); its items to receive are those to find, with the partner's asset ids. Entries that can't be read are left out (check
-    /// `has_malformed_items()` first); stackable items (`amount` > 1) count as one.
+    /// `offer` is the accepted offer ([`SteamTradeManager::offer`], or [`SteamTradeManager::offers`] with
+    /// [`OfferQuery::ALL`]); its items to receive ([`Offer::take`]) are those to find, with the partner's asset ids.
+    /// Entries that couldn't be read are left out (check [`Offer::has_malformed_items`] first); stackable items
+    /// (`amount` > 1) count as one.
     ///
     /// The caller says what it knows:
     ///
@@ -952,11 +816,12 @@ impl SteamTradeManager {
     /// are once it ended isn't verified, so for an offer older than its protection, commodities may be
     /// [`Located::NotFound`].
     ///
-    /// **Not verified against live Steam yet.**
+    /// Seen live once (2026-10-22): one case received, placed [`Located::AnyOfKind`] from context 16.
+    /// [`Located::Exact`] here was not.
     ///
     /// # Errors
     ///
-    /// [`TradeError::OfferNotAccepted`] if `offer` isn't accepted (`trade_offer_state` 3): nothing was looked up.
+    /// [`TradeError::OfferNotAccepted`] if `offer` isn't [`OfferState::Accepted`]: nothing was looked up.
     /// [`TradeError::Cs2InventoryUnavailable`] while the game coordinator's inventory isn't current (it can't tell
     /// what is there): nothing was looked up, try again once it is. Not when the offer has no CS2 item to receive:
     /// those are [`Located::NotFound`] without a look. [`TradeError::GameCoordinatorError`] if the client stopped. The
@@ -964,12 +829,12 @@ impl SteamTradeManager {
     /// nothing is placed, try again later. Items not found are no error: [`Located::NotFound`].
     pub async fn find_received_items(
         &self,
-        offer: &TradeOffer_Trade,
-        known_ids: &HashSet<u64>,
-        fingerprints: &HashMap<u64, Fingerprint>,
+        offer: &Offer,
+        known_ids: &HashSet<AssetId>,
+        fingerprints: &HashMap<AssetId, Fingerprint>,
         cs2: &mut Cs2,
     ) -> Result<Vec<ReceivedItem>, TradeError> {
-        let received = accepted_received_assets(offer)?;
+        let received = accepted_received_items(offer)?;
         received::find_and_locate(received, known_ids, fingerprints, cs2, || {
             self.own_inventory(InventoryContext::CS2_TRADE_PROTECTED)
         })
@@ -977,28 +842,17 @@ impl SteamTradeManager {
     }
 }
 
-/// The items `offer` gave this account, those that can be read; [`TradeError::OfferNotAccepted`] unless it was
-/// accepted. An accepted CS2 offer is state 3, its items there at once (seen live).
+/// The items `offer` gave this account, those that could be read; [`TradeError::OfferNotAccepted`] unless it was
+/// accepted. An accepted CS2 offer is [`OfferState::Accepted`], its items there at once (seen live).
 #[cfg(feature = "cs2")]
-fn accepted_received_assets(offer: &TradeOffer_Trade) -> Result<Vec<CEcon_Asset>, TradeError> {
-    if offer.state != ETradeOfferState::Accepted {
+fn accepted_received_items(offer: &Offer) -> Result<Vec<OfferedItem>, TradeError> {
+    if offer.state != OfferState::Accepted {
         return Err(TradeError::OfferNotAccepted {
-            tradeoffer_id: offer.tradeofferid,
+            offer_id: offer.id,
             state: offer.state,
         });
     }
-    Ok(received_assets(offer))
-}
-
-/// The items `offer` gives this account, those that can be read.
-#[cfg(feature = "cs2")]
-fn received_assets(offer: &TradeOffer_Trade) -> Vec<CEcon_Asset> {
-    offer
-        .items_to_receive
-        .iter()
-        .filter_map(OfferItem::asset)
-        .cloned()
-        .collect()
+    Ok(offer.take.clone())
 }
 
 /// The form as it is sent.
@@ -1007,29 +861,58 @@ fn with_session_id(mut form: Box<dyn HasSessionID>, sessionid: String) -> Arc<dy
     Arc::from(form)
 }
 
-/// The `partner` sent to accept `offer`.
+/// Steam's answer `body`, after [`check_response`], as an `OUTPUT`. A body that isn't one is
+/// [`TradeError::Steam`] when it has a JSON `success` code, else [`TradeError::UnexpectedResponse`].
 ///
-/// Built from the offer id, not from `accountid_other`: wrong by reading, but it is what bots send today and Steam
-/// takes it. Changing it needs a live check.
-fn accept_partner_of(offer: &TradeOffer_Trade) -> u64 {
-    SteamID::from_steam3(offer.tradeofferid as u32, None, None).to_steam64()
+/// The answers read here (create, accept, decline, cancel) have only optional fields, so any JSON object is one, also
+/// `{"success":16}`: then a create is `UnexpectedResponse` (no offer id), a decline or a cancel is `UnexpectedResponse`
+/// (not about the offer), and an accept is [`Needs::Nothing`] without a trade id. Whether Steam answers these requests
+/// with a `success` code isn't known: none of the answers in the fixtures has one.
+fn answer_of<OUTPUT: DeserializeOwned>(body: &str) -> Result<OUTPUT, TradeError> {
+    serde_json::from_str::<OUTPUT>(body).map_err(|_| {
+        match serde_json::from_str::<TradeOfferGenericErrorResponse>(body) {
+            Ok(TradeOfferGenericErrorResponse { eresult: Some(eresult) }) => {
+                TradeError::Steam { eresult, message: None }
+            }
+            _ => TradeError::UnexpectedResponse(body.to_string()),
+        }
+    })
 }
 
-fn created_offer_id(response: &TradeOfferCreateResponse) -> Result<u64, TradeError> {
-    response
+/// The `partner` sent to accept the offer `offer_id`.
+///
+/// Built from the offer id, not from the offer's partner: wrong by reading, but it is what bots send today and Steam
+/// takes it (bug 3 in `workingcontext.md`). Changing it needs a live check.
+fn accept_partner(offer_id: OfferId) -> u64 {
+    SteamID::from_steam3(offer_id.0 as u32, None, None).to_steam64()
+}
+
+/// The offer Steam's answer to a create is about.
+fn created_offer(answer: &TradeOfferCreateResponse) -> Result<CreatedOffer, TradeError> {
+    let id = answer
         .tradeofferid
         .as_deref()
-        .and_then(|id| u64::from_str(id).ok())
-        .ok_or_else(|| {
-            OfferError::GeneralFailure(format!("Steam's answer has no trade offer id: {:?}", response)).into()
-        })
+        .and_then(|id| OfferId::from_str(id).ok())
+        .ok_or_else(|| TradeError::UnexpectedResponse(format!("Steam's answer has no trade offer id: {:?}", answer)))?;
+    Ok(CreatedOffer {
+        id,
+        needs: Needs::of(answer),
+    })
+}
+
+/// Steam's answer to an accept.
+fn posted_accept(answer: &TradeOfferCreateResponse) -> PostedAccept {
+    PostedAccept {
+        trade_id: accepted_trade_id(answer),
+        needs: Needs::of(answer),
+    }
 }
 
 /// The trade id in Steam's answer to an accept. One that isn't a number is logged and left out: the accept is done
 /// either way.
-fn accepted_trade_id(response: &TradeOfferCreateResponse) -> Option<i64> {
-    let tradeid = response.tradeid.as_deref()?;
-    match i64::from_str(tradeid) {
+fn accepted_trade_id(answer: &TradeOfferCreateResponse) -> Option<TradeId> {
+    let tradeid = answer.tradeid.as_deref()?;
+    match TradeId::from_str(tradeid) {
         Ok(tradeid) => Some(tradeid),
         Err(_) => {
             warn!(
@@ -1041,46 +924,30 @@ fn accepted_trade_id(response: &TradeOfferCreateResponse) -> Option<i64> {
     }
 }
 
-#[derive(serde::Deserialize)]
-struct TradeOfferAccessTokenResponse {
-    #[serde(default)]
-    response: TradeOfferAccessToken,
-}
-
-#[derive(Default, serde::Deserialize)]
-struct TradeOfferAccessToken {
-    trade_offer_access_token: Option<String>,
-}
-
-/// The token in Steam's answer to `GetTradeOfferAccessToken` (`CEcon_GetTradeOfferAccessToken_Response`):
-/// `{"response":{"trade_offer_access_token":"…"}}`. Steam's Web API answers `{"response":{}}` when it refuses.
-fn trade_offer_access_token(body: &str) -> Result<String, TradeError> {
-    let answer: TradeOfferAccessTokenResponse = serde_json::from_str(body).map_err(|error| {
-        GeneralError(format!(
-            "Steam's GetTradeOfferAccessToken answer can't be read: {}",
-            error
-        ))
-    })?;
-    answer
-        .response
-        .trade_offer_access_token
-        .filter(|token| !token.is_empty())
-        .ok_or_else(|| GeneralError("Steam's GetTradeOfferAccessToken answer has no token.".to_string()))
+/// Whether Steam's answer to a decline or a cancel is about `offer_id`.
+fn answer_about(offer_id: OfferId, answer: &TradeOfferCancelResponse) -> Result<(), TradeError> {
+    if answer.tradeofferid.as_deref().map(OfferId::from_str) == Some(Ok(offer_id)) {
+        return Ok(());
+    }
+    Err(TradeError::UnexpectedResponse(format!(
+        "Steam's answer isn't about trade offer {}: {:?}",
+        offer_id, answer
+    )))
 }
 
 /// The trade link of `steam_id` with `token`, validated as any trade link.
-fn trade_link_of(steam_id: SteamID, token: &str) -> Result<Tradelink, TradeError> {
-    Tradelink::new(format!(
+fn trade_link_of(steam_id: SteamID, token: &str) -> Result<TradeLink, TradeError> {
+    let link = format!(
         "https://steamcommunity.com/tradeoffer/new/?partner={}&token={}",
         steam_id.account_id(),
         token
-    ))
-    .map_err(|error| TradeError::from(errors::OfferValidationError::from(error)))
+    );
+    Ok(TradeLink::parse(&link)?)
 }
 
 lazy_static::lazy_static! {
     /// The link as the privacy page shows it, in an attribute (`&amp;`) or as text; node-steamcommunity's
-    /// (`index.js:316`), ASCII only.
+    /// (`index.js:317`), ASCII only.
     static ref PRIVACY_PAGE_TRADE_LINK: regex::Regex = regex::Regex::new(
         r"https://steamcommunity\.com/tradeoffer/new/\?partner=([0-9]+)&(?:amp;)?token=([A-Za-z0-9_-]+)"
     )
@@ -1088,61 +955,16 @@ lazy_static::lazy_static! {
 }
 
 /// The trade link of `steam_id` on its trade offer privacy page. A link of another account is not taken.
-fn trade_link_on_privacy_page(page: &str, steam_id: SteamID) -> Result<Tradelink, TradeError> {
+fn trade_link_on_privacy_page(page: &str, steam_id: SteamID) -> Result<TradeLink, TradeError> {
     PRIVACY_PAGE_TRADE_LINK
         .captures_iter(page)
         .find(|link| link[1].parse::<u32>().ok() == Some(steam_id.account_id()))
-        .ok_or_else(|| GeneralError("The trade offer privacy page has no trade link of this account.".to_string()))
+        .ok_or_else(|| {
+            TradeError::UnexpectedResponse(
+                "The trade offer privacy page has no trade link of this account.".to_string(),
+            )
+        })
         .and_then(|link| trade_link_of(steam_id, &link[2]))
-}
-
-/// What is left after Steam answered an accept.
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum AcceptOutcome {
-    Done,
-    NeedsMobileConfirmation,
-    NeedsEmailConfirmation,
-}
-
-/// An absent flag is read as `false`, as node-steam-tradeoffer-manager does: an answer with neither flag set is an
-/// accepted offer (`lib/classes/TradeOffer.js:611-615`). This deliberately reverses the earlier "assume a mobile
-/// confirmation when Steam doesn't say", which failed with `ConfirmationError::NotFound` after a successful accept,
-/// e.g. of a gift. A mobile confirmation wins over an email one: it is the one this crate can give.
-fn accept_outcome(response: &TradeOfferCreateResponse) -> AcceptOutcome {
-    if response.needs_mobile_confirmation == Some(true) {
-        AcceptOutcome::NeedsMobileConfirmation
-    } else if response.needs_email_confirmation == Some(true) {
-        AcceptOutcome::NeedsEmailConfirmation
-    } else {
-        AcceptOutcome::Done
-    }
-}
-
-/// What is left after creating an offer and looking for its confirmation.
-#[derive(Debug, PartialEq)]
-enum CreatedOfferStep<C> {
-    Confirm(C),
-    Done,
-    ConfirmationNotFound,
-    NeedsEmailConfirmation,
-}
-
-/// A confirmation found is always accepted, as this crate always did. Without one, the answer to the creation decides:
-/// `needs_mobile_confirmation: true` is an error, never a success; `needs_email_confirmation: true` alone too, since
-/// this crate can't give it; otherwise the offer needed no confirmation (e.g. we give nothing).
-fn created_offer_step<C>(confirmation: Option<C>, created: &TradeOfferCreateResponse) -> CreatedOfferStep<C> {
-    match confirmation {
-        Some(confirmation) => CreatedOfferStep::Confirm(confirmation),
-        None if created.needs_mobile_confirmation == Some(true) => CreatedOfferStep::ConfirmationNotFound,
-        None if created.needs_email_confirmation == Some(true) => CreatedOfferStep::NeedsEmailConfirmation,
-        None => CreatedOfferStep::Done,
-    }
-}
-
-/// Whether the answer to the creation says the offer is live: neither flag set, as node-steam-tradeoffer-manager
-/// reads it (`lib/classes/TradeOffer.js:452-475`, "sent" rather than "pending").
-fn created_offer_is_live(created: &TradeOfferCreateResponse) -> bool {
-    created.needs_mobile_confirmation != Some(true) && created.needs_email_confirmation != Some(true)
 }
 
 /// Sends `acknowledge()` unless `acknowledged` says Steam already took it, and notes when it does. A failure is logged
@@ -1161,55 +983,130 @@ where
     }
 }
 
-/// The steps of [`SteamTradeManager::create_offer_and_confirm`] after the offer `tradeoffer_id` was created, each
-/// request given as a future (or, for the last one, a closure) so that tests can stand in for Steam.
-///
-/// `accept_own_offer` is the POST of an accept of our own offer that this crate always sent (bug 4 in
-/// `workingcontext.md`; the wire is frozen until checked live). It still goes out, but its answer is not used, and
-/// its failure is only logged: it never stops the confirmation step.
-///
-/// Confirmations are then always looked for, and one found is always accepted, even when Steam's answer to the
-/// creation has no flag: a confirmable offer is never left unconfirmed because Steam omitted a flag. Whether one was
-/// needed comes from that answer, as node-steam-tradeoffer-manager decides (`lib/classes/TradeOffer.js:452-460`),
-/// see [`created_offer_step`]. If the confirmations can't be fetched (e.g. HTTP 429, an expired session), the offer
-/// is reported as created when the answer has no flag, since it is live then, and as failed otherwise.
-async fn confirm_created_offer_steps<C, Accept, Find, Confirm, ConfirmFut>(
-    tradeoffer_id: u64,
-    created: &TradeOfferCreateResponse,
-    accept_own_offer: Accept,
-    find_confirmation: Find,
-    accept_confirmation: Confirm,
-) -> Result<(), TradeError>
-where
-    Accept: Future<Output = Result<TradeOfferCreateResponse, TradeError>>,
-    Find: Future<Output = Result<Option<C>, TradeError>>,
-    Confirm: FnOnce(C) -> ConfirmFut,
-    ConfirmFut: Future<Output = Result<(), TradeError>>,
-{
-    if let Err(error) = accept_own_offer.await {
-        warn!(
-            "Accepting our own trade offer {} failed, looking for its confirmation anyway: {}",
-            tradeoffer_id, error
-        );
+/// The confirmations of `confirmations` that are of an offer of `offer_ids`, each offer's first one, and which offers
+/// have one. `is_of(confirmation, offer_id)` tells whether a confirmation is of an offer.
+fn confirmations_of<C>(
+    offer_ids: &[OfferId],
+    mut confirmations: Vec<C>,
+    is_of: impl Fn(&C, OfferId) -> bool,
+) -> (Vec<C>, Confirmed) {
+    let mut found = Vec::new();
+    let mut confirmed = Confirmed::default();
+    for &offer_id in offer_ids {
+        match confirmations
+            .iter()
+            .position(|confirmation| is_of(confirmation, offer_id))
+        {
+            Some(index) => {
+                found.push(confirmations.swap_remove(index));
+                confirmed.confirmed.push(offer_id);
+            }
+            None => confirmed.not_found.push(offer_id),
+        }
     }
+    (found, confirmed)
+}
 
-    let confirmation = match find_confirmation.await {
-        Ok(confirmation) => confirmation,
-        Err(error) if created_offer_is_live(created) => {
+/// The steps of [`SteamTradeManager::confirm_offers`] for `offer_ids`, given as closures so that tests can stand in for
+/// Steam: `fetch()` the account's confirmations (getlist), and only if one of them is of an offer of `offer_ids`
+/// (`is_of`), `acknowledge()` trade protection, then `process(found)` once with every one found (multiajaxop). Steam
+/// refuses to confirm trades of trade-protected items before the acknowledgement (seen live 2026-10-20). Nothing is
+/// sent for no offer.
+async fn confirm_steps<C, F, FF, A, AF, P, PF>(
+    offer_ids: &[OfferId],
+    fetch: F,
+    is_of: impl Fn(&C, OfferId) -> bool,
+    acknowledge: A,
+    process: P,
+) -> Result<Confirmed, ConfirmFailed>
+where
+    F: FnOnce() -> FF,
+    FF: Future<Output = Result<Vec<C>, TradeError>>,
+    A: FnOnce() -> AF,
+    AF: Future<Output = ()>,
+    P: FnOnce(Vec<C>) -> PF,
+    PF: Future<Output = Result<(), TradeError>>,
+{
+    if offer_ids.is_empty() {
+        return Ok(Confirmed::default());
+    }
+    let confirmations = fetch().await.map_err(ConfirmFailed::Fetch)?;
+    let (found, confirmed) = confirmations_of(offer_ids, confirmations, is_of);
+    if !found.is_empty() {
+        acknowledge().await;
+        process(found).await.map_err(ConfirmFailed::Process)?;
+    }
+    Ok(confirmed)
+}
+
+/// What [`SteamTradeManager::send`] returns, once the offer `created` was created and `confirmed` tells how its
+/// confirmation went.
+///
+/// A confirmation found is always accepted, as this crate always did. Without one, the answer to the create decides:
+/// [`Needs::MobileConfirmation`] is an error, never a success; [`Needs::EmailConfirmation`] too, since this crate
+/// can't give it; [`Needs::Nothing`] is a sent offer (e.g. we give nothing), also when the confirmations could not be
+/// fetched. A confirmation that Steam refused to accept is an error whatever the answer said.
+fn sent_offer(created: CreatedOffer, confirmed: Result<Confirmed, ConfirmFailed>) -> Result<OfferId, TradeError> {
+    let offer_id = created.id;
+    let found = match confirmed {
+        Ok(confirmed) => confirmed.confirmed.contains(&offer_id),
+        Err(ConfirmFailed::Fetch(error)) if created.needs == Needs::Nothing => {
             warn!(
                 "Could not fetch confirmations for trade offer {}, which Steam said needs none: {}",
-                tradeoffer_id, error
+                offer_id, error
             );
-            return Ok(());
+            return Ok(offer_id);
         }
-        Err(error) => return Err(error),
+        Err(failed) => return Err(offer_created_error(offer_id, failed.into())),
     };
+    match (found, created.needs) {
+        (true, _) | (false, Needs::Nothing) => Ok(offer_id),
+        (false, Needs::MobileConfirmation) => Err(offer_created_error(
+            offer_id,
+            TradeError::ConfirmationNotFound { offer_id },
+        )),
+        (false, Needs::EmailConfirmation) => Err(offer_created_error(
+            offer_id,
+            TradeError::NeedsEmailConfirmation { offer_id },
+        )),
+    }
+}
 
-    match created_offer_step(confirmation, created) {
-        CreatedOfferStep::Confirm(confirmation) => accept_confirmation(confirmation).await,
-        CreatedOfferStep::Done => Ok(()),
-        CreatedOfferStep::ConfirmationNotFound => Err(ConfirmationError::NotFound.into()),
-        CreatedOfferStep::NeedsEmailConfirmation => Err(TradeError::NeedsEmailConfirmation { tradeoffer_id }),
+/// The error of [`SteamTradeManager::send`] after the offer `offer_id` was created:
+/// [`TradeError::ConfirmationNotFound`] as is, since it has the id, any other wrapped in
+/// [`TradeError::OfferCreatedButNotConfirmed`].
+fn offer_created_error(offer_id: OfferId, error: TradeError) -> TradeError {
+    match error {
+        error @ TradeError::ConfirmationNotFound { .. } => error,
+        error => TradeError::OfferCreatedButNotConfirmed {
+            offer_id,
+            source: Box::new(error),
+        },
+    }
+}
+
+/// The steps of [`SteamTradeManager::accept`] once Steam answered the accept of `offer_id` with `posted`: the trade's
+/// id, as `accept` returns it. `confirm()` confirms the accept, given as a closure so that tests can stand in for
+/// Steam.
+///
+/// [`Needs::Nothing`]: done, with Steam's trade id. [`Needs::EmailConfirmation`]:
+/// [`TradeError::NeedsEmailConfirmation`]. [`Needs::MobileConfirmation`]: `confirm()`, then no trade id, or
+/// [`TradeError::ConfirmationNotFound`] if it found none.
+async fn accept_steps<C, CF>(offer_id: OfferId, posted: PostedAccept, confirm: C) -> Result<Option<TradeId>, TradeError>
+where
+    C: FnOnce() -> CF,
+    CF: Future<Output = Result<Confirmed, TradeError>>,
+{
+    match posted.needs {
+        Needs::Nothing => Ok(posted.trade_id),
+        Needs::EmailConfirmation => Err(TradeError::NeedsEmailConfirmation { offer_id }),
+        Needs::MobileConfirmation => {
+            if confirm().await?.confirmed.contains(&offer_id) {
+                Ok(None)
+            } else {
+                Err(TradeError::ConfirmationNotFound { offer_id })
+            }
+        }
     }
 }
 
@@ -1228,111 +1125,100 @@ fn fail_on_malformed_offers(offers: &GetTradeOffersResponse) -> Result<(), Trade
     match malformed.first() {
         None => Ok(()),
         Some(first) => Err(TradeError::MalformedOffers {
-            tradeoffer_ids: malformed.iter().map(|offer| offer.tradeofferid()).collect(),
+            offer_ids: malformed
+                .iter()
+                .map(|offer| offer.tradeofferid().map(OfferId))
+                .collect(),
             reason: first.reason.clone(),
         }),
     }
 }
 
-/// The offers of `offers` with id `tradeoffer_id`. An error if none is readable and an offer that could not be read
-/// may be this one: it has this id, or its id could not be read.
-///
-/// A readable copy wins over an unreadable one with the same id: Steam may send an offer readable on one page and
-/// unreadable on another.
-fn offers_with_id(offers: GetTradeOffersResponse, tradeoffer_id: u64) -> Result<Vec<TradeOffer_Trade>, TradeError> {
-    let with_id = malformed_offers(&offers).find(|offer| offer.tradeofferid() == Some(tradeoffer_id));
-    let without_id: Vec<&MalformedOffer> = malformed_offers(&offers)
-        .filter(|offer| offer.tradeofferid().is_none())
-        .collect();
-    let unreadable = match (with_id, without_id.first()) {
-        (Some(malformed), _) => Some(TradeError::MalformedOffer {
-            tradeoffer_id,
-            reason: malformed.reason.clone(),
-        }),
-        (None, Some(first)) => Some(TradeError::MalformedOffers {
-            tradeoffer_ids: vec![None; without_id.len()],
-            reason: first.reason.clone(),
-        }),
-        (None, None) => None,
-    };
+/// The offers of `response`, sent then received. [`TradeError::MalformedOffers`] with every offer that can't be one.
+fn offers_of(response: GetTradeOffersResponse) -> Result<Vec<Offer>, TradeError> {
+    let response = response.response;
+    let all = response
+        .trade_offers_sent
+        .into_iter()
+        .flatten()
+        .chain(response.trade_offers_received.into_iter().flatten());
 
-    let found = offers.filter_by(|offer| offer.tradeofferid == tradeoffer_id);
-    match unreadable {
-        Some(error) if found.is_empty() => Err(error),
-        _ => Ok(found),
-    }
-}
-
-/// The error of `create_offer_and_confirm` after the offer `tradeoffer_id` was created.
-fn offer_created_error(tradeoffer_id: u64, error: TradeError) -> TradeError {
-    match error {
-        TradeError::ConfirmationError(ConfirmationError::NotFound) => {
-            ConfirmationError::NotFoundButTradeCreated(tradeoffer_id).into()
+    let mut offers = Vec::new();
+    let mut malformed = Vec::new();
+    let mut first_reason = None;
+    for offer in all {
+        let offer_id = OfferId(offer.tradeofferid);
+        match Offer::of(offer) {
+            Ok(offer) => offers.push(offer),
+            Err(reason) => {
+                malformed.push(Some(offer_id));
+                first_reason.get_or_insert(reason);
+            }
         }
-        error => TradeError::OfferCreatedButNotConfirmed {
-            tradeoffer_id,
-            source: Box::new(error),
-        },
+    }
+    match first_reason {
+        None => Ok(offers),
+        Some(reason) => Err(TradeError::MalformedOffers {
+            offer_ids: malformed,
+            reason,
+        }),
     }
 }
 
-/// The new asset ids of the trade `tradeid` in `history`, in the order of [`HasAssets::every_asset`].
-fn new_assetids(history: GetTradeHistoryResponse, tradeid: i64) -> Result<Vec<i64>, TradeError> {
-    let found_trade = history
-        .filter_by(|trade| trade.tradeid == tradeid)
-        .into_iter()
-        .next()
-        .ok_or(TradeError::TradeNotInHistory(tradeid))?;
+/// The offer `offer_id` in `answer`, Steam's answer to `GetTradeOffer`: `None` for an answer without one, or for
+/// `X-eresult` NoMatch.
+fn offer_of(
+    offer_id: OfferId,
+    answer: Result<GetTradeOfferResponse, SteamAPIError>,
+) -> Result<Option<Offer>, TradeError> {
+    let answer = match answer {
+        Ok(answer) => answer.response,
+        Err(SteamAPIError::EResult(EResult::NoMatch, _)) => return Ok(None),
+        Err(error) => return Err(web_api_error(error)),
+    };
+    match (answer.offer, answer.malformed_offer) {
+        (Some(offer), _) => Offer::of(offer)
+            .map(Some)
+            .map_err(|reason| TradeError::MalformedOffer { offer_id, reason }),
+        (None, Some(malformed)) => Err(TradeError::MalformedOffer {
+            offer_id,
+            reason: malformed.reason,
+        }),
+        (None, None) => Ok(None),
+    }
+}
 
-    found_trade
-        .every_asset()
+/// The trades of `history`. [`TradeError::UnexpectedResponse`] if one can't be read.
+fn trades_of(history: GetTradeHistoryResponse) -> Result<Vec<Trade>, TradeError> {
+    history
+        .response
+        .trades
         .into_iter()
-        .map(|traded_asset| {
-            traded_asset.new_assetid.ok_or(TradeError::TradeNotSettled {
-                tradeid,
-                assetid: traded_asset.assetid,
+        .map(|trade| {
+            let trade_id = trade.tradeid;
+            Trade::of(trade).map_err(|reason| {
+                TradeError::UnexpectedResponse(format!("Trade `{}` can't be read: {}", trade_id, reason))
             })
         })
         .collect()
 }
 
-/// The end of the trade protection of the trade `tradeid` in `history`.
-fn lock_end(history: GetTradeHistoryResponse, tradeid: i64) -> Result<Option<i64>, TradeError> {
-    history
-        .filter_by(|trade| trade.tradeid == tradeid)
-        .into_iter()
-        .next()
-        .map(|trade| trade.time_settlement)
-        .ok_or(TradeError::TradeNotInHistory(tradeid))
-}
-
-/// One page of `GetTradeOffers`.
-async fn trade_offers_page(
-    api_client: &SteamAPI,
-    sent: bool,
-    received: bool,
-    active_only: bool,
-    cursor: Option<u32>,
-) -> Result<GetTradeOffersResponse, TradeError> {
-    trade_offers_request(api_client, sent, received, active_only, cursor)
-        .execute_with_response()
-        .err_into()
-        .await
+/// The hold of Steam's answer to `GetTradeHoldDurations`: `both_escrow`, as ArchiSteamFarm reads it
+/// (`ArchiSteamFarm/Steam/Integration/ArchiWebHandler.cs:1829`).
+fn hold_of(answer: GetTradeHoldDurationsResponseBase) -> Result<Duration, TradeError> {
+    let hold = answer.response.both_escrow.ok_or(TradeError::TradeHoldUnknown)?;
+    let seconds = number(hold.escrow_end_duration_seconds, "escrow_end_duration_seconds")
+        .map_err(TradeError::UnexpectedResponse)?;
+    Ok(Duration::from_secs(seconds))
 }
 
 /// The request of one page of `GetTradeOffers`. Without a cursor, it is the request this crate always sent.
-fn trade_offers_request(
-    api_client: &SteamAPI,
-    sent: bool,
-    received: bool,
-    active_only: bool,
-    cursor: Option<u32>,
-) -> GetTradeOffers<'_> {
+fn trade_offers_request(api_client: &SteamAPI, query: OfferQuery, cursor: Option<u32>) -> GetTradeOffers<'_> {
     let request = api_client.get().IEconService().GetTradeOffers(
-        sent,
-        received,
+        query.sent,
+        query.received,
         MAX_HISTORICAL_CUTOFF,
-        Some(active_only),
+        Some(query.active_only),
         None,
         None,
         None,
@@ -1341,6 +1227,19 @@ fn trade_offers_request(
         Some(cursor) => request.cursor(cursor),
         None => request,
     }
+}
+
+/// The request of `GetTradeOffer` for `offer_id`: its id, nothing else, as node-steam-tradeoffer-manager sends.
+fn trade_offer_request(api_client: &SteamAPI, offer_id: OfferId) -> GetTradeOffer<'_> {
+    api_client.get().IEconService().GetTradeOffer(offer_id.0, None)
+}
+
+/// The request of `GetTradeHoldDurations` for the owner of `link`.
+fn trade_hold_request<'a>(api_client: &'a SteamAPI, link: &TradeLink) -> GetTradeHoldDurations<'a> {
+    api_client
+        .get()
+        .IEconService()
+        .GetTradeHoldDurations(link.partner().to_steam64(), link.token().to_string())
 }
 
 /// Reads the first page with `page(None)`, then the next ones while Steam sends a cursor, and merges them.
@@ -1458,13 +1357,10 @@ fn append_malformed_offers(merged: &mut Vec<MalformedOffer>, page: Vec<Malformed
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::errors::TradeError::GeneralError;
 
     fn get_tradeoffer_url_with_token() -> &'static str {
         "https://steamcommunity.com/tradeoffer/new/?partner=79925588&token=Ob27qXzn"
-    }
-
-    fn get_tradeoffer_url_without_token() -> &'static str {
-        "https://steamcommunity.com/tradeoffer/new/?partner=79925588"
     }
 
     #[allow(clippy::too_many_lines)]
@@ -1701,53 +1597,6 @@ mod tests {
         serde_json::from_str::<GetTradeHistoryResponse>(&response).unwrap()
     }
 
-    #[test]
-    fn new_assets() {
-        let raw_response = sample_trade_history_response();
-        let filtered = raw_response.filter_by(|x| x.tradeid == 3622543526924228084).remove(0);
-        let asset = filtered.every_asset().remove(0);
-        assert_eq!(asset.assetid, 15319724006);
-        assert_eq!(asset.new_assetid, Some(19793871926));
-    }
-
-    #[test]
-    fn new_assetids_of_a_trade() {
-        assert_eq!(
-            new_assetids(sample_trade_history_response(), 3151905948734426645).unwrap(),
-            vec![19019879428, 19019879441]
-        );
-    }
-
-    #[test]
-    fn new_assetids_trade_not_in_history() {
-        match new_assetids(sample_trade_history_response(), 1) {
-            Err(TradeError::TradeNotInHistory(1)) => {}
-            other => panic!("{:?}", other),
-        }
-    }
-
-    #[test]
-    fn new_assetids_unsettled_trade() {
-        let history: GetTradeHistoryResponse = serde_json::from_str(
-            r#"{"response":{"more":false,"trades":[{"tradeid":"42","steamid_other":"76561198040191316",
-              "time_init":1603998438,"status":3,
-              "assets_given":[
-                {"appid":730,"contextid":"2","assetid":"100","amount":"1","classid":"1","instanceid":"0",
-                 "new_assetid":"200","new_contextid":"2"},
-                {"appid":730,"contextid":"2","assetid":"101","amount":"1","classid":"1","instanceid":"0"}
-              ]}]}}"#,
-        )
-        .unwrap();
-
-        match new_assetids(history, 42) {
-            Err(TradeError::TradeNotSettled {
-                tradeid: 42,
-                assetid: 101,
-            }) => {}
-            other => panic!("{:?}", other),
-        }
-    }
-
     /// `GetTradeHistory` with the access token right after a CS2 trade (`fixtures/live/2026-10-20/ack-cycle.jsonl`),
     /// first two trades.
     fn live_trade_history_response() -> GetTradeHistoryResponse {
@@ -1765,27 +1614,104 @@ mod tests {
         .unwrap()
     }
 
-    #[test]
-    fn lock_end_of_a_protected_trade() {
-        // 2026-10-27 16:00:00 UTC
-        assert_eq!(
-            lock_end(live_trade_history_response(), 695401084301346863).unwrap(),
-            Some(1793116800)
-        );
+    fn trades(history: GetTradeHistoryResponse) -> Vec<Trade> {
+        trades_of(history).unwrap()
+    }
+
+    fn trade_in(history: GetTradeHistoryResponse, id: u64) -> Option<Trade> {
+        trades(history).into_iter().find(|trade| trade.id == TradeId(id))
+    }
+
+    fn cs2(id: u64) -> Asset {
+        Asset::new(InventoryContext::CS2, AssetId(id))
     }
 
     #[test]
-    fn lock_end_of_an_old_trade() {
-        assert_eq!(
-            lock_end(live_trade_history_response(), 4726007333531040160).unwrap(),
-            None
-        );
+    fn new_asset_of_an_item() {
+        let trade = trade_in(sample_trade_history_response(), 3622543526924228084).unwrap();
+        assert_eq!(trade.new_asset(AssetId(15319724006)), Some(cs2(19793871926)));
+        assert_eq!(trade.new_asset(AssetId(1)), None);
     }
 
     #[test]
-    fn lock_end_trade_not_in_history() {
-        match lock_end(live_trade_history_response(), 1) {
-            Err(TradeError::TradeNotInHistory(1)) => {}
+    fn new_assets_of_a_trade() {
+        let trade = trade_in(sample_trade_history_response(), 3151905948734426645).unwrap();
+        assert!(trade.is_settled());
+        let new: Vec<Option<Asset>> = trade.received.iter().map(|item| item.new_asset).collect();
+        assert_eq!(new, vec![Some(cs2(19019879428)), Some(cs2(19019879441))]);
+        assert!(trade.given.is_empty());
+    }
+
+    #[test]
+    fn trade_not_in_history() {
+        assert_eq!(trade_in(sample_trade_history_response(), 1), None);
+    }
+
+    #[test]
+    fn unsettled_trade() {
+        let history: GetTradeHistoryResponse = serde_json::from_str(
+            r#"{"response":{"more":false,"trades":[{"tradeid":"42","steamid_other":"76561198040191316",
+              "time_init":1603998438,"status":3,
+              "assets_given":[
+                {"appid":730,"contextid":"2","assetid":"100","amount":"1","classid":"1","instanceid":"0",
+                 "new_assetid":"200","new_contextid":"2"},
+                {"appid":730,"contextid":"2","assetid":"101","amount":"1","classid":"1","instanceid":"0"}
+              ]}]}}"#,
+        )
+        .unwrap();
+
+        let trade = trade_in(history, 42).unwrap();
+        assert!(!trade.is_settled());
+        assert_eq!(trade.new_asset(AssetId(100)), Some(cs2(200)));
+        assert_eq!(trade.new_asset(AssetId(101)), None);
+    }
+
+    #[test]
+    fn live_trades() {
+        let trades = trades(live_trade_history_response());
+        assert_eq!(
+            trades[0],
+            Trade {
+                id: TradeId(695401084301346863),
+                partner: SteamID::from_steam64(76561197961265729),
+                status: TradeStatus::Complete,
+                started: 1792510484,
+                // 2026-10-27 16:00:00 UTC
+                protected_until: Some(1793116800),
+                received: vec![TradedItem {
+                    asset: cs2(24234602605),
+                    classid: 241575744,
+                    instanceid: 302028390,
+                    amount: 1,
+                    new_asset: None,
+                    rollback_new_asset: None,
+                }],
+                given: vec![],
+            }
+        );
+        // a CS2 trade since 2026-04: no new asset id
+        assert!(!trades[0].is_settled());
+        assert!(trades[0].is_protected_at(1793116799));
+        assert!(!trades[0].is_protected_at(1793116800));
+
+        // an old trade: no protection, new asset ids
+        assert_eq!(trades[1].protected_until, None);
+        assert!(!trades[1].is_protected());
+        assert_eq!(trades[1].time_left(), None);
+        assert!(trades[1].is_settled());
+        assert_eq!(trades[1].new_asset(AssetId(25838682254)), Some(cs2(29793633296)));
+    }
+
+    #[test]
+    fn unreadable_trade_fails_the_list() {
+        let history: GetTradeHistoryResponse = serde_json::from_str(
+            r#"{"response":{"more":false,"trades":[{"tradeid":"42","steamid_other":"76561198040191316",
+              "time_init":1603998438,"status":3,
+              "assets_given":[{"appid":730,"contextid":"2","assetid":"100","classid":"1","instanceid":"0"}]}]}}"#,
+        )
+        .unwrap();
+        match trades_of(history) {
+            Err(TradeError::UnexpectedResponse(message)) => assert!(message.contains("amount"), "{}", message),
             other => panic!("{:?}", other),
         }
     }
@@ -1801,25 +1727,18 @@ mod tests {
         Some(headers.get("Referer").unwrap().to_str().unwrap())
     }
 
-    // Expected values were captured from the code before this change (`prepare_offer`, `TradeKind::endpoint`, the
-    // header and form building of the old `request()`), with the same inputs.
+    // Expected values were captured from the code of 0.7 (`prepare_offer`, `TradeKind::endpoint`, the header and form
+    // building of the old `request()`), with the same inputs.
 
     #[test]
     fn create_request_is_unchanged() {
-        let mut mine = AssetCollection::default();
-        mine.add(InventoryContext::CS2, 17034419698);
-        mine.add(InventoryContext::DOTA2, 1);
-        let mut theirs = AssetCollection::default();
-        theirs.add(InventoryContext::CS2, 18116227588);
-        let offer = TradeOffer::new(
-            get_tradeoffer_url_with_token().to_string(),
-            mine,
-            theirs,
-            "hi & bye, ção=1".to_string(),
-        )
-        .unwrap();
+        let offer = OfferRequest::to(TradeLink::parse(get_tradeoffer_url_with_token()).unwrap())
+            .give(cs2(17034419698))
+            .give(Asset::new(InventoryContext::DOTA2, AssetId(1)))
+            .take(cs2(18116227588))
+            .message("hi & bye, ção=1");
 
-        let request = SteamTradeManager::prepare_request(TradeKind::Create(offer), None, None).unwrap();
+        let request = PreparedRequest::create(&offer);
         assert_eq!(request.url, "https://steamcommunity.com/tradeoffer/new/send");
         assert_eq!(referer(&request), Some("https://steamcommunity.com/tradeoffer/new"));
         assert_eq!(
@@ -1827,31 +1746,35 @@ mod tests {
             "sessionid=SESSION123&serverid=1&partner=76561198040191316&captcha=&tradeoffermessage=hi+%26+bye%2C+%C3%A7%C3%A3o%3D1&json_tradeoffer=%7B%22newversion%22%3Atrue%2C%22version%22%3A2%2C%22me%22%3A%7B%22assets%22%3A%5B%7B%22appid%22%3A730%2C%22contextid%22%3A%222%22%2C%22amount%22%3A1%2C%22assetid%22%3A%2217034419698%22%7D%2C%7B%22appid%22%3A570%2C%22contextid%22%3A%222%22%2C%22amount%22%3A1%2C%22assetid%22%3A%221%22%7D%5D%2C%22currency%22%3A%5B%5D%2C%22ready%22%3Afalse%7D%2C%22them%22%3A%7B%22assets%22%3A%5B%7B%22appid%22%3A730%2C%22contextid%22%3A%222%22%2C%22amount%22%3A1%2C%22assetid%22%3A%2218116227588%22%7D%5D%2C%22currency%22%3A%5B%5D%2C%22ready%22%3Afalse%7D%7D&trade_offer_create_params=%7B%22trade_offer_access_token%22%3A%22Ob27qXzn%22%7D"
         );
 
-        let mut mine = AssetCollection::default();
-        mine.add(InventoryContext::TF2, 5);
-        let offer = TradeOffer::new(
-            "https://steamcommunity.com/tradeoffer/new/?partner=1&token=a-b_c".to_string(),
-            mine,
-            None,
-            None,
-        )
-        .unwrap();
-        let request = SteamTradeManager::prepare_request(TradeKind::Create(offer), None, None).unwrap();
+        let link = TradeLink::parse("https://steamcommunity.com/tradeoffer/new/?partner=1&token=a-b_c").unwrap();
+        let offer = OfferRequest::to(link).give(Asset::new(InventoryContext::TF2, AssetId(5)));
         assert_eq!(
-            sent_form(request),
+            sent_form(PreparedRequest::create(&offer)),
             "sessionid=SESSION123&serverid=1&partner=76561197960265729&captcha=&tradeoffermessage=&json_tradeoffer=%7B%22newversion%22%3Atrue%2C%22version%22%3A2%2C%22me%22%3A%7B%22assets%22%3A%5B%7B%22appid%22%3A440%2C%22contextid%22%3A%222%22%2C%22amount%22%3A1%2C%22assetid%22%3A%225%22%7D%5D%2C%22currency%22%3A%5B%5D%2C%22ready%22%3Afalse%7D%2C%22them%22%3A%7B%22assets%22%3A%5B%5D%2C%22currency%22%3A%5B%5D%2C%22ready%22%3Afalse%7D%7D&trade_offer_create_params=%7B%22trade_offer_access_token%22%3A%22a-b_c%22%7D"
         );
     }
 
     #[test]
+    fn stackable_amount_is_sent() {
+        let offer = OfferRequest::to(TradeLink::parse(get_tradeoffer_url_with_token()).unwrap())
+            .take_amount(Asset::new(InventoryContext::STEAM, AssetId(3)), 500);
+        let form = sent_form(PreparedRequest::create(&offer));
+        assert!(
+            form.contains(
+                "%7B%22appid%22%3A753%2C%22contextid%22%3A%226%22%2C%22amount%22%3A500%2C%22assetid%22%3A%223%22%7D"
+            ),
+            "{}",
+            form
+        );
+    }
+
+    #[test]
     fn accept_request_is_unchanged() {
-        let offer: TradeOffer_Trade =
-            serde_json::from_str(r#"{"tradeofferid":"4127395150","accountid_other":79925588,"trade_offer_state":2}"#)
-                .unwrap();
-        let partner = accept_partner_of(&offer);
+        let offer_id = OfferId(4127395150);
+        let partner = accept_partner(offer_id);
         assert_eq!(partner, 76561202087660878);
 
-        let request = SteamTradeManager::prepare_request(TradeKind::Accept, Some(4127395150), Some(partner)).unwrap();
+        let request = PreparedRequest::accept(offer_id, partner);
         assert_eq!(request.url, "https://steamcommunity.com/tradeoffer/4127395150/accept");
         assert_eq!(
             referer(&request),
@@ -1863,55 +1786,14 @@ mod tests {
         );
     }
 
-    #[cfg(feature = "cs2")]
-    #[test]
-    fn received_assets_are_the_readable_items_to_receive() {
-        let offer: TradeOffer_Trade = serde_json::from_str(
-            r#"{"tradeofferid":"4127395150","accountid_other":79925588,"trade_offer_state":3,
-              "items_to_give":[{"appid":730,"contextid":"2","assetid":"1","classid":"2","amount":"1"}],
-              "items_to_receive":[
-                {"appid":730,"contextid":"2","assetid":"24234602605","classid":"241575744","amount":"1"},
-                {"appid":730,"contextid":"2","assetid":"not a number","classid":"241575744","amount":"1"}]}"#,
-        )
-        .unwrap();
-        assert!(offer.has_malformed_items());
-        let received = received_assets(&offer);
-        assert_eq!(received.len(), 1);
-        assert_eq!((received[0].assetid, received[0].classid), (24234602605, 241575744));
-    }
-
-    #[cfg(feature = "cs2")]
-    #[test]
-    fn only_an_accepted_offer_has_received_items_to_find() {
-        let offer = |state: u32| -> TradeOffer_Trade {
-            serde_json::from_str(&format!(
-                r#"{{"tradeofferid":"4127395150","accountid_other":79925588,"trade_offer_state":{},
-                  "items_to_receive":[
-                    {{"appid":730,"contextid":"2","assetid":"24234602605","classid":"241575744","amount":"1"}}]}}"#,
-                state
-            ))
-            .unwrap()
-        };
-        assert_eq!(accepted_received_assets(&offer(3)).unwrap().len(), 1);
-        for (state, expected) in [(2, ETradeOfferState::Active), (7, ETradeOfferState::Declined)] {
-            match accepted_received_assets(&offer(state)) {
-                Err(TradeError::OfferNotAccepted {
-                    tradeoffer_id: 4127395150,
-                    state,
-                }) => assert_eq!(state, expected),
-                other => panic!("{:?}", other),
-            }
-        }
-    }
-
     #[test]
     fn decline_and_cancel_requests_are_unchanged() {
-        let request = SteamTradeManager::prepare_request(TradeKind::Decline, Some(4127395150), None).unwrap();
+        let request = PreparedRequest::decline(OfferId(4127395150));
         assert_eq!(request.url, "https://steamcommunity.com/tradeoffer/4127395150/decline");
         assert_eq!(referer(&request), None);
         assert_eq!(sent_form(request), "sessionid=SESSION123");
 
-        let request = SteamTradeManager::prepare_request(TradeKind::Cancel, Some(4127395150), None).unwrap();
+        let request = PreparedRequest::cancel(OfferId(4127395150));
         assert_eq!(request.url, "https://steamcommunity.com/tradeoffer/4127395150/cancel");
         assert_eq!(referer(&request), None);
         assert_eq!(sent_form(request), "sessionid=SESSION123");
@@ -1919,10 +1801,44 @@ mod tests {
 
     #[test]
     fn acknowledge_trade_protection_request() {
-        let request = SteamTradeManager::acknowledge_request();
+        let request = PreparedRequest::acknowledge();
         assert_eq!(request.url, "https://steamcommunity.com/trade/new/acknowledge");
         assert_eq!(referer(&request), None);
         assert_eq!(sent_form(request), "sessionid=SESSION123&message=1");
+    }
+
+    #[test]
+    fn decline_and_cancel_answers() {
+        // Steam's answers in `ack-cycle.jsonl` (decline, then cancel)
+        let answer = |body: &str| answer_of::<TradeOfferCancelResponse>(body).unwrap();
+        assert!(answer_about(OfferId(9438483046), &answer(r#"{"tradeofferid":"9438483046"}"#)).is_ok());
+        assert!(answer_about(OfferId(9438482627), &answer(r#"{"tradeofferid":"9438482627"}"#)).is_ok());
+
+        for body in &[r#"{"tradeofferid":"9438482627"}"#, r#"{}"#, r#"{"tradeofferid":"abc"}"#] {
+            match answer_about(OfferId(9438483046), &answer(body)) {
+                Err(TradeError::UnexpectedResponse(_)) => {}
+                other => panic!("{}: {:?}", body, other),
+            }
+        }
+    }
+
+    #[test]
+    fn answers_that_are_not_the_expected_type() {
+        match answer_of::<TradeOfferCancelResponse>(r#"{"success":16}"#) {
+            // all fields optional: a code alone reads as an answer, as in 0.7
+            Ok(answer) => assert_eq!(answer.tradeofferid, None),
+            other => panic!("{:?}", other),
+        }
+        match answer_of::<TradeOfferCancelResponse>(r#"{"success":16,"tradeofferid":7}"#) {
+            Err(error @ TradeError::Steam { message: None, .. }) => assert_eq!(error.eresult(), Some(EResult::Timeout)),
+            other => panic!("{:?}", other),
+        }
+        for body in &["<html></html>", "", r#"{"success":false,"tradeofferid":7}"#] {
+            match answer_of::<TradeOfferCancelResponse>(body) {
+                Err(TradeError::UnexpectedResponse(answer)) => assert_eq!(&answer, body),
+                other => panic!("{}: {:?}", body, other),
+            }
+        }
     }
 
     /// Runs `acknowledge_once` with an acknowledgement answering `answer`, and returns whether it was sent.
@@ -1960,13 +1876,17 @@ mod tests {
     }
 
     #[test]
-    fn created_offer_without_id() {
+    fn created_offer_of_the_answer() {
+        // Steam's answer to the create of `ack-cycle.jsonl`
         assert_eq!(
-            created_offer_id(&create_response(
-                r#"{"tradeofferid":"4112828817","needs_mobile_confirmation":true}"#
+            created_offer(&create_response(
+                r#"{"tradeofferid":"9438482627","needs_mobile_confirmation":true,"needs_email_confirmation":false,"email_domain":"example.com"}"#
             ))
             .unwrap(),
-            4112828817
+            CreatedOffer {
+                id: OfferId(9438482627),
+                needs: Needs::MobileConfirmation,
+            }
         );
         for body in &[
             r#"{}"#,
@@ -1974,8 +1894,8 @@ mod tests {
             r#"{"tradeofferid":"abc"}"#,
             r#"{"tradeofferid":null}"#,
         ] {
-            match created_offer_id(&create_response(body)) {
-                Err(TradeError::TradeOfferError(OfferError::GeneralFailure(_))) => {}
+            match created_offer(&create_response(body)) {
+                Err(TradeError::UnexpectedResponse(_)) => {}
                 other => panic!("{}: {:?}", body, other),
             }
         }
@@ -1985,8 +1905,11 @@ mod tests {
     fn trade_id_of_an_accept() {
         // Steam's answer to the accept of `ack-cycle.jsonl`
         assert_eq!(
-            accepted_trade_id(&create_response(r#"{"tradeid":"695401084301346863"}"#)),
-            Some(695401084301346863)
+            posted_accept(&create_response(r#"{"tradeid":"695401084301346863"}"#)),
+            PostedAccept {
+                trade_id: Some(TradeId(695401084301346863)),
+                needs: Needs::Nothing,
+            }
         );
         assert_eq!(
             accepted_trade_id(&create_response(r#"{"needs_mobile_confirmation":true}"#)),
@@ -1996,50 +1919,510 @@ mod tests {
     }
 
     #[test]
-    fn accept_outcome_follows_the_flags() {
-        let outcome = |body: &str| accept_outcome(&create_response(body));
+    fn needs_follow_the_flags() {
+        let needs = |body: &str| posted_accept(&create_response(body)).needs;
 
         // absent flags: accepted, as node-steam-tradeoffer-manager reads them (e.g. a gift)
-        assert_eq!(outcome(r#"{"tradeid":"3151905948734426645"}"#), AcceptOutcome::Done);
-        assert_eq!(outcome(r#"{}"#), AcceptOutcome::Done);
+        assert_eq!(needs(r#"{"tradeid":"3151905948734426645"}"#), Needs::Nothing);
+        assert_eq!(needs(r#"{}"#), Needs::Nothing);
         assert_eq!(
-            outcome(r#"{"needs_mobile_confirmation":false,"needs_email_confirmation":false}"#),
-            AcceptOutcome::Done
+            needs(r#"{"needs_mobile_confirmation":false,"needs_email_confirmation":false}"#),
+            Needs::Nothing
         );
 
         assert_eq!(
-            outcome(r#"{"needs_mobile_confirmation":true}"#),
-            AcceptOutcome::NeedsMobileConfirmation
+            needs(r#"{"needs_mobile_confirmation":true}"#),
+            Needs::MobileConfirmation
         );
         assert_eq!(
-            outcome(r#"{"needs_mobile_confirmation":true,"needs_email_confirmation":true}"#),
-            AcceptOutcome::NeedsMobileConfirmation
+            needs(r#"{"needs_mobile_confirmation":true,"needs_email_confirmation":true}"#),
+            Needs::MobileConfirmation
         );
 
         assert_eq!(
-            outcome(r#"{"needs_email_confirmation":true,"email_domain":"example.com"}"#),
-            AcceptOutcome::NeedsEmailConfirmation
+            needs(r#"{"needs_email_confirmation":true,"email_domain":"example.com"}"#),
+            Needs::EmailConfirmation
         );
         assert_eq!(
-            outcome(r#"{"needs_mobile_confirmation":false,"needs_email_confirmation":true}"#),
-            AcceptOutcome::NeedsEmailConfirmation
+            needs(r#"{"needs_mobile_confirmation":false,"needs_email_confirmation":true}"#),
+            Needs::EmailConfirmation
         );
     }
 
     #[test]
     fn errors_after_creation_carry_the_offer_id() {
-        match offer_created_error(7, ConfirmationError::NotFound.into()) {
-            TradeError::ConfirmationError(ConfirmationError::NotFoundButTradeCreated(7)) => {}
+        match offer_created_error(OfferId(7), TradeError::ConfirmationNotFound { offer_id: OfferId(7) }) {
+            TradeError::ConfirmationNotFound { offer_id: OfferId(7) } => {}
             other => panic!("{:?}", other),
         }
-        match offer_created_error(7, OfferError::NoMatch.into()) {
+        match offer_created_error(OfferId(7), TradeError::NoSessionId) {
             TradeError::OfferCreatedButNotConfirmed {
-                tradeoffer_id: 7,
+                offer_id: OfferId(7),
                 source,
             } => {
-                assert!(matches!(*source, TradeError::TradeOfferError(OfferError::NoMatch)))
+                assert!(matches!(*source, TradeError::NoSessionId))
             }
             other => panic!("{:?}", other),
+        }
+    }
+
+    #[test]
+    fn each_offer_takes_its_own_confirmation() {
+        let (found, confirmed) = confirmations_of(
+            &[OfferId(1), OfferId(2), OfferId(3), OfferId(1)],
+            vec![10, 3, 1, 1],
+            |&confirmation: &u64, offer_id| confirmation == offer_id.0,
+        );
+        assert_eq!(found, vec![1, 3, 1]);
+        assert_eq!(confirmed.confirmed, vec![OfferId(1), OfferId(3), OfferId(1)]);
+        assert_eq!(confirmed.not_found, vec![OfferId(2)]);
+
+        let (found, confirmed) = confirmations_of(&[OfferId(1)], vec![], |&c: &u64, id| c == id.0);
+        assert!(found.is_empty());
+        assert_eq!(
+            confirmed,
+            Confirmed {
+                confirmed: vec![],
+                not_found: vec![OfferId(1)],
+            }
+        );
+    }
+
+    fn rate_limited_fetch() -> TradeError {
+        steam_mobile::errors::AuthError::from(steam_mobile::errors::InternalError::TooManyRequests {
+            url: "https://steamcommunity.com/mobileconf/getlist".to_string(),
+        })
+        .into()
+    }
+
+    fn assert_not_confirmed(result: Result<OfferId, TradeError>, check_source: impl FnOnce(&TradeError) -> bool) {
+        match result {
+            Err(TradeError::OfferCreatedButNotConfirmed {
+                offer_id: OfferId(7),
+                source,
+            }) => assert!(check_source(&source), "{:?}", source),
+            other => panic!("{:?}", other),
+        }
+    }
+
+    /// What `send` returns for offer 7, created with `needs`, when confirming it gave `confirmed`.
+    fn sent(needs: Needs, confirmed: Result<Confirmed, ConfirmFailed>) -> Result<OfferId, TradeError> {
+        sent_offer(CreatedOffer { id: OfferId(7), needs }, confirmed)
+    }
+
+    fn found() -> Result<Confirmed, ConfirmFailed> {
+        Ok(Confirmed {
+            confirmed: vec![OfferId(7)],
+            not_found: vec![],
+        })
+    }
+
+    fn none_found() -> Result<Confirmed, ConfirmFailed> {
+        Ok(Confirmed {
+            confirmed: vec![],
+            not_found: vec![OfferId(7)],
+        })
+    }
+
+    #[test]
+    fn sent_offer_needs_and_confirmations() {
+        let all = [Needs::Nothing, Needs::MobileConfirmation, Needs::EmailConfirmation];
+
+        // a confirmation found is accepted whatever the needs, and a refused one fails the offer
+        for &needs in &all {
+            assert_eq!(sent(needs, found()).unwrap(), OfferId(7));
+            assert_not_confirmed(
+                sent(needs, Err(ConfirmFailed::Process(rate_limited_fetch()))),
+                TradeError::is_too_many_requests,
+            );
+        }
+
+        // needs nothing: sent, found or not, fetched or not
+        assert_eq!(sent(Needs::Nothing, none_found()).unwrap(), OfferId(7));
+        assert_eq!(
+            sent(Needs::Nothing, Err(ConfirmFailed::Fetch(rate_limited_fetch()))).unwrap(),
+            OfferId(7)
+        );
+
+        // a mobile confirmation is needed: never a success without it
+        match sent(Needs::MobileConfirmation, none_found()) {
+            Err(TradeError::ConfirmationNotFound { offer_id: OfferId(7) }) => {}
+            other => panic!("{:?}", other),
+        }
+        assert_not_confirmed(
+            sent(
+                Needs::MobileConfirmation,
+                Err(ConfirmFailed::Fetch(rate_limited_fetch())),
+            ),
+            TradeError::is_too_many_requests,
+        );
+
+        // an email one, which this crate can't give
+        assert_not_confirmed(sent(Needs::EmailConfirmation, none_found()), |source| {
+            matches!(source, TradeError::NeedsEmailConfirmation { offer_id: OfferId(7) })
+        });
+        assert_not_confirmed(
+            sent(
+                Needs::EmailConfirmation,
+                Err(ConfirmFailed::Fetch(rate_limited_fetch())),
+            ),
+            TradeError::is_too_many_requests,
+        );
+    }
+
+    /// A request [`confirm_steps`] sent to the stand-in for Steam.
+    #[derive(Debug, PartialEq)]
+    enum ConfirmStep {
+        Fetch,
+        Acknowledge,
+        /// The confirmations accepted, by their offer id.
+        Process(Vec<u64>),
+    }
+
+    /// Runs [`confirm_steps`] for `offer_ids`, with Steam standing in: `fetched` is what the getlist gives (each
+    /// confirmation as its offer id), `processed` what the multiajaxop gives. Returns the result and the steps sent.
+    fn run_confirm_steps(
+        offer_ids: &[u64],
+        fetched: Result<Vec<u64>, TradeError>,
+        processed: Result<(), TradeError>,
+    ) -> (Result<Confirmed, ConfirmFailed>, Vec<ConfirmStep>) {
+        let steps = std::cell::RefCell::new(Vec::new());
+        let offer_ids: Vec<OfferId> = offer_ids.iter().copied().map(OfferId).collect();
+        let result = futures::executor::block_on(confirm_steps(
+            &offer_ids,
+            || {
+                steps.borrow_mut().push(ConfirmStep::Fetch);
+                futures::future::ready(fetched)
+            },
+            |&confirmation: &u64, offer_id| confirmation == offer_id.0,
+            || {
+                steps.borrow_mut().push(ConfirmStep::Acknowledge);
+                futures::future::ready(())
+            },
+            |found| {
+                steps.borrow_mut().push(ConfirmStep::Process(found));
+                futures::future::ready(processed)
+            },
+        ));
+        (result, steps.into_inner())
+    }
+
+    #[test]
+    fn confirm_fetches_then_acknowledges_then_accepts_all_found_at_once() {
+        let (result, steps) = run_confirm_steps(&[1, 2, 3], Ok(vec![9, 3, 1]), Ok(()));
+        assert_eq!(
+            steps,
+            vec![
+                ConfirmStep::Fetch,
+                ConfirmStep::Acknowledge,
+                ConfirmStep::Process(vec![1, 3])
+            ]
+        );
+        assert_eq!(
+            result.unwrap(),
+            Confirmed {
+                confirmed: vec![OfferId(1), OfferId(3)],
+                not_found: vec![OfferId(2)],
+            }
+        );
+    }
+
+    #[test]
+    fn confirm_sends_nothing_more_when_nothing_is_found() {
+        for fetched in [vec![], vec![9]] {
+            let (result, steps) = run_confirm_steps(&[1], Ok(fetched), Ok(()));
+            assert_eq!(steps, vec![ConfirmStep::Fetch]);
+            assert_eq!(
+                result.unwrap(),
+                Confirmed {
+                    confirmed: vec![],
+                    not_found: vec![OfferId(1)],
+                }
+            );
+        }
+
+        // no offer: no request at all
+        let (result, steps) = run_confirm_steps(&[], Ok(vec![1]), Ok(()));
+        assert!(steps.is_empty());
+        assert_eq!(result.unwrap(), Confirmed::default());
+    }
+
+    #[test]
+    fn confirm_tells_a_failed_fetch_from_a_refused_confirmation() {
+        let (result, steps) = run_confirm_steps(&[7], Err(rate_limited_fetch()), Ok(()));
+        assert_eq!(steps, vec![ConfirmStep::Fetch]);
+        assert!(matches!(result, Err(ConfirmFailed::Fetch(ref error)) if error.is_too_many_requests()));
+
+        let refused = TradeError::UnexpectedResponse("refused".to_string());
+        let (result, steps) = run_confirm_steps(&[7], Ok(vec![7]), Err(refused));
+        assert_eq!(
+            steps,
+            vec![
+                ConfirmStep::Fetch,
+                ConfirmStep::Acknowledge,
+                ConfirmStep::Process(vec![7])
+            ]
+        );
+        assert!(matches!(
+            result,
+            Err(ConfirmFailed::Process(TradeError::UnexpectedResponse(_)))
+        ));
+    }
+
+    #[test]
+    fn send_of_an_offer_that_needs_nothing_fails_only_on_a_refused_confirmation() {
+        let (confirmed, _) = run_confirm_steps(&[7], Err(rate_limited_fetch()), Ok(()));
+        assert_eq!(sent(Needs::Nothing, confirmed).unwrap(), OfferId(7));
+
+        let refused = TradeError::UnexpectedResponse("refused".to_string());
+        let (confirmed, _) = run_confirm_steps(&[7], Ok(vec![7]), Err(refused));
+        assert_not_confirmed(sent(Needs::Nothing, confirmed), |source| {
+            matches!(source, TradeError::UnexpectedResponse(_))
+        });
+    }
+
+    /// Runs the steps of `accept` for offer 7 after Steam answered `posted`, with `confirmed` standing in for the
+    /// confirmation; returns the result, and whether it confirmed.
+    fn run_accept_steps(
+        needs: Needs,
+        confirmed: Result<Confirmed, TradeError>,
+    ) -> (Result<Option<TradeId>, TradeError>, bool) {
+        let confirming = std::cell::Cell::new(false);
+        let posted = PostedAccept {
+            trade_id: Some(TradeId(9)),
+            needs,
+        };
+        let result = futures::executor::block_on(accept_steps(OfferId(7), posted, || {
+            confirming.set(true);
+            futures::future::ready(confirmed)
+        }));
+        (result, confirming.get())
+    }
+
+    #[test]
+    fn accept_confirms_only_when_steam_asks() {
+        let found = || -> Result<Confirmed, TradeError> {
+            Ok(Confirmed {
+                confirmed: vec![OfferId(7)],
+                not_found: vec![],
+            })
+        };
+
+        let (result, confirmed) = run_accept_steps(Needs::Nothing, found());
+        assert_eq!(result.unwrap(), Some(TradeId(9)));
+        assert!(!confirmed);
+
+        let (result, confirmed) = run_accept_steps(Needs::EmailConfirmation, found());
+        assert!(matches!(
+            result,
+            Err(TradeError::NeedsEmailConfirmation { offer_id: OfferId(7) })
+        ));
+        assert!(!confirmed);
+
+        let (result, confirmed) = run_accept_steps(Needs::MobileConfirmation, found());
+        assert_eq!(result.unwrap(), None);
+        assert!(confirmed);
+
+        let (result, _) = run_accept_steps(Needs::MobileConfirmation, Ok(Confirmed::default()));
+        assert!(matches!(
+            result,
+            Err(TradeError::ConfirmationNotFound { offer_id: OfferId(7) })
+        ));
+
+        let (result, _) = run_accept_steps(Needs::MobileConfirmation, Err(rate_limited_fetch()));
+        assert!(result.unwrap_err().is_too_many_requests());
+    }
+
+    /// The first offer of `GetTradeOffers` for A and for B right after the trade (`ack-cycle.jsonl`), accepted.
+    const LIVE_SENT_OFFER: &str = r#"{"tradeofferid":"9438483375","accountid_other":1000002,"message":"steamhelper-rs live test","expiration_time":1793720076,"trade_offer_state":3,"items_to_give":[{"appid":730,"contextid":"2","assetid":"24234602605","classid":"241575744","instanceid":"302028390","amount":"1","missing":true,"est_usd":"4"}],"is_our_offer":true,"time_created":1792510476,"time_updated":1792510484,"tradeid":"695401084301346863","from_real_time_trade":false,"escrow_end_date":0,"confirmation_method":2,"eresult":1,"delay_settlement":true,"settlement_date":1793116800}"#;
+    const LIVE_RECEIVED_OFFER: &str = r#"{"tradeofferid":"9438483375","accountid_other":1000001,"message":"steamhelper-rs live test","expiration_time":1793720076,"trade_offer_state":3,"items_to_receive":[{"appid":730,"contextid":"2","assetid":"24234602605","classid":"241575744","instanceid":"302028390","amount":"1","missing":true,"est_usd":"4"}],"is_our_offer":false,"time_created":1792510476,"time_updated":1792510484,"tradeid":"695401084301346863","from_real_time_trade":false,"escrow_end_date":0,"confirmation_method":0,"eresult":1,"delay_settlement":true,"settlement_date":1793116800}"#;
+    /// The second, declined.
+    const LIVE_DECLINED_OFFER: &str = r#"{"tradeofferid":"9438483046","accountid_other":1000002,"message":"steamhelper-rs live test","expiration_time":1793720064,"trade_offer_state":7,"items_to_give":[{"appid":730,"contextid":"2","assetid":"24234602605","classid":"241575744","instanceid":"302028390","amount":"1","missing":false,"est_usd":"4"}],"is_our_offer":true,"time_created":1792510464,"time_updated":1792510471,"from_real_time_trade":false,"escrow_end_date":0,"confirmation_method":2,"eresult":1,"delay_settlement":true,"settlement_date":0}"#;
+
+    fn live_item(missing: bool) -> OfferedItem {
+        OfferedItem {
+            asset: cs2(24234602605),
+            classid: 241575744,
+            instanceid: 302028390,
+            amount: 1,
+            missing,
+        }
+    }
+
+    #[test]
+    fn live_offers() {
+        let response: GetTradeOffersResponse = serde_json::from_str(&format!(
+            r#"{{"response":{{"trade_offers_sent":[{},{}],"trade_offers_received":[{}]}}}}"#,
+            LIVE_SENT_OFFER, LIVE_DECLINED_OFFER, LIVE_RECEIVED_OFFER
+        ))
+        .unwrap();
+        let offers = offers_of(response).unwrap();
+
+        let sent = Offer {
+            id: OfferId(9438483375),
+            partner: SteamID::from_steam64(76561197961265730),
+            is_ours: true,
+            state: OfferState::Accepted,
+            give: vec![live_item(true)],
+            take: vec![],
+            has_malformed_items: false,
+            message: "steamhelper-rs live test".to_string(),
+            created: 1792510476,
+            updated: 1792510484,
+            expires: Some(1793720076),
+            escrow_end: None,
+            trade_id: Some(TradeId(695401084301346863)),
+            protected_until: Some(1793116800),
+        };
+        assert_eq!(offers[0], sent);
+        // the same time as its trade's
+        let trade = trade_in(live_trade_history_response(), 695401084301346863).unwrap();
+        assert_eq!(sent.protected_until, trade.protected_until);
+        assert_eq!(
+            offers[1],
+            Offer {
+                id: OfferId(9438483046),
+                state: OfferState::Declined,
+                give: vec![live_item(false)],
+                created: 1792510464,
+                updated: 1792510471,
+                expires: Some(1793720064),
+                trade_id: None,
+                protected_until: None,
+                ..sent.clone()
+            }
+        );
+        assert_eq!(
+            offers[2],
+            Offer {
+                partner: SteamID::from_steam64(76561197961265729),
+                is_ours: false,
+                give: vec![],
+                take: vec![live_item(true)],
+                ..sent
+            }
+        );
+    }
+
+    #[test]
+    fn offer_with_an_unreadable_item() {
+        let offer: TradeOffer_Trade = serde_json::from_str(
+            r#"{"tradeofferid":"4127395150","accountid_other":79925588,"trade_offer_state":3,
+              "items_to_give":[{"appid":730,"contextid":"2","assetid":"1","classid":"2","amount":"1"}],
+              "items_to_receive":[
+                {"appid":730,"contextid":"2","assetid":"24234602605","classid":"241575744","amount":"1"},
+                {"appid":730,"contextid":"2","assetid":"not a number","classid":"241575744","amount":"1"},
+                {"appid":730,"contextid":"2","assetid":"24234602606","classid":"241575744"}]}"#,
+        )
+        .unwrap();
+        let offer = Offer::of(offer).unwrap();
+        assert!(offer.has_malformed_items);
+        assert_eq!(offer.give.len(), 1);
+        let take: Vec<(Asset, u64)> = offer.take.iter().map(|item| (item.asset, item.classid)).collect();
+        assert_eq!(take, vec![(cs2(24234602605), 241575744)]);
+    }
+
+    #[test]
+    fn offer_that_cannot_be_ours_fails_the_list() {
+        let response: GetTradeOffersResponse = serde_json::from_str(
+            r#"{"response":{"trade_offers_received":[
+                {"tradeofferid":"1","accountid_other":2,"trade_offer_state":2},
+                {"tradeofferid":"3","accountid_other":4294967296,"trade_offer_state":2},
+                {"tradeofferid":"5","accountid_other":2,"trade_offer_state":2,"tradeid":"x"}]}}"#,
+        )
+        .unwrap();
+        match offers_of(response) {
+            Err(TradeError::MalformedOffers { offer_ids, reason }) => {
+                assert_eq!(offer_ids, vec![Some(OfferId(3)), Some(OfferId(5))]);
+                assert!(reason.contains("accountid_other"), "{}", reason);
+            }
+            other => panic!("{:?}", other),
+        }
+    }
+
+    fn one_offer(body: &str) -> Result<Option<Offer>, TradeError> {
+        offer_of(OfferId(9438483375), Ok(serde_json::from_str(body).unwrap()))
+    }
+
+    #[test]
+    fn offer_by_id() {
+        let found = one_offer(&format!(r#"{{"response":{{"offer":{}}}}}"#, LIVE_SENT_OFFER)).unwrap();
+        assert_eq!(found.map(|offer| offer.id), Some(OfferId(9438483375)));
+
+        // no such offer: no `offer`, or NoMatch
+        assert_eq!(one_offer(r#"{"response":{}}"#).unwrap(), None);
+        let no_match = SteamAPIError::EResult(EResult::NoMatch, "Value: 42".to_string());
+        assert_eq!(offer_of(OfferId(1), Err(no_match)).unwrap(), None);
+
+        // any other error stays one, with Steam's code when it gave one
+        let denied = SteamAPIError::EResult(EResult::AccessDenied, "Value: 15".to_string());
+        assert!(matches!(
+            offer_of(OfferId(1), Err(denied)),
+            Err(TradeError::Steam {
+                eresult: EResult::AccessDenied,
+                message: None
+            })
+        ));
+        let rate_limited = SteamAPIError::SteamHttpError("429".to_string());
+        assert!(offer_of(OfferId(1), Err(rate_limited))
+            .unwrap_err()
+            .is_too_many_requests());
+
+        // an offer that can't be read
+        for body in &[
+            r#"{"response":{"offer":{"tradeofferid":"9438483375","trade_offer_state":2}}}"#,
+            r#"{"response":{"offer":{"tradeofferid":"9438483375","accountid_other":4294967296,"trade_offer_state":2}}}"#,
+        ] {
+            match one_offer(body) {
+                Err(TradeError::MalformedOffer {
+                    offer_id: OfferId(9438483375),
+                    reason,
+                }) => assert!(reason.contains("accountid_other"), "{}", reason),
+                other => panic!("{}: {:?}", body, other),
+            }
+        }
+    }
+
+    #[test]
+    fn trade_hold_of_the_answer() {
+        let hold = |body: &str| hold_of(serde_json::from_str(body).unwrap());
+        assert_eq!(
+            hold(r#"{"response":{"my_escrow":{"escrow_end_duration_seconds":0},"their_escrow":{"escrow_end_duration_seconds":1296000},"both_escrow":{"escrow_end_duration_seconds":1296000}}}"#).unwrap(),
+            Duration::from_secs(1296000)
+        );
+        assert_eq!(
+            hold(r#"{"response":{"both_escrow":{"escrow_end_duration_seconds":0}}}"#).unwrap(),
+            Duration::from_secs(0)
+        );
+        assert!(matches!(hold(r#"{"response":{}}"#), Err(TradeError::TradeHoldUnknown)));
+        assert!(matches!(
+            hold(r#"{"response":{"both_escrow":{"escrow_end_duration_seconds":-1}}}"#),
+            Err(TradeError::UnexpectedResponse(_))
+        ));
+    }
+
+    #[cfg(feature = "cs2")]
+    #[test]
+    fn only_an_accepted_offer_has_received_items_to_find() {
+        let offer = |state: u32| -> Offer {
+            let offer: TradeOffer_Trade = serde_json::from_str(&format!(
+                r#"{{"tradeofferid":"4127395150","accountid_other":79925588,"trade_offer_state":{},
+                  "items_to_receive":[
+                    {{"appid":730,"contextid":"2","assetid":"24234602605","classid":"241575744","amount":"1"}}]}}"#,
+                state
+            ))
+            .unwrap();
+            Offer::of(offer).unwrap()
+        };
+        assert_eq!(accepted_received_items(&offer(3)).unwrap().len(), 1);
+        for (state, expected) in [(2, OfferState::Active), (7, OfferState::Declined)] {
+            match accepted_received_items(&offer(state)) {
+                Err(TradeError::OfferNotAccepted {
+                    offer_id: OfferId(4127395150),
+                    state,
+                }) => assert_eq!(state, expected),
+                other => panic!("{:?}", other),
+            }
         }
     }
 
@@ -2211,7 +2594,7 @@ mod tests {
         let rate_limited = futures::executor::block_on(fetch_all_trade_offer_pages(|cursor| async move {
             match cursor {
                 None => Ok(offers_page(&[], &[1], Some(100))),
-                Some(_) => Err(tappet::errors::SteamAPIError::SteamHttpError("429".to_string()).into()),
+                Some(_) => Err(web_api_error(SteamAPIError::SteamHttpError("429".to_string()))),
             }
         }));
         assert!(rate_limited.unwrap_err().is_too_many_requests());
@@ -2223,43 +2606,6 @@ mod tests {
             Err(GeneralError("down".to_string()))
         }));
         assert!(result.is_err());
-    }
-
-    #[test]
-    fn offer_by_id() {
-        let offers = serde_json::from_str::<GetTradeOffersResponse>(
-            r#"{"response":{
-                "trade_offers_sent":[{"tradeofferid":"1","accountid_other":2,"trade_offer_state":2},
-                                     {"tradeofferid":"3","trade_offer_state":2}],
-                "trade_offers_received":[{"tradeofferid":"5","accountid_other":2,"trade_offer_state":2}]}}"#,
-        )
-        .unwrap();
-
-        assert_eq!(ids(&Some(offers_with_id(offers.clone(), 1).unwrap())), vec![1]);
-        assert_eq!(ids(&Some(offers_with_id(offers.clone(), 5).unwrap())), vec![5]);
-        assert!(offers_with_id(offers.clone(), 7).unwrap().is_empty());
-        match offers_with_id(offers, 3) {
-            Err(TradeError::MalformedOffer {
-                tradeoffer_id: 3,
-                reason,
-            }) => {
-                assert!(reason.contains("accountid_other"), "{}", reason)
-            }
-            other => panic!("{:?}", other),
-        }
-
-        // an offer without a readable id may be any missing one, not a readable one
-        let offers = serde_json::from_str::<GetTradeOffersResponse>(
-            r#"{"response":{"trade_offers_received":[
-                {"tradeofferid":"5","accountid_other":2,"trade_offer_state":2},
-                {"accountid_other":2,"trade_offer_state":2}]}}"#,
-        )
-        .unwrap();
-        assert_eq!(ids(&Some(offers_with_id(offers.clone(), 5).unwrap())), vec![5]);
-        match offers_with_id(offers, 7) {
-            Err(TradeError::MalformedOffers { tradeoffer_ids, .. }) => assert_eq!(tradeoffer_ids, vec![None]),
-            other => panic!("{:?}", other),
-        }
     }
 
     #[test]
@@ -2280,8 +2626,8 @@ mod tests {
                 assert!(message.starts_with("2 trade offer(s) could not be read"), "{}", message);
                 assert!(message.contains("accountid_other"), "{}", message);
                 match error {
-                    TradeError::MalformedOffers { tradeoffer_ids, .. } => {
-                        assert_eq!(tradeoffer_ids, vec![Some(3), None])
+                    TradeError::MalformedOffers { offer_ids, .. } => {
+                        assert_eq!(offer_ids, vec![Some(OfferId(3)), None])
                     }
                     _ => unreachable!(),
                 }
@@ -2311,251 +2657,15 @@ mod tests {
         ]);
         let merged = merged.unwrap();
         match fail_on_malformed_offers(&merged) {
-            Err(TradeError::MalformedOffers { tradeoffer_ids, .. }) => {
-                assert_eq!(tradeoffer_ids, vec![Some(1), None, None])
+            Err(TradeError::MalformedOffers { offer_ids, .. }) => {
+                assert_eq!(offer_ids, vec![Some(OfferId(1)), None, None])
             }
             other => panic!("{:?}", other),
         }
     }
 
     #[test]
-    fn created_offer_confirmation() {
-        let step = |found: bool, body: &str| created_offer_step(found.then(|| ()), &create_response(body));
-
-        // a confirmation found is always accepted
-        for body in &[
-            r#"{"tradeofferid":"1","needs_mobile_confirmation":true}"#,
-            r#"{"tradeofferid":"1","needs_mobile_confirmation":false}"#,
-            r#"{"tradeofferid":"1"}"#,
-            r#"{"tradeofferid":"1","needs_email_confirmation":true}"#,
-        ] {
-            assert_eq!(step(true, body), CreatedOfferStep::Confirm(()), "{}", body);
-        }
-
-        // Steam said one is needed: never a success without it
-        assert_eq!(
-            step(false, r#"{"tradeofferid":"1","needs_mobile_confirmation":true}"#),
-            CreatedOfferStep::ConfirmationNotFound
-        );
-        assert_eq!(
-            step(
-                false,
-                r#"{"tradeofferid":"1","needs_mobile_confirmation":true,"needs_email_confirmation":true}"#
-            ),
-            CreatedOfferStep::ConfirmationNotFound
-        );
-        assert_eq!(
-            step(false, r#"{"tradeofferid":"1","needs_email_confirmation":true}"#),
-            CreatedOfferStep::NeedsEmailConfirmation
-        );
-
-        // no confirmation needed
-        for body in &[
-            r#"{"tradeofferid":"1"}"#,
-            r#"{"tradeofferid":"1","needs_mobile_confirmation":false,"needs_email_confirmation":false}"#,
-        ] {
-            assert_eq!(step(false, body), CreatedOfferStep::Done, "{}", body);
-        }
-
-        // and the error the caller sees
-        match offer_created_error(7, ConfirmationError::NotFound.into()) {
-            TradeError::ConfirmationError(ConfirmationError::NotFoundButTradeCreated(7)) => {}
-            other => panic!("{:?}", other),
-        }
-    }
-
-    const ACCEPT_OWN_OFFER: &str = "accept own offer";
-    const FETCH_CONFIRMATIONS: &str = "fetch confirmations";
-    const ACCEPT_CONFIRMATION: &str = "accept confirmation";
-
-    /// Runs the steps after creating offer 7 against stand-ins for Steam's answers; returns the result as
-    /// `create_offer_and_confirm` returns it, and the steps taken.
-    fn run_created_offer_steps(
-        created: &str,
-        accept_own_offer: Result<TradeOfferCreateResponse, TradeError>,
-        confirmations: Result<Option<u64>, TradeError>,
-        accept_confirmation: Result<(), TradeError>,
-    ) -> (Result<(), TradeError>, Vec<&'static str>) {
-        let created = create_response(created);
-        let steps = std::cell::RefCell::new(vec![]);
-        let steps_ref = &steps;
-
-        let result = futures::executor::block_on(confirm_created_offer_steps(
-            7,
-            &created,
-            async move {
-                steps_ref.borrow_mut().push(ACCEPT_OWN_OFFER);
-                accept_own_offer
-            },
-            async move {
-                steps_ref.borrow_mut().push(FETCH_CONFIRMATIONS);
-                confirmations
-            },
-            |confirmation: u64| {
-                assert_eq!(confirmation, 7);
-                steps_ref.borrow_mut().push(ACCEPT_CONFIRMATION);
-                async move { accept_confirmation }
-            },
-        ))
-        .map_err(|error| offer_created_error(7, error));
-
-        (result, steps.into_inner())
-    }
-
-    fn rate_limited_fetch() -> TradeError {
-        steam_mobile::errors::AuthError::from(steam_mobile::errors::InternalError::TooManyRequests {
-            url: "https://steamcommunity.com/mobileconf/getlist".to_string(),
-        })
-        .into()
-    }
-
-    fn assert_not_confirmed(result: Result<(), TradeError>, check_source: impl FnOnce(&TradeError) -> bool) {
-        match result {
-            Err(TradeError::OfferCreatedButNotConfirmed {
-                tradeoffer_id: 7,
-                source,
-            }) => assert!(check_source(&source), "{:?}", source),
-            other => panic!("{:?}", other),
-        }
-    }
-
-    #[test]
-    fn failed_accept_of_own_offer_still_confirms() {
-        let url = Url::parse("https://steamcommunity.com/tradeoffer/7/accept").unwrap();
-        let accept_failures = || -> Vec<TradeError> {
-            vec![
-                check_response(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    &url,
-                    r#"{"strError":"There was an error accepting this trade offer. Please try again later. (28)"}"#,
-                )
-                .unwrap_err(),
-                check_response(StatusCode::BAD_GATEWAY, &url, "<html></html>").unwrap_err(),
-                check_response(StatusCode::TOO_MANY_REQUESTS, &url, "").unwrap_err(),
-                // the lookup before the POST
-                OfferError::NoMatch.into(),
-                TradeError::MalformedOffer {
-                    tradeoffer_id: 7,
-                    reason: "missing field `accountid_other`".to_string(),
-                },
-                TradeError::MalformedOffers {
-                    tradeoffer_ids: vec![None],
-                    reason: "missing field `tradeofferid`".to_string(),
-                },
-                // no POST at all
-                GeneralError("Somehow you don't have a sessionid cookie. You need to login first.".to_string()),
-            ]
-        };
-
-        for accept_failure in accept_failures() {
-            let failure = accept_failure.to_string();
-            let (result, steps) = run_created_offer_steps(
-                r#"{"tradeofferid":"7","needs_mobile_confirmation":true}"#,
-                Err(accept_failure),
-                Ok(Some(7)),
-                Ok(()),
-            );
-            assert!(result.is_ok(), "{}: {:?}", failure, result);
-            assert_eq!(
-                steps,
-                vec![ACCEPT_OWN_OFFER, FETCH_CONFIRMATIONS, ACCEPT_CONFIRMATION],
-                "{}",
-                failure
-            );
-        }
-
-        // and the answer to the creation still decides without one
-        for accept_failure in accept_failures() {
-            let (result, steps) = run_created_offer_steps(
-                r#"{"tradeofferid":"7","needs_mobile_confirmation":true}"#,
-                Err(accept_failure),
-                Ok(None),
-                Ok(()),
-            );
-            assert!(matches!(
-                result,
-                Err(TradeError::ConfirmationError(
-                    ConfirmationError::NotFoundButTradeCreated(7)
-                ))
-            ));
-            assert_eq!(steps, vec![ACCEPT_OWN_OFFER, FETCH_CONFIRMATIONS]);
-        }
-        for accept_failure in accept_failures() {
-            let (result, _) = run_created_offer_steps(r#"{"tradeofferid":"7"}"#, Err(accept_failure), Ok(None), Ok(()));
-            assert!(result.is_ok(), "{:?}", result);
-        }
-
-        // its answer is not used either
-        let (result, steps) = run_created_offer_steps(
-            r#"{"tradeofferid":"7","needs_mobile_confirmation":true}"#,
-            Ok(create_response(r#"{"needs_mobile_confirmation":false}"#)),
-            Ok(Some(7)),
-            Ok(()),
-        );
-        assert!(result.is_ok(), "{:?}", result);
-        assert_eq!(steps, vec![ACCEPT_OWN_OFFER, FETCH_CONFIRMATIONS, ACCEPT_CONFIRMATION]);
-    }
-
-    #[test]
-    fn created_offer_flags_and_confirmations() {
-        let accepted = || -> Result<_, TradeError> { Ok(create_response(r#"{"tradeid":"1"}"#)) };
-        let live = [
-            r#"{"tradeofferid":"7"}"#,
-            r#"{"tradeofferid":"7","needs_mobile_confirmation":false,"needs_email_confirmation":false}"#,
-        ];
-        let mobile = [
-            r#"{"tradeofferid":"7","needs_mobile_confirmation":true}"#,
-            r#"{"tradeofferid":"7","needs_mobile_confirmation":true,"needs_email_confirmation":true}"#,
-        ];
-        let email = r#"{"tradeofferid":"7","needs_email_confirmation":true}"#;
-        let all = live.iter().chain(&mobile).chain(std::iter::once(&email));
-
-        // a confirmation found is accepted whatever the flags, and its failure is the offer's
-        for created in all.clone() {
-            let (result, steps) = run_created_offer_steps(created, accepted(), Ok(Some(7)), Ok(()));
-            assert!(result.is_ok(), "{}: {:?}", created, result);
-            assert_eq!(steps, vec![ACCEPT_OWN_OFFER, FETCH_CONFIRMATIONS, ACCEPT_CONFIRMATION]);
-
-            let (result, _) = run_created_offer_steps(created, accepted(), Ok(Some(7)), Err(rate_limited_fetch()));
-            assert_not_confirmed(result, TradeError::is_too_many_requests);
-        }
-
-        // no flag: the offer is live, found or not, fetched or not
-        for created in &live {
-            let (result, steps) = run_created_offer_steps(created, accepted(), Ok(None), Ok(()));
-            assert!(result.is_ok(), "{}: {:?}", created, result);
-            assert_eq!(steps, vec![ACCEPT_OWN_OFFER, FETCH_CONFIRMATIONS]);
-
-            let (result, steps) = run_created_offer_steps(created, accepted(), Err(rate_limited_fetch()), Ok(()));
-            assert!(result.is_ok(), "{}: {:?}", created, result);
-            assert_eq!(steps, vec![ACCEPT_OWN_OFFER, FETCH_CONFIRMATIONS]);
-        }
-
-        // a mobile confirmation is needed: never a success without it
-        for created in &mobile {
-            let (result, _) = run_created_offer_steps(created, accepted(), Ok(None), Ok(()));
-            assert!(matches!(
-                result,
-                Err(TradeError::ConfirmationError(
-                    ConfirmationError::NotFoundButTradeCreated(7)
-                ))
-            ));
-
-            let (result, _) = run_created_offer_steps(created, accepted(), Err(rate_limited_fetch()), Ok(()));
-            assert_not_confirmed(result, TradeError::is_too_many_requests);
-        }
-
-        // an email one, which this crate can't give
-        let (result, _) = run_created_offer_steps(email, accepted(), Ok(None), Ok(()));
-        assert_not_confirmed(result, |source| {
-            matches!(source, TradeError::NeedsEmailConfirmation { tradeoffer_id: 7 })
-        });
-        let (result, _) = run_created_offer_steps(email, accepted(), Err(rate_limited_fetch()), Ok(()));
-        assert_not_confirmed(result, TradeError::is_too_many_requests);
-    }
-
-    #[test]
-    fn readable_copy_of_an_offer_wins() {
+    fn readable_copy_of_an_offer_still_fails_the_list() {
         let page = |json: &str| serde_json::from_str::<GetTradeOffersResponse>(json).unwrap();
         for pages in [
             vec![
@@ -2575,8 +2685,8 @@ mod tests {
         ] {
             let (merged, _) = read_pages(pages);
             let merged = merged.unwrap();
-            assert_eq!(ids(&Some(offers_with_id(merged.clone(), 1).unwrap())), vec![1]);
-            // the list as a whole still fails, as Steam did send an unreadable offer
+            assert_eq!(ids(&merged.response.trade_offers_received), vec![1]);
+            // the list as a whole fails, as Steam did send an unreadable offer
             assert!(matches!(
                 fail_on_malformed_offers(&merged),
                 Err(TradeError::MalformedOffers { .. })
@@ -2604,8 +2714,8 @@ mod tests {
         assert_eq!(requested, vec![None, Some(100)]);
         for merged in [single.unwrap(), paged.unwrap()] {
             match fail_on_malformed_offers(&merged) {
-                Err(TradeError::MalformedOffers { tradeoffer_ids, .. }) => {
-                    assert_eq!(tradeoffer_ids, vec![Some(3), Some(1), None, None])
+                Err(TradeError::MalformedOffers { offer_ids, .. }) => {
+                    assert_eq!(offer_ids, vec![Some(OfferId(3)), Some(OfferId(1)), None, None])
                 }
                 other => panic!("{:?}", other),
             }
@@ -2617,8 +2727,7 @@ mod tests {
     // builds the request `execute` sends, without sending it.
     const FIRST_PAGE_URL: &str = "https://api.steampowered.com/IEconService/GetTradeOffers/v1?access_token=TOKEN&&get_sent_offers=true&get_received_offers=true&time_historical_cutoff=4294967295&active_only=true";
 
-    fn prepared_url(request: GetTradeOffers<'_>) -> String {
-        let request = request.prepare().unwrap();
+    fn prepared_url(request: reqwest::Request) -> String {
         assert_eq!(request.method(), Method::GET);
         assert!(request.headers().is_empty(), "{:?}", request.headers());
         assert!(request.body().is_none());
@@ -2632,13 +2741,11 @@ mod tests {
 
         let merged = futures::executor::block_on(fetch_all_trade_offer_pages(|cursor| {
             let api_client = web_api_with_token(&http_client, "TOKEN".to_string());
-            sent.push(prepared_url(trade_offers_request(
-                &api_client,
-                true,
-                true,
-                true,
-                cursor,
-            )));
+            sent.push(prepared_url(
+                trade_offers_request(&api_client, OfferQuery::ACTIVE, cursor)
+                    .prepare()
+                    .unwrap(),
+            ));
             let page = match cursor {
                 None => offers_page(&[1], &[2], Some(100)),
                 Some(_) => offers_page(&[], &[3], Some(0)),
@@ -2662,7 +2769,11 @@ mod tests {
             .iter()
             .map(|token| {
                 let api_client = web_api_with_token(&http_client, token.to_string());
-                prepared_url(trade_offers_request(&api_client, false, true, true, None))
+                prepared_url(
+                    trade_offers_request(&api_client, OfferQuery::ACTIVE_RECEIVED, None)
+                        .prepare()
+                        .unwrap(),
+                )
             })
             .collect();
 
@@ -2683,44 +2794,43 @@ mod tests {
         );
     }
 
+    #[test]
+    fn offer_request_is_its_id_only() {
+        let api_client = web_api_with_token(&reqwest::Client::new(), "TOKEN".to_string());
+        assert_eq!(
+            prepared_url(trade_offer_request(&api_client, OfferId(9438483375)).prepare().unwrap()),
+            "https://api.steampowered.com/IEconService/GetTradeOffer/v1?access_token=TOKEN&&tradeofferid=9438483375"
+        );
+    }
+
+    #[test]
+    fn trade_hold_request() {
+        let api_client = web_api_with_token(&reqwest::Client::new(), "TOKEN".to_string());
+        let link = TradeLink::parse(get_tradeoffer_url_with_token()).unwrap();
+        assert_eq!(
+            prepared_url(super::trade_hold_request(&api_client, &link).prepare().unwrap()),
+            "https://api.steampowered.com/IEconService/GetTradeHoldDurations/v1?access_token=TOKEN&&steamid_target=76561198040191316&trade_offer_access_token=Ob27qXzn"
+        );
+    }
+
     /// B of the live tests stands in: account id 1, SteamID 76561197960265729.
     fn account() -> SteamID {
         SteamID::from_account_id(1)
     }
 
     #[test]
-    fn trade_offer_access_token_answer() {
-        assert_eq!(
-            trade_offer_access_token(r#"{"response":{"trade_offer_access_token":"Ob27qXzn"}}"#).unwrap(),
-            "Ob27qXzn"
-        );
-        for refused in &[
-            r#"{"response":{}}"#,
-            r#"{}"#,
-            r#"{"response":{"trade_offer_access_token":""}}"#,
-            "<html>",
-        ] {
-            assert!(
-                matches!(trade_offer_access_token(refused), Err(GeneralError(_))),
-                "{}",
-                refused
-            );
-        }
-    }
-
-    #[test]
     fn trade_link_from_token() {
         let link = trade_link_of(account(), "Ob27qXzn").unwrap();
         assert_eq!(
-            link.link,
+            link.url(),
             "https://steamcommunity.com/tradeoffer/new/?partner=1&token=Ob27qXzn"
         );
-        assert_eq!(link.partner_id, account());
-        assert_eq!(link.token, "Ob27qXzn");
+        assert_eq!(link.partner(), account());
+        assert_eq!(link.token(), "Ob27qXzn");
         // a token no trade link has
         assert!(matches!(
             trade_link_of(account(), "a&token=b"),
-            Err(TradeError::TradeValidationError(_))
+            Err(TradeError::TradeLinkError(_))
         ));
     }
 
@@ -2737,13 +2847,13 @@ mod tests {
     fn trade_link_on_the_privacy_page() {
         let link = trade_link_on_privacy_page(PRIVACY_PAGE, account()).unwrap();
         assert_eq!(
-            link.link,
+            link.url(),
             "https://steamcommunity.com/tradeoffer/new/?partner=1&token=Ob27qXzn"
         );
 
         // as text, unescaped
         let text = "Trade URL: https://steamcommunity.com/tradeoffer/new/?partner=1&token=Ob27qXzn";
-        assert_eq!(trade_link_on_privacy_page(text, account()).unwrap().token, "Ob27qXzn");
+        assert_eq!(trade_link_on_privacy_page(text, account()).unwrap().token(), "Ob27qXzn");
     }
 
     #[test]
@@ -2751,10 +2861,129 @@ mod tests {
         let others = PRIVACY_PAGE.replace("partner=1&", "partner=2&");
         for page in &[others.as_str(), "<html>Sign In</html>", ""] {
             assert!(
-                matches!(trade_link_on_privacy_page(page, account()), Err(GeneralError(_))),
+                matches!(
+                    trade_link_on_privacy_page(page, account()),
+                    Err(TradeError::UnexpectedResponse(_))
+                ),
                 "{}",
                 page
             );
         }
+    }
+
+    /// A loopback server standing in for Steam Community. `/profiles/1/tradeoffers/privacy` redirects as the privacy
+    /// page did live on 2026-10-22 (`fixtures/live/2026-10-22/live-check.jsonl` lines 12-14): to
+    /// `market/eligibilitycheck`, which redirects back, then to `login/home`. `/tradeoffer/new/send` redirects to
+    /// `login/home`, `/moved` to `/page`, `/profiles/2/tradeoffers/privacy` to the same page under a custom URL that
+    /// starts with "login" (`/profiles/…` redirects there for an account with a custom URL, as aiosteampy notes,
+    /// `aiosteampy/client/state.py:286`); any other path is a page.
+    fn fake_community() -> u16 {
+        use std::io::BufRead;
+        use std::io::BufReader;
+        use std::io::Read;
+        use std::io::Write;
+
+        const LOGIN: &str = "/login/home/?goto=%2Fprofiles%2F1%2Ftradeoffers%2Fprivacy";
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        std::thread::spawn(move || {
+            let mut eligibility_checked = false;
+            for stream in listener.incoming() {
+                let mut stream = stream.unwrap();
+                let mut reader = BufReader::new(stream.try_clone().unwrap());
+                let mut line = String::new();
+                reader.read_line(&mut line).unwrap();
+                let path = line.split(' ').nth(1).unwrap().to_string();
+                let mut content_length = 0;
+                loop {
+                    line.clear();
+                    reader.read_line(&mut line).unwrap();
+                    let Some((name, value)) = line.trim_end().split_once(':') else {
+                        break;
+                    };
+                    if name.eq_ignore_ascii_case("content-length") {
+                        content_length = value.trim().parse().unwrap();
+                    }
+                }
+                reader.read_exact(&mut vec![0; content_length]).unwrap();
+                let location = match path.as_str() {
+                    "/profiles/1/tradeoffers/privacy" if eligibility_checked => Some(LOGIN),
+                    "/profiles/1/tradeoffers/privacy" => {
+                        Some("/market/eligibilitycheck/?goto=%2Fprofiles%2F1%2Ftradeoffers%2Fprivacy")
+                    }
+                    "/market/eligibilitycheck/?goto=%2Fprofiles%2F1%2Ftradeoffers%2Fprivacy" => {
+                        eligibility_checked = true;
+                        Some("/profiles/1/tradeoffers/privacy")
+                    }
+                    "/tradeoffer/new/send" => Some(LOGIN),
+                    "/moved" => Some("/page"),
+                    "/profiles/2/tradeoffers/privacy" => Some("/id/loginbot/tradeoffers/privacy"),
+                    _ => None,
+                };
+                let page = "<html><title>Sign In</title></html>";
+                let answer = match location {
+                    Some(location) => format!("HTTP/1.1 302 Found\r\nLocation: {}\r\nContent-Length: 0\r\n", location),
+                    None => format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n", page.len()),
+                };
+                let body = if location.is_some() { "" } else { page };
+                write!(stream, "{}Connection: close\r\n\r\n{}", answer, body).unwrap();
+            }
+        });
+        port
+    }
+
+    fn is_session_expired(answer: Result<(StatusCode, Url, String), TradeError>) -> bool {
+        matches!(
+            answer,
+            Err(TradeError::InternalError(InternalError::MobileInternalError(
+                steam_mobile::errors::InternalError::SessionExpired
+            )))
+        )
+    }
+
+    #[tokio::test]
+    async fn a_redirect_to_the_login_page_is_session_expired() {
+        let port = fake_community();
+        let base = format!("http://{}:{}", STEAM_COMMUNITY_HOST, port);
+        // follows redirects, as steam-mobile's client
+        let client = reqwest::Client::builder()
+            .no_proxy()
+            .resolve(STEAM_COMMUNITY_HOST, std::net::SocketAddr::from(([127, 0, 0, 1], port)))
+            .build()
+            .unwrap();
+
+        let page = client
+            .get(format!("{}/profiles/1/tradeoffers/privacy", base))
+            .send()
+            .await
+            .unwrap();
+        assert!(is_session_expired(community_answer(page).await));
+
+        // a POST too: reqwest follows a 302 with a GET
+        let posted = client
+            .post(format!("{}/tradeoffer/new/send", base))
+            .body("sessionid=1")
+            .send()
+            .await
+            .unwrap();
+        assert!(is_session_expired(community_answer(posted).await));
+
+        // a redirect elsewhere is read as any answer
+        let moved = client.get(format!("{}/moved", base)).send().await.unwrap();
+        let (status, url, body) = community_answer(moved).await.unwrap();
+        assert_eq!((status, url.path()), (StatusCode::OK, "/page"));
+        assert!(body.starts_with("<html>"));
+
+        // a custom URL that starts with "login" is no login page
+        let vanity = client
+            .get(format!("{}/profiles/2/tradeoffers/privacy", base))
+            .send()
+            .await
+            .unwrap();
+        let (status, url, _) = community_answer(vanity).await.unwrap();
+        assert_eq!(
+            (status, url.path()),
+            (StatusCode::OK, "/id/loginbot/tradeoffers/privacy")
+        );
     }
 }

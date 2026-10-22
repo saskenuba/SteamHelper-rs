@@ -12,13 +12,9 @@ keywords = ["steam", "tradeoffer", "trading"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
-default = ["additional-checks"]
-
-additional-checks = ["scraper"]
-
 # Where the items of an accepted offer went, through CS2's game coordinator (steam-client-lib's `cs2`):
-# `SteamTradeManager::accept_offer_and_find_items`. The account's CS2 session and web session share one Steam client
-# logon (steam-mobile's `cm`, `SteamAuthenticator::login_with_client`).
+# `SteamTradeManager::accept_and_find_items` and `find_received_items`. The account's CS2 session and web session
+# share one Steam client logon (steam-mobile's `cm`, `SteamAuthenticator::login_with_client`).
 cs2 = ["dep:steam-client-lib", "steam-client-lib/cs2", "steam-mobile/cm"]
 
 [dependencies]
@@ -29,7 +25,6 @@ regex = "^1"
 thiserror = "1"
 tracing = "^0.1"
 
-scraper = { version = "^0", optional = true }
 steam-client-lib = { path = "../steam-client", version = "^0.2.0", optional = true }
 
 futures = "^0.3"

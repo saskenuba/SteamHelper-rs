@@ -1,35 +1,34 @@
-use crate::TradeOffer;
+use crate::OfferId;
 use crate::TRADEOFFER_BASE;
 use crate::TRADEOFFER_NEW_URL;
 
-pub mod asset_collection;
 pub mod context;
 pub mod sessionid;
 pub mod trade_link;
-pub mod trade_offer;
 pub mod trade_offer_web;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TradeKind {
     Accept,
     Cancel,
-    Create(TradeOffer),
+    Create,
     Decline,
 }
 
 impl TradeKind {
-    pub fn endpoint(&self, tradeofferid: Option<u64>) -> String {
-        if let TradeKind::Create(_) = self {
+    /// The URL of the operation; every one but `Create` is on an existing offer.
+    pub fn endpoint(self, offer_id: Option<OfferId>) -> String {
+        if let TradeKind::Create = self {
             return TRADEOFFER_NEW_URL.to_string();
         }
 
-        let tradeofferid = tradeofferid.unwrap();
+        let offer_id = offer_id.unwrap();
         let url_path = match self {
             Self::Accept => "/accept",
             Self::Cancel => "/cancel",
             Self::Decline => "/decline",
-            _ => unreachable!(),
+            Self::Create => unreachable!(),
         };
-        TRADEOFFER_BASE.to_owned() + &*tradeofferid.to_string() + url_path
+        TRADEOFFER_BASE.to_owned() + &*offer_id.to_string() + url_path
     }
 }

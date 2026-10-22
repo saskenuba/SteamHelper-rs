@@ -10,8 +10,6 @@
 use std::borrow::Cow;
 #[cfg(feature = "cs2")]
 use std::collections::HashMap;
-#[cfg(feature = "cs2")]
-use std::convert::TryFrom;
 use std::fmt;
 use std::future::Future;
 
@@ -20,6 +18,7 @@ use serde::Deserialize;
 use serde::Deserializer;
 use serde_json::value::RawValue;
 
+use crate::AssetId;
 #[cfg(feature = "cs2")]
 use crate::Fingerprint;
 use crate::InventoryContext;
@@ -71,12 +70,12 @@ impl Inventory {
     /// ([`SteamTradeManager::inventory`](crate::SteamTradeManager::inventory)) gives the fingerprints of an offer's
     /// items: extra entries don't matter, they are looked up by the offer's asset ids.
     #[cfg(feature = "cs2")]
-    pub fn fingerprints(&self) -> HashMap<u64, Fingerprint> {
+    pub fn fingerprints(&self) -> HashMap<AssetId, Fingerprint> {
         let mut fingerprints = HashMap::new();
         for page in self.pages() {
             for item in page.items() {
-                if let (Ok(assetid), Some(fingerprint)) = (u64::try_from(item.assetid), Fingerprint::of(&item)) {
-                    fingerprints.insert(assetid, fingerprint);
+                if let Some(fingerprint) = Fingerprint::of(&item) {
+                    fingerprints.insert(item.assetid, fingerprint);
                 }
             }
         }
@@ -107,13 +106,14 @@ impl<'a> InventoryPage<'a> {
     ///
     /// # Errors
     ///
-    /// [`TradeError::GeneralError`] if it isn't an inventory, Steam doesn't say `success: 1`, or it says more items
-    /// come but not where.
+    /// [`TradeError::UnexpectedResponse`] if it isn't an inventory, Steam doesn't say `success: 1`, or it says more
+    /// items come but not where.
     pub fn parse(body: &'a str) -> Result<Self, TradeError> {
-        let page: RawPage<'a> = serde_json::from_str(body)
-            .map_err(|error| TradeError::GeneralError(format!("Steam's inventory answer can't be read: {}", error)))?;
+        let page: RawPage<'a> = serde_json::from_str(body).map_err(|error| {
+            TradeError::UnexpectedResponse(format!("Steam's inventory answer can't be read: {}", error))
+        })?;
         if !page.success {
-            return Err(TradeError::GeneralError(
+            return Err(TradeError::UnexpectedResponse(
                 "Steam's inventory answer doesn't say `success: 1`.".to_string(),
             ));
         }
@@ -121,7 +121,7 @@ impl<'a> InventoryPage<'a> {
             (false, _) => None,
             (true, Some(last)) => Some(last),
             (true, None) => {
-                return Err(TradeError::GeneralError(
+                return Err(TradeError::UnexpectedResponse(
                     "Steam says the inventory has more items, but not where they start: items would be missing."
                         .to_string(),
                 ))
@@ -197,10 +197,10 @@ impl<'a> InventoryPage<'a> {
 pub struct InventoryItem<'p> {
     pub appid: u32,
     pub contextid: u32,
-    pub assetid: i64,
+    pub assetid: AssetId,
     /// The item's kind. It stays the same when the item is traded; `instanceid` doesn't (seen live, CS2).
-    pub classid: i64,
-    pub instanceid: i64,
+    pub classid: u64,
+    pub instanceid: u64,
     pub amount: i64,
     /// Empty if Steam sent no description for the item.
     pub market_hash_name: &'p str,
@@ -296,11 +296,11 @@ struct RawAsset {
     #[serde(with = "serde_with::rust::display_fromstr")]
     contextid: u32,
     #[serde(with = "serde_with::rust::display_fromstr")]
-    assetid: i64,
+    assetid: AssetId,
     #[serde(with = "serde_with::rust::display_fromstr")]
-    classid: i64,
+    classid: u64,
     #[serde(default, with = "serde_with::rust::display_fromstr")]
-    instanceid: i64,
+    instanceid: u64,
     #[serde(with = "serde_with::rust::display_fromstr")]
     amount: i64,
 }
@@ -308,9 +308,9 @@ struct RawAsset {
 #[derive(Debug, Deserialize)]
 struct RawDescription<'a> {
     #[serde(with = "serde_with::rust::display_fromstr")]
-    classid: i64,
+    classid: u64,
     #[serde(default, with = "serde_with::rust::display_fromstr")]
-    instanceid: i64,
+    instanceid: u64,
     #[serde(default, borrow)]
     market_hash_name: Cow<'a, str>,
     #[serde(default, deserialize_with = "flag")]
@@ -332,7 +332,7 @@ struct RawText<'a> {
 #[derive(Debug, Deserialize)]
 struct RawProperties<'a> {
     #[serde(with = "serde_with::rust::display_fromstr")]
-    assetid: i64,
+    assetid: AssetId,
     #[serde(default, borrow)]
     asset_properties: Option<&'a RawValue>,
 }
@@ -471,13 +471,13 @@ where
             None => return Ok(inventory),
         };
         if inventory.pages.len() >= MAX_INVENTORY_PAGES {
-            return Err(TradeError::GeneralError(format!(
+            return Err(TradeError::UnexpectedResponse(format!(
                 "The inventory has more than {} pages: items would be missing.",
                 MAX_INVENTORY_PAGES
             )));
         }
         if starts.contains(&next) {
-            return Err(TradeError::GeneralError(format!(
+            return Err(TradeError::UnexpectedResponse(format!(
                 "Steam sent the inventory page after asset `{}` twice: items would be missing.",
                 next
             )));
@@ -534,14 +534,17 @@ mod tests {
         assert_eq!(items.len(), 2);
 
         let case = &items[0];
-        assert_eq!(case.assetid, 25838682267);
+        assert_eq!(case.assetid, AssetId(25838682267));
         assert_eq!(case.market_hash_name, "Dreams & Nightmares Case");
         assert!(case.commodity && case.tradable && case.marketable);
         assert!(case.properties().is_empty());
         assert_eq!((case.pattern(), case.wear()), (None, None));
 
         let skin = &items[1];
-        assert_eq!((skin.appid, skin.contextid, skin.assetid), (730, 2, 24936074294));
+        assert_eq!(
+            (skin.appid, skin.contextid, skin.assetid),
+            (730, 2, AssetId(24936074294))
+        );
         assert_eq!((skin.classid, skin.instanceid, skin.amount), (7993036706, 480085569, 1));
         assert!(!skin.commodity);
         assert_eq!(skin.pattern(), Some(355));
@@ -558,7 +561,7 @@ mod tests {
         let item = page.items().next().unwrap();
         assert_eq!(
             (item.contextid, item.assetid, item.classid),
-            (16, 54238728503, 241575744)
+            (16, AssetId(54238728503), 241575744)
         );
         assert!(!item.tradable && !item.marketable);
         assert_eq!(item.pattern(), Some(302));
@@ -590,7 +593,7 @@ mod tests {
     fn not_a_success() {
         for body in &[r#"{"success":false}"#, r#"{"success":0}"#, r#"{}"#, "null", "<html>"] {
             match InventoryPage::parse(body) {
-                Err(TradeError::GeneralError(_)) => {}
+                Err(TradeError::UnexpectedResponse(_)) => {}
                 other => panic!("{}: {:?}", body, other),
             }
         }
@@ -600,7 +603,7 @@ mod tests {
     #[test]
     fn more_items_without_last_assetid_is_an_error() {
         let result = InventoryPage::parse(r#"{"assets":[],"success":1,"more_items":1}"#);
-        assert!(matches!(result, Err(TradeError::GeneralError(_))));
+        assert!(matches!(result, Err(TradeError::UnexpectedResponse(_))));
     }
 
     #[test]
@@ -633,10 +636,10 @@ mod tests {
         format!(r#"{{"assets":[{}],"success":1{}}}"#, assets.join(","), more)
     }
 
-    fn ids(inventory: &Inventory) -> Vec<i64> {
+    fn ids(inventory: &Inventory) -> Vec<u64> {
         inventory
             .pages()
-            .flat_map(|page| page.items().map(|item| item.assetid).collect::<Vec<_>>())
+            .flat_map(|page| page.items().map(|item| item.assetid.0).collect::<Vec<_>>())
             .collect()
     }
 
@@ -697,7 +700,7 @@ mod tests {
             let body = page(&[served], Some("1"));
             async move { Ok(body) }
         }));
-        assert!(matches!(result, Err(TradeError::GeneralError(_))));
+        assert!(matches!(result, Err(TradeError::UnexpectedResponse(_))));
         assert_eq!(served, 2);
     }
 
@@ -709,7 +712,7 @@ mod tests {
             let body = page(&[1], Some(&served.to_string()));
             async move { Ok(body) }
         }));
-        assert!(matches!(result, Err(TradeError::GeneralError(_))));
+        assert!(matches!(result, Err(TradeError::UnexpectedResponse(_))));
         assert_eq!(served, MAX_INVENTORY_PAGES);
     }
 
@@ -719,7 +722,7 @@ mod tests {
         let mut fingerprints = Inventory::from_json(CONTEXT_2.to_string()).unwrap().fingerprints();
         // the case has none
         assert_eq!(fingerprints.len(), 1);
-        let skin = fingerprints.remove(&24936074294).unwrap();
+        let skin = fingerprints.remove(&AssetId(24936074294)).unwrap();
         assert_eq!(skin, Fingerprint::new(355, "0.0661438107490539551".parse().unwrap()));
         assert!(Inventory::default().fingerprints().is_empty());
     }

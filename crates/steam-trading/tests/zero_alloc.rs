@@ -131,7 +131,7 @@ fn reading_items_allocates_nothing() {
     let (checksum, count) = allocations(|| {
         let mut checksum = 0;
         for item in page.items() {
-            checksum += item.assetid + item.classid + item.market_hash_name.len() as i64;
+            checksum += (item.assetid.0 + item.classid) as i64 + item.market_hash_name.len() as i64;
             checksum += item.pattern().unwrap() + item.wear().map_or(0, |wear| (wear * 1000.0) as i64);
             checksum += i64::from(item.tradable) + i64::from(item.commodity);
         }

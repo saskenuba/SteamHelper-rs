@@ -4,14 +4,16 @@ use serde::Deserialize;
 use steam_mobile::errors::InternalError as MobileInternalError;
 use steam_mobile::StatusCode;
 use steam_mobile::Url;
+use steam_mobile::STEAM_COMMUNITY_HOST;
 
-use crate::errors::error_from_strmessage;
+use crate::errors::error_of_strmessage;
 use crate::errors::InternalError;
-use crate::OfferError;
 use crate::TradeError;
 
 /// How much of an error page goes into the error, as in steam-mobile.
 const ERROR_BODY_SNIPPET_CHARS: usize = 200;
+/// How the path of Steam's login page starts, as steam-mobile checks it (`url_expired_check`).
+const LOGIN_PATH: &str = "/login";
 
 #[derive(Deserialize)]
 struct StrError {
@@ -29,11 +31,26 @@ pub(crate) fn check_response(status: StatusCode, url: &Url, body: &str) -> Resul
     rate_limit_check(status, url)?;
 
     if let Some(message) = str_error(body) {
-        let error = error_from_strmessage(&message).unwrap_or(OfferError::GeneralFailure(message));
-        return Err(error.into());
+        return Err(error_of_strmessage(message));
     }
 
     status_check(status, url, body)
+}
+
+/// Fails with steam-mobile's `SessionExpired` if Steam redirected the request to its login page: the session is gone,
+/// and the page isn't an answer to the request. `url` is the answer's, after the redirects reqwest followed.
+///
+/// The login page is a Steam Community URL whose path starts with `/login`, as steam-mobile's `url_expired_check`
+/// reads a `Location`. Seen live (2026-10-22): the privacy page's redirects ended on
+/// `https://steamcommunity.com/login/home/?goto=…`. Checking the final URL is this crate's rule. The siblings check an
+/// unfollowed redirect's `Location` for `/login` (node-steamcommunity `components/http.js:106-111`, aiosteampy
+/// `transport/base.py:239`), and node-steamcommunity catches a lost session on a followed GET from the page itself
+/// (`components/http.js:139-144`).
+pub(crate) fn login_redirect_check(url: &Url) -> Result<(), TradeError> {
+    if url.host_str() == Some(STEAM_COMMUNITY_HOST) && url.path().starts_with(LOGIN_PATH) {
+        return Err(mobile_error(MobileInternalError::SessionExpired));
+    }
+    Ok(())
 }
 
 /// Fails on HTTP 429.
@@ -85,6 +102,8 @@ fn body_snippet(body: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    use steam_language::enums::EResult;
+
     use super::*;
     use crate::types::trade_offer_web::TradeOfferCancelResponse;
     use crate::types::trade_offer_web::TradeOfferCreateResponse;
@@ -110,7 +129,10 @@ mod tests {
 
         for status in &[StatusCode::OK, StatusCode::INTERNAL_SERVER_ERROR] {
             match check_response(*status, &url(), body) {
-                Err(TradeError::TradeOfferError(OfferError::Revoked)) => {}
+                Err(TradeError::Steam {
+                    eresult: EResult::Revoked,
+                    message: Some(message),
+                }) => assert!(message.ends_with("(26)"), "{}", message),
                 other => panic!("{:?}", other),
             }
         }
@@ -120,7 +142,7 @@ mod tests {
     fn str_error_without_known_code() {
         let body = r#"{"strError":"Você não pode negociar (aguarde)."}"#;
         match check_response(StatusCode::OK, &url(), body) {
-            Err(TradeError::TradeOfferError(OfferError::GeneralFailure(message))) => {
+            Err(TradeError::UnexpectedResponse(message)) => {
                 assert_eq!(message, "Você não pode negociar (aguarde).")
             }
             other => panic!("{:?}", other),
@@ -138,6 +160,31 @@ mod tests {
             "<html></html>",
         ] {
             assert!(check_response(StatusCode::OK, &url(), body).is_ok(), "{}", body);
+        }
+    }
+
+    #[test]
+    fn a_redirect_to_the_login_page_is_session_expired() {
+        // the final URL of the privacy page, live on 2026-10-22
+        let login =
+            "https://steamcommunity.com/login/home/?goto=%2Fprofiles%2F76561197961265729%2Ftradeoffers%2Fprivacy";
+        match mobile(login_redirect_check(&Url::parse(login).unwrap()).unwrap_err()) {
+            MobileInternalError::SessionExpired => {}
+            other => panic!("{:?}", other),
+        }
+
+        for asked in &[
+            "https://steamcommunity.com/profiles/76561197961265729/tradeoffers/privacy",
+            // where `/profiles/…` redirects for an account whose custom URL starts with "login"
+            "https://steamcommunity.com/id/loginbot/tradeoffers/privacy",
+            "https://steamcommunity.com/inventory/76561197961265729/730/2?l=english&count=1000",
+            "https://steamcommunity.com/tradeoffer/new/send",
+            "https://steamcommunity.com/tradeoffer/9438483375/accept",
+            "https://steamcommunity.com/trade/new/acknowledge",
+            // only Steam Community's login page was seen
+            "https://store.steampowered.com/login/",
+        ] {
+            assert!(login_redirect_check(&Url::parse(asked).unwrap()).is_ok(), "{}", asked);
         }
     }
 

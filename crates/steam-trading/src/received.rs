@@ -13,7 +13,6 @@
 
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::convert::TryFrom;
 use std::future::Future;
 use std::time::Duration;
 use std::time::Instant;
@@ -22,13 +21,16 @@ use futures_timer::Delay;
 use serde::Deserialize;
 use serde::Serialize;
 use steam_client::gc::cs2::Cs2;
-use tappet::response_types::CEcon_Asset;
 use tracing::debug;
 
+use crate::AssetId;
 use crate::Inventory;
 use crate::InventoryContext;
 use crate::InventoryItem;
+use crate::OfferId;
+use crate::OfferedItem;
 use crate::TradeError;
+use crate::TradeId;
 
 /// How long to wait for the received items by default.
 pub(crate) const DEFAULT_TIMEOUT: Duration = Duration::from_secs(60);
@@ -36,28 +38,28 @@ pub(crate) const DEFAULT_TIMEOUT: Duration = Duration::from_secs(60);
 const POLL_INTERVAL: Duration = Duration::from_millis(250);
 
 /// An offer accepted by
-/// [`SteamTradeManager::accept_offer_and_find_items`](crate::SteamTradeManager::accept_offer_and_find_items), and
-/// where its items went.
+/// [`SteamTradeManager::accept_and_find_items`](crate::SteamTradeManager::accept_and_find_items), and where its items
+/// went.
 #[derive(Debug, Clone)]
 pub struct AcceptedOffer {
-    /// The trade's id, as [`SteamTradeManager::accept_offer`](crate::SteamTradeManager::accept_offer) returns it:
-    /// `None` when Steam asked for a mobile confirmation, whose answer has no id.
-    pub tradeid: Option<i64>,
+    /// The trade's id, as [`SteamTradeManager::accept`](crate::SteamTradeManager::accept) returns it: `None` when
+    /// Steam asked for a mobile confirmation, whose answer has no id.
+    pub trade_id: Option<TradeId>,
     /// One per item received, in the offer's order. Entries of the offer that couldn't be read are left out (see
-    /// `has_malformed_items()` on the offer).
+    /// [`Offer::has_malformed_items`](crate::Offer::has_malformed_items)).
     pub received: Vec<ReceivedItem>,
     /// The game coordinator's item ids right before the accept. Pass them to
     /// [`SteamTradeManager::find_received_items`](crate::SteamTradeManager::find_received_items) as `known_ids` to look
     /// again for items [`Located::NotFound`], with the new ids other trades were found to bring since: else two offers
     /// with the same commodity can be given the same new id.
-    pub known_ids: HashSet<u64>,
+    pub known_ids: HashSet<AssetId>,
 }
 
 /// An item received, and where it went.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct ReceivedItem {
-    /// The item as the offer listed it: its `assetid` is the partner's, from before the trade.
-    pub offered: CEcon_Asset,
+    /// The item as the offer listed it: its asset id is the partner's, from before the trade.
+    pub offered: OfferedItem,
     pub located: Located,
 }
 
@@ -70,19 +72,19 @@ pub struct ReceivedItem {
 pub enum Located {
     /// Its pattern equals the item's [`Fingerprint`]'s and its wear is within 1e-6 of it (the closest such new item):
     /// this copy.
-    Exact(u64),
+    Exact(AssetId),
     /// A new item of its kind (`classid`), per our own web inventory (CS2's context 16), for an item without a
     /// fingerprint (every commodity: copies are alike). If copies of that kind differ, which one it is isn't known.
-    AnyOfKind(u64),
+    AnyOfKind(AssetId),
     /// No new item for it: its fingerprint matched none, or our web inventory lists no new item of its kind. After an
     /// accept, the wait for the new items ended at the timeout then. Also items of other games than CS2, which the game
-    /// coordinator doesn't hold: check `offered.appid`, looking again won't find those.
+    /// coordinator doesn't hold: check `offered.asset.context`, looking again won't find those.
     NotFound,
 }
 
 impl Located {
     /// The item's new asset id, if it was found.
-    pub fn assetid(&self) -> Option<u64> {
+    pub fn assetid(&self) -> Option<AssetId> {
         match *self {
             Located::Exact(id) | Located::AnyOfKind(id) => Some(id),
             Located::NotFound => None,
@@ -93,7 +95,7 @@ impl Located {
 /// What the game coordinator tells about an item.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct GcItem {
-    pub(crate) id: u64,
+    pub(crate) id: AssetId,
     pub(crate) pattern: Option<u32>,
     pub(crate) float: Option<f32>,
 }
@@ -101,29 +103,29 @@ pub(crate) struct GcItem {
 /// The game coordinator's inventory of the account, read without taking anyone's events.
 pub(crate) trait ItemSource {
     /// The ids of the items, `None` while the inventory isn't current.
-    fn item_ids(&mut self) -> Result<Option<HashSet<u64>>, TradeError>;
+    fn item_ids(&mut self) -> Result<Option<HashSet<AssetId>>, TradeError>;
 
     /// The items whose id isn't in `known`, in id order, `None` while the inventory isn't current. Items in storage
     /// units are left out: no trade puts an item there.
-    fn items_not_in(&mut self, known: &HashSet<u64>) -> Result<Option<Vec<GcItem>>, TradeError>;
+    fn items_not_in(&mut self, known: &HashSet<AssetId>) -> Result<Option<Vec<GcItem>>, TradeError>;
 }
 
 /// `Cs2::inventory` reads the messages that came (they become the caller's events, as during any request) and gives
 /// the local copy: no request, nothing taken from the caller.
 impl ItemSource for Cs2 {
-    fn item_ids(&mut self) -> Result<Option<HashSet<u64>>, TradeError> {
+    fn item_ids(&mut self) -> Result<Option<HashSet<AssetId>>, TradeError> {
         let inventory = self.inventory().map_err(TradeError::GameCoordinatorError)?;
-        Ok(inventory.map(|inventory| inventory.iter().map(|item| item.id()).collect()))
+        Ok(inventory.map(|inventory| inventory.iter().map(|item| AssetId(item.id())).collect()))
     }
 
-    fn items_not_in(&mut self, known: &HashSet<u64>) -> Result<Option<Vec<GcItem>>, TradeError> {
+    fn items_not_in(&mut self, known: &HashSet<AssetId>) -> Result<Option<Vec<GcItem>>, TradeError> {
         let inventory = self.inventory().map_err(TradeError::GameCoordinatorError)?;
         Ok(inventory.map(|inventory| {
             inventory
                 .iter()
-                .filter(|item| !known.contains(&item.id()) && item.storage_unit().is_none())
+                .filter(|item| !known.contains(&AssetId(item.id())) && item.storage_unit().is_none())
                 .map(|item| GcItem {
-                    id: item.id(),
+                    id: AssetId(item.id()),
                     pattern: item.pattern(),
                     float: item.float(),
                 })
@@ -209,7 +211,7 @@ impl From<FingerprintJson> for Fingerprint {
 /// A received item, as the matching sees it.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct Wanted {
-    classid: i64,
+    classid: u64,
     /// Whether it is a CS2 item: the game coordinator holds no other.
     cs2: bool,
     /// The partner's copy's, from the caller.
@@ -218,16 +220,13 @@ pub(crate) struct Wanted {
 
 impl Wanted {
     /// Each of `received`, with its fingerprint from `fingerprints` by the partner's asset id.
-    fn all(received: &[CEcon_Asset], fingerprints: &HashMap<u64, Fingerprint>) -> Vec<Self> {
+    fn all(received: &[OfferedItem], fingerprints: &HashMap<AssetId, Fingerprint>) -> Vec<Self> {
         received
             .iter()
             .map(|offered| Self {
                 classid: offered.classid,
-                cs2: offered.appid == i64::from(InventoryContext::CS2.appid()),
-                fingerprint: u64::try_from(offered.assetid)
-                    .ok()
-                    .and_then(|assetid| fingerprints.get(&assetid))
-                    .copied(),
+                cs2: offered.asset.context.appid() == InventoryContext::CS2.appid(),
+                fingerprint: fingerprints.get(&offered.asset.id).copied(),
             })
             .collect()
     }
@@ -241,7 +240,7 @@ struct Placed {
 }
 
 impl Placed {
-    fn take(&mut self, wanted: usize, free: usize, how: fn(u64) -> Located) {
+    fn take(&mut self, wanted: usize, free: usize, how: fn(AssetId) -> Located) {
         let item = self.free.remove(free);
         self.located[wanted] = Some(how(item.id));
     }
@@ -279,7 +278,7 @@ fn place_by_fingerprints(wanted: &[Wanted], new: &[GcItem]) -> Placed {
 
 /// The new items whose kind (`classid`) [`locate`] needs, from our own web inventory: those left after the
 /// fingerprints, and none when every CS2 item has a fingerprint.
-pub(crate) fn ids_needing_kinds(wanted: &[Wanted], new: &[GcItem]) -> Vec<u64> {
+pub(crate) fn ids_needing_kinds(wanted: &[Wanted], new: &[GcItem]) -> Vec<AssetId> {
     if !wanted.iter().any(|wanted| wanted.cs2 && wanted.fingerprint.is_none()) {
         return Vec::new();
     }
@@ -296,7 +295,7 @@ pub(crate) fn ids_needing_kinds(wanted: &[Wanted], new: &[GcItem]) -> Vec<u64> {
 ///
 /// First the fingerprints (see [`place_by_fingerprints`]); then each item left, in the offer's order, on the first
 /// free new item of its kind ([`Located::AnyOfKind`]), else [`Located::NotFound`].
-pub(crate) fn locate(wanted: &[Wanted], new: &[GcItem], kinds: &HashMap<u64, i64>) -> Vec<Located> {
+pub(crate) fn locate(wanted: &[Wanted], new: &[GcItem], kinds: &HashMap<AssetId, u64>) -> Vec<Located> {
     let mut placed = place_by_fingerprints(wanted, new);
     for (index, item) in wanted.iter().enumerate() {
         if placed.located[index].is_some() {
@@ -339,7 +338,7 @@ impl Wait {
 /// coordinator to send it again.
 pub(crate) async fn wait_for_new_items<S: ItemSource>(
     source: &mut S,
-    before: &HashSet<u64>,
+    before: &HashSet<AssetId>,
     wanted: &[Wanted],
     wait: Wait,
 ) -> Result<Vec<GcItem>, TradeError> {
@@ -387,9 +386,9 @@ pub(crate) enum AcceptFailed {
     NotConfirmed(TradeError),
 }
 
-/// The steps of `accept_offer_and_find_items` once the offer was looked up, each request given as a closure so that
-/// tests can stand in for Steam: `accept()` (the accept and its confirmation), and `own_inventory()` (CS2's
-/// trade-protected context). `fingerprints` are the partner's copies', by their asset id in the offer.
+/// The steps of `accept_and_find_items`, each request given as a closure so that tests can stand in for Steam:
+/// `accept()` (the accept and its confirmation), and `own_inventory()` (CS2's trade-protected context).
+/// `fingerprints` are the partner's copies', by their asset id in the offer.
 ///
 /// Notes the game coordinator's item ids, accepts, waits for the new items, and places the received ones as
 /// [`find_and_locate`] does. Fails with [`TradeError::Cs2InventoryUnavailable`] before the accept while the inventory
@@ -397,9 +396,9 @@ pub(crate) enum AcceptFailed {
 /// confirmation of it is [`TradeError::AcceptedButNotConfirmed`]; any failure after it is
 /// [`TradeError::AcceptedButItemsNotFound`].
 pub(crate) async fn accept_and_locate<S, A, AF, O, OF>(
-    tradeoffer_id: u64,
-    received: Vec<CEcon_Asset>,
-    fingerprints: &HashMap<u64, Fingerprint>,
+    offer_id: OfferId,
+    received: Vec<OfferedItem>,
+    fingerprints: &HashMap<AssetId, Fingerprint>,
     source: &mut S,
     accept: A,
     own_inventory: O,
@@ -408,7 +407,7 @@ pub(crate) async fn accept_and_locate<S, A, AF, O, OF>(
 where
     S: ItemSource,
     A: FnOnce() -> AF,
-    AF: Future<Output = Result<Option<i64>, AcceptFailed>>,
+    AF: Future<Output = Result<Option<TradeId>, AcceptFailed>>,
     O: FnOnce() -> OF,
     OF: Future<Output = Result<Inventory, TradeError>>,
 {
@@ -416,12 +415,12 @@ where
 
     // Right before the accept: an item that comes from elsewhere earlier isn't taken for a received one.
     let known_ids = source.item_ids()?.ok_or(TradeError::Cs2InventoryUnavailable)?;
-    let tradeid = match accept().await {
-        Ok(tradeid) => tradeid,
+    let trade_id = match accept().await {
+        Ok(trade_id) => trade_id,
         Err(AcceptFailed::NotSent(error)) => return Err(error),
         Err(AcceptFailed::NotConfirmed(error)) => {
             return Err(TradeError::AcceptedButNotConfirmed {
-                tradeoffer_id,
+                offer_id,
                 known_ids,
                 source: Box::new(error),
             })
@@ -430,13 +429,13 @@ where
 
     match locate_after_accept(&wanted, &known_ids, source, own_inventory, wait).await {
         Ok(located) => Ok(AcceptedOffer {
-            tradeid,
+            trade_id,
             received: received_items(received, located),
             known_ids,
         }),
         Err(error) => Err(TradeError::AcceptedButItemsNotFound {
-            tradeoffer_id,
-            tradeid,
+            offer_id,
+            trade_id,
             known_ids,
             source: Box::new(error),
         }),
@@ -446,7 +445,7 @@ where
 /// Waits for the new items and places the received ones among them.
 async fn locate_after_accept<S, O, OF>(
     wanted: &[Wanted],
-    before: &HashSet<u64>,
+    before: &HashSet<AssetId>,
     source: &mut S,
     own_inventory: O,
     wait: Wait,
@@ -471,9 +470,9 @@ where
 /// Fails with [`TradeError::Cs2InventoryUnavailable`] while the inventory isn't current, unless no CS2 item is to be
 /// found; with the error of a read of our web inventory that failed; otherwise only if the game coordinator does.
 pub(crate) async fn find_and_locate<S, O, OF>(
-    received: Vec<CEcon_Asset>,
-    known: &HashSet<u64>,
-    fingerprints: &HashMap<u64, Fingerprint>,
+    received: Vec<OfferedItem>,
+    known: &HashSet<AssetId>,
+    fingerprints: &HashMap<AssetId, Fingerprint>,
     source: &mut S,
     own_inventory: O,
 ) -> Result<Vec<ReceivedItem>, TradeError>
@@ -508,7 +507,7 @@ where
 }
 
 /// Each of `received` with where it went.
-fn received_items(received: Vec<CEcon_Asset>, located: Vec<Located>) -> Vec<ReceivedItem> {
+fn received_items(received: Vec<OfferedItem>, located: Vec<Located>) -> Vec<ReceivedItem> {
     received
         .into_iter()
         .zip(located)
@@ -517,14 +516,12 @@ fn received_items(received: Vec<CEcon_Asset>, located: Vec<Located>) -> Vec<Rece
 }
 
 /// The `classid` of the items `ids` that `inventory` lists.
-fn kinds_of(ids: &[u64], inventory: &Inventory) -> HashMap<u64, i64> {
+fn kinds_of(ids: &[AssetId], inventory: &Inventory) -> HashMap<AssetId, u64> {
     let mut kinds = HashMap::new();
     for page in inventory.pages() {
         for item in page.items() {
-            if let Ok(id) = u64::try_from(item.assetid) {
-                if ids.contains(&id) {
-                    kinds.insert(id, item.classid);
-                }
+            if ids.contains(&item.assetid) {
+                kinds.insert(item.assetid, item.classid);
             }
         }
     }
@@ -543,16 +540,17 @@ mod tests {
     use futures::future::ready;
 
     use super::*;
+    use crate::Asset;
 
-    const AUG: i64 = 241575744;
-    const CASE: i64 = 4717330486;
-    const MP7: i64 = 7993036706;
+    const AUG: u64 = 241575744;
+    const CASE: u64 = 4717330486;
+    const MP7: u64 = 7993036706;
 
     fn fingerprint(pattern: i64, wear: f32) -> Option<Fingerprint> {
         Some(Fingerprint::new(pattern, f64::from(wear)))
     }
 
-    fn wanted(classid: i64, fingerprint: Option<Fingerprint>) -> Wanted {
+    fn wanted(classid: u64, fingerprint: Option<Fingerprint>) -> Wanted {
         Wanted {
             classid,
             cs2: true,
@@ -562,7 +560,7 @@ mod tests {
 
     fn skin(id: u64, pattern: u32, float: f32) -> GcItem {
         GcItem {
-            id,
+            id: AssetId(id),
             pattern: Some(pattern),
             float: Some(float),
         }
@@ -570,22 +568,29 @@ mod tests {
 
     fn commodity(id: u64) -> GcItem {
         GcItem {
-            id,
+            id: AssetId(id),
             pattern: None,
             float: None,
         }
     }
 
-    fn no_kinds() -> HashMap<u64, i64> {
+    fn no_kinds() -> HashMap<AssetId, u64> {
         HashMap::new()
     }
 
-    fn kinds(kinds: &[(u64, i64)]) -> HashMap<u64, i64> {
-        kinds.iter().copied().collect()
+    fn kinds(kinds: &[(u64, u64)]) -> HashMap<AssetId, u64> {
+        kinds.iter().map(|&(id, kind)| (AssetId(id), kind)).collect()
     }
 
-    fn ids(ids: &[u64]) -> HashSet<u64> {
-        ids.iter().copied().collect()
+    fn ids(ids: &[u64]) -> HashSet<AssetId> {
+        ids.iter().copied().map(AssetId).collect()
+    }
+
+    fn fingerprints(fingerprints: &[(u64, Fingerprint)]) -> HashMap<AssetId, Fingerprint> {
+        fingerprints
+            .iter()
+            .map(|&(id, fingerprint)| (AssetId(id), fingerprint))
+            .collect()
     }
 
     #[test]
@@ -617,7 +622,7 @@ mod tests {
         ];
         assert_eq!(
             locate(&wanted, &new, &no_kinds()),
-            vec![Located::Exact(10), Located::Exact(20)]
+            vec![Located::Exact(AssetId(10)), Located::Exact(AssetId(20))]
         );
     }
 
@@ -638,7 +643,7 @@ mod tests {
         let new = [skin(10, 1, 0.500_000_4), skin(20, 1, 0.500_000_1)];
         assert_eq!(
             locate(&wanted, &new, &no_kinds()),
-            vec![Located::Exact(20), Located::Exact(10)]
+            vec![Located::Exact(AssetId(20)), Located::Exact(AssetId(10))]
         );
     }
 
@@ -652,7 +657,7 @@ mod tests {
         assert!(ids_needing_kinds(&wanted, &new).is_empty());
         assert_eq!(
             locate(&wanted, &new, &no_kinds()),
-            vec![Located::Exact(10), Located::Exact(20)]
+            vec![Located::Exact(AssetId(10)), Located::Exact(AssetId(20))]
         );
     }
 
@@ -671,7 +676,7 @@ mod tests {
         assert!(ids_needing_kinds(&wanted, &new).is_empty());
         assert_eq!(
             locate(&wanted, &new, &no_kinds()),
-            vec![Located::Exact(10), Located::Exact(20)]
+            vec![Located::Exact(AssetId(10)), Located::Exact(AssetId(20))]
         );
     }
 
@@ -698,7 +703,11 @@ mod tests {
         assert!(ids_needing_kinds(&wanted, &new).is_empty());
         assert_eq!(
             locate(&wanted, &new, &no_kinds()),
-            vec![Located::Exact(20), Located::Exact(30), Located::NotFound]
+            vec![
+                Located::Exact(AssetId(20)),
+                Located::Exact(AssetId(30)),
+                Located::NotFound
+            ]
         );
     }
 
@@ -707,10 +716,10 @@ mod tests {
         // the first MP7 has no fingerprint: it doesn't take the copy the second one's fingerprint matches
         let wanted = [wanted(MP7, None), wanted(MP7, fingerprint(355, 0.066_143_81))];
         let new = [skin(10, 355, 0.066_143_81), skin(20, 12, 0.2)];
-        assert_eq!(ids_needing_kinds(&wanted, &new), vec![20]);
+        assert_eq!(ids_needing_kinds(&wanted, &new), vec![AssetId(20)]);
         assert_eq!(
             locate(&wanted, &new, &kinds(&[(10, MP7), (20, MP7)])),
-            vec![Located::AnyOfKind(20), Located::Exact(10)]
+            vec![Located::AnyOfKind(AssetId(20)), Located::Exact(AssetId(10))]
         );
     }
 
@@ -718,11 +727,18 @@ mod tests {
     fn any_of_kind() {
         let wanted = [wanted(CASE, None), wanted(CASE, None), wanted(AUG, None)];
         let new = [commodity(12), commodity(11), skin(13, 302, 0.37)];
-        assert_eq!(ids_needing_kinds(&wanted, &new), vec![11, 12, 13]);
+        assert_eq!(
+            ids_needing_kinds(&wanted, &new),
+            vec![AssetId(11), AssetId(12), AssetId(13)]
+        );
         let kinds = kinds(&[(11, CASE), (12, CASE), (13, AUG)]);
         assert_eq!(
             locate(&wanted, &new, &kinds),
-            vec![Located::AnyOfKind(11), Located::AnyOfKind(12), Located::AnyOfKind(13)]
+            vec![
+                Located::AnyOfKind(AssetId(11)),
+                Located::AnyOfKind(AssetId(12)),
+                Located::AnyOfKind(AssetId(13))
+            ]
         );
     }
 
@@ -740,7 +756,7 @@ mod tests {
         let new = [skin(1, 302, 0.37), commodity(2)];
         assert_eq!(
             locate(&wanted, &new, &kinds(&[(1, AUG)])),
-            vec![Located::AnyOfKind(1), Located::NotFound]
+            vec![Located::AnyOfKind(AssetId(1)), Located::NotFound]
         );
     }
 
@@ -764,13 +780,13 @@ mod tests {
         assert!(ids_needing_kinds(&wanted, &new).is_empty());
         assert_eq!(
             locate(&wanted, &new, &no_kinds()),
-            vec![Located::NotFound, Located::Exact(1)]
+            vec![Located::NotFound, Located::Exact(AssetId(1))]
         );
     }
 
     /// A game coordinator inventory that changes on each look: the next state of `states`, the last one staying.
     struct Script {
-        before: HashSet<u64>,
+        before: HashSet<AssetId>,
         states: VecDeque<Option<Vec<GcItem>>>,
         looks: usize,
     }
@@ -795,11 +811,11 @@ mod tests {
     }
 
     impl ItemSource for Script {
-        fn item_ids(&mut self) -> Result<Option<HashSet<u64>>, TradeError> {
+        fn item_ids(&mut self) -> Result<Option<HashSet<AssetId>>, TradeError> {
             Ok(self.state().map(|_| self.before.clone()))
         }
 
-        fn items_not_in(&mut self, known: &HashSet<u64>) -> Result<Option<Vec<GcItem>>, TradeError> {
+        fn items_not_in(&mut self, known: &HashSet<AssetId>) -> Result<Option<Vec<GcItem>>, TradeError> {
             assert_eq!(known, &self.before);
             Ok(self.state())
         }
@@ -885,16 +901,18 @@ mod tests {
         assert!(all_arrived(&[gem], &[]));
     }
 
-    fn asset(context: InventoryContext, assetid: i64, classid: i64) -> CEcon_Asset {
-        serde_json::from_value(serde_json::json!({
-            "appid": context.appid(), "contextid": context.contextid().to_string(), "assetid": assetid.to_string(),
-            "classid": classid.to_string(), "instanceid": "0", "amount": "1"
-        }))
-        .unwrap()
+    fn asset(context: InventoryContext, assetid: u64, classid: u64) -> OfferedItem {
+        OfferedItem {
+            asset: Asset::new(context, AssetId(assetid)),
+            classid,
+            instanceid: 0,
+            amount: 1,
+            missing: false,
+        }
     }
 
     /// An inventory page with skins `(assetid, classid, pattern, wear)`.
-    fn web_inventory(context: InventoryContext, skins: &[(i64, i64, i64, &str)]) -> Inventory {
+    fn web_inventory(context: InventoryContext, skins: &[(u64, u64, i64, &str)]) -> Inventory {
         let assets: Vec<String> = skins
             .iter()
             .map(|(assetid, classid, _, _)| {
@@ -931,7 +949,7 @@ mod tests {
     }
 
     /// Our `context` listing `(assetid, classid)`.
-    fn kinds_page(context: InventoryContext, items: &[(u64, i64)]) -> Result<Inventory, TradeError> {
+    fn kinds_page(context: InventoryContext, items: &[(u64, u64)]) -> Result<Inventory, TradeError> {
         let assets: Vec<String> = items
             .iter()
             .map(|(assetid, classid)| {
@@ -947,7 +965,7 @@ mod tests {
     }
 
     /// Context 16 listing `items`.
-    fn protected(items: &[(u64, i64)]) -> impl FnOnce() -> Result<Inventory, TradeError> + '_ {
+    fn protected(items: &[(u64, u64)]) -> impl FnOnce() -> Result<Inventory, TradeError> + '_ {
         move || kinds_page(InventoryContext::CS2_TRADE_PROTECTED, items)
     }
 
@@ -960,7 +978,7 @@ mod tests {
     }
 
     fn too_many_requests() -> TradeError {
-        tappet::errors::SteamAPIError::SteamHttpError("429".to_string()).into()
+        crate::errors::web_api_error(tappet::errors::SteamAPIError::SteamHttpError("429".to_string()))
     }
 
     fn located(received: &[ReceivedItem]) -> Vec<Located> {
@@ -970,20 +988,20 @@ mod tests {
     /// `accept_and_locate` of offer 7, accepted as trade 42, with `fingerprints`, and how many times our own web
     /// inventory was read.
     fn accept<S: ItemSource>(
-        received: Vec<CEcon_Asset>,
+        received: Vec<OfferedItem>,
         fingerprints: &[(u64, Fingerprint)],
         source: &mut S,
         own_inventory: impl FnOnce() -> Result<Inventory, TradeError>,
         wait: Wait,
     ) -> (Result<AcceptedOffer, TradeError>, usize) {
-        let fingerprints: HashMap<u64, Fingerprint> = fingerprints.iter().copied().collect();
+        let fingerprints = self::fingerprints(fingerprints);
         let reads = Cell::new(0);
         let result = block_on(accept_and_locate(
-            7,
+            OfferId(7),
             received,
             &fingerprints,
             source,
-            || ready(Ok(Some(42))),
+            || ready(Ok(Some(TradeId(42)))),
             || {
                 reads.set(reads.get() + 1);
                 ready(own_inventory())
@@ -998,13 +1016,13 @@ mod tests {
         let mut source = Script::new(&[1], vec![None]);
         let accepted = Cell::new(false);
         let result = block_on(accept_and_locate(
-            7,
+            OfferId(7),
             vec![asset(InventoryContext::CS2, 100, AUG)],
             &HashMap::new(),
             &mut source,
             || {
                 accepted.set(true);
-                ready(Ok(Some(42)))
+                ready(Ok(Some(TradeId(42))))
             },
             || ready(no_web_read()),
             fast(Duration::from_secs(1)),
@@ -1036,11 +1054,11 @@ mod tests {
             fast(Duration::from_secs(10)),
         );
         let accepted = result.unwrap();
-        assert_eq!(accepted.tradeid, Some(42));
+        assert_eq!(accepted.trade_id, Some(TradeId(42)));
         assert_eq!(accepted.known_ids, ids(&[1]));
         assert_eq!(accepted.received.len(), 1);
-        assert_eq!(accepted.received[0].offered.assetid, 24234602605);
-        assert_eq!(accepted.received[0].located, Located::Exact(54238728503));
+        assert_eq!(accepted.received[0].offered.asset.id, AssetId(24234602605));
+        assert_eq!(accepted.received[0].located, Located::Exact(AssetId(54238728503)));
         assert_eq!(reads, 0);
     }
 
@@ -1062,7 +1080,7 @@ mod tests {
             no_web_read,
             fast(Duration::from_secs(10)),
         );
-        assert_eq!(located(&result.unwrap().received), vec![Located::Exact(901)]);
+        assert_eq!(located(&result.unwrap().received), vec![Located::Exact(AssetId(901))]);
         assert_eq!(source.looks, 3);
         assert_eq!(reads, 0);
     }
@@ -1071,14 +1089,12 @@ mod tests {
     fn copies_of_one_kind_after_a_confirmation() {
         let new = vec![skin(901, 12, 0.2), skin(902, 355, 0.066_143_81)];
         let mut source = Script::new(&[1], vec![Some(vec![]), Some(new)]);
-        let fingerprints: HashMap<u64, Fingerprint> = vec![
+        let fingerprints = fingerprints(&[
             (100, web_fingerprint(355, "0.0661438107490539551")),
             (101, web_fingerprint(12, "0.200000002980232239")),
-        ]
-        .into_iter()
-        .collect();
+        ]);
         let accepted = block_on(accept_and_locate(
-            7,
+            OfferId(7),
             vec![
                 asset(InventoryContext::CS2, 100, MP7),
                 asset(InventoryContext::CS2, 101, MP7),
@@ -1090,10 +1106,10 @@ mod tests {
             fast(Duration::from_secs(10)),
         ))
         .unwrap();
-        assert_eq!(accepted.tradeid, None);
+        assert_eq!(accepted.trade_id, None);
         assert_eq!(
             located(&accepted.received),
-            vec![Located::Exact(902), Located::Exact(901)]
+            vec![Located::Exact(AssetId(902)), Located::Exact(AssetId(901))]
         );
     }
 
@@ -1114,7 +1130,7 @@ mod tests {
         let accepted = result.unwrap();
         assert_eq!(
             located(&accepted.received),
-            vec![Located::Exact(901), Located::AnyOfKind(902)]
+            vec![Located::Exact(AssetId(901)), Located::AnyOfKind(AssetId(902))]
         );
         assert_eq!(reads, 1);
     }
@@ -1130,7 +1146,7 @@ mod tests {
             fast(Duration::from_millis(20)),
         );
         let accepted = result.unwrap();
-        assert_eq!(accepted.tradeid, Some(42));
+        assert_eq!(accepted.trade_id, Some(TradeId(42)));
         assert_eq!(accepted.known_ids, ids(&[1]));
         assert_eq!(accepted.received[0].located, Located::NotFound);
         // nothing new: no kind to read
@@ -1153,8 +1169,8 @@ mod tests {
         assert!(error.is_too_many_requests(), "{:?}", error);
         match error {
             TradeError::AcceptedButItemsNotFound {
-                tradeoffer_id: 7,
-                tradeid: Some(42),
+                offer_id: OfferId(7),
+                trade_id: Some(TradeId(42)),
                 known_ids,
                 ..
             } => assert_eq!(known_ids, ids(&[1])),
@@ -1190,7 +1206,7 @@ mod tests {
             commodity(902),
             commodity(903),
         ]);
-        let known: Vec<u64> = known_ids.into_iter().collect();
+        let known: Vec<u64> = known_ids.into_iter().map(|id| id.0).collect();
         let (result, reads) = find(
             received,
             &known,
@@ -1200,7 +1216,7 @@ mod tests {
         );
         assert_eq!(
             located(&result.unwrap()),
-            vec![Located::Exact(901), Located::AnyOfKind(902)]
+            vec![Located::Exact(AssetId(901)), Located::AnyOfKind(AssetId(902))]
         );
         assert_eq!(reads, 1);
     }
@@ -1209,11 +1225,11 @@ mod tests {
     struct FailsAfter(usize);
 
     impl ItemSource for FailsAfter {
-        fn item_ids(&mut self) -> Result<Option<HashSet<u64>>, TradeError> {
+        fn item_ids(&mut self) -> Result<Option<HashSet<AssetId>>, TradeError> {
             Ok(Some(ids(&[1])))
         }
 
-        fn items_not_in(&mut self, _: &HashSet<u64>) -> Result<Option<Vec<GcItem>>, TradeError> {
+        fn items_not_in(&mut self, _: &HashSet<AssetId>) -> Result<Option<Vec<GcItem>>, TradeError> {
             if self.0 == 0 {
                 return Err(TradeError::GeneralError("the client stopped".to_string()));
             }
@@ -1233,8 +1249,8 @@ mod tests {
         );
         match result {
             Err(TradeError::AcceptedButItemsNotFound {
-                tradeoffer_id: 7,
-                tradeid: Some(42),
+                offer_id: OfferId(7),
+                trade_id: Some(TradeId(42)),
                 known_ids,
                 source,
             }) => {
@@ -1249,7 +1265,7 @@ mod tests {
     fn a_failed_accept_is_plain() {
         let mut source = Script::new(&[1], vec![Some(vec![])]);
         let result = block_on(accept_and_locate(
-            7,
+            OfferId(7),
             vec![asset(InventoryContext::CS2, 100, AUG)],
             &HashMap::new(),
             &mut source,
@@ -1268,7 +1284,7 @@ mod tests {
     fn a_failed_confirmation_carries_the_snapshot() {
         let mut source = Script::new(&[1], vec![Some(vec![])]);
         let result = block_on(accept_and_locate(
-            7,
+            OfferId(7),
             vec![asset(InventoryContext::CS2, 100, AUG)],
             &HashMap::new(),
             &mut source,
@@ -1280,7 +1296,7 @@ mod tests {
         assert!(error.is_too_many_requests(), "{:?}", error);
         match error {
             TradeError::AcceptedButNotConfirmed {
-                tradeoffer_id: 7,
+                offer_id: OfferId(7),
                 known_ids,
                 ..
             } => assert_eq!(known_ids, ids(&[1])),
@@ -1318,11 +1334,11 @@ mod tests {
     }
 
     impl ItemSource for Now {
-        fn item_ids(&mut self) -> Result<Option<HashSet<u64>>, TradeError> {
+        fn item_ids(&mut self) -> Result<Option<HashSet<AssetId>>, TradeError> {
             unreachable!("no snapshot once the partner accepted")
         }
 
-        fn items_not_in(&mut self, known: &HashSet<u64>) -> Result<Option<Vec<GcItem>>, TradeError> {
+        fn items_not_in(&mut self, known: &HashSet<AssetId>) -> Result<Option<Vec<GcItem>>, TradeError> {
             self.looks += 1;
             Ok(self
                 .items
@@ -1333,14 +1349,14 @@ mod tests {
 
     /// `find_and_locate` with `known` ids and `fingerprints`, with how many times our own web inventory was read.
     fn find<S: ItemSource>(
-        received: Vec<CEcon_Asset>,
+        received: Vec<OfferedItem>,
         known: &[u64],
         fingerprints: &[(u64, Fingerprint)],
         source: &mut S,
         own_inventory: impl FnOnce() -> Result<Inventory, TradeError>,
     ) -> (Result<Vec<ReceivedItem>, TradeError>, usize) {
         let known = ids(known);
-        let fingerprints: HashMap<u64, Fingerprint> = fingerprints.iter().copied().collect();
+        let fingerprints = self::fingerprints(fingerprints);
         let reads = Cell::new(0);
         let result = block_on(find_and_locate(received, &known, &fingerprints, source, || {
             reads.set(reads.get() + 1);
@@ -1426,8 +1442,11 @@ mod tests {
             no_web_read,
         );
         let received = result.unwrap();
-        assert_eq!(received[0].offered.assetid, 100);
-        assert_eq!(located(&received), vec![Located::Exact(902), Located::Exact(901)]);
+        assert_eq!(received[0].offered.asset.id, AssetId(100));
+        assert_eq!(
+            located(&received),
+            vec![Located::Exact(AssetId(902)), Located::Exact(AssetId(901))]
+        );
         assert_eq!(reads, 0);
         assert_eq!(source.looks, 1);
     }
@@ -1448,7 +1467,11 @@ mod tests {
         );
         assert_eq!(
             located(&result.unwrap()),
-            vec![Located::AnyOfKind(11), Located::AnyOfKind(12), Located::AnyOfKind(13)]
+            vec![
+                Located::AnyOfKind(AssetId(11)),
+                Located::AnyOfKind(AssetId(12)),
+                Located::AnyOfKind(AssetId(13))
+            ]
         );
         assert_eq!(reads, 1);
         assert_eq!(source.looks, 1);
@@ -1469,7 +1492,7 @@ mod tests {
         );
         assert_eq!(
             located(&result.unwrap()),
-            vec![Located::Exact(10), Located::AnyOfKind(20)]
+            vec![Located::Exact(AssetId(10)), Located::AnyOfKind(AssetId(20))]
         );
         assert_eq!(reads, 1);
     }
@@ -1547,7 +1570,7 @@ mod tests {
             &mut source,
             no_web_read,
         );
-        assert_eq!(located(&result.unwrap()), vec![Located::Exact(6)]);
+        assert_eq!(located(&result.unwrap()), vec![Located::Exact(AssetId(6))]);
     }
 
     #[test]

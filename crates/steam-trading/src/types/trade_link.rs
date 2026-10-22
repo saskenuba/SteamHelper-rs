@@ -1,12 +1,16 @@
-use std::convert::TryFrom;
+use std::fmt;
 use std::str::FromStr;
 
 use lazy_static::lazy_static;
 use regex::Regex;
-use serde::{Deserialize, Serialize};
+use serde::de;
+use serde::Deserialize;
+use serde::Deserializer;
+use serde::Serialize;
+use serde::Serializer;
 use steamid_parser::SteamID;
 
-use crate::errors::TradelinkError;
+use crate::errors::TradeLinkError;
 
 const CANONICAL_PREFIX: &str = "https://steamcommunity.com/tradeoffer/new/?partner=";
 
@@ -21,10 +25,10 @@ lazy_static! {
 }
 
 /// The partner's account id and the token of `trade_link`, surrounding whitespace ignored.
-fn parse(trade_link: &str) -> Result<(u32, &str), TradelinkError> {
+fn parse(trade_link: &str) -> Result<(u32, &str), TradeLinkError> {
     let captures = TRADE_LINK_REGEX
         .captures(trade_link.trim())
-        .ok_or(TradelinkError::Invalid)?;
+        .ok_or(TradeLinkError::Invalid)?;
 
     // A second `partner` or `token` makes the link ambiguous: Steam may read the other one. Names that are
     // percent-encoded (`%70artner`) or arrays (`partner[]`) could be one too; no trade link has them.
@@ -40,68 +44,108 @@ fn parse(trade_link: &str) -> Result<(u32, &str), TradelinkError> {
                     .any(|ours| name.split('[').next() == Some(*ours))
         });
     if repeated {
-        return Err(TradelinkError::Invalid);
+        return Err(TradeLinkError::Invalid);
     }
 
     let partner = captures
         .name("partner")
         .and_then(|partner| u32::from_str(partner.as_str()).ok())
-        .ok_or(TradelinkError::Invalid)?;
-    let token = captures.name("token").ok_or(TradelinkError::Invalid)?.as_str();
+        .ok_or(TradeLinkError::Invalid)?;
+    let token = captures.name("token").ok_or(TradeLinkError::Invalid)?.as_str();
 
     Ok((partner, token))
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-/// A tradelink generated from Steam Trade Offer page.
+/// A trade link, as Steam generates it on the trade offer privacy page: whom to send an offer to, and the token that
+/// lets anyone send them one.
 ///
 /// A link is accepted as Steam generates it (`https://steamcommunity.com/tradeoffer/new/?partner=N&token=T`), with
 /// surrounding whitespace, and with more parameters or a fragment after the token. Anything else around it, other
-/// text included, makes it invalid. `link` is always the canonical form, without the extras.
+/// text included, makes it invalid. [`TradeLink::url`] is always the canonical form, without the extras.
+///
+/// Shown as its URL; in JSON (serde) the URL string, parsed again when read.
 ///
 /// # Notes
-/// A tradelink does not need a token if is from a friend.
-/// But Steam always generates one with a token, and it is also kind of pointless to remove the token, so they are standardized to have it.
-pub struct Tradelink {
-    pub link: String,
-    pub partner_id: SteamID,
-    pub token: String,
+/// A friend's link needs no token, but Steam always generates one with it, so a link without one is invalid.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct TradeLink {
+    url: String,
+    partner: SteamID,
+    token: String,
 }
 
-impl TryFrom<String> for Tradelink {
-    type Error = TradelinkError;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        Self::new(value)
-    }
-}
-
-impl Tradelink {
-    /// Whether the link is valid and its partner is `steamid`.
-    pub fn validate_with_steam64(trade_link: &str, steamid: u64) -> Result<bool, TradelinkError> {
-        let (partner, _) = parse(trade_link)?;
-        Ok(SteamID::from_steam3(partner, None, None) == SteamID::from_steam64(steamid))
-    }
-
-    pub fn validate(trade_link: &str) -> Result<(), TradelinkError> {
-        parse(trade_link).map(|_| ())
-    }
-
-    /// `link` is the canonical form of `trade_link`: for a link as Steam generates it, the link itself.
-    pub fn new(trade_link: String) -> Result<Self, TradelinkError> {
-        let (partner, token) = parse(&trade_link)?;
+impl TradeLink {
+    /// Reads `link`. Steam can tell whether its token is still the partner's; this can't.
+    pub fn parse(link: &str) -> Result<TradeLink, TradeLinkError> {
+        let (partner, token) = parse(link)?;
 
         Ok(Self {
-            partner_id: SteamID::from_steam3(partner, None, None),
+            partner: SteamID::from_steam3(partner, None, None),
             token: token.to_string(),
-            link: format!("{}{}&token={}", CANONICAL_PREFIX, partner, token),
+            url: format!("{}{}&token={}", CANONICAL_PREFIX, partner, token),
         })
+    }
+
+    /// Whom offers to this link go to.
+    pub fn partner(&self) -> SteamID {
+        self.partner
+    }
+
+    pub fn token(&self) -> &str {
+        &self.token
+    }
+
+    /// The link in its canonical form.
+    pub fn url(&self) -> &str {
+        &self.url
+    }
+
+    /// Whether the link is `steam_id`'s.
+    pub fn belongs_to(&self, steam_id: SteamID) -> bool {
+        self.partner == steam_id
+    }
+}
+
+impl FromStr for TradeLink {
+    type Err = TradeLinkError;
+
+    fn from_str(link: &str) -> Result<Self, Self::Err> {
+        Self::parse(link)
+    }
+}
+
+impl fmt::Display for TradeLink {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.url)
+    }
+}
+
+impl Serialize for TradeLink {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&self.url)
+    }
+}
+
+impl<'de> Deserialize<'de> for TradeLink {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let link = String::deserialize(deserializer)?;
+        Self::parse(&link).map_err(de::Error::custom)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Whether `link` reads as a trade link.
+    fn validate(link: &str) -> Result<(), TradeLinkError> {
+        TradeLink::parse(link).map(|_| ())
+    }
+
+    /// Whether `link` reads as a trade link, and is `steam64`'s.
+    fn validate_with_steam64(link: &str, steam64: u64) -> Result<bool, TradeLinkError> {
+        TradeLink::parse(link).map(|link| link.belongs_to(SteamID::from_steam64(steam64)))
+    }
 
     fn get_google() -> &'static str {
         "http://google.com"
@@ -126,32 +170,32 @@ mod tests {
 
     #[test]
     fn validated_with_steamid() {
-        let result = Tradelink::validate_with_steam64(get_valid_tradelink(), valid_steamid());
+        let result = validate_with_steam64(get_valid_tradelink(), valid_steamid());
         assert_eq!(result, Ok(true))
     }
 
     #[test]
     fn validated_with_invalid_steamid() {
-        let result = Tradelink::validate_with_steam64(get_valid_tradelink(), invalid_steamid());
+        let result = validate_with_steam64(get_valid_tradelink(), invalid_steamid());
         assert_eq!(result, Ok(false))
     }
 
     #[test]
     fn valid_tradelink() {
-        let result = Tradelink::validate(get_valid_tradelink());
+        let result = validate(get_valid_tradelink());
         assert_eq!(result, Ok(()))
     }
 
     #[test]
     fn wrong_token_is_not_detected() {
-        let result = Tradelink::validate(get_wrong_token_tradelink());
+        let result = validate(get_wrong_token_tradelink());
         assert_eq!(result, Ok(()))
     }
 
     #[test]
     fn invalid_tradelink_missing_token() {
-        let result = Tradelink::validate("https://steamcommunity.com/tradeoffer/new/?partner=24569668");
-        assert_eq!(result, Err(TradelinkError::Invalid))
+        let result = validate("https://steamcommunity.com/tradeoffer/new/?partner=24569668");
+        assert_eq!(result, Err(TradeLinkError::Invalid))
     }
 
     #[test]
@@ -163,20 +207,19 @@ mod tests {
             "https://steamcommunity.com/tradeoffer/new/?partner=4294967295&token=AbCdEf09",
             " https://steamcommunity.com/tradeoffer/new/?partner=24569668&token=vnFisKdN\n",
         ] {
-            assert_eq!(Tradelink::validate(link), Ok(()), "{}", link);
-            assert!(Tradelink::new(link.to_string()).is_ok(), "{}", link);
+            assert_eq!(validate(link), Ok(()), "{}", link);
+            assert!(TradeLink::parse(link).is_ok(), "{}", link);
         }
     }
 
     #[test]
     fn new_trims_the_link() {
-        let tradelink = Tradelink::new(
-            "\t https://steamcommunity.com/tradeoffer/new/?partner=24569668&token=vnFisKdN \r\n".to_string(),
-        )
-        .unwrap();
-        assert_eq!(tradelink.link, get_valid_tradelink());
-        assert_eq!(tradelink.token, "vnFisKdN");
-        assert_eq!(tradelink.partner_id.to_steam64(), valid_steamid());
+        let tradelink =
+            TradeLink::parse("\t https://steamcommunity.com/tradeoffer/new/?partner=24569668&token=vnFisKdN \r\n")
+                .unwrap();
+        assert_eq!(tradelink.url(), get_valid_tradelink());
+        assert_eq!(tradelink.token(), "vnFisKdN");
+        assert_eq!(tradelink.partner().to_steam64(), valid_steamid());
     }
 
     #[test]
@@ -190,17 +233,12 @@ mod tests {
             "https://steamcommunity.com/tradeoffer/new/?partner=24569668&token=vnFisKdN&",
             " https://steamcommunity.com/tradeoffer/new/?partner=24569668&token=vnFisKdN&a=é\n",
         ] {
-            assert_eq!(Tradelink::validate(link), Ok(()), "{}", link);
-            assert_eq!(
-                Tradelink::validate_with_steam64(link, valid_steamid()),
-                Ok(true),
-                "{}",
-                link
-            );
-            let tradelink = Tradelink::new(link.to_string()).unwrap();
-            assert_eq!(tradelink.link, get_valid_tradelink(), "{}", link);
-            assert_eq!(tradelink.token, "vnFisKdN");
-            assert_eq!(tradelink.partner_id.to_steam64(), valid_steamid());
+            assert_eq!(validate(link), Ok(()), "{}", link);
+            assert_eq!(validate_with_steam64(link, valid_steamid()), Ok(true), "{}", link);
+            let tradelink = TradeLink::parse(link).unwrap();
+            assert_eq!(tradelink.url(), get_valid_tradelink(), "{}", link);
+            assert_eq!(tradelink.token(), "vnFisKdN");
+            assert_eq!(tradelink.partner().to_steam64(), valid_steamid());
         }
     }
 
@@ -235,16 +273,11 @@ mod tests {
             "https://steamcommunity.com/tradeoffer/new/?partner=1&token=abcdefgh&a=1 thanks",
             "<https://steamcommunity.com/tradeoffer/new/?partner=1&token=abcdefgh>",
         ] {
-            assert_eq!(Tradelink::validate(link), Err(TradelinkError::Invalid), "{}", link);
+            assert_eq!(validate(link), Err(TradeLinkError::Invalid), "{}", link);
+            assert_eq!(TradeLink::parse(link), Err(TradeLinkError::Invalid), "{}", link);
             assert_eq!(
-                Tradelink::new(link.to_string()),
-                Err(TradelinkError::Invalid),
-                "{}",
-                link
-            );
-            assert_eq!(
-                Tradelink::validate_with_steam64(link, valid_steamid()),
-                Err(TradelinkError::Invalid),
+                validate_with_steam64(link, valid_steamid()),
+                Err(TradeLinkError::Invalid),
                 "{}",
                 link
             );
@@ -254,21 +287,36 @@ mod tests {
     #[test]
     fn partner_above_u32_is_invalid() {
         let link = "https://steamcommunity.com/tradeoffer/new/?partner=4294967296&token=abcdefgh";
-        assert_eq!(Tradelink::new(link.to_string()), Err(TradelinkError::Invalid));
+        assert_eq!(TradeLink::parse(link), Err(TradeLinkError::Invalid));
         assert_eq!(
-            Tradelink::validate_with_steam64(link, valid_steamid()),
-            Err(TradelinkError::Invalid)
+            validate_with_steam64(link, valid_steamid()),
+            Err(TradeLinkError::Invalid)
         );
         let link = "https://steamcommunity.com/tradeoffer/new/?partner=99999999999999999999999&token=abcdefgh";
         assert_eq!(
-            Tradelink::validate_with_steam64(link, valid_steamid()),
-            Err(TradelinkError::Invalid)
+            validate_with_steam64(link, valid_steamid()),
+            Err(TradeLinkError::Invalid)
         );
     }
 
     #[test]
     fn invalid_tradelink() {
-        let result = Tradelink::validate(get_google());
-        assert_eq!(result, Err(TradelinkError::Invalid))
+        let result = validate(get_google());
+        assert_eq!(result, Err(TradeLinkError::Invalid))
+    }
+
+    #[test]
+    fn url_string_both_ways() {
+        let link = TradeLink::parse(get_valid_tradelink()).unwrap();
+        assert_eq!(link.to_string(), get_valid_tradelink());
+        assert_eq!(get_valid_tradelink().parse::<TradeLink>().unwrap(), link);
+
+        let json = serde_json::to_string(&link).unwrap();
+        assert_eq!(json, format!("\"{}\"", get_valid_tradelink()));
+        assert_eq!(serde_json::from_str::<TradeLink>(&json).unwrap(), link);
+        // read as any link: the canonical form
+        let extras = format!("\"{}#trade\"", get_valid_tradelink());
+        assert_eq!(serde_json::from_str::<TradeLink>(&extras).unwrap(), link);
+        assert!(serde_json::from_str::<TradeLink>("\"http://google.com\"").is_err());
     }
 }
