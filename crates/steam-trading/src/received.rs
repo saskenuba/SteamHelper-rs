@@ -5,7 +5,7 @@
 //! are those the game coordinator's inventory gained. Telling which received item is which comes from what a trade
 //! keeps: the pattern and wear (the web prints the game coordinator's 32-bit float in full) and the kind (`classid`).
 //! The pattern and wear come from the caller, read from the partner's inventory before the trade: offers and trade
-//! history carry none (seen live 2026-10-22). Spec: `docs/specs/2026-10-21-received-items.md`.
+//! history carry none (seen live 2026-10-22).
 //!
 //! Two ways in, both placing items with [`locate`]: [`accept_and_locate`] notes the game coordinator's item ids,
 //! accepts, and waits for new ones; [`find_and_locate`], for an offer the partner accepted earlier, looks once at the
@@ -74,9 +74,9 @@ pub enum Located {
     /// A new item of its kind (`classid`), per our own web inventory (CS2's context 16), for an item without a
     /// fingerprint (every commodity: copies are alike). If copies of that kind differ, which one it is isn't known.
     AnyOfKind(u64),
-    /// No new item for it: none arrived before the timeout after an accept, its fingerprint matched none, or our web
-    /// inventory lists no new item of its kind. Also items of other games than CS2, which the game coordinator doesn't
-    /// hold: check `offered.appid`, looking again won't find those.
+    /// No new item for it: its fingerprint matched none, or our web inventory lists no new item of its kind. After an
+    /// accept, the wait for the new items ended at the timeout then. Also items of other games than CS2, which the game
+    /// coordinator doesn't hold: check `offered.appid`, looking again won't find those.
     NotFound,
 }
 
@@ -141,7 +141,8 @@ const WEAR_TOLERANCE: f64 = 1e-6;
 ///
 /// An item matches it when its pattern is equal and its wear within 1e-6: a wear the caller stored rounded to 6 or
 /// more decimals still matches. In JSON (serde) it is `{"pattern": 302, "wear": 0.37215376}`, the wear written as the
-/// shortest decimal that reads back as the same `f32`.
+/// shortest decimal that reads back as the same `f32`. A wear that isn't finite (NaN, infinity) matches no item, and
+/// doesn't survive serde: serde_json writes it as `null`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(into = "FingerprintJson", from = "FingerprintJson")]
 pub struct Fingerprint {
@@ -333,12 +334,13 @@ impl Wait {
     }
 }
 
-/// The items `source` gained over `before`, once there are `expected` of them or `timeout` passed: then those of the
-/// last current inventory. While the inventory isn't current, waits for the game coordinator to send it again.
+/// The items `source` gained over `before`, once they hold every CS2 item of `wanted` (see [`all_arrived`]) or
+/// `timeout` passed: then those of the last current inventory. While the inventory isn't current, waits for the game
+/// coordinator to send it again.
 pub(crate) async fn wait_for_new_items<S: ItemSource>(
     source: &mut S,
     before: &HashSet<u64>,
-    expected: usize,
+    wanted: &[Wanted],
     wait: Wait,
 ) -> Result<Vec<GcItem>, TradeError> {
     let deadline = Instant::now() + wait.timeout;
@@ -348,20 +350,52 @@ pub(crate) async fn wait_for_new_items<S: ItemSource>(
             Some(new) => latest = new,
             None => debug!("The game coordinator's inventory isn't current; waiting for it."),
         }
-        if latest.len() >= expected || Instant::now() >= deadline {
+        if all_arrived(wanted, &latest) || Instant::now() >= deadline {
             return Ok(latest);
         }
         Delay::new(wait.poll).await;
     }
 }
 
+/// Whether `new` holds every CS2 item of `wanted`: a match for each fingerprint (placed as [`place_by_fingerprints`]
+/// does), and at least as many new items left as CS2 items without a fingerprint. Items from elsewhere don't count
+/// for an item with a fingerprint.
+fn all_arrived(wanted: &[Wanted], new: &[GcItem]) -> bool {
+    let placed = place_by_fingerprints(wanted, new);
+    let with_fingerprint = wanted
+        .iter()
+        .filter(|wanted| wanted.cs2 && wanted.fingerprint.is_some())
+        .count();
+    let without_fingerprint = wanted
+        .iter()
+        .filter(|wanted| wanted.cs2 && wanted.fingerprint.is_none())
+        .count();
+    let exact = placed
+        .located
+        .iter()
+        .filter(|located| matches!(located, Some(Located::Exact(_))))
+        .count();
+    exact == with_fingerprint && placed.free.len() >= without_fingerprint
+}
+
+/// How an accept failed.
+#[derive(Debug)]
+pub(crate) enum AcceptFailed {
+    /// Sending it failed, or Steam refused it: nothing was accepted.
+    NotSent(TradeError),
+    /// Steam took it, but confirming it failed.
+    NotConfirmed(TradeError),
+}
+
 /// The steps of `accept_offer_and_find_items` once the offer was looked up, each request given as a closure so that
-/// tests can stand in for Steam: `accept()`, and `own_inventory()` (CS2's trade-protected context). `fingerprints`
-/// are the partner's copies', by their asset id in the offer.
+/// tests can stand in for Steam: `accept()` (the accept and its confirmation), and `own_inventory()` (CS2's
+/// trade-protected context). `fingerprints` are the partner's copies', by their asset id in the offer.
 ///
 /// Notes the game coordinator's item ids, accepts, waits for the new items, and places the received ones as
 /// [`find_and_locate`] does. Fails with [`TradeError::Cs2InventoryUnavailable`] before the accept while the inventory
-/// isn't current; any failure after it is [`TradeError::AcceptedButItemsNotFound`].
+/// isn't current, and with the plain error if the accept wasn't sent ([`AcceptFailed::NotSent`]). A failed
+/// confirmation of it is [`TradeError::AcceptedButNotConfirmed`]; any failure after it is
+/// [`TradeError::AcceptedButItemsNotFound`].
 pub(crate) async fn accept_and_locate<S, A, AF, O, OF>(
     tradeoffer_id: u64,
     received: Vec<CEcon_Asset>,
@@ -374,7 +408,7 @@ pub(crate) async fn accept_and_locate<S, A, AF, O, OF>(
 where
     S: ItemSource,
     A: FnOnce() -> AF,
-    AF: Future<Output = Result<Option<i64>, TradeError>>,
+    AF: Future<Output = Result<Option<i64>, AcceptFailed>>,
     O: FnOnce() -> OF,
     OF: Future<Output = Result<Inventory, TradeError>>,
 {
@@ -382,7 +416,17 @@ where
 
     // Right before the accept: an item that comes from elsewhere earlier isn't taken for a received one.
     let known_ids = source.item_ids()?.ok_or(TradeError::Cs2InventoryUnavailable)?;
-    let tradeid = accept().await?;
+    let tradeid = match accept().await {
+        Ok(tradeid) => tradeid,
+        Err(AcceptFailed::NotSent(error)) => return Err(error),
+        Err(AcceptFailed::NotConfirmed(error)) => {
+            return Err(TradeError::AcceptedButNotConfirmed {
+                tradeoffer_id,
+                known_ids,
+                source: Box::new(error),
+            })
+        }
+    };
 
     match locate_after_accept(&wanted, &known_ids, source, own_inventory, wait).await {
         Ok(located) => Ok(AcceptedOffer {
@@ -412,11 +456,10 @@ where
     O: FnOnce() -> OF,
     OF: Future<Output = Result<Inventory, TradeError>>,
 {
-    let expected = wanted.iter().filter(|wanted| wanted.cs2).count();
-    let new = if expected == 0 {
-        Vec::new()
+    let new = if wanted.iter().any(|wanted| wanted.cs2) {
+        wait_for_new_items(source, before, wanted, wait).await?
     } else {
-        wait_for_new_items(source, before, expected, wait).await?
+        Vec::new()
     };
     place(wanted, &new, own_inventory).await
 }
@@ -785,7 +828,7 @@ mod tests {
         let new = block_on(wait_for_new_items(
             &mut source,
             &before,
-            2,
+            &[wanted(CASE, None), wanted(CASE, None)],
             fast(Duration::from_secs(10)),
         ))
         .unwrap();
@@ -801,13 +844,45 @@ mod tests {
         let new = block_on(wait_for_new_items(
             &mut source,
             &before,
-            2,
+            &[wanted(CASE, None), wanted(CASE, None)],
             fast(Duration::from_millis(50)),
         ))
         .unwrap();
         assert!(started.elapsed() >= Duration::from_millis(50));
         // the last current inventory
         assert_eq!(new, vec![commodity(1)]);
+    }
+
+    #[test]
+    fn an_unmatched_fingerprint_times_out_with_what_came() {
+        let mut source = Script::new(&[], vec![Some(vec![commodity(1)])]);
+        let before = HashSet::new();
+        let started = Instant::now();
+        let new = block_on(wait_for_new_items(
+            &mut source,
+            &before,
+            &[wanted(AUG, fingerprint(302, 0.37))],
+            fast(Duration::from_millis(50)),
+        ))
+        .unwrap();
+        assert!(started.elapsed() >= Duration::from_millis(50));
+        assert_eq!(new, vec![commodity(1)]);
+    }
+
+    #[test]
+    fn all_arrived_counts_items_from_elsewhere_for_commodities_only() {
+        let aug = wanted(AUG, fingerprint(302, 0.37));
+        let case = wanted(CASE, None);
+        let received = skin(901, 302, 0.37);
+        let elsewhere = commodity(900);
+        assert!(!all_arrived(&[aug], &[elsewhere]));
+        assert!(all_arrived(&[aug], &[elsewhere, received]));
+        assert!(!all_arrived(&[aug, case], &[received]));
+        assert!(all_arrived(&[aug, case], &[elsewhere, received]));
+        assert!(!all_arrived(&[case, case], &[elsewhere]));
+        let mut gem = wanted(667924416, None);
+        gem.cs2 = false;
+        assert!(all_arrived(&[gem], &[]));
     }
 
     fn asset(context: InventoryContext, assetid: i64, classid: i64) -> CEcon_Asset {
@@ -966,6 +1041,29 @@ mod tests {
         assert_eq!(accepted.received.len(), 1);
         assert_eq!(accepted.received[0].offered.assetid, 24234602605);
         assert_eq!(accepted.received[0].located, Located::Exact(54238728503));
+        assert_eq!(reads, 0);
+    }
+
+    #[test]
+    fn an_item_from_elsewhere_first_does_not_end_the_wait() {
+        // a case from elsewhere lands before the skin
+        let mut source = Script::new(
+            &[1],
+            vec![
+                Some(vec![]),
+                Some(vec![commodity(900)]),
+                Some(vec![commodity(900), skin(901, 302, 0.372_153_76)]),
+            ],
+        );
+        let (result, reads) = accept(
+            vec![asset(InventoryContext::CS2, 100, AUG)],
+            &[(100, web_fingerprint(302, "0.372153759002685547"))],
+            &mut source,
+            no_web_read,
+            fast(Duration::from_secs(10)),
+        );
+        assert_eq!(located(&result.unwrap().received), vec![Located::Exact(901)]);
+        assert_eq!(source.looks, 3);
         assert_eq!(reads, 0);
     }
 
@@ -1155,11 +1253,41 @@ mod tests {
             vec![asset(InventoryContext::CS2, 100, AUG)],
             &HashMap::new(),
             &mut source,
-            || ready(Err(TradeError::GeneralError("refused".to_string()))),
+            || {
+                ready(Err(AcceptFailed::NotSent(TradeError::GeneralError(
+                    "refused".to_string(),
+                ))))
+            },
             || ready(no_web_read()),
             fast(Duration::from_secs(10)),
         ));
         assert!(matches!(result, Err(TradeError::GeneralError(_))), "{:?}", result);
+    }
+
+    #[test]
+    fn a_failed_confirmation_carries_the_snapshot() {
+        let mut source = Script::new(&[1], vec![Some(vec![])]);
+        let result = block_on(accept_and_locate(
+            7,
+            vec![asset(InventoryContext::CS2, 100, AUG)],
+            &HashMap::new(),
+            &mut source,
+            || ready(Err(AcceptFailed::NotConfirmed(too_many_requests()))),
+            || ready(no_web_read()),
+            fast(Duration::from_secs(10)),
+        ));
+        let error = result.unwrap_err();
+        assert!(error.is_too_many_requests(), "{:?}", error);
+        match error {
+            TradeError::AcceptedButNotConfirmed {
+                tradeoffer_id: 7,
+                known_ids,
+                ..
+            } => assert_eq!(known_ids, ids(&[1])),
+            other => panic!("{:?}", other),
+        }
+        // the snapshot only: no wait
+        assert_eq!(source.looks, 1);
     }
 
     #[test]

@@ -2,9 +2,13 @@
 use std::collections::HashSet;
 
 use steam_language::enums::EResult;
+#[cfg(feature = "cs2")]
+use steam_language::enums::ETradeOfferState;
 use steam_mobile::errors::AuthError;
 use steam_mobile::HttpError;
 use tappet::errors::SteamAPIError;
+#[cfg(feature = "cs2")]
+use tappet::response_types::EnumOrUnknown;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -89,8 +93,29 @@ pub enum TradeError {
     /// brings could not be told from those already there. Nothing was accepted, or by `find_received_items` nothing
     /// was looked up: try again once the game coordinator sent the inventory (`Cs2Event::InventoryLoaded`).
     #[cfg(feature = "cs2")]
-    #[error("CS2's game coordinator has no current inventory of the account; the offer was not accepted.")]
+    #[error("CS2's game coordinator has no current inventory of the account; nothing was accepted or looked up.")]
     Cs2InventoryUnavailable,
+
+    /// The offer given to `find_received_items` isn't accepted (`trade_offer_state` 3), so no item of it was
+    /// received: nothing was looked up. `state` is its state.
+    #[cfg(feature = "cs2")]
+    #[error("Trade offer `{tradeoffer_id}` is not accepted (state {state:?}); nothing was looked up.")]
+    OfferNotAccepted {
+        tradeoffer_id: u64,
+        state: EnumOrUnknown<ETradeOfferState>,
+    },
+
+    /// The accept was sent, but its confirmation failed: the trade may still happen. Check the offer's state, then
+    /// call [`SteamTradeManager::find_received_items`](crate::SteamTradeManager::find_received_items) with
+    /// `known_ids`, the game coordinator's item ids right before the accept, to find its items.
+    #[cfg(feature = "cs2")]
+    #[error("Trade offer `{tradeoffer_id}` was accepted, but confirming the accept failed: {source}")]
+    AcceptedButNotConfirmed {
+        tradeoffer_id: u64,
+        known_ids: HashSet<u64>,
+        #[source]
+        source: Box<TradeError>,
+    },
 
     /// The offer was accepted, but finding where its items went failed. The trade happened: `tradeid` is its id, as
     /// [`SteamTradeManager::accept_offer`](crate::SteamTradeManager::accept_offer) returns it (`None` after a mobile
@@ -124,6 +149,8 @@ impl TradeError {
             TradeError::OfferCreatedButNotConfirmed { source, .. } => source.is_too_many_requests(),
             #[cfg(feature = "cs2")]
             TradeError::AcceptedButItemsNotFound { source, .. } => source.is_too_many_requests(),
+            #[cfg(feature = "cs2")]
+            TradeError::AcceptedButNotConfirmed { source, .. } => source.is_too_many_requests(),
             _ => false,
         }
     }

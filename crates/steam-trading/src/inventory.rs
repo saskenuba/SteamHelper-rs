@@ -99,7 +99,7 @@ pub struct InventoryPage<'a> {
     /// Sorted by asset id.
     properties: Vec<RawProperties<'a>>,
     next_start: Option<&'a str>,
-    total_inventory_count: Option<&'a RawValue>,
+    total_inventory_count: Option<u32>,
 }
 
 impl<'a> InventoryPage<'a> {
@@ -185,13 +185,10 @@ impl<'a> InventoryPage<'a> {
         self.next_start
     }
 
-    /// How many items Steam says the whole inventory has (`total_inventory_count`, on every page), `None` if it didn't
-    /// say or not as a count.
+    /// How many items Steam says the whole inventory has (`total_inventory_count`, on every page), `None` when Steam
+    /// doesn't send it.
     pub fn total_inventory_count(&self) -> Option<u32> {
-        let raw = self.total_inventory_count?.get();
-        serde_json::from_str(raw)
-            .ok()
-            .or_else(|| serde_json::from_str::<&str>(raw).ok()?.parse().ok())
+        self.total_inventory_count
     }
 }
 
@@ -289,9 +286,8 @@ struct RawPage<'a> {
     more_items: bool,
     #[serde(default, borrow)]
     last_assetid: Option<&'a str>,
-    /// Read on demand: a count Steam sends in another shape leaves the page readable.
-    #[serde(default, borrow)]
-    total_inventory_count: Option<&'a RawValue>,
+    #[serde(default)]
+    total_inventory_count: Option<u32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -671,21 +667,6 @@ mod tests {
         assert_eq!(InventoryPage::parse(EMPTY).unwrap().total_inventory_count(), Some(0));
         let without = page(&[1], None);
         assert_eq!(InventoryPage::parse(&without).unwrap().total_inventory_count(), None);
-        for (count, expected) in &[
-            (r#""7""#, Some(7)),
-            (r#""x""#, None),
-            ("-1", None),
-            ("null", None),
-            ("{}", None),
-        ] {
-            let body = format!(r#"{{"success":1,"total_inventory_count":{}}}"#, count);
-            assert_eq!(
-                InventoryPage::parse(&body).unwrap().total_inventory_count(),
-                *expected,
-                "{}",
-                count
-            );
-        }
 
         let inventory = Inventory::from_json(CONTEXT_16.to_string()).unwrap();
         assert_eq!(inventory.total_inventory_count(), Some(1));

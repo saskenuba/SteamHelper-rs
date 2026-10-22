@@ -587,12 +587,25 @@ impl SteamTradeManager {
 
     /// [`SteamTradeManager::accept_offer`] once the offer was looked up. The caller holds the accept lock.
     async fn accept_with_partner(&self, tradeoffer_id: u64, partner: u64) -> Result<Option<i64>, TradeError> {
-        let resp: TradeOfferCreateResponse = self
-            .send_request(TradeKind::Accept, Some(tradeoffer_id), Some(partner))
-            .await?;
+        let resp = self.send_accept(tradeoffer_id, partner).await?;
+        self.confirm_accept(tradeoffer_id, &resp).await
+    }
 
-        match accept_outcome(&resp) {
-            AcceptOutcome::Done => return Ok(accepted_trade_id(&resp)),
+    /// Sends the accept of the offer `tradeoffer_id`: Steam's answer.
+    async fn send_accept(&self, tradeoffer_id: u64, partner: u64) -> Result<TradeOfferCreateResponse, TradeError> {
+        self.send_request(TradeKind::Accept, Some(tradeoffer_id), Some(partner))
+            .await
+    }
+
+    /// Confirms the accept Steam answered with `resp`, if it asks for a mobile confirmation. Returns the trade id, as
+    /// [`SteamTradeManager::accept_offer`] does.
+    async fn confirm_accept(
+        &self,
+        tradeoffer_id: u64,
+        resp: &TradeOfferCreateResponse,
+    ) -> Result<Option<i64>, TradeError> {
+        match accept_outcome(resp) {
+            AcceptOutcome::Done => return Ok(accepted_trade_id(resp)),
             AcceptOutcome::NeedsEmailConfirmation => {
                 return Err(TradeError::NeedsEmailConfirmation { tradeoffer_id });
             }
@@ -850,26 +863,32 @@ impl SteamTradeManager {
     /// 2. Notes the game coordinator's item ids. Fails with [`TradeError::Cs2InventoryUnavailable`] if its inventory
     ///    isn't current: nothing is accepted.
     /// 3. Accepts, as `accept_offer`.
-    /// 4. Waits for the new ids, looking at the local inventory every 250 ms (no request), until there are as many as
-    ///    CS2 items received, or 60 s passed ([`SteamTradeManager::with_received_items_timeout`]). While the inventory
-    ///    isn't current, it waits for the game coordinator to send it again; nothing greets the game coordinator
-    ///    meanwhile, so a session lost during the wait ends it.
-    /// 5. Places each received item, as [`SteamTradeManager::find_received_items`] does: an item with a fingerprint on
-    ///    a new item that matches it ([`Located::Exact`]), the others by kind ([`Located::AnyOfKind`]), read once from
-    ///    our own web inventory (CS2's context 16, where received items land).
+    /// 4. Waits for the new ids, looking at the local inventory every 250 ms (no request), until each CS2 item with a
+    ///    fingerprint has a new item that matches it and the new items left are at least as many as the CS2 items
+    ///    without one, or 60 s passed ([`SteamTradeManager::with_received_items_timeout`]). Items from elsewhere
+    ///    (a drop, another trade) don't end it early for an item with a fingerprint. While the inventory isn't
+    ///    current, it waits for the game coordinator to send it again; nothing greets the game coordinator meanwhile,
+    ///    so a session lost during the wait ends it.
+    /// 5. Places each received item among the new items of the last look, as
+    ///    [`SteamTradeManager::find_received_items`] does: an item with a fingerprint on a new item that matches it
+    ///    ([`Located::Exact`]), the others by kind ([`Located::AnyOfKind`]), read once from our own web inventory
+    ///    (CS2's context 16, where received items land). After a timeout, those that didn't come are
+    ///    [`Located::NotFound`].
     ///
     /// Web reads: none when every CS2 item received has a fingerprint, else one of our own. Steam rate limits them.
     ///
     /// One accept at a time per manager: this holds the accept lock of `accept_offer` until the items are placed.
     ///
-    /// **Not verified against live Steam yet** (spec `docs/specs/2026-10-21-received-items.md`, live checks).
+    /// **Not verified against live Steam yet.**
     ///
     /// # Errors
     ///
-    /// Before the accept, the plain error: nothing was accepted. After it, [`TradeError::AcceptedButItemsNotFound`]
-    /// with the trade id and the item ids noted before the accept, for a failure of the game coordinator (the client
-    /// stopped) or of the read of our web inventory: pass those ids to `find_received_items` later. Items not found in
-    /// time are no error: [`Located::NotFound`].
+    /// Before Steam took the accept, the plain error: nothing was accepted. If confirming it then fails (finding or
+    /// accepting the mobile confirmation, or Steam waits for an email one), [`TradeError::AcceptedButNotConfirmed`]
+    /// with the item ids noted before the accept: the trade may still happen, check the offer's state, then pass those
+    /// ids to `find_received_items`. Once accepted, [`TradeError::AcceptedButItemsNotFound`] with the trade id and
+    /// those ids, for a failure of the game coordinator (the client stopped) or of the read of our web inventory: pass
+    /// them to `find_received_items` later. Items not found in time are no error: [`Located::NotFound`].
     pub async fn accept_offer_and_find_items(
         &self,
         tradeoffer_id: u64,
@@ -891,7 +910,15 @@ impl SteamTradeManager {
             received,
             fingerprints,
             cs2,
-            move || self.accept_with_partner(tradeoffer_id, accept_partner),
+            move || async move {
+                let resp = self
+                    .send_accept(tradeoffer_id, accept_partner)
+                    .await
+                    .map_err(received::AcceptFailed::NotSent)?;
+                self.confirm_accept(tradeoffer_id, &resp)
+                    .await
+                    .map_err(received::AcceptFailed::NotConfirmed)
+            },
             move || self.own_inventory(InventoryContext::CS2_TRADE_PROTECTED),
             received::Wait::new(self.received_items_timeout),
         )
@@ -901,8 +928,8 @@ impl SteamTradeManager {
     /// Finds where the items received went in an offer the partner accepted, such as one this account sent, through
     /// CS2's game coordinator. Nothing is accepted and nothing is waited for. Feature `cs2`.
     ///
-    /// `offer` is the accepted offer as Steam lists it (`get_trade_offers` lists accepted offers too); its items to
-    /// receive are those to find, with the partner's asset ids. Entries that can't be read are left out (check
+    /// `offer` is the accepted offer as Steam lists it (`get_trade_offers` lists accepted offers with `active_only:
+    /// false`); its items to receive are those to find, with the partner's asset ids. Entries that can't be read are left out (check
     /// `has_malformed_items()` first); stackable items (`amount` > 1) count as one.
     ///
     /// The caller says what it knows:
@@ -920,13 +947,16 @@ impl SteamTradeManager {
     /// within 1e-6 (a wear rounded to 6 decimals still matches), the lowest id of equally close ones:
     /// [`Located::Exact`], else [`Located::NotFound`]. Then each item without one (every commodity) on the first new
     /// item left that our web inventory lists with its kind (`classid`): [`Located::AnyOfKind`], else
-    /// [`Located::NotFound`]. Kinds are read once, in CS2's context 16 where received items land, and only when an item
-    /// has no fingerprint.
+    /// [`Located::NotFound`]. Kinds are read once, and only when an item has no fingerprint, in CS2's context 16:
+    /// received items land there and stay during the trade protection (seen live right after the trade). Where they
+    /// are once it ended isn't verified, so for an offer older than its protection, commodities may be
+    /// [`Located::NotFound`].
     ///
     /// **Not verified against live Steam yet.**
     ///
     /// # Errors
     ///
+    /// [`TradeError::OfferNotAccepted`] if `offer` isn't accepted (`trade_offer_state` 3): nothing was looked up.
     /// [`TradeError::Cs2InventoryUnavailable`] while the game coordinator's inventory isn't current (it can't tell
     /// what is there): nothing was looked up, try again once it is. Not when the offer has no CS2 item to receive:
     /// those are [`Located::NotFound`] without a look. [`TradeError::GameCoordinatorError`] if the client stopped. The
@@ -939,11 +969,25 @@ impl SteamTradeManager {
         fingerprints: &HashMap<u64, Fingerprint>,
         cs2: &mut Cs2,
     ) -> Result<Vec<ReceivedItem>, TradeError> {
-        received::find_and_locate(received_assets(offer), known_ids, fingerprints, cs2, || {
+        let received = accepted_received_assets(offer)?;
+        received::find_and_locate(received, known_ids, fingerprints, cs2, || {
             self.own_inventory(InventoryContext::CS2_TRADE_PROTECTED)
         })
         .await
     }
+}
+
+/// The items `offer` gave this account, those that can be read; [`TradeError::OfferNotAccepted`] unless it was
+/// accepted. An accepted CS2 offer is state 3, its items there at once (seen live).
+#[cfg(feature = "cs2")]
+fn accepted_received_assets(offer: &TradeOffer_Trade) -> Result<Vec<CEcon_Asset>, TradeError> {
+    if offer.state != ETradeOfferState::Accepted {
+        return Err(TradeError::OfferNotAccepted {
+            tradeoffer_id: offer.tradeofferid,
+            state: offer.state,
+        });
+    }
+    Ok(received_assets(offer))
 }
 
 /// The items `offer` gives this account, those that can be read.
@@ -1834,6 +1878,30 @@ mod tests {
         let received = received_assets(&offer);
         assert_eq!(received.len(), 1);
         assert_eq!((received[0].assetid, received[0].classid), (24234602605, 241575744));
+    }
+
+    #[cfg(feature = "cs2")]
+    #[test]
+    fn only_an_accepted_offer_has_received_items_to_find() {
+        let offer = |state: u32| -> TradeOffer_Trade {
+            serde_json::from_str(&format!(
+                r#"{{"tradeofferid":"4127395150","accountid_other":79925588,"trade_offer_state":{},
+                  "items_to_receive":[
+                    {{"appid":730,"contextid":"2","assetid":"24234602605","classid":"241575744","amount":"1"}}]}}"#,
+                state
+            ))
+            .unwrap()
+        };
+        assert_eq!(accepted_received_assets(&offer(3)).unwrap().len(), 1);
+        for (state, expected) in [(2, ETradeOfferState::Active), (7, ETradeOfferState::Declined)] {
+            match accepted_received_assets(&offer(state)) {
+                Err(TradeError::OfferNotAccepted {
+                    tradeoffer_id: 4127395150,
+                    state,
+                }) => assert_eq!(state, expected),
+                other => panic!("{:?}", other),
+            }
+        }
     }
 
     #[test]
