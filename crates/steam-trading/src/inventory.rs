@@ -8,6 +8,10 @@
 //! item's properties and owner-only texts stay raw JSON until asked for.
 
 use std::borrow::Cow;
+#[cfg(feature = "cs2")]
+use std::collections::HashMap;
+#[cfg(feature = "cs2")]
+use std::convert::TryFrom;
 use std::fmt;
 use std::future::Future;
 
@@ -16,6 +20,8 @@ use serde::Deserialize;
 use serde::Deserializer;
 use serde_json::value::RawValue;
 
+#[cfg(feature = "cs2")]
+use crate::Fingerprint;
 use crate::InventoryContext;
 use crate::TradeError;
 
@@ -57,6 +63,24 @@ impl Inventory {
     /// tell a complete read. `None` if Steam didn't say.
     pub fn total_inventory_count(&self) -> Option<u32> {
         self.pages().next()?.total_inventory_count()
+    }
+
+    /// The [`Fingerprint`] of each item with a pattern and a wear, by its asset id. Feature `cs2`.
+    ///
+    /// One call after reading the partner's inventory
+    /// ([`SteamTradeManager::inventory`](crate::SteamTradeManager::inventory)) gives the fingerprints of an offer's
+    /// items: extra entries don't matter, they are looked up by the offer's asset ids.
+    #[cfg(feature = "cs2")]
+    pub fn fingerprints(&self) -> HashMap<u64, Fingerprint> {
+        let mut fingerprints = HashMap::new();
+        for page in self.pages() {
+            for item in page.items() {
+                if let (Ok(assetid), Some(fingerprint)) = (u64::try_from(item.assetid), Fingerprint::of(&item)) {
+                    fingerprints.insert(assetid, fingerprint);
+                }
+            }
+        }
+        fingerprints
     }
 }
 
@@ -706,6 +730,17 @@ mod tests {
         }));
         assert!(matches!(result, Err(TradeError::GeneralError(_))));
         assert_eq!(served, MAX_INVENTORY_PAGES);
+    }
+
+    #[cfg(feature = "cs2")]
+    #[test]
+    fn fingerprints_of_the_skins() {
+        let mut fingerprints = Inventory::from_json(CONTEXT_2.to_string()).unwrap().fingerprints();
+        // the case has none
+        assert_eq!(fingerprints.len(), 1);
+        let skin = fingerprints.remove(&24936074294).unwrap();
+        assert_eq!(skin, Fingerprint::new(355, "0.0661438107490539551".parse().unwrap()));
+        assert!(Inventory::default().fingerprints().is_empty());
     }
 
     #[test]

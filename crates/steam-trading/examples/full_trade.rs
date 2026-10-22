@@ -12,9 +12,9 @@
 //! - `inspect` (the default, read-only): both bots' CS2 inventories ([`InventoryContext::CS2`] and
 //!   [`InventoryContext::CS2_TRADE_PROTECTED`]), with pattern, wear and lock; then their last trades.
 //! - `trade`: A's tradable items, to pick one.
-//! - `trade <assetid>`: A sends B that item (to B's trade link, from `my_trade_link`), B accepts with
-//!   `accept_offer_and_find_items`. Ends on one line: `A's <old id> → B's <new id> · found by <how> · unlocks <time>
-//!   (in Nd Nh)`.
+//! - `trade <assetid>`: A sends B that item (to B's trade link, from `my_trade_link`); B reads its pattern and wear
+//!   from A's inventory, as a bot does before a trade, and accepts with `accept_offer_and_find_items`. Ends on one
+//!   line: `A's <old id> → B's <new id> · found by <how> · unlocks <time> (in Nd Nh)`.
 //!
 //! ```sh
 //! cargo run -p steam-trading --features cs2 --example full_trade
@@ -54,6 +54,7 @@ use steam_trading::Inventory;
 use steam_trading::InventoryContext;
 use steam_trading::InventoryItem;
 use steam_trading::Located;
+use steam_trading::SteamID;
 use steam_trading::SteamTradeManager;
 use steam_trading::TradeOffer;
 
@@ -228,10 +229,8 @@ async fn print_recent_trades(name: &str, trades: &SteamTradeManager) -> Result<(
 /// How `accept_offer_and_find_items` told the item apart.
 fn how(located: Located) -> &'static str {
     match located {
-        Located::Only(_) => "the only new item",
-        Located::PatternAndWear(_) => "pattern and wear",
-        Located::Kind(_) => "kind",
-        Located::Guessed(_) => "a guess among its kind",
+        Located::Exact(_) => "pattern and wear",
+        Located::AnyOfKind(_) => "kind",
         Located::NotFound => "nothing",
     }
 }
@@ -252,7 +251,13 @@ async fn connect_cs2(b: &LoggedOn) -> Result<Cs2> {
 }
 
 /// A sends `assetid` to B, B accepts; then where the item went, and when it unlocks.
-async fn trade(a_trades: &SteamTradeManager, b: &LoggedOn, b_trades: &SteamTradeManager, assetid: i64) -> Result<()> {
+async fn trade(
+    a_trades: &SteamTradeManager,
+    a_id: SteamID,
+    b: &LoggedOn,
+    b_trades: &SteamTradeManager,
+    assetid: i64,
+) -> Result<()> {
     let a_items = a_trades.own_inventory(InventoryContext::CS2).await?;
     let name = a_items
         .pages()
@@ -263,8 +268,10 @@ async fn trade(a_trades: &SteamTradeManager, b: &LoggedOn, b_trades: &SteamTrade
         })
         .ok_or("not one of A's tradable CS2 items: run `trade` to list them")?;
 
-    // before sending anything: B must be able to tell where the item goes
+    // before sending anything: B must be able to tell where the item goes, from A's copy as B reads it (the offer
+    // carries no pattern or wear)
     let mut cs2 = connect_cs2(b).await?;
+    let fingerprints = b_trades.inventory(a_id, InventoryContext::CS2).await?.fingerprints();
 
     let b_link = b_trades.my_trade_link().await?;
     let mut offered = AssetCollection::default();
@@ -282,7 +289,9 @@ async fn trade(a_trades: &SteamTradeManager, b: &LoggedOn, b_trades: &SteamTrade
         println!("A: canceled offer {offer_id}");
         return Ok(());
     }
-    let accepted = b_trades.accept_offer_and_find_items(offer_id, &mut cs2).await?;
+    let accepted = b_trades
+        .accept_offer_and_find_items(offer_id, &fingerprints, &mut cs2)
+        .await?;
     match accepted.tradeid {
         Some(tradeid) => println!("B: accepted offer {offer_id}: trade {tradeid}"),
         None => println!("B: accepted offer {offer_id} after a confirmation; Steam gave no trade id"),
@@ -336,6 +345,7 @@ async fn main() -> Result<()> {
 async fn run(args: &[String], a: Web, b: &LoggedOn) -> Result<()> {
     // the authenticators are all they need: access token for the Web API, cookies for the rest; each manager owns its
     // account's
+    let a_id = a.steam_id();
     let a_trades = SteamTradeManager::new(a);
     let b_trades = &b.trades;
 
@@ -353,7 +363,7 @@ async fn run(args: &[String], a: Web, b: &LoggedOn) -> Result<()> {
                 println!("  {item}");
             }
         }
-        ["trade", assetid] => trade(&a_trades, b, b_trades, assetid.parse()?).await?,
+        ["trade", assetid] => trade(&a_trades, a_id, b, b_trades, assetid.parse()?).await?,
         _ => return Err("usage: full_trade [inspect | trade [<assetid>]]".into()),
     }
     Ok(())

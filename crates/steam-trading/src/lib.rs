@@ -327,8 +327,7 @@ impl SteamTradeManager {
     /// Another account's inventory must be public; a private one is an HTTP 403. Only the owner sees
     /// [`InventoryContext::CS2_TRADE_PROTECTED`].
     ///
-    /// Steam rate limits this endpoint (HTTP 429, [`TradeError::is_too_many_requests`]), and serves it from a cache of
-    /// its own: an item just received may take a moment to show.
+    /// Steam rate limits this endpoint (HTTP 429, [`TradeError::is_too_many_requests`]).
     ///
     /// # Errors
     ///
@@ -838,28 +837,28 @@ impl SteamTradeManager {
     ///
     /// **Note: This is irreversable, be extra careful when accepting any trade offer.**
     ///
+    /// `fingerprints` are the pattern and wear of the partner's copies, by their asset id in the offer, as read from
+    /// the partner's inventory before the trade ([`SteamTradeManager::inventory`], then [`Inventory::fingerprints`]):
+    /// offers and trade history carry none. Any may be missing; commodities have none.
+    ///
     /// `cs2` is this account's session with CS2's game coordinator, borrowed for the call. Its events are not taken:
     /// the call only looks at [`Cs2::inventory`], which reads what came and leaves them as events (kept up to `Cs2`'s
     /// event capacity, then counted as `Lagged`). Steps:
     ///
     /// 1. Looks the offer up, as `accept_offer` does, and takes the items to receive. Entries that can't be read are
     ///    left out (check `has_malformed_items()` first); stackable items (`amount` > 1) count as one.
-    /// 2. Fails with [`TradeError::Cs2InventoryUnavailable`] if the game coordinator's inventory isn't current: nothing
-    ///    is accepted.
-    /// 3. Only if 2+ received items share a kind (`classid`): reads the partner's web inventory, once per context, for
-    ///    their pattern and wear. A failure (e.g. a private inventory) is logged.
-    /// 4. Notes the game coordinator's item ids, and accepts, as `accept_offer`.
-    /// 5. Waits for the new ids, looking at the local inventory every 250 ms (no request), until there are as many as
+    /// 2. Notes the game coordinator's item ids. Fails with [`TradeError::Cs2InventoryUnavailable`] if its inventory
+    ///    isn't current: nothing is accepted.
+    /// 3. Accepts, as `accept_offer`.
+    /// 4. Waits for the new ids, looking at the local inventory every 250 ms (no request), until there are as many as
     ///    CS2 items received, or 60 s passed ([`SteamTradeManager::with_received_items_timeout`]). While the inventory
     ///    isn't current, it waits for the game coordinator to send it again; nothing greets the game coordinator
     ///    meanwhile, so a session lost during the wait ends it.
-    /// 6. Places each received item: see [`Located`]. Only when the game coordinator can't tell kinds apart, reads our
-    ///    own web inventory (CS2's context 16, where received items land) for the new ids' kinds, again while it misses
-    ///    some of them (Steam's cache), 3 times at most.
+    /// 5. Places each received item, as [`SteamTradeManager::find_received_items`] does: an item with a fingerprint on
+    ///    a new item that matches it ([`Located::Exact`]), the others by kind ([`Located::AnyOfKind`]), read once from
+    ///    our own web inventory (CS2's context 16, where received items land).
     ///
-    /// Web reads: none for one item; one per partner context for repeated kinds; 1 to 3 of our own only when needed.
-    /// Steam rate limits them. Items that come from elsewhere while waiting can be taken for received ones
-    /// ([`Located::Only`], [`Located::Guessed`]).
+    /// Web reads: none when every CS2 item received has a fingerprint, else one of our own. Steam rate limits them.
     ///
     /// One accept at a time per manager: this holds the accept lock of `accept_offer` until the items are placed.
     ///
@@ -867,12 +866,14 @@ impl SteamTradeManager {
     ///
     /// # Errors
     ///
-    /// Before the accept, the plain error: nothing was accepted. After it, only a failure of the game coordinator
-    /// (the client stopped), as [`TradeError::AcceptedButItemsNotFound`] with the trade id. Items not found in time
-    /// are no error: [`Located::NotFound`].
+    /// Before the accept, the plain error: nothing was accepted. After it, [`TradeError::AcceptedButItemsNotFound`]
+    /// with the trade id and the item ids noted before the accept, for a failure of the game coordinator (the client
+    /// stopped) or of the read of our web inventory: pass those ids to `find_received_items` later. Items not found in
+    /// time are no error: [`Located::NotFound`].
     pub async fn accept_offer_and_find_items(
         &self,
         tradeoffer_id: u64,
+        fingerprints: &HashMap<u64, Fingerprint>,
         cs2: &mut Cs2,
     ) -> Result<AcceptedOffer, TradeError> {
         let _accepting = self.accepting.lock().await;
@@ -882,15 +883,14 @@ impl SteamTradeManager {
             .into_iter()
             .next()
             .ok_or(OfferError::NoMatch)?;
-        let partner = SteamID::from_account_id(offer.accountid_other as u32);
         let accept_partner = accept_partner_of(&offer);
         let received = received_assets(&offer);
 
         received::accept_and_locate(
             tradeoffer_id,
             received,
+            fingerprints,
             cs2,
-            move |context| self.inventory(partner, context),
             move || self.accept_with_partner(tradeoffer_id, accept_partner),
             move || self.own_inventory(InventoryContext::CS2_TRADE_PROTECTED),
             received::Wait::new(self.received_items_timeout),
@@ -905,24 +905,23 @@ impl SteamTradeManager {
     /// receive are those to find, with the partner's asset ids. Entries that can't be read are left out (check
     /// `has_malformed_items()` first); stackable items (`amount` > 1) count as one.
     ///
-    /// Unlike [`SteamTradeManager::accept_offer_and_find_items`], there is no snapshot from before the trade and the
-    /// partner's copies are gone, so the caller says what it knows:
+    /// The caller says what it knows:
     ///
     /// - `known_ids`: the game coordinator item ids (the asset ids) that aren't from this offer, such as the items held
-    ///   before it and those other offers brought. The items of `cs2`'s inventory not in it are the new ones.
+    ///   before it and those other offers brought, or [`AcceptedOffer::known_ids`]. The items of `cs2`'s inventory not
+    ///   in it are the new ones. Include the new ids earlier calls found for other trades: else two offers with the
+    ///   same commodity can be given the same new id ([`Located::AnyOfKind`] takes the first free one by id).
     /// - `fingerprints`: the pattern and wear of the partner's copies, by their asset id in the offer, as read from the
-    ///   partner's inventory before the trade; any may be missing, and commodities have none.
+    ///   partner's inventory before the trade ([`Inventory::fingerprints`]); any may be missing, and commodities have
+    ///   none.
     ///
     /// Steps: looks once at [`Cs2::inventory`] (local state, no request; its events are not taken), and places each
-    /// item (see [`Located`]). When the game coordinator can't place every item, reads our own web inventory for the
-    /// new ids' kinds: CS2's context 16 (where received items land while trade-protected), then context 2 only for
-    /// ids still missing, once each.
-    ///
-    /// New items not in `known_ids` may have come another way, so an item without a fingerprint (every commodity) is
-    /// only placed on a new item read to be of its kind: [`Located::Kind`], or [`Located::Guessed`] among those of its
-    /// kind, never [`Located::Only`]. With no such item, or a web read that didn't list it yet (Steam serves it from a
-    /// cache), it is [`Located::NotFound`]: look again later. An item with a fingerprint is
-    /// only ever placed on a new item that matches it, also as [`Located::Only`] or [`Located::Guessed`].
+    /// item. An item with a fingerprint is placed on the closest new item that matches it, the same pattern and a wear
+    /// within 1e-6 (a wear rounded to 6 decimals still matches), the lowest id of equally close ones:
+    /// [`Located::Exact`], else [`Located::NotFound`]. Then each item without one (every commodity) on the first new
+    /// item left that our web inventory lists with its kind (`classid`): [`Located::AnyOfKind`], else
+    /// [`Located::NotFound`]. Kinds are read once, in CS2's context 16 where received items land, and only when an item
+    /// has no fingerprint.
     ///
     /// **Not verified against live Steam yet.**
     ///
@@ -940,8 +939,8 @@ impl SteamTradeManager {
         fingerprints: &HashMap<u64, Fingerprint>,
         cs2: &mut Cs2,
     ) -> Result<Vec<ReceivedItem>, TradeError> {
-        received::find_and_locate(received_assets(offer), known_ids, fingerprints, cs2, |context| {
-            self.own_inventory(context)
+        received::find_and_locate(received_assets(offer), known_ids, fingerprints, cs2, || {
+            self.own_inventory(InventoryContext::CS2_TRADE_PROTECTED)
         })
         .await
     }

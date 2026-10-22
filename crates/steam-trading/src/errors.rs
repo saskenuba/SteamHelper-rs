@@ -1,3 +1,6 @@
+#[cfg(feature = "cs2")]
+use std::collections::HashSet;
+
 use steam_language::enums::EResult;
 use steam_mobile::errors::AuthError;
 use steam_mobile::HttpError;
@@ -91,12 +94,15 @@ pub enum TradeError {
 
     /// The offer was accepted, but finding where its items went failed. The trade happened: `tradeid` is its id, as
     /// [`SteamTradeManager::accept_offer`](crate::SteamTradeManager::accept_offer) returns it (`None` after a mobile
-    /// confirmation).
+    /// confirmation). `known_ids` are the game coordinator's item ids right before the accept: call
+    /// [`SteamTradeManager::find_received_items`](crate::SteamTradeManager::find_received_items) with them later to
+    /// find its items, adding the new ids other trades were found to bring since.
     #[cfg(feature = "cs2")]
     #[error("Trade offer `{tradeoffer_id}` was accepted (trade {tradeid:?}), but finding its items failed: {source}")]
     AcceptedButItemsNotFound {
         tradeoffer_id: u64,
         tradeid: Option<i64>,
+        known_ids: HashSet<u64>,
         #[source]
         source: Box<TradeError>,
     },
