@@ -95,7 +95,7 @@ impl<'a> GetTradeOffers<'a> {
 #[derive(Parameters, Serialize, Debug, Default)]
 #[doc(hidden)]
 pub struct GetTradeOfferParameters {
-    tradeofferid: i64,
+    tradeofferid: u64,
     language: Option<String>,
     get_descriptions: Option<bool>,
 }
@@ -109,7 +109,7 @@ impl<'a> IEconService<'a> {
     /// - `inject_custom_key`, for injecting a custom api key different than the one used for instantiating `SteamAPI`,
     ///   which then you can execute with the options above;
     /// - `get_descriptions`, to also request the item descriptions.
-    pub fn GetTradeOffer(self, tradeofferid: i64, language: Option<String>) -> GetTradeOffer<'a> {
+    pub fn GetTradeOffer(self, tradeofferid: u64, language: Option<String>) -> GetTradeOffer<'a> {
         let mut into: GetTradeOffer = self.into();
         into.parameters = GetTradeOfferParameters {
             tradeofferid,

@@ -172,10 +172,41 @@ pub struct GetTradeOfferResponse {
     pub response: CEcon_GetTradeOffer_Response,
 }
 
+/// Steam's answer for one offer. Without an `offer`, there is no such offer: node-steam-tradeoffer-manager fails then
+/// (`lib/index.js` ~531-545).
 #[allow(non_camel_case_types)]
 #[derive(Deserialize, Debug, Clone)]
+#[serde(from = "RawGetTradeOfferResponse")]
 pub struct CEcon_GetTradeOffer_Response {
-    pub offer: TradeOffer_Trade,
+    /// The offer, if Steam sent one that could be read; else see [Self::malformed_offer].
+    pub offer: Option<TradeOffer_Trade>,
+    /// The offer Steam sent, if it is not a [TradeOffer_Trade], as in `GetTradeOffers`.
+    pub malformed_offer: Option<MalformedOffer>,
+}
+
+/// `CEcon_GetTradeOffer_Response` as Steam sends it.
+#[derive(Deserialize)]
+struct RawGetTradeOfferResponse {
+    offer: Option<OfferEntry>,
+}
+
+impl From<RawGetTradeOfferResponse> for CEcon_GetTradeOffer_Response {
+    fn from(raw: RawGetTradeOfferResponse) -> Self {
+        match raw.offer {
+            None => Self {
+                offer: None,
+                malformed_offer: None,
+            },
+            Some(OfferEntry::Offer(offer)) => Self {
+                offer: Some(*offer),
+                malformed_offer: None,
+            },
+            Some(OfferEntry::Malformed(malformed)) => Self {
+                offer: None,
+                malformed_offer: Some(malformed),
+            },
+        }
+    }
 }
 
 #[allow(non_camel_case_types)]
@@ -348,8 +379,8 @@ pub struct TradeOffer_Trade {
     pub eresult: Option<EnumOrUnknown<EResult>>,
     /// Trade protection. Seen live (2026-10-20): `true` on every CS2 offer, in any state.
     pub delay_settlement: Option<bool>,
-    /// Unix time. Trade protection; from the schema, not seen live, not even on an accepted CS2 offer (2026-10-20).
-    /// The end of the protection is in `GetTradeHistory`, [`TradeHistory_Trade::time_settlement`].
+    /// Unix time its items' trade protection ends. Seen live (2026-10-20, 2026-10-22): on an accepted CS2 offer, the
+    /// same time as its trade's [`TradeHistory_Trade::time_settlement`]; 0 on offers that weren't accepted.
     pub settlement_date: Option<i64>,
 }
 
@@ -943,6 +974,25 @@ mod tests {
         assert!(!clean.has_malformed_offers());
         assert_eq!(clean.trade_offers_sent.map(|offers| offers.len()), Some(0));
         assert!(clean.trade_offers_received.is_none());
+    }
+
+    #[test]
+    fn one_offer() {
+        let one = |json: &str| serde_json::from_str::<GetTradeOfferResponse>(json).unwrap().response;
+
+        let found = one(r#"{"response":{"offer":{"tradeofferid":"1","accountid_other":2,"trade_offer_state":2}}}"#);
+        assert_eq!(found.offer.map(|offer| offer.tradeofferid), Some(1));
+        assert!(found.malformed_offer.is_none());
+
+        // no such offer
+        let none = one(r#"{"response":{}}"#);
+        assert!(none.offer.is_none() && none.malformed_offer.is_none());
+
+        let unreadable = one(r#"{"response":{"offer":{"tradeofferid":"3","trade_offer_state":2}}}"#);
+        assert!(unreadable.offer.is_none());
+        let malformed = unreadable.malformed_offer.unwrap();
+        assert_eq!(malformed.tradeofferid(), Some(3));
+        assert!(malformed.reason.contains("accountid_other"), "{}", malformed.reason);
     }
 
     #[test]
