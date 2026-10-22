@@ -20,8 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
      in the offer, as the caller read them before the trade; any may be
      missing
    - places items with the rules of accept_offer_and_find_items
-     (Located::Only, PatternAndWear, Kind, Guessed, NotFound); our own web
-     inventory is read once at most, only when kinds can't be told apart
+     (Located::Only, PatternAndWear, Kind, Guessed, NotFound), except for
+     items without a fingerprint (see Bug Fixes); our own web inventory is
+     read only when the game coordinator can't place every item
    - TradeError::Cs2InventoryUnavailable while the game coordinator's
      inventory isn't current (nothing looked up)
    - Fingerprint is public: Fingerprint::new(pattern, wear_bits),
@@ -33,6 +34,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    Inventory::total_inventory_count() (the first page's) and
    InventoryPage::total_inventory_count(). None when Steam doesn't send it,
    or not as a count.
+
+### Bug Fixes
+
+ - <csr-id-cf9b96a4d8e0ee12e42f79171d9f14dd794c2e79/> find_received_items places items without a fingerprint by kind only
+   The new items may have come another way, so an item without a
+   fingerprint (every commodity) is placed only on a new item our web
+   inventory lists with its classid: Located::Kind, or Located::Guessed among
+   those of its kind, else Located::NotFound; never Located::Only. Kinds are
+   read in context 16, then context 2 for ids still missing, once each.
 
 ### Refactor
 
