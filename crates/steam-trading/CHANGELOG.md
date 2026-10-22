@@ -5,106 +5,173 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v0.8.0 (2026-10-22)
 
 ### New Features (BREAKING)
 
- - <csr-id-8ad274fbaee8a5df823c5bbdc18580f8835fbc0b/> accept_offer_and_find_items takes the fingerprints, reads no partner inventory
-   SteamTradeManager::accept_offer_and_find_items(offer_id, &fingerprints,
-   &mut Cs2) (feature cs2): the caller gives the pattern and wear of the
-   partner's copies, by their asset id in the offer, as read from the
-   partner's inventory before the trade (Inventory::fingerprints). Offers
-   and trade history carry none (seen live 2026-10-22), and the call no
-   longer reads the partner's inventory.
+ - <csr-id-bd4c190be2bab28d208f45facc10dc586314fba0/> typed public API, steps and convenience methods
+   Typed ids (OfferId, TradeId, AssetId, Asset), TradeLink, OfferRequest,
+   and the crate's own Offer, Trade, OfferedItem and TradedItem. Public
+   steps, one Steam step each (create_offer, confirm_offers, post_accept,
+   decline_offer, cancel_offer, offers, offer, trades, trade, trade_hold),
+   and convenience methods that only chain them (send, accept). Errors
+   keep Steam's code: TradeError::Steam { eresult, message }, read with
+   eresult(), also from Web API x-eresult headers. No tappet type in a
+   public signature except the re-exported TradeStatus; EResult is
+   re-exported.
+   
+   | 0.7 | 0.8 |
+   |---|---|
+   | TradeOffer::new, AssetCollection | OfferRequest::to(link).give(..).take(..).give_amount/take_amount(..).message(..) |
+   | Tradelink (new, validate, validate_with_steam64) | TradeLink::parse, partner, token, url, belongs_to |
+   | create_offer -> u64 | create_offer -> CreatedOffer { id, needs } |
+   | create_offer_and_confirm | send |
+   | accept_offer(u64) | accept(&Offer) -> Accepted { trade_id }; step post_accept(&Offer) |
+   | deny_offer | decline_offer(OfferId) |
+   | cancel_offer(u64) | cancel_offer(OfferId) |
+   | decline_received_offers | offers(OfferQuery::ACTIVE_RECEIVED) + decline_offer |
+   | get_trade_offers(bool, bool, bool) | offers(OfferQuery) |
+   | get_tradeoffer_by_id | offer(OfferId) -> Option<Offer>, any state |
+   | trade_history, get_new_assetids, trade_lock_end | trades(TradeQuery), trade(TradeId), Trade::protected_until / new_asset |
+   | accept_offer_and_find_items(u64, ..) | accept_and_find_items(&Offer, ..) |
+   | check_steam_guard_recently_activated, feature additional-checks | trade_hold(&TradeLink) |
+   | api_extensions (FilterBy, HasAssets) | Vec<Offer>, Vec<Trade> |
+   | TRADE_MAX_TRADES_PER_SINGLE_USER, TRADE_MAX_ONGOING_TRADES | removed, no source (TRADE_MAX_ITEMS stays) |
+   | OfferError, ConfirmationError, OfferValidationError | TradeError::Steam, ConfirmationNotFound, EmptyOffer, TooManyItems, InvalidAmount |
+   
+   Requests to Steam: create, accept, decline, cancel, acknowledge,
+   GetTradeOffers, GetTradeHistory and inventories send the same bytes as
+   0.7. Changes:
+   
+   - send no longer POSTs an accept of our own offer
+   - accept takes the offer already read: no listing of every active
+     offer per accept
+   - confirm_offers confirms many offers in one multiajaxop
+   - new: GetTradeOffer (offer), GetTradeHoldDurations (trade_hold); the
+     Steam Guard HTML check and the scraper dependency are gone
+   - my_trade_link reads only the trade offer privacy page
+     (GetTradeOfferAccessToken is 404 on the Web API)
+   - a Steam Community answer that ended on the login page is
+     steam-mobile's SessionExpired
+   - decline and cancel require Steam's answer to carry the offer's id
+   
+   Also Offer::protected_until (the offer's settlement_date) and stackable
+   amounts. Verified live 2026-10-22: create, one multiajaxop for two
+   offers, cancel, an accept needing a mobile confirmation, offer, trade,
+   trade_hold, my_trade_link.
+ - <csr-id-8ad274fbaee8a5df823c5bbdc18580f8835fbc0b/> accept_and_find_items takes the fingerprints, reads no partner inventory
+   accept_and_find_items(&offer, &fingerprints, &mut Cs2) (feature cs2):
+   the caller gives the pattern and wear of the partner's copies, by their
+   asset id in the offer, as read from the partner's inventory before the
+   trade (Inventory::fingerprints). Offers and trade history carry none
+   (seen live 2026-10-22), and the call doesn't read the partner's
+   inventory.
    
    - snapshot of the game coordinator's item ids, accept, wait for the new
      ones, then places items as find_received_items does
    - the wait ends once each CS2 item with a fingerprint has a matching new
-     item and the new items left are at least the CS2 items without one, or
-     at the timeout: an item from elsewhere no longer ends it early
-   - Located has three variants instead of five: Exact (same pattern as
-     the fingerprint, wear within 1e-6), AnyOfKind (a new item of its
-     classid in our web inventory, for an item without a fingerprint:
-     every commodity) and NotFound; nothing is placed by elimination or
-     guessed among unknown kinds any more
+     item and the new items left are at least the CS2 items without one,
+     or at the timeout: an item from elsewhere doesn't end it early
+   - Located has three variants: Exact (same pattern as the fingerprint,
+     wear within 1e-6), AnyOfKind (a new item of its classid in our web
+     inventory, for an item without a fingerprint: every commodity) and
+     NotFound; nothing is placed by elimination or guessed
    - web reads: none when every CS2 item received has a fingerprint, else
      one of our own context 16
    - AcceptedOffer::known_ids and TradeError::AcceptedButItemsNotFound
      { known_ids, .. }: the game coordinator's item ids right before the
-     accept, to pass to find_received_items to look again
-   - a failed read of our web inventory after the accept is now
-     AcceptedButItemsNotFound (is_too_many_requests() tells a 429) instead
-     of items placed without kinds
-   - TradeError::AcceptedButNotConfirmed { tradeoffer_id, known_ids, source }
-     when Steam took the accept but its confirmation failed (finding or
-     accepting the mobile confirmation, or Steam waits for an email one):
-     the trade may still happen; a failure before Steam took the accept
-     stays the plain error
+     accept, to pass to find_received_items to look again; a failed read
+     of our web inventory after the accept is that error
+   - TradeError::AcceptedButNotConfirmed { offer_id, known_ids, source }
+     when Steam took the accept but its confirmation failed: the trade may
+     still happen
    
-   Not verified against live Steam.
+   Verified live 2026-10-22: an MP7 placed as Exact from the game
+   coordinator alone.
 
 ### New Features
 
  - <csr-id-21ec6420cd94a1c59c62dd49b3e9a307fe9ed1c1/> where the items of an offer the partner accepted went
-   SteamTradeManager::find_received_items(&offer, &known_ids, &fingerprints,
-   &mut Cs2) (feature cs2), for an offer this account sent and learns later
-   was accepted: no snapshot from before the trade, no partner read.
+   find_received_items(&offer, &known_ids, &fingerprints, &mut Cs2)
+   (feature cs2), for an offer this account sent and learns later was
+   accepted: no snapshot from before the trade, no partner read.
    
-   - looks once at Cs2::inventory: the new items are those whose id isn't in
-     known_ids; nothing is accepted, nothing is waited for
-   - fingerprints: the partner's copies' pattern and wear by their asset id
-     in the offer, as the caller read them before the trade; any may be
-     missing
-   - places items with the rules of accept_offer_and_find_items: each item
-     with a fingerprint on the closest new item that matches it, the same
-     pattern and a wear within 1e-6 so that a wear rounded to 6 decimals
-     still matches, the lowest id of equally close ones (Located::Exact),
-     else NotFound; then each item without one on the first new item our
-     web inventory lists with its kind (Located::AnyOfKind), else NotFound;
-     kinds are read once, in context 16, only when an item has no
-     fingerprint
+   - looks once at Cs2::inventory: the new items are those whose id isn't
+     in known_ids; nothing is accepted, nothing is waited for
+   - places items with the rules of accept_and_find_items; kinds are read
+     once, in context 16, only when an item has no fingerprint
    - known_ids should include the new ids earlier calls found for other
      trades: else two offers with the same commodity can be given the same
      new id
    - TradeError::Cs2InventoryUnavailable while the game coordinator's
-     inventory isn't current (nothing looked up)
-   - TradeError::OfferNotAccepted { tradeoffer_id, state } when the offer's
-     trade_offer_state isn't Accepted (3): nothing looked up or read
-   - Fingerprint is public: Fingerprint::new(pattern, wear: f64) (the wear
-     kept as f32, the game coordinator's float),
-     Fingerprint::of(&InventoryItem), pattern(), wear() -> f32; serde as
-     {"pattern": 302, "wear": 0.37215376}, the wear the shortest decimal
-     that reads back as the same f32
+     inventory isn't current, TradeError::OfferNotAccepted { offer_id,
+     state } when the offer isn't accepted: nothing looked up
+   - Fingerprint::new(pattern, wear: f64), Fingerprint::of(&InventoryItem),
+     pattern(), wear() -> f32; serde as {"pattern": 302, "wear":
+     0.37215376}
    
-   Not verified against live Steam.
+   Verified live 2026-10-22: a case placed as AnyOfKind.
  - <csr-id-8ad274fbaee8a5df823c5bbdc18580f8835fbc0b/> Inventory::fingerprints
    Inventory::fingerprints() (feature cs2): the Fingerprint of each item
-   with a pattern and a wear, by its asset id, to pass to
-   accept_offer_and_find_items or find_received_items after one read of
-   the partner's inventory. Commodities have none.
+   with a pattern and a wear, by its asset id, after one read of the
+   partner's inventory. Commodities have none.
  - <csr-id-832c3617f05a144c63cebfc15445b7082064f6f3/> Inventory::total_inventory_count
    The count Steam sends on every inventory page, to tell a complete read:
    Inventory::total_inventory_count() (the first page's) and
-   InventoryPage::total_inventory_count(), read as the plain number Steam
-   sends. None when Steam doesn't send it.
+   InventoryPage::total_inventory_count(). None when Steam doesn't send it.
 
 ### Bug Fixes
 
  - <csr-id-cf9b96a4d8e0ee12e42f79171d9f14dd794c2e79/> find_received_items places items without a fingerprint by kind only
    The new items may have come another way, so an item without a
-   fingerprint (every commodity) is placed only on a new item our web
-   inventory lists with its classid (Located::AnyOfKind), else
-   Located::NotFound.
-
+   fingerprint is placed only on a new item our web inventory lists with
+   its classid (Located::AnyOfKind), else Located::NotFound.
  - <csr-id-f2b1b4d5a46d2d3b2204c5eac4c75bcd66c44d49/> find_received_items fails with a web inventory read that failed
-   A failed read of our web inventory for the new items' kinds is the call's
-   error (the read's TradeError; is_too_many_requests() tells a 429) instead
-   of a logged Located::NotFound.
+   A failed read of our web inventory for the new items' kinds is the
+   call's error (is_too_many_requests() tells a 429) instead of a logged
+   Located::NotFound.
+ - <csr-id-373fb8674095dbcd6294dffa75f62e7009afb264/> received items, from the branch review
+   - find_received_items refuses an offer that isn't accepted
+     (TradeError::OfferNotAccepted), before any look or read
+   - total_inventory_count is read as the number Steam sends
 
 ### Refactor
 
  - <csr-id-e543c5532288e1700f8dd71af80f1685275ccc37/> one placing core for received items
-   accept_offer_and_find_items and find_received_items share it.
+   accept_and_find_items and find_received_items share it.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 15 commits contributed to the release.
+ - 1 day passed between releases.
+ - 15 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Typed public API, steps and convenience methods ([`bd4c190`](https://github.com/saskenuba/SteamHelper-rs/commit/bd4c190be2bab28d208f45facc10dc586314fba0))
+    - Changelog for the received items review fixes ([`0f63917`](https://github.com/saskenuba/SteamHelper-rs/commit/0f63917770338278111909c9fae63392b9afa825))
+    - Received items, from the branch review ([`373fb86`](https://github.com/saskenuba/SteamHelper-rs/commit/373fb8674095dbcd6294dffa75f62e7009afb264))
+    - Changelog for the caller's fingerprints ([`9fe1fe3`](https://github.com/saskenuba/SteamHelper-rs/commit/9fe1fe354a2df54ab82745ae39d059403247835d))
+    - README on the caller's fingerprints ([`8d1198a`](https://github.com/saskenuba/SteamHelper-rs/commit/8d1198a1f55d29f1ab387a75ca0d3e444b232138))
+    - Received items placed by the caller's fingerprints ([`8ad274f`](https://github.com/saskenuba/SteamHelper-rs/commit/8ad274fbaee8a5df823c5bbdc18580f8835fbc0b))
+    - Changelog for the failed web read in find_received_items ([`1a983a6`](https://github.com/saskenuba/SteamHelper-rs/commit/1a983a6e2354960703f54eddf6c13c2b0b793fed))
+    - Find_received_items fails with a web inventory read that failed ([`f2b1b4d`](https://github.com/saskenuba/SteamHelper-rs/commit/f2b1b4d5a46d2d3b2204c5eac4c75bcd66c44d49))
+    - Changelog for the kind-only placement in find_received_items ([`ef1707c`](https://github.com/saskenuba/SteamHelper-rs/commit/ef1707cf6e8e5c6c2d7bbcce2fefe7c619c0f761))
+    - Find_received_items places items without a fingerprint by kind only ([`cf9b96a`](https://github.com/saskenuba/SteamHelper-rs/commit/cf9b96a4d8e0ee12e42f79171d9f14dd794c2e79))
+    - README mentions find_received_items ([`57c1a62`](https://github.com/saskenuba/SteamHelper-rs/commit/57c1a6211ee62aa76a1f5c82c8e5f9bca2f64c49))
+    - Changelog for find_received_items and total_inventory_count ([`d8ff461`](https://github.com/saskenuba/SteamHelper-rs/commit/d8ff4613164ef6c1a6abafd1ea65f26329676b82))
+    - Where the items of an offer the partner accepted went ([`21ec642`](https://github.com/saskenuba/SteamHelper-rs/commit/21ec6420cd94a1c59c62dd49b3e9a307fe9ed1c1))
+    - One placing core for received items ([`e543c55`](https://github.com/saskenuba/SteamHelper-rs/commit/e543c5532288e1700f8dd71af80f1685275ccc37))
+    - Inventory::total_inventory_count ([`832c361`](https://github.com/saskenuba/SteamHelper-rs/commit/832c3617f05a144c63cebfc15445b7082064f6f3))
+</details>
 
 ## v0.7.0 (2026-10-21)
 

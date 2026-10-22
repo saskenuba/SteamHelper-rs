@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.1 (2026-10-22)
+
+### Bug Fixes
+
+ - <csr-id-5a34054941f3cd2e793254305844d8c85402c4a5/> session cookies kept on redirects, one cookie jar
+   A session from login_with_client lost steamLoginSecure and sessionid on
+   any redirect (seen live 2026-10-22: the trade offer privacy page's
+   redirect chain ended on the login page). steam-mobile wrote the Cookie
+   header from its own jar while reqwest kept a second one, which it uses
+   instead on every redirect and which only held cookies Steam had set.
+   The password login kept them only because Steam had set them.
+   
+   - steam-mobile's jar is reqwest's cookie store: redirects carry the
+     target host's cookies, and cookies set on a redirect response are
+     kept (e.g. webTradeEligibility, set by market/eligibilitycheck)
+   - the jar honours Max-Age, on wall-clock time; cookies without it, and
+     those steam-mobile writes itself, never expire
+   - first requests send the same Cookie header as before; a cookie set on
+     a redirect is now sent on later requests to that host until it
+     expires
+   
+   Verified live 2026-10-22: the privacy page's redirect chain carries the
+   session's cookies and answers 200.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 1 day passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Session cookies kept on redirects, one cookie jar ([`5a34054`](https://github.com/saskenuba/SteamHelper-rs/commit/5a34054941f3cd2e793254305844d8c85402c4a5))
+</details>
+
 ## 0.7.0 (2026-10-21)
 
 ### Chore

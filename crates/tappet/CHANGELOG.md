@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.8.0 (2026-10-22)
+
+### New Features (BREAKING)
+
+ - <csr-id-c8c72681989e61d0fd40bf423db8a6f040672e22/> GetTradeOffer as Steam answers it
+   - GetTradeOffer takes the offer id as u64, like GetTradeOffers' ids.
+   - CEcon_GetTradeOffer_Response is { offer: Option<TradeOffer_Trade>,
+     malformed_offer: Option<MalformedOffer> }: Steam answers a missing
+     offer with {"response":{}} and x-eresult 42 (seen live 2026-10-22),
+     and an offer that can't be read is kept aside, as in GetTradeOffers.
+   - No language or get_descriptions in the query when they are None.
+   - TradeOffer_Trade::settlement_date documented: seen live, the trade's
+     time_settlement once accepted, 0 before.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 1 day passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - GetTradeOffer as Steam answers it ([`c8c7268`](https://github.com/saskenuba/SteamHelper-rs/commit/c8c72681989e61d0fd40bf423db8a6f040672e22))
+</details>
+
 ## 0.7.0 (2026-10-21)
 
 ### New Features (BREAKING)
