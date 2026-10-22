@@ -75,7 +75,7 @@ version = "^1"
 path = "../steamid-parser"
 
 [dependencies.steam-client-lib]
-version = "^0.2.0"
+version = "^0.2.1"
 path = "../steam-client"
 optional = true
 

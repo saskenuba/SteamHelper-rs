@@ -1,6 +1,6 @@
 [package]
 name = "tappet"
-version = "0.7.0"
+version = "0.8.0"
 authors = ["Martin <martin@hotmail.com.br>"]
 license = "MIT"
 edition = "2018"
