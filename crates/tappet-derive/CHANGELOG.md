@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.3.3 (2026-10-21)
+
+### Bug Fixes
+
+ - <csr-id-c5e159a14118a8b97d20177c03b9011c5ff34249/> endpoint Debug hides the API key
+   The generated endpoint structs implement Debug by hand, with key shown
+   as <redacted>: the derived Debug printed the API key.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 1594 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Endpoint Debug hides the API key ([`c5e159a`](https://github.com/saskenuba/SteamHelper-rs/commit/c5e159a14118a8b97d20177c03b9011c5ff34249))
+</details>
+
 ## v0.3.2 (2022-06-10)
 
 ### Other

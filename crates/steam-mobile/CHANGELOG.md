@@ -5,6 +5,199 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.0 (2026-10-21)
+
+### Chore
+
+ - <csr-id-8cba64f4e70cd363e2fb272f9fe16df5bb95c147/> remove unused dependencies
+
+### Documentation
+
+ - <csr-id-dbaedcc06760a687b4d5bb32e578fe3235f98a9e/> update READMEs
+
+### New Features
+
+ - <csr-id-40dcb71581b1b3181cafd67898205cb0ecc76bc8/> log in through a Steam client (feature cm)
+   Feature cm, an optional dependency on steam-client-lib:
+   SteamAuthenticator::login_with_client(SteamHandle<User>) logs in to the
+   Steam websites through a Steam client logged on to the account, instead
+   of with a password. The client generates an access token
+   (Authentication.GenerateAccessTokenForApp over its CM connection); the
+   session sets the steamLoginSecure and sessionid cookies on the
+   Community, Store, Help and Checkout hosts, and checks that Steam takes
+   them.
+   
+   The authenticator keeps the handle and renews the token itself: the
+   first request with the session (or access_token()) once the current
+   token expires within an hour first gets a new one through the client,
+   swaps steamLoginSecure and keeps the sessionid.
+   
+   - SteamAuthenticator::renew_before(Duration) sets another margin, which
+     is also how long the session outlasts a client that can't renew it
+   - the token's lifetime is read from its own claims (exp minus iat, or
+     exp by the local clock without iat) and counted from when the client
+     was asked, so a skewed local clock doesn't matter
+   - the request that starts a renewal waits for the client's answer, up
+     to its 30-second call deadline (steam-mobile spawns no task);
+     requests meanwhile go at once with the current token while it is
+     valid, and only those whose token has expired wait for that answer,
+     so the client is asked once
+   - a failed renewal (such as while the client reconnects) lets the
+     request go with the current token while it is valid, and isn't tried
+     again for 30 seconds. An expired token is never sent: such a request
+     fails, unsent, with InternalError::ClientToken, whose source is the
+     client's error as an Arc<steam_client::errors::ClientError>
+   - a valid token issued for less than an hour is renewed 30 seconds
+     after it was asked for at the soonest, not on every request; a token
+     whose expiry is out of range is an error, not a panic
+   - renewal happens only early, and a failed request is never retried.
+     Password logins never renew, as before. The mid-session swap is not
+     verified against live Steam
+   - SteamAuthenticator::access_token().await, returning an AccessToken
+     whose Debug hides the token, for Web API calls that take
+     access_token= (steam-trading's SteamTradeManager). Async and fallible
+     because a login through a Steam client renews the token first when it
+     is about to expire
+   - SteamAuthenticator::steam_id() (logged in): the account's SteamID,
+     from the login
+   - StatusCode is re-exported
+   - examples web_session (step by step with a Steam client, read-only) and web_session_bot (the long-running setup), feature cm;
+     steam-client-lib's examples point to them
+ - <csr-id-5b53d00168dffc3ed658a44bc4e3e7a70ab70520/> revoke the API key, so it can be reissued
+   - SteamAuthenticator::revoke_api_key posts to /dev/revokekey and clears
+     the cached key; a following register_api_key registers a fresh one
+   - the revocation is verified by re-fetching the key page, since Steam
+     does not confirm it in the response; revoking when no key exists
+     succeeds
+   - examples: login, and rotate_api_key, which revokes and registers a new
+     key end to end
+
+### Bug Fixes
+
+ - <csr-id-358fd47498708ff62993662676bb93bdb85efc97/> parse family group and unknown confirmation kinds
+   EConfirmationType now mirrors Steam's EMobileConfirmationType, adding
+   BuildChangeRequest, AddUser, InviteToFamilyGroup, JoinFamilyGroup,
+   MarketPurchase and RequestRefund. Kinds Steam adds later deserialize as
+   Unknown instead of failing the whole confirmation fetch.
+
+### New Features (BREAKING)
+
+ - <csr-id-eff8fe79116bf58b51c9c1e0dd26acd9ce6cda1b/> add authenticators without a phone
+   Follows ArchiSteamFarm and steamguard-cli: AddAuthenticator is called
+   directly, and Steam sends the activation code by SMS if the account has
+   a phone, or by email otherwise.
+   
+   - new PendingMaFile state. SteamAuthenticator<Authenticated, AbsentMaFile>
+     ::begin_add_authenticator moves to it and reports where the code went
+     (ActivationCodeDelivery, from confirm_type and phone_number_hint).
+     finalize_pending moves it to PresentMaFile, ready for confirmations, or
+     hands it back with the error so a wrong code can be retried in the
+     same session
+   - SteamUser::with_pending_mafile resumes a pending maFile from disk; login
+     doesn't use it for codes, since it isn't active yet
+   - compile_fail doctests check that these transitions can't be skipped
+   - AddAuthenticator failures say what happened (rate limited, refused,
+     the raw status) instead of "Something went wrong"
+   - CLI: --phone is optional for authenticator add. With --out, the maFile
+     is written as <account>.maFile.pending before finalizing and renamed to
+     <account>.maFile afterwards, never overwriting an existing file. A
+     wrong code is asked again, and authenticator finalize resumes from the
+     pending file
+   - README documents the new flow
+ - <csr-id-ee0f9b2081487dac8ef3bafb233b7b1f83c6dc24/> recover missing device IDs, let the maFile state drive login
+   - a sealed MaFileState trait, implemented by AbsentMaFile and
+     PresentMaFile, tells login which maFile is active. Login takes the
+     shared secret from it instead of downcasting an Arc<dyn IsUser>;
+     IsUser and downcast-rs are gone, and an invalid shared secret is a
+     login error instead of a panic
+   - when the active maFile has no device ID, login fetches it from
+     ITwoFactorService/QueryStatus, and fails if Steam has none. An
+     authenticated PresentMaFile therefore always has one, so confirmations
+     and API key registration no longer panic on maFiles that lack it
+   - MobileAuthFile::device_id and SteamAuthenticator::mafile expose it, so
+     the recovered ID can be saved back
+   - CLI: authenticator status shows the Steam Guard status, compares the
+     device IDs, and offers to save a recovered one, replacing the maFile
+     through a temporary file
+ - <csr-id-20c78b5cba297ba8e57ba67e8b95ecb480df3b1f/> revamp the CLI
+   - clap 4 derive; the binary is now steam-mobile and reports the crate
+     version
+   - the maFile comes from --mafile or STEAM_MAFILE, and the account from
+     the maFile, overridable with --account or STEAM_ACCOUNT
+   - code prints the login code from the maFile's shared secret, through
+     the new MobileAuthFile::auth_code
+   - confirmations list shows the pending confirmations; accept and deny
+     take ids, --trade-offer, --kind (repeatable, `family` covers invites
+     and joins) or --all, and print what they act on. Unknown ids fail
+     before anything is sent
+   - authenticator add takes --phone and --out
+   - README documents the new commands
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-df9e30d0abb695141efec20c5fa6aee2f849141d/> own cookie jar, responses checked before parsing
+   Requests are unchanged, except that a missing sessionid cookie now stops
+   some of them (see dump_cookie below); only how Steam's answers are read
+   changed.
+   
+   - the cookie jar no longer loses cookies at random. The
+     cookie-hashed-domain jar compared cookies by name only, so now and
+     then a sessionid or steamLoginSecure of one Steam host replaced the
+     one of another (about 9% of sessions lost one; steam-trading then
+     sent an empty sessionid). steam-mobile has its own jar now, keyed by
+     host and name, and depends on upstream cookie 0.17 for the cookie
+     type only. Requests send the same cookies as before; only their order
+     in the Cookie header changed, from random to fixed (the mobile app's
+     cookies first, then the others in the order they were first set)
+   - responses parsed as a success are checked first: HTTP 429 is
+     InternalError::TooManyRequests, any other non-2xx
+     InternalError::HttpStatus (with the start of the page), and a Web API
+     x-eresult other than OK InternalError::EResult (an InvalidPassword at
+     login is LoginError::IncorrectCredentials). They were parsed anyway
+     and failed as deserialization errors
+   - a protobuf response that doesn't decode says so, with the type and
+     the decoder's error
+   - an EResult number steam-language doesn't know no longer fails the API
+     key and parental unlock responses; error messages show the number
+   - dump_cookie returns None when the session has no such cookie (it
+     returned Some("") when the jar held other cookies). The login steps
+     that send sessionid still send an empty one when there is none,
+     without panicking. api_key_register and api_key_revoke (and so
+     steam-trading's Steam Community POSTs) instead fail without sending
+     anything, with ApiKeyError::GeneralError("Missing sessionid
+     cookie."), where they used to POST an empty sessionid
+   - InternalError::HttpError (and every error built from it) shows its
+     URL without the query, which may carry a confirmation hash or an
+     encoded request
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 10 commits contributed to the release over the course of 9 calendar days.
+ - 10 days passed between releases.
+ - 9 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Log in through a Steam client (feature cm) ([`40dcb71`](https://github.com/saskenuba/SteamHelper-rs/commit/40dcb71581b1b3181cafd67898205cb0ecc76bc8))
+    - Own cookie jar, responses checked before parsing ([`df9e30d`](https://github.com/saskenuba/SteamHelper-rs/commit/df9e30d0abb695141efec20c5fa6aee2f849141d))
+    - Release steam-cryptography v0.1.0, steam-language-gen-derive v0.2.1, steam-protobuf v0.3.1, steam-totp v0.2.3, tappet v0.6.1, steam-client-lib v0.1.0 ([`6c17375`](https://github.com/saskenuba/SteamHelper-rs/commit/6c173751b28bf95bfe2983dcaf48cf103e9a4307))
+    - Remove unused dependencies ([`8cba64f`](https://github.com/saskenuba/SteamHelper-rs/commit/8cba64f4e70cd363e2fb272f9fe16df5bb95c147))
+    - Update READMEs ([`dbaedcc`](https://github.com/saskenuba/SteamHelper-rs/commit/dbaedcc06760a687b4d5bb32e578fe3235f98a9e))
+    - Add authenticators without a phone ([`eff8fe7`](https://github.com/saskenuba/SteamHelper-rs/commit/eff8fe79116bf58b51c9c1e0dd26acd9ce6cda1b))
+    - Recover missing device IDs, let the maFile state drive login ([`ee0f9b2`](https://github.com/saskenuba/SteamHelper-rs/commit/ee0f9b2081487dac8ef3bafb233b7b1f83c6dc24))
+    - Revamp the CLI ([`20c78b5`](https://github.com/saskenuba/SteamHelper-rs/commit/20c78b5cba297ba8e57ba67e8b95ecb480df3b1f))
+    - Parse family group and unknown confirmation kinds ([`358fd47`](https://github.com/saskenuba/SteamHelper-rs/commit/358fd47498708ff62993662676bb93bdb85efc97))
+    - Revoke the API key, so it can be reissued ([`5b53d00`](https://github.com/saskenuba/SteamHelper-rs/commit/5b53d00168dffc3ed658a44bc4e3e7a70ab70520))
+</details>
+
 ## 0.6.0 (2026-10-11)
 
 ### Other

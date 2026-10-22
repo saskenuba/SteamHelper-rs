@@ -5,6 +5,99 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.2.0 (2026-10-21)
+
+### Documentation
+
+ - <csr-id-40dcb71581b1b3181cafd67898205cb0ecc76bc8/> trade_notifications points to steam-mobile's login_with_client
+   For the web session that steam-trading fetches the offers with, and to
+   steam-mobile's web_session_bot example, which sets it up.
+
+### New Features
+
+ - <csr-id-40bd72cee586bd2b910272e3d26faf0c43adbf09/> AccessToken::issued_at
+   When Steam issued a token (its iat claim), if it says. It is Steam's
+   clock, as expires_at is: the time between the two is how long the
+   token lasts, whatever the local clock says. steam-mobile renews web
+   sessions by it.
+   
+   A token whose expiry is out of range is ClientError::InvalidToken
+   instead of a panic.
+ - <csr-id-aa8f6f5582c0fc3a6d9468f7472dbdb698770a27/> job messages
+   Requests that aren't service methods but are answered by one message
+   carrying their job id, such as ClientRequestFreeLicense, answered by
+   ClientRequestFreeLicenseResponse.
+   
+   - job::JobMessage names one by a marker type, as ServiceMethod does:
+     the crate's own in job::messages, sent with
+     call_job_message(request), any other with
+     call_job::<Message>(request), on SteamClient and SteamHandle. At
+     most 30 s; on a handle, concurrently with the other calls
+   - an answer whose result isn't OK is ClientError::JobMessage, with the
+     request and the result, such as RateLimitExceeded for a free license
+   - service methods and job messages are one kind of exchange in the
+     sans-IO core: job ids, matching and timeouts are shared
+   - what Steam pushes because of a request, such as the ClientLicenseList
+     after a free license, stays an event, not part of the answer
+   - reading the answers allocates nothing (tests/zero_alloc.rs)
+   - example free_license: ClientRequestFreeLicense for the app ids given,
+     or with BY_HAND=1 through a marker type declared in the example
+
+### Bug Fixes
+
+ - <csr-id-fb417377ac79a43d39ba0978981e31a5ee38d200/> an unreadable GC message counts as dropped
+   A message from a game coordinator whose envelope can't be read can't be
+   routed: it was logged and lost. Since it may have been any channel's,
+   every channel now counts it as dropped, so its reader sees
+   GcEvent::Lagged.
+
+### New Features (BREAKING)
+
+ - <csr-id-7cc393a45dabfa223531dc1a3b809f1f89ac8085/> CS2 inventory only while it is current
+   Cs2::inventory() gives the account's inventory only while it is the
+   game coordinator's current one, and None otherwise: before the game
+   coordinator sent it, and from Cs2Event::InventoryUnavailable (the
+   session ended, messages were dropped or couldn't be read, the cache was
+   unsubscribed or is another version) until Cs2Event::InventoryLoaded.
+   It first reads what came since, as events, so the answer is as of the
+   latest message.
+   
+   - what changed while the inventory was unavailable comes as item events
+     just before InventoryLoaded
+   - Cs2 asks the game coordinator to send the cache again
+     (CacheSubscriptionRefresh, as the game does) when its copy may be old
+   - InventoryLoaded and InventoryUnavailable are never dropped, like the
+     session events
+   - example cs2_profile prints the new events
+   
+   BREAKING: Cs2::inventory takes &mut self and returns
+   Result<Option<&Inventory>, ClientError> (Closed once the client
+   stopped, GcRefused if the game coordinator refused the session); new
+   Cs2Event::InventoryUnavailable.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 5 commits contributed to the release.
+ - 3 days passed between releases.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Log in through a Steam client (feature cm) ([`40dcb71`](https://github.com/saskenuba/SteamHelper-rs/commit/40dcb71581b1b3181cafd67898205cb0ecc76bc8))
+    - CS2 inventory only while it is current ([`7cc393a`](https://github.com/saskenuba/SteamHelper-rs/commit/7cc393a45dabfa223531dc1a3b809f1f89ac8085))
+    - An unreadable GC message counts as dropped ([`fb41737`](https://github.com/saskenuba/SteamHelper-rs/commit/fb417377ac79a43d39ba0978981e31a5ee38d200))
+    - AccessToken::issued_at ([`40bd72c`](https://github.com/saskenuba/SteamHelper-rs/commit/40bd72cee586bd2b910272e3d26faf0c43adbf09))
+    - Job messages ([`aa8f6f5`](https://github.com/saskenuba/SteamHelper-rs/commit/aa8f6f5582c0fc3a6d9468f7472dbdb698770a27))
+</details>
+
 ## v0.1.0 (2026-10-18)
 
 ### Chore
