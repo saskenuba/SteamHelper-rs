@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    
    - snapshot of the game coordinator's item ids, accept, wait for the new
      ones, then places items as find_received_items does
+   - the wait ends once each CS2 item with a fingerprint has a matching new
+     item and the new items left are at least the CS2 items without one, or
+     at the timeout: an item from elsewhere no longer ends it early
    - Located has three variants instead of five: Exact (same pattern as
      the fingerprint, wear within 1e-6), AnyOfKind (a new item of its
      classid in our web inventory, for an item without a fingerprint:
@@ -32,6 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    - a failed read of our web inventory after the accept is now
      AcceptedButItemsNotFound (is_too_many_requests() tells a 429) instead
      of items placed without kinds
+   - TradeError::AcceptedButNotConfirmed { tradeoffer_id, known_ids, source }
+     when Steam took the accept but its confirmation failed (finding or
+     accepting the mobile confirmation, or Steam waits for an email one):
+     the trade may still happen; a failure before Steam took the accept
+     stays the plain error
    
    Not verified against live Steam.
 
@@ -60,6 +68,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
      new id
    - TradeError::Cs2InventoryUnavailable while the game coordinator's
      inventory isn't current (nothing looked up)
+   - TradeError::OfferNotAccepted { tradeoffer_id, state } when the offer's
+     trade_offer_state isn't Accepted (3): nothing looked up or read
    - Fingerprint is public: Fingerprint::new(pattern, wear: f64) (the wear
      kept as f32, the game coordinator's float),
      Fingerprint::of(&InventoryItem), pattern(), wear() -> f32; serde as
@@ -75,8 +85,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - <csr-id-832c3617f05a144c63cebfc15445b7082064f6f3/> Inventory::total_inventory_count
    The count Steam sends on every inventory page, to tell a complete read:
    Inventory::total_inventory_count() (the first page's) and
-   InventoryPage::total_inventory_count(). None when Steam doesn't send it,
-   or not as a count.
+   InventoryPage::total_inventory_count(), read as the plain number Steam
+   sends. None when Steam doesn't send it.
 
 ### Bug Fixes
 
