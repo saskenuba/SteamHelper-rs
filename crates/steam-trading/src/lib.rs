@@ -81,6 +81,8 @@ use tappet::response_types::GetTradeHistoryResponse;
 use tappet::response_types::GetTradeOffersResponse;
 use tappet::response_types::MalformedOffer;
 #[cfg(feature = "cs2")]
+use tappet::response_types::CEcon_Asset;
+#[cfg(feature = "cs2")]
 use tappet::response_types::OfferItem;
 use tappet::response_types::TradeHistory_Trade;
 use tappet::response_types::TradeOffer_Trade;
@@ -878,12 +880,7 @@ impl SteamTradeManager {
             .ok_or(OfferError::NoMatch)?;
         let partner = SteamID::from_account_id(offer.accountid_other as u32);
         let accept_partner = accept_partner_of(&offer);
-        let received = offer
-            .items_to_receive
-            .iter()
-            .filter_map(OfferItem::asset)
-            .cloned()
-            .collect();
+        let received = received_assets(&offer);
 
         received::accept_and_locate(
             tradeoffer_id,
@@ -896,6 +893,17 @@ impl SteamTradeManager {
         )
         .await
     }
+}
+
+/// The items `offer` gives this account, those that can be read.
+#[cfg(feature = "cs2")]
+fn received_assets(offer: &TradeOffer_Trade) -> Vec<CEcon_Asset> {
+    offer
+        .items_to_receive
+        .iter()
+        .filter_map(OfferItem::asset)
+        .cloned()
+        .collect()
 }
 
 /// The form as it is sent.
@@ -1758,6 +1766,23 @@ mod tests {
             sent_form(request),
             "sessionid=SESSION123&serverid=1&partner=76561202087660878&captcha=&tradeofferid=4127395150"
         );
+    }
+
+    #[cfg(feature = "cs2")]
+    #[test]
+    fn received_assets_are_the_readable_items_to_receive() {
+        let offer: TradeOffer_Trade = serde_json::from_str(
+            r#"{"tradeofferid":"4127395150","accountid_other":79925588,"trade_offer_state":3,
+              "items_to_give":[{"appid":730,"contextid":"2","assetid":"1","classid":"2","amount":"1"}],
+              "items_to_receive":[
+                {"appid":730,"contextid":"2","assetid":"24234602605","classid":"241575744","amount":"1"},
+                {"appid":730,"contextid":"2","assetid":"not a number","classid":"241575744","amount":"1"}]}"#,
+        )
+        .unwrap();
+        assert!(offer.has_malformed_items());
+        let received = received_assets(&offer);
+        assert_eq!(received.len(), 1);
+        assert_eq!((received[0].assetid, received[0].classid), (24234602605, 241575744));
     }
 
     #[test]

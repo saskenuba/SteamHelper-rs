@@ -28,7 +28,8 @@ use crate::TradeError;
 pub(crate) const DEFAULT_TIMEOUT: Duration = Duration::from_secs(60);
 /// How often the game coordinator's inventory is looked at while waiting. Local state: no request.
 const POLL_INTERVAL: Duration = Duration::from_millis(250);
-/// Reads of our own web inventory for the kinds of the new items, at most: Steam serves it from a cache.
+/// Reads of our own web inventory for the kinds of the new items after an accept, at most: Steam serves it from a
+/// cache.
 const KIND_READS: usize = 3;
 /// Between two of those reads.
 const KIND_READ_INTERVAL: Duration = Duration::from_secs(2);
@@ -422,11 +423,7 @@ where
 
     Ok(AcceptedOffer {
         tradeid,
-        received: received
-            .into_iter()
-            .zip(located)
-            .map(|(offered, located)| ReceivedItem { offered, located })
-            .collect(),
+        received: received_items(received, located),
     })
 }
 
@@ -451,13 +448,37 @@ where
         wait_for_new_items(source, before, expected, wait).await?
     };
 
-    let needing = ids_needing_kinds(wanted, &new);
+    Ok(place(wanted, &new, own_inventory, KIND_READS, wait.kind_read_interval).await)
+}
+
+/// [`locate`], with the kinds it needs read from our own web inventory, `kind_reads` times at most.
+async fn place<O, OF>(
+    wanted: &[Wanted],
+    new: &[GcItem],
+    own_inventory: &mut O,
+    kind_reads: usize,
+    kind_read_interval: Duration,
+) -> Vec<Located>
+where
+    O: FnMut() -> OF,
+    OF: Future<Output = Result<Inventory, TradeError>>,
+{
+    let needing = ids_needing_kinds(wanted, new);
     let kinds = if needing.is_empty() {
         HashMap::new()
     } else {
-        kinds_of(&needing, own_inventory, wait.kind_read_interval).await
+        kinds_of(&needing, own_inventory, kind_reads, kind_read_interval).await
     };
-    Ok(locate(wanted, &new, &kinds))
+    locate(wanted, new, &kinds)
+}
+
+/// Each of `received` with where it went.
+fn received_items(received: Vec<CEcon_Asset>, located: Vec<Located>) -> Vec<ReceivedItem> {
+    received
+        .into_iter()
+        .zip(located)
+        .map(|(offered, located)| ReceivedItem { offered, located })
+        .collect()
 }
 
 /// The pattern and wear of the partner's copies, by the partner's asset id: only for items whose kind repeats among
@@ -511,14 +532,14 @@ where
 }
 
 /// The `classid` of the items `ids` from our own web inventory, read again while some are missing (Steam serves it
-/// from a cache), [`KIND_READS`] times at most. A failed read is logged and ends the reads.
-async fn kinds_of<O, OF>(ids: &[u64], own_inventory: &mut O, interval: Duration) -> HashMap<u64, i64>
+/// from a cache), `reads` times at most. A failed read is logged and ends the reads.
+async fn kinds_of<O, OF>(ids: &[u64], own_inventory: &mut O, reads: usize, interval: Duration) -> HashMap<u64, i64>
 where
     O: FnMut() -> OF,
     OF: Future<Output = Result<Inventory, TradeError>>,
 {
     let mut kinds = HashMap::new();
-    for read in 1..=KIND_READS {
+    for read in 1..=reads {
         if read > 1 {
             Delay::new(interval).await;
         }
@@ -550,7 +571,7 @@ where
             kinds.len(),
             ids.len(),
             read,
-            KIND_READS
+            reads
         );
     }
     kinds
