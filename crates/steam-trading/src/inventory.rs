@@ -52,6 +52,12 @@ impl Inventory {
         // checked when they came, so they read the same now
         self.pages.iter().filter_map(|body| InventoryPage::parse(body).ok())
     }
+
+    /// How many items Steam says the inventory has, from the first page: compare it with the items of every page to
+    /// tell a complete read. `None` if Steam didn't say.
+    pub fn total_inventory_count(&self) -> Option<u32> {
+        self.pages().next()?.total_inventory_count()
+    }
 }
 
 impl fmt::Debug for Inventory {
@@ -69,6 +75,7 @@ pub struct InventoryPage<'a> {
     /// Sorted by asset id.
     properties: Vec<RawProperties<'a>>,
     next_start: Option<&'a str>,
+    total_inventory_count: Option<&'a RawValue>,
 }
 
 impl<'a> InventoryPage<'a> {
@@ -106,6 +113,7 @@ impl<'a> InventoryPage<'a> {
             descriptions,
             properties,
             next_start,
+            total_inventory_count: page.total_inventory_count,
         })
     }
 
@@ -151,6 +159,15 @@ impl<'a> InventoryPage<'a> {
     /// Where the next page starts (Steam's `last_assetid`), `None` after the last page.
     pub fn next_start(&self) -> Option<&'a str> {
         self.next_start
+    }
+
+    /// How many items Steam says the whole inventory has (`total_inventory_count`, on every page), `None` if it didn't
+    /// say or not as a count.
+    pub fn total_inventory_count(&self) -> Option<u32> {
+        let raw = self.total_inventory_count?.get();
+        serde_json::from_str(raw)
+            .ok()
+            .or_else(|| serde_json::from_str::<&str>(raw).ok()?.parse().ok())
     }
 }
 
@@ -248,6 +265,9 @@ struct RawPage<'a> {
     more_items: bool,
     #[serde(default, borrow)]
     last_assetid: Option<&'a str>,
+    /// Read on demand: a count Steam sends in another shape leaves the page readable.
+    #[serde(default, borrow)]
+    total_inventory_count: Option<&'a RawValue>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -616,6 +636,52 @@ mod tests {
         .unwrap();
         assert_eq!(ids(&inventory), vec![1, 2, 3, 4]);
         assert!(pages.next().is_none());
+    }
+
+    #[test]
+    fn total_inventory_count() {
+        assert_eq!(
+            InventoryPage::parse(CONTEXT_2).unwrap().total_inventory_count(),
+            Some(2)
+        );
+        assert_eq!(InventoryPage::parse(EMPTY).unwrap().total_inventory_count(), Some(0));
+        let without = page(&[1], None);
+        assert_eq!(InventoryPage::parse(&without).unwrap().total_inventory_count(), None);
+        for (count, expected) in &[
+            (r#""7""#, Some(7)),
+            (r#""x""#, None),
+            ("-1", None),
+            ("null", None),
+            ("{}", None),
+        ] {
+            let body = format!(r#"{{"success":1,"total_inventory_count":{}}}"#, count);
+            assert_eq!(
+                InventoryPage::parse(&body).unwrap().total_inventory_count(),
+                *expected,
+                "{}",
+                count
+            );
+        }
+
+        let inventory = Inventory::from_json(CONTEXT_16.to_string()).unwrap();
+        assert_eq!(inventory.total_inventory_count(), Some(1));
+        assert_eq!(Inventory::from_json(without).unwrap().total_inventory_count(), None);
+        assert_eq!(Inventory::default().total_inventory_count(), None);
+    }
+
+    #[test]
+    fn total_inventory_count_of_a_paged_inventory_is_the_first_page_s() {
+        let mut pages = vec![
+            r#"{"assets":[],"success":1,"more_items":1,"last_assetid":"2","total_inventory_count":3}"#,
+            r#"{"assets":[],"success":1,"total_inventory_count":4}"#,
+        ]
+        .into_iter();
+        let inventory = block_on(read_all_inventory_pages(|_| {
+            let body = pages.next().expect("no more pages").to_string();
+            async move { Ok(body) }
+        }))
+        .unwrap();
+        assert_eq!(inventory.total_inventory_count(), Some(3));
     }
 
     #[test]
