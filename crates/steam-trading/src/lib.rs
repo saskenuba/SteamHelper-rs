@@ -914,13 +914,15 @@ impl SteamTradeManager {
     ///   partner's inventory before the trade; any may be missing, and commodities have none.
     ///
     /// Steps: looks once at [`Cs2::inventory`] (local state, no request; its events are not taken), and places each
-    /// item (see [`Located`]). Only when the game coordinator can't tell kinds apart, reads our own web inventory once
-    /// (CS2's context 16, where received items land while trade-protected) for the new ids' kinds; Steam serves it
-    /// from a cache, so an item received seconds before may be [`Located::Guessed`] instead of [`Located::Kind`]. A
-    /// failed read is logged: those items are [`Located::Guessed`].
+    /// item (see [`Located`]). When the game coordinator can't place every item, reads our own web inventory for the
+    /// new ids' kinds: CS2's context 16 (where received items land while trade-protected), then context 2 only for
+    /// ids still missing, once each.
     ///
-    /// Items not in `known_ids` that came from elsewhere can be taken for received ones ([`Located::Only`],
-    /// [`Located::Guessed`]); an item with a fingerprint is only ever paired with one that matches it.
+    /// New items not in `known_ids` may have come another way, so an item without a fingerprint (every commodity) is
+    /// only placed on a new item read to be of its kind: [`Located::Kind`], or [`Located::Guessed`] among those of its
+    /// kind, never [`Located::Only`]. With no such item, or a web read that failed (logged) or didn't list it yet
+    /// (Steam serves it from a cache), it is [`Located::NotFound`]: look again later. An item with a fingerprint is
+    /// only ever placed on a new item that matches it, also as [`Located::Only`] or [`Located::Guessed`].
     ///
     /// **Not verified against live Steam yet.**
     ///
@@ -937,8 +939,8 @@ impl SteamTradeManager {
         fingerprints: &HashMap<u64, Fingerprint>,
         cs2: &mut Cs2,
     ) -> Result<Vec<ReceivedItem>, TradeError> {
-        received::find_and_locate(received_assets(offer), known_ids, fingerprints, cs2, || {
-            self.own_inventory(InventoryContext::CS2_TRADE_PROTECTED)
+        received::find_and_locate(received_assets(offer), known_ids, fingerprints, cs2, |context| {
+            self.own_inventory(context)
         })
         .await
     }
