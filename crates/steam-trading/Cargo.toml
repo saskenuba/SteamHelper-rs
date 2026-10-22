@@ -1,6 +1,6 @@
 [package]
 name = "steam-trading"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["Martin <martin@hotmail.com.br>"]
 edition = "2018"
 repository = "https://github.com/saskenuba/SteamHelper-rs/tree/master/crates/steam-trading/"
@@ -30,7 +30,7 @@ thiserror = "1"
 tracing = "^0.1"
 
 scraper = { version = "^0", optional = true }
-steam-client-lib = { path = "../steam-client", version = "^0.1.0", optional = true }
+steam-client-lib = { path = "../steam-client", version = "^0.2.0", optional = true }
 
 futures = "^0.3"
 futures-timer = "^3"
