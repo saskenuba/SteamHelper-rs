@@ -51,7 +51,9 @@ let confirmations = trades.authenticator().fetch_confirmations().await?;
 * `additional-checks` (default): when creating an offer fails, checks whether the partner recently enabled
   Steam Guard (`OfferError::SteamGuardRecentlyEnabled`), and `check_steam_guard_recently_activated`.
 * `cs2`: `accept_offer_and_find_items`, which accepts and finds the new asset ids of the CS2 items received through
-  CS2's game coordinator (steam-client-lib), since Steam's trade history no longer gives them for CS2. Not verified
-  against live Steam yet. It also turns on steam-mobile's `cm`: one Steam client logon gives the account's CS2
+  CS2's game coordinator (steam-client-lib), since Steam's trade history no longer gives them for CS2, and
+  `find_received_items`, the same for an offer the partner accepted (one this account sent), from the item ids the
+  caller already knows and the pattern and wear it kept of the partner's copies. Not verified against live Steam yet.
+  It also turns on steam-mobile's `cm`: one Steam client logon gives the account's CS2
   session and its web session (`SteamAuthenticator::login_with_client`), which then renews itself. The `full_trade`
   example uses it, and `cs2_trade_items` compares the game coordinator's item ids with the web inventory's.
