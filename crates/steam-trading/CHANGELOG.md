@@ -44,6 +44,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    those of its kind, else Located::NotFound; never Located::Only. Kinds are
    read in context 16, then context 2 for ids still missing, once each.
 
+ - <csr-id-f2b1b4d5a46d2d3b2204c5eac4c75bcd66c44d49/> find_received_items fails with a web inventory read that failed
+   A failed read of our web inventory for the new items' kinds is the call's
+   error (the read's TradeError; is_too_many_requests() tells a 429) instead
+   of a logged Located::NotFound. accept_offer_and_find_items is unchanged.
+
 ### Refactor
 
  - <csr-id-e543c5532288e1700f8dd71af80f1685275ccc37/> one placing core for received items
