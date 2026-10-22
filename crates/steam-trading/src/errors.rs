@@ -83,8 +83,8 @@ pub enum TradeError {
     GameCoordinatorError(steam_client::errors::ClientError),
 
     /// CS2's game coordinator has no current inventory of the account (see `Cs2::inventory`), so the items an accept
-    /// brings could not be told from those already there. Nothing was accepted: try again once the game coordinator
-    /// sent the inventory (`Cs2Event::InventoryLoaded`).
+    /// brings could not be told from those already there. Nothing was accepted, or by `find_received_items` nothing
+    /// was looked up: try again once the game coordinator sent the inventory (`Cs2Event::InventoryLoaded`).
     #[cfg(feature = "cs2")]
     #[error("CS2's game coordinator has no current inventory of the account; the offer was not accepted.")]
     Cs2InventoryUnavailable,

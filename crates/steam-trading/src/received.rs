@@ -5,6 +5,10 @@
 //! are those the game coordinator's inventory gained. Telling which received item is which comes from what a trade
 //! keeps: the pattern and wear (the web prints the game coordinator's 32-bit float in full) and the kind (`classid`).
 //! Spec: `docs/specs/2026-10-21-received-items.md`.
+//!
+//! Two ways in: [`accept_and_locate`] accepts and waits for what the inventory gains over a snapshot taken right
+//! before; [`find_and_locate`], for an offer the partner accepted earlier, looks once at what the inventory has beyond
+//! the ids the caller knows, with the fingerprints the caller kept. Both place items with [`locate`].
 
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -57,21 +61,23 @@ pub struct ReceivedItem {
 
 /// How a received item was found in the game coordinator's inventory, with its new asset id.
 ///
-/// Items that came from elsewhere while waiting (a drop, another trade) can be taken for received ones in
-/// [`Located::Only`] and [`Located::Guessed`].
+/// Items that came from elsewhere (a drop, another trade: while waiting after an accept, or not among the ids known to
+/// [`SteamTradeManager::find_received_items`](crate::SteamTradeManager::find_received_items)) can be taken for received
+/// ones in [`Located::Only`] and [`Located::Guessed`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Located {
     /// The only one left: one received item not found otherwise, and one new item.
     Only(u64),
-    /// Pattern and wear (as `f32` bits) equal the partner's copy, from the partner's web inventory.
+    /// Pattern and wear (as `f32` bits) equal the partner's copy's [`Fingerprint`]: read from the partner's web
+    /// inventory before the accept, or given by the caller.
     PatternAndWear(u64),
     /// The only new item of its kind (`classid`), from our own web inventory.
     Kind(u64),
     /// Not told apart from others of its kind, or whose kind couldn't be read: the set of new ids is right, which of
     /// them is this item may not be.
     Guessed(u64),
-    /// Nothing new for it before the timeout. Also items of other games than CS2, which the game coordinator doesn't
-    /// hold.
+    /// Nothing new for it: before the timeout after an accept, or in the inventory as it is when the partner accepted.
+    /// Also items of other games than CS2, which the game coordinator doesn't hold.
     NotFound,
 }
 
@@ -127,20 +133,33 @@ impl ItemSource for Cs2 {
     }
 }
 
-/// The partner's copy of an item: pattern and wear, which a trade keeps.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) struct Fingerprint {
+/// What a trade keeps of an item and tells copies of one kind apart: its pattern and wear. Commodities (cases,
+/// graffiti) have neither.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Fingerprint {
     pattern: i64,
     /// The web's wear as the game coordinator's `f32`: the web prints that float in full, so the bits are equal.
     wear_bits: u32,
 }
 
 impl Fingerprint {
-    fn of(item: &InventoryItem<'_>) -> Option<Self> {
-        Some(Self {
-            pattern: item.pattern()?,
-            wear_bits: (item.wear()? as f32).to_bits(),
-        })
+    /// From the pattern ("Pattern Template") and the wear's bits as `f32`: `(wear as f32).to_bits()` of the web's
+    /// "Wear Rating", or the game coordinator's float's.
+    pub const fn new(pattern: i64, wear_bits: u32) -> Self {
+        Self { pattern, wear_bits }
+    }
+
+    /// An item's, from its web inventory: `None` without a pattern or a wear.
+    pub fn of(item: &InventoryItem<'_>) -> Option<Self> {
+        Some(Self::new(item.pattern()?, (item.wear()? as f32).to_bits()))
+    }
+
+    pub const fn pattern(&self) -> i64 {
+        self.pattern
+    }
+
+    pub const fn wear_bits(&self) -> u32 {
+        self.wear_bits
     }
 
     fn matches(&self, item: &GcItem) -> bool {
@@ -154,7 +173,7 @@ pub(crate) struct Wanted {
     classid: i64,
     /// Whether it is a CS2 item: the game coordinator holds no other.
     cs2: bool,
-    /// From the partner's web inventory, when it was read and the item has both.
+    /// The partner's copy's, when known.
     fingerprint: Option<Fingerprint>,
 }
 
@@ -447,8 +466,43 @@ where
     } else {
         wait_for_new_items(source, before, expected, wait).await?
     };
-
     Ok(place(wanted, &new, own_inventory, KIND_READS, wait.kind_read_interval).await)
+}
+
+/// The steps of `find_received_items`: where `received` (an accepted offer's items to receive) went among the items
+/// of `source` not in `known`, looking at it once, with the partner's `fingerprints` by asset id. `own_inventory()`
+/// reads CS2's trade-protected context, once at most.
+///
+/// Fails with [`TradeError::Cs2InventoryUnavailable`] while the inventory isn't current, unless no CS2 item is to be
+/// found; otherwise only if the game coordinator does.
+pub(crate) async fn find_and_locate<S, O, OF>(
+    received: Vec<CEcon_Asset>,
+    known: &HashSet<u64>,
+    fingerprints: &HashMap<u64, Fingerprint>,
+    source: &mut S,
+    mut own_inventory: O,
+) -> Result<Vec<ReceivedItem>, TradeError>
+where
+    S: ItemSource,
+    O: FnMut() -> OF,
+    OF: Future<Output = Result<Inventory, TradeError>>,
+{
+    let wanted: Vec<Wanted> = received
+        .iter()
+        .map(|offered| {
+            let fingerprint = u64::try_from(offered.assetid)
+                .ok()
+                .and_then(|assetid| fingerprints.get(&assetid));
+            Wanted::new(offered, fingerprint.copied())
+        })
+        .collect();
+    let new = if wanted.iter().any(|wanted| wanted.cs2) {
+        source.items_not_in(known)?.ok_or(TradeError::Cs2InventoryUnavailable)?
+    } else {
+        Vec::new()
+    };
+    let located = place(&wanted, &new, &mut own_inventory, 1, Duration::ZERO).await;
+    Ok(received_items(received, located))
 }
 
 /// [`locate`], with the kinds it needs read from our own web inventory, `kind_reads` times at most.
@@ -1175,6 +1229,302 @@ mod tests {
             no_inventory,
             fast(Duration::from_secs(10)),
         ));
+        assert!(matches!(result, Err(TradeError::GeneralError(_))), "{:?}", result);
+    }
+
+    /// The game coordinator's inventory as it is now (`None`: not current), holding every item, the known ones too.
+    struct Now {
+        items: Option<Vec<GcItem>>,
+        looks: usize,
+    }
+
+    impl Now {
+        fn current(items: Vec<GcItem>) -> Self {
+            Self {
+                items: Some(items),
+                looks: 0,
+            }
+        }
+    }
+
+    impl ItemSource for Now {
+        fn item_ids(&mut self) -> Result<Option<HashSet<u64>>, TradeError> {
+            unreachable!("no snapshot once the partner accepted")
+        }
+
+        fn items_not_in(&mut self, known: &HashSet<u64>) -> Result<Option<Vec<GcItem>>, TradeError> {
+            self.looks += 1;
+            Ok(self
+                .items
+                .as_ref()
+                .map(|items| items.iter().filter(|item| !known.contains(&item.id)).copied().collect()))
+        }
+    }
+
+    /// `find_and_locate` with `known` ids and `fingerprints`, counting the reads of our own web inventory.
+    fn find<S: ItemSource>(
+        received: Vec<CEcon_Asset>,
+        known: &[u64],
+        fingerprints: &[(u64, Fingerprint)],
+        source: &mut S,
+        mut own_inventory: impl FnMut() -> Result<Inventory, TradeError>,
+    ) -> (Result<Vec<ReceivedItem>, TradeError>, usize) {
+        let known: HashSet<u64> = known.iter().copied().collect();
+        let fingerprints: HashMap<u64, Fingerprint> = fingerprints.iter().copied().collect();
+        let reads = Cell::new(0);
+        let result = block_on(find_and_locate(received, &known, &fingerprints, source, || {
+            reads.set(reads.get() + 1);
+            ready(own_inventory())
+        }));
+        (result, reads.get())
+    }
+
+    fn located(received: Vec<ReceivedItem>) -> Vec<Located> {
+        received.iter().map(|item| item.located).collect()
+    }
+
+    /// Our context 16 listing `(assetid, classid)`.
+    fn kinds_page(items: &[(u64, i64)]) -> Result<Inventory, TradeError> {
+        let assets: Vec<String> = items
+            .iter()
+            .map(|(assetid, classid)| {
+                format!(
+                    r#"{{"appid":730,"contextid":"16","assetid":"{}","classid":"{}","amount":"1"}}"#,
+                    assetid, classid
+                )
+            })
+            .collect();
+        Inventory::from_json(format!(r#"{{"assets":[{}],"success":1}}"#, assets.join(",")))
+    }
+
+    fn web_fingerprint(pattern: i64, wear: &str) -> Fingerprint {
+        Fingerprint::new(pattern, (wear.parse::<f64>().unwrap() as f32).to_bits())
+    }
+
+    #[test]
+    fn fingerprint_of_a_web_item() {
+        let inventory = web_inventory(
+            InventoryContext::CS2_TRADE_PROTECTED,
+            &[(54238728503, AUG, 302, "0.372153759002685547")],
+        );
+        let page = inventory.pages().next().unwrap();
+        let fingerprint = Fingerprint::of(&page.items().next().unwrap()).unwrap();
+        assert_eq!(fingerprint, Fingerprint::new(302, 0x3ebe_8af0));
+        assert_eq!((fingerprint.pattern(), fingerprint.wear_bits()), (302, 0x3ebe_8af0));
+
+        let case = kinds_page(&[(1, CASE)]).unwrap();
+        let page = case.pages().next().unwrap();
+        assert_eq!(Fingerprint::of(&page.items().next().unwrap()), None);
+    }
+
+    #[test]
+    fn partner_accepted_one_item() {
+        let mut source = Now::current(vec![skin(1, 7, 0.1), commodity(2), skin(54238728503, 302, 0.37)]);
+        let (result, reads) = find(
+            vec![asset(InventoryContext::CS2, 24234602605, AUG)],
+            &[1, 2],
+            &[],
+            &mut source,
+            || panic!("no web read"),
+        );
+        let received = result.unwrap();
+        assert_eq!(received.len(), 1);
+        assert_eq!(received[0].offered.assetid, 24234602605);
+        assert_eq!(received[0].located, Located::Only(54238728503));
+        assert_eq!((reads, source.looks), (0, 1));
+    }
+
+    #[test]
+    fn partner_accepted_copies_of_one_kind_told_apart_by_fingerprints() {
+        let mut source = Now::current(vec![skin(1, 7, 0.1), skin(901, 12, 0.2), skin(902, 355, 0.066_143_81)]);
+        let (result, reads) = find(
+            vec![
+                asset(InventoryContext::CS2, 100, MP7),
+                asset(InventoryContext::CS2, 101, MP7),
+            ],
+            &[1],
+            &[
+                (100, web_fingerprint(355, "0.0661438107490539551")),
+                (101, web_fingerprint(12, "0.200000002980232239")),
+            ],
+            &mut source,
+            || panic!("no web read"),
+        );
+        assert_eq!(
+            located(result.unwrap()),
+            vec![Located::PatternAndWear(902), Located::PatternAndWear(901)]
+        );
+        assert_eq!(reads, 0);
+    }
+
+    #[test]
+    fn partner_accepted_copies_of_one_kind_not_told_apart_are_guessed() {
+        let mut source = Now::current(vec![commodity(12), commodity(11)]);
+        let (result, reads) = find(
+            vec![
+                asset(InventoryContext::CS2, 100, CASE),
+                asset(InventoryContext::CS2, 101, CASE),
+            ],
+            &[],
+            &[],
+            &mut source,
+            || kinds_page(&[(11, CASE), (12, CASE)]),
+        );
+        assert_eq!(
+            located(result.unwrap()),
+            vec![Located::Guessed(11), Located::Guessed(12)]
+        );
+        assert_eq!(reads, 1);
+    }
+
+    #[test]
+    fn partner_accepted_kinds() {
+        let mut source = Now::current(vec![skin(901, 302, 0.37), commodity(902)]);
+        let (result, reads) = find(
+            vec![
+                asset(InventoryContext::CS2, 100, AUG),
+                asset(InventoryContext::CS2, 101, CASE),
+            ],
+            &[],
+            &[],
+            &mut source,
+            || kinds_page(&[(901, AUG), (902, CASE)]),
+        );
+        assert_eq!(located(result.unwrap()), vec![Located::Kind(901), Located::Kind(902)]);
+        assert_eq!(reads, 1);
+    }
+
+    #[test]
+    fn partner_accepted_reads_a_stale_web_inventory_once() {
+        let mut source = Now::current(vec![skin(901, 302, 0.37), commodity(902)]);
+        let (result, reads) = find(
+            vec![
+                asset(InventoryContext::CS2, 100, AUG),
+                asset(InventoryContext::CS2, 101, CASE),
+            ],
+            &[],
+            &[],
+            &mut source,
+            || kinds_page(&[]),
+        );
+        assert_eq!(
+            located(result.unwrap()),
+            vec![Located::Guessed(901), Located::Guessed(902)]
+        );
+        assert_eq!(reads, 1);
+    }
+
+    #[test]
+    fn partner_accepted_with_an_unreadable_web_inventory_is_guessed() {
+        let mut source = Now::current(vec![commodity(12), commodity(11)]);
+        let (result, reads) = find(
+            vec![
+                asset(InventoryContext::CS2, 100, CASE),
+                asset(InventoryContext::CS2, 101, CASE),
+            ],
+            &[],
+            &[],
+            &mut source,
+            || Err(TradeError::GeneralError("HTTP 429".to_string())),
+        );
+        assert_eq!(
+            located(result.unwrap()),
+            vec![Located::Guessed(11), Located::Guessed(12)]
+        );
+        assert_eq!(reads, 1);
+    }
+
+    #[test]
+    fn partner_accepted_missing_is_not_found() {
+        let mut source = Now::current(vec![skin(1, 302, 0.37)]);
+        let (result, reads) = find(
+            vec![asset(InventoryContext::CS2, 100, AUG)],
+            &[1],
+            &[],
+            &mut source,
+            || panic!("no web read"),
+        );
+        assert_eq!(located(result.unwrap()), vec![Located::NotFound]);
+        assert_eq!(reads, 0);
+    }
+
+    #[test]
+    fn partner_accepted_known_ids_are_not_new() {
+        // 5 is a copy the bot already holds, with the same pattern and wear
+        let mut source = Now::current(vec![skin(5, 355, 0.066_143_81), skin(6, 355, 0.066_143_81)]);
+        let (result, _) = find(
+            vec![asset(InventoryContext::CS2, 100, MP7)],
+            &[5],
+            &[(100, web_fingerprint(355, "0.0661438107490539551"))],
+            &mut source,
+            || panic!("no web read"),
+        );
+        assert_eq!(located(result.unwrap()), vec![Located::PatternAndWear(6)]);
+    }
+
+    #[test]
+    fn partner_accepted_without_a_fingerprint_for_one_item() {
+        let mut source = Now::current(vec![skin(20, 12, 0.2), skin(10, 355, 0.066_143_81)]);
+        let (result, reads) = find(
+            vec![
+                asset(InventoryContext::CS2, 100, MP7),
+                asset(InventoryContext::CS2, 101, MP7),
+            ],
+            &[],
+            &[(100, web_fingerprint(355, "0.0661438107490539551"))],
+            &mut source,
+            || panic!("no web read"),
+        );
+        assert_eq!(
+            located(result.unwrap()),
+            vec![Located::PatternAndWear(10), Located::Only(20)]
+        );
+        assert_eq!(reads, 0);
+    }
+
+    #[test]
+    fn partner_accepted_without_a_current_inventory() {
+        let mut source = Now { items: None, looks: 0 };
+        let (result, reads) = find(
+            vec![asset(InventoryContext::CS2, 100, AUG)],
+            &[],
+            &[],
+            &mut source,
+            || panic!("no web read"),
+        );
+        assert!(
+            matches!(result, Err(TradeError::Cs2InventoryUnavailable)),
+            "{:?}",
+            result
+        );
+        assert_eq!((reads, source.looks), (0, 1));
+    }
+
+    #[test]
+    fn partner_accepted_other_games_need_no_look() {
+        let mut source = Now { items: None, looks: 0 };
+        let (result, _) = find(
+            vec![asset(InventoryContext::STEAM, 100, 667924416)],
+            &[],
+            &[],
+            &mut source,
+            || panic!("no web read"),
+        );
+        assert_eq!(located(result.unwrap()), vec![Located::NotFound]);
+        let (result, _) = find(Vec::new(), &[], &[], &mut source, || panic!("no web read"));
+        assert!(result.unwrap().is_empty());
+        assert_eq!(source.looks, 0);
+    }
+
+    #[test]
+    fn partner_accepted_game_coordinator_failure() {
+        let (result, _) = find(
+            vec![asset(InventoryContext::CS2, 100, AUG)],
+            &[],
+            &[],
+            &mut FailsAfter(0),
+            || panic!("no web read"),
+        );
         assert!(matches!(result, Err(TradeError::GeneralError(_))), "{:?}", result);
     }
 

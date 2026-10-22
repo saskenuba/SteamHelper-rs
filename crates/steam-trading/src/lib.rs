@@ -33,6 +33,8 @@
     unused_qualifications
 )]
 
+#[cfg(feature = "cs2")]
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::future::Future;
 use std::str::FromStr;
@@ -58,6 +60,8 @@ pub use inventory::PropertyValue;
 #[cfg(feature = "cs2")]
 pub use received::AcceptedOffer;
 #[cfg(feature = "cs2")]
+pub use received::Fingerprint;
+#[cfg(feature = "cs2")]
 pub use received::Located;
 #[cfg(feature = "cs2")]
 pub use received::ReceivedItem;
@@ -77,11 +81,11 @@ use steam_mobile::Url;
 use steam_mobile::STEAM_COMMUNITY_HOST;
 pub use steamid_parser::SteamID;
 use tappet::endpoints::ieconservice::get::GetTradeOffers;
+#[cfg(feature = "cs2")]
+use tappet::response_types::CEcon_Asset;
 use tappet::response_types::GetTradeHistoryResponse;
 use tappet::response_types::GetTradeOffersResponse;
 use tappet::response_types::MalformedOffer;
-#[cfg(feature = "cs2")]
-use tappet::response_types::CEcon_Asset;
 #[cfg(feature = "cs2")]
 use tappet::response_types::OfferItem;
 use tappet::response_types::TradeHistory_Trade;
@@ -891,6 +895,51 @@ impl SteamTradeManager {
             move || self.own_inventory(InventoryContext::CS2_TRADE_PROTECTED),
             received::Wait::new(self.received_items_timeout),
         )
+        .await
+    }
+
+    /// Finds where the items received went in an offer the partner accepted, such as one this account sent, through
+    /// CS2's game coordinator. Nothing is accepted and nothing is waited for. Feature `cs2`.
+    ///
+    /// `offer` is the accepted offer as Steam lists it (`get_trade_offers` lists accepted offers too); its items to
+    /// receive are those to find, with the partner's asset ids. Entries that can't be read are left out (check
+    /// `has_malformed_items()` first); stackable items (`amount` > 1) count as one.
+    ///
+    /// Unlike [`SteamTradeManager::accept_offer_and_find_items`], there is no snapshot from before the trade and the
+    /// partner's copies are gone, so the caller says what it knows:
+    ///
+    /// - `known_ids`: the game coordinator item ids (the asset ids) that aren't from this offer, such as the items held
+    ///   before it and those other offers brought. The items of `cs2`'s inventory not in it are the new ones.
+    /// - `fingerprints`: the pattern and wear of the partner's copies, by their asset id in the offer, as read from the
+    ///   partner's inventory before the trade; any may be missing, and commodities have none.
+    ///
+    /// Steps: looks once at [`Cs2::inventory`] (local state, no request; its events are not taken), and places each
+    /// item (see [`Located`]). Only when the game coordinator can't tell kinds apart, reads our own web inventory once
+    /// (CS2's context 16, where received items land while trade-protected) for the new ids' kinds; Steam serves it
+    /// from a cache, so an item received seconds before may be [`Located::Guessed`] instead of [`Located::Kind`]. A
+    /// failed read is logged: those items are [`Located::Guessed`].
+    ///
+    /// Items not in `known_ids` that came from elsewhere can be taken for received ones ([`Located::Only`],
+    /// [`Located::Guessed`]); an item with a fingerprint is only ever paired with one that matches it.
+    ///
+    /// **Not verified against live Steam yet.**
+    ///
+    /// # Errors
+    ///
+    /// [`TradeError::Cs2InventoryUnavailable`] while the game coordinator's inventory isn't current (it can't tell
+    /// what is there): nothing was looked up, try again once it is. Not when the offer has no CS2 item to receive:
+    /// those are [`Located::NotFound`] without a look. [`TradeError::GameCoordinatorError`] if the client stopped.
+    /// Items not found are no error: [`Located::NotFound`].
+    pub async fn find_received_items(
+        &self,
+        offer: &TradeOffer_Trade,
+        known_ids: &HashSet<u64>,
+        fingerprints: &HashMap<u64, Fingerprint>,
+        cs2: &mut Cs2,
+    ) -> Result<Vec<ReceivedItem>, TradeError> {
+        received::find_and_locate(received_assets(offer), known_ids, fingerprints, cs2, || {
+            self.own_inventory(InventoryContext::CS2_TRADE_PROTECTED)
+        })
         .await
     }
 }
