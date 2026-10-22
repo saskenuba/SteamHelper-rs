@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### New Features (BREAKING)
+
+ - <csr-id-8ad274fbaee8a5df823c5bbdc18580f8835fbc0b/> accept_offer_and_find_items takes the fingerprints, reads no partner inventory
+   SteamTradeManager::accept_offer_and_find_items(offer_id, &fingerprints,
+   &mut Cs2) (feature cs2): the caller gives the pattern and wear of the
+   partner's copies, by their asset id in the offer, as read from the
+   partner's inventory before the trade (Inventory::fingerprints). Offers
+   and trade history carry none (seen live 2026-10-22), and the call no
+   longer reads the partner's inventory.
+   
+   - snapshot of the game coordinator's item ids, accept, wait for the new
+     ones, then places items as find_received_items does
+   - Located has three variants instead of five: Exact (same pattern as
+     the fingerprint, wear within 1e-6), AnyOfKind (a new item of its
+     classid in our web inventory, for an item without a fingerprint:
+     every commodity) and NotFound; nothing is placed by elimination or
+     guessed among unknown kinds any more
+   - web reads: none when every CS2 item received has a fingerprint, else
+     one of our own context 16
+   - AcceptedOffer::known_ids and TradeError::AcceptedButItemsNotFound
+     { known_ids, .. }: the game coordinator's item ids right before the
+     accept, to pass to find_received_items to look again
+   - a failed read of our web inventory after the accept is now
+     AcceptedButItemsNotFound (is_too_many_requests() tells a 429) instead
+     of items placed without kinds
+   
+   Not verified against live Steam.
+
 ### New Features
 
  - <csr-id-21ec6420cd94a1c59c62dd49b3e9a307fe9ed1c1/> where the items of an offer the partner accepted went
@@ -19,16 +47,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    - fingerprints: the partner's copies' pattern and wear by their asset id
      in the offer, as the caller read them before the trade; any may be
      missing
-   - places items with the rules of accept_offer_and_find_items
-     (Located::Only, PatternAndWear, Kind, Guessed, NotFound), except for
-     items without a fingerprint (see Bug Fixes); our own web inventory is
-     read only when the game coordinator can't place every item
+   - places items with the rules of accept_offer_and_find_items: each item
+     with a fingerprint on the closest new item that matches it, the same
+     pattern and a wear within 1e-6 so that a wear rounded to 6 decimals
+     still matches, the lowest id of equally close ones (Located::Exact),
+     else NotFound; then each item without one on the first new item our
+     web inventory lists with its kind (Located::AnyOfKind), else NotFound;
+     kinds are read once, in context 16, only when an item has no
+     fingerprint
+   - known_ids should include the new ids earlier calls found for other
+     trades: else two offers with the same commodity can be given the same
+     new id
    - TradeError::Cs2InventoryUnavailable while the game coordinator's
      inventory isn't current (nothing looked up)
-   - Fingerprint is public: Fingerprint::new(pattern, wear_bits),
-     Fingerprint::of(&InventoryItem), pattern(), wear_bits()
+   - Fingerprint is public: Fingerprint::new(pattern, wear: f64) (the wear
+     kept as f32, the game coordinator's float),
+     Fingerprint::of(&InventoryItem), pattern(), wear() -> f32; serde as
+     {"pattern": 302, "wear": 0.37215376}, the wear the shortest decimal
+     that reads back as the same f32
    
    Not verified against live Steam.
+ - <csr-id-8ad274fbaee8a5df823c5bbdc18580f8835fbc0b/> Inventory::fingerprints
+   Inventory::fingerprints() (feature cs2): the Fingerprint of each item
+   with a pattern and a wear, by its asset id, to pass to
+   accept_offer_and_find_items or find_received_items after one read of
+   the partner's inventory. Commodities have none.
  - <csr-id-832c3617f05a144c63cebfc15445b7082064f6f3/> Inventory::total_inventory_count
    The count Steam sends on every inventory page, to tell a complete read:
    Inventory::total_inventory_count() (the first page's) and
@@ -40,19 +83,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - <csr-id-cf9b96a4d8e0ee12e42f79171d9f14dd794c2e79/> find_received_items places items without a fingerprint by kind only
    The new items may have come another way, so an item without a
    fingerprint (every commodity) is placed only on a new item our web
-   inventory lists with its classid: Located::Kind, or Located::Guessed among
-   those of its kind, else Located::NotFound; never Located::Only. Kinds are
-   read in context 16, then context 2 for ids still missing, once each.
+   inventory lists with its classid (Located::AnyOfKind), else
+   Located::NotFound.
 
  - <csr-id-f2b1b4d5a46d2d3b2204c5eac4c75bcd66c44d49/> find_received_items fails with a web inventory read that failed
    A failed read of our web inventory for the new items' kinds is the call's
    error (the read's TradeError; is_too_many_requests() tells a 429) instead
-   of a logged Located::NotFound. accept_offer_and_find_items is unchanged.
+   of a logged Located::NotFound.
 
 ### Refactor
 
  - <csr-id-e543c5532288e1700f8dd71af80f1685275ccc37/> one placing core for received items
-   accept_offer_and_find_items behaves as before.
+   accept_offer_and_find_items and find_received_items share it.
 
 ## v0.7.0 (2026-10-21)
 
